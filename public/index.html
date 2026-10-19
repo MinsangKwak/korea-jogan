@@ -91,6 +91,11 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .notice .in { padding-block: .7rem; }
 .notice p { margin: 0; }
 .notice.ok { background: var(--brand-soft); }
+.stale { background: var(--ink); color: var(--bg); font-size: .9rem; line-height: 1.6; }
+.stale .in { padding-block: .6rem; }
+.stale p { margin: 0; }
+.stale a { color: inherit; font-weight: 700; }
+.mast-right .asof { display: block; font-size: .75rem; opacity: .75; }
 .notice a { color: inherit; font-weight: 700; }
 
 /* 섹션 공통 */
@@ -367,7 +372,7 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
     <div class="in">
       <a class="logo" href="#top">대한민국 조간<small>데이터로 읽는 오늘의 대한민국</small></a>
       <div class="mast-right">
-        <time id="issueDate" datetime="">—</time>
+        <span><time id="issueDate" datetime="">—</time><span class="asof" id="asOf"></span></span>
         <button class="bigbtn" id="bigBtn" type="button" aria-pressed="false">가 글자 크게</button>
       </div>
     </div>
@@ -375,6 +380,9 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
   <nav class="cats" aria-label="분야">
     <div class="in"><ul id="catNav"></ul></div>
   </nav>
+  <div class="stale" id="stale" role="status" hidden>
+    <div class="in"><p id="staleMsg"></p></div>
+  </div>
   <div class="notice" role="note">
     <div class="in"><p id="notice">오늘 호를 불러오는 중입니다.</p></div>
   </div>
@@ -601,6 +609,9 @@ const one = (v) => v.toLocaleString('ko-KR', { minimumFractionDigits: 1, maximum
 const daysBetween = (a, b) => Math.round((b - a) / DAY);
 const utc = (y, m, d) => new Date(Date.UTC(y, m - 1, d));
 const parseDate = (s) => { const [y, m, d] = s.split('-').map(Number); return utc(y, m, d); };
+// 발행 기준은 한국 시간. 기기 시간대와 상관없이 오늘 날짜를 KST로 구한다
+const todayKST = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+const longDate = (s) => parseDate(s).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', timeZone: 'UTC' });
 
 function el(tag, attrs, text) {
   const n = document.createElement(tag);
@@ -1077,6 +1088,21 @@ function renderLimits() {
   D.limits.forEach((t) => $('limits').append(el('li', {}, t)));
 }
 
+// 조간은 00시 발행. 최신 호가 오늘 날짜가 아니면 지난 호를 보고 있다고 먼저 알린다
+function renderStale() {
+  const today = todayKST();
+  if (D.date >= today) return;
+  $('staleMsg').textContent = '오늘(' + longDate(today) + ') 호는 아직 발행되지 않았습니다. 아래는 ' + longDate(D.date) + ' 호입니다.';
+  $('stale').hidden = false;
+}
+
+function renderAsOf() {
+  if (!D.collectedAt) return;
+  const t = new Date(D.collectedAt);
+  if (Number.isNaN(t.getTime())) return;
+  $('asOf').textContent = t.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' }) + ' 수집 기준';
+}
+
 // 호 상태(시안·초안·공개)에 따라 맨 위 안내 문구를 바꾼다
 function renderNotice() {
   const box = $('notice');
@@ -1201,7 +1227,9 @@ async function boot() {
     return;
   }
   ISSUE = parseDate(D.date);
+  renderStale();
   renderNotice();
+  renderAsOf();
   renderLead();
   renderSplits();
   renderNational();
