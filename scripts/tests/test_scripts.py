@@ -21,6 +21,7 @@ sys.path.insert(0, str(HERE.parent))
 
 import approve  # noqa: E402
 import build_feed  # noqa: E402
+import build_tokens  # noqa: E402
 import ecos_nums  # noqa: E402
 import validate  # noqa: E402
 
@@ -148,6 +149,29 @@ class EcosTest(unittest.TestCase):
         nums = ecos_nums.convert(raw)
         self.assertEqual([n["k"] for n in nums], ["원·달러 환율"])
         self.assertEqual(nums[0]["dir"], "flat")
+
+
+class TokensTest(unittest.TestCase):
+    def test_committed_css_matches_tokens(self):
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(build_tokens.main(["--check"]), 0)
+
+    def test_themes_and_aliases(self):
+        css = build_tokens.build({
+            "name": "t",
+            "color": {"themes": [{"id": "light"}, {"id": "dark"}], "tokens": [
+                {"name": "brand", "value": {"light": "#0047a0", "dark": "#86aeea"}},
+                {"name": "focus", "value": "{brand}"},
+            ]},
+            "type": {"families": {"sans": "sans-serif"}},
+            "radius": {"tokens": [{"name": "radius-md", "value": "8px"}]},
+        })
+        self.assertIn("--focus: var(--brand);", css)
+        self.assertIn("--radius-md: 8px;", css)
+        self.assertIn("--font-sans: sans-serif;", css)
+        # 다크 값은 기기 설정과 data-theme 두 곳에 들어간다
+        self.assertEqual(css.count("--brand: #86aeea;"), 2)
+        self.assertIn(':root:not([data-theme="light"])', css)
 
 
 if __name__ == "__main__":
