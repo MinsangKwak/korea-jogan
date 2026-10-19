@@ -35,9 +35,16 @@ scripts/
   fetch_ecos.py          한국은행 ECOS 수집
   validate.py            발행 전 검사(출처 누락, 값 범위, 날짜 등)
 .github/workflows/
-  pages.yml              main에 push하면 검사 후 배포
-  daily.yml              일일 수집(지금은 수동 실행만)
+  check.yml              dev·main push와 PR에서 데이터·커밋 제목 검사
+  deploy-pages.yml       deploy에 push하면 검사 후 배포
+  daily.yml              한국은행 ECOS 원본 수집(수동 실행)
+docs/
+  BRANCHES.md            dev → main → deploy 흐름
+  COMMITS.md             커밋 제목 규칙
+  DAILY_RUNBOOK.md       매일 00시 자동 발행 절차
 ```
+
+브랜치는 `dev`(개발) → `main`(최종본) → `deploy`(배포 전용) 한 방향으로 흐릅니다. 자세한 규칙은 [docs/BRANCHES.md](docs/BRANCHES.md)에 있습니다. 커밋 제목은 [docs/COMMITS.md](docs/COMMITS.md)를 따르고, 로컬에서 `git config core.hooksPath .githooks`로 검사 훅을 켤 수 있습니다.
 
 ## 로컬에서 보기
 
