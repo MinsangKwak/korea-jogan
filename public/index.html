@@ -330,7 +330,7 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
     <div class="in"><ul id="catNav"></ul></div>
   </nav>
   <div class="notice" role="note">
-    <div class="in"><p id="notice"><strong>시안 호입니다.</strong> 공식 발표 원문과, 그 발표를 인용한 기사로 확인한 수치만 실었습니다. 수집 한계는 맨 아래에 적었습니다.</p></div>
+    <div class="in"><p id="notice"><strong>시안 호입니다.</strong> 수치는 공식 발표 원문이나 그 발표를 인용한 기사로 확인했습니다. 수집 한계는 맨 아래에 있습니다.</p></div>
   </div>
 </header>
 
@@ -356,7 +356,7 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
       <header class="sec-head">
         <p class="label">정치</p>
         <h2 id="polH">임기·선거·예산 일정</h2>
-        <p class="desc">날짜로 계산하는 값입니다. 법으로 정해진 날과 현행법 규칙으로 계산한 날은 따로 표시합니다.</p>
+        <p class="desc">법으로 정해진 날과 현행법 규칙으로 계산한 날을 구분해 표시합니다.</p>
       </header>
       <div class="three">
         <div class="panel term">
@@ -386,7 +386,7 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
       <header class="sec-head">
         <p class="label">경제</p>
         <h2 id="ecoH">오늘의 핵심 숫자</h2>
-        <p class="desc">기준 시점은 항목마다 다릅니다. '출처'를 누르면 기관·발표일·원문 링크가 펼쳐집니다. 상승·하락 표시는 방향일 뿐 좋고 나쁨의 평가가 아닙니다.</p>
+        <p class="desc">항목마다 기준 시점이 다릅니다. '출처'를 누르면 기관, 발표일, 원문 링크를 볼 수 있습니다. 화살표는 오르내린 방향만 나타냅니다.</p>
       </header>
       <div class="tiles" id="nums"></div>
     </div>
@@ -414,7 +414,7 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
       <header class="sec-head">
         <p class="label">재정</p>
         <h2 id="fisH">국가채무와 국민연금</h2>
-        <p class="desc">늘 같은 자리에서 보는 상설 지표입니다. 새 공식 발표가 나온 날에만 바뀝니다.</p>
+        <p class="desc">새 공식 발표가 나온 날에만 바뀌는 상설 지표입니다.</p>
       </header>
       <div class="two">
         <div class="panel">
@@ -495,7 +495,7 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
       <li><b>D</b>언론 보도·민간 집계</li>
       <li><b>E</b>분석·계산</li>
     </ul>
-    <p>본 서비스는 공식 정부·공공기관 자료를 우선으로 공개 자료를 수집·분석합니다. 잠정치는 수정될 수 있습니다.</p>
+    <p>정부·공공기관의 공식 자료를 먼저 쓰고, 부족한 부분은 공개 보도로 채웁니다. 잠정치는 나중에 바뀔 수 있습니다.</p>
     <p>코드 MIT · 글 CC BY 4.0 · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub</a></p>
   </div>
 </footer>
@@ -616,7 +616,7 @@ function renderNums() {
 }
 
 function renderDiffs() {
-  $('mediaDesc').textContent = '주제: ' + D.topic + '. 국내 10곳, 해외 10곳의 기사를 같은 기준으로 읽었습니다. 어떤 수치를 썼는지, 그 출처를 밝혔는지, 수치 없이 분위기만 전한 표현은 무엇인지, 원인과 전망을 어떻게 해석했는지 나란히 봅니다.';
+  $('mediaDesc').textContent = '주제는 ' + D.topic + '입니다. 국내 10곳과 해외 10곳의 기사를 같은 기준으로 읽고, 쓴 수치와 그 출처, 수치 없이 분위기만 전한 표현, 원인과 전망의 해석을 비교했습니다.';
   D.diffs.forEach((c, i) => {
     const det = el('details', { class: 'compare' });
     if (i === 0) det.open = true;
