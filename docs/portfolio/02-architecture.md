@@ -10,9 +10,10 @@ flowchart LR
     B --> C["YYYY-MM-DD.json 작성"]
     C --> D{"validate.py"}
     D -- 실패 --> X["발행 중단"]
-    D -- 통과 --> E["dev 커밋"]
-    E --> F["main · deploy 빨리 감기"]
-    F --> G{"deploy-pages.yml<br/>다시 검사"}
+    D -- 통과 --> E["dev 커밋(draft)"]
+    E --> R["사람이 원문 대조<br/>approve.py"]
+    R --> F["main · deploy 빨리 감기"]
+    F --> G{"deploy-pages.yml<br/>--deploy 검사 · RSS"}
     G -- 통과 --> H["GitHub Pages"]
     H --> U["브라우저: index.json → 최신 호"]
 ```
@@ -25,7 +26,9 @@ flowchart LR
 | 발행 데이터 | [public/data/issues/](../../public/data/issues) | `index.json`(최신 호·목록)과 날짜별 호. 형식은 [DATA.md](../DATA.md) |
 | 발행 전 검사 | [scripts/validate.py](../../scripts/validate.py) | 필수 항목, 출처·링크, 값 범위, 날짜, 시도 이름을 검사합니다 |
 | 커밋 제목 검사 | [scripts/check_commit_msg.mjs](../../scripts/check_commit_msg.mjs) | 로컬 훅과 PR에서 `종류(범위): 제목` 규칙을 검사합니다 |
-| 공공 API 수집기 | [scripts/fetch_ecos.py](../../scripts/fetch_ecos.py) | 한국은행 ECOS 원본 수집 뼈대(준비 중) |
+| 승인 | [scripts/approve.py](../../scripts/approve.py) | 사람이 확인한 초안을 `published`로 바꾸고 확인한 사람·시각을 남깁니다 |
+| RSS | [scripts/build_feed.py](../../scripts/build_feed.py) | 승인된 호로 `feed.xml`을 만듭니다. 배포 때 실행 |
+| 공공 API 수집기 | [scripts/fetch_ecos.py](../../scripts/fetch_ecos.py) · [ecos_nums.py](../../scripts/ecos_nums.py) | ECOS 원본(환율·기준금리·코스피·코스닥) 수집과 핵심 숫자 변환 |
 | 워크플로 | [.github/workflows/](../../.github/workflows) | `check.yml` 검사, `deploy-pages.yml` 배포, `daily.yml` 수집 |
 
 ## 화면 구현
@@ -82,6 +85,7 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 | 조사 | 분야별 하위 에이전트를 동시에 돌립니다(핵심 숫자 · 전국 · 지역 두 묶음 · 언론 주제) |
 | 상설 지표 | 재정·국민연금·수출입은 새 공식 발표가 있을 때만 바꾸고, 없으면 지난 호 값을 씁니다 |
 | 실패 처리 | 고칠 수 없는 섹션은 지난 호 값으로 되돌린 뒤 다시 검사하고, 그래도 실패하면 발행하지 않습니다 |
+| 사람 확인 | 자동 작업은 `draft`까지만 씁니다. 머리기사·핵심 숫자·갈린 숫자를 사람이 원문과 대조해 승인해야 배포됩니다 |
 
 절차 전체는 [DAILY_RUNBOOK.md](../DAILY_RUNBOOK.md)에 있습니다.
 
@@ -98,4 +102,4 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 ## 앞으로 바꿀 부분
 
 - 핵심 숫자는 공공 API(ECOS·KOSIS·관세청) 수집기로 옮겨, 에이전트 조사는 기사·요약에만 쓰게 합니다.
-- 호가 쌓이면 `index.json`의 목록으로 지난 호 아카이브와 RSS를 만듭니다.
+- 지난 호 아카이브는 `?d=YYYY-MM-DD`로 같은 화면에서 엽니다. 호가 수백 개로 늘면 목록을 달·연 단위로 나눕니다.
