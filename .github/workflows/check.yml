@@ -1,0 +1,36 @@
+# dev·main에 올라오거나 PR이 열리면 데이터 검사와 커밋 제목 검사를 돌린다
+name: 검사
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main, deploy]
+
+permissions:
+  contents: read
+
+jobs:
+  data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 데이터 검사
+        run: python scripts/validate.py
+
+  commit-msg:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # 어긋나면 실패로 표시하되 병합을 막는 필수 검사로 두지는 않는다
+      - name: PR 커밋 제목
+        run: node scripts/check_commit_msg.mjs --range "origin/${{ github.base_ref }}..HEAD"
