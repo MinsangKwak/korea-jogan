@@ -90,6 +90,8 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .notice { background: var(--hl-soft); color: var(--ink); font-size: .88rem; line-height: 1.6; }
 .notice .in { padding-block: .7rem; }
 .notice p { margin: 0; }
+.notice.ok { background: var(--brand-soft); }
+.notice a { color: inherit; font-weight: 700; }
 
 /* 섹션 공통 */
 .sec { padding-block: 2.4rem; border-top: 1px solid var(--line); scroll-margin-top: calc(var(--nav-h) + 8px); }
@@ -145,6 +147,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .srcpanel dl { display: grid; grid-template-columns: auto 1fr; gap: .1rem .8rem; margin: 0; }
 .srcpanel dt { color: var(--ink-3); }
 .srcpanel dd { margin: 0; min-width: 0; }
+.report { font-size: .8rem; color: var(--ink-3); }
 
 /* 언론: 비교 상자 */
 .compare { border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
@@ -316,6 +319,11 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
 .grade { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; list-style: none; padding: 0; }
 .grade b { margin-right: .3rem; color: var(--ink); }
 .foot p { margin: 0 0 .5rem; max-width: 50rem; }
+.fixes { list-style: none; padding: 0 !important; }
+.fixes li { padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.fixes li + li { margin-top: 0 !important; }
+.fixes .fw { font-size: .82rem; color: var(--ink-3); }
+.fixes del { color: var(--ink-3); }
 
 /* 하단 분야 메뉴(좁은 화면) */
 .tabbar { display: none; }
@@ -353,7 +361,7 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
     <div class="in"><ul id="catNav"></ul></div>
   </nav>
   <div class="notice" role="note">
-    <div class="in"><p id="notice"><strong>시안 호입니다.</strong> 수치는 공식 발표 원문이나 그 발표를 인용한 기사로 확인했습니다. 수집 한계는 맨 아래에 있습니다.</p></div>
+    <div class="in"><p id="notice">오늘 호를 불러오는 중입니다.</p></div>
   </div>
 </header>
 
@@ -528,6 +536,9 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
       <li><b>E</b>분석·계산</li>
     </ul>
     <p>정부·공공기관의 공식 자료를 먼저 쓰고, 부족한 부분은 공개 보도로 채웁니다. 잠정치는 나중에 바뀔 수 있습니다.</p>
+    <h2 id="fixH">정정 기록</h2>
+    <ul class="fixes" id="fixes" aria-labelledby="fixH"></ul>
+    <p>숫자·문장·링크가 원문과 다르면 <a id="reportLink" href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" target="_blank" rel="noopener">오류 신고</a>로 알려 주세요. 확인한 뒤 고치고, 고친 내용은 이 기록에 남깁니다.</p>
     <p>코드 MIT · 글 CC BY 4.0 · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub</a></p>
   </div>
 </footer>
@@ -538,6 +549,7 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
 'use strict';
 
 const DAY = 86400000;
+const REPO = 'https://github.com/MinsangKwak/korea-jogan';
 const SECTIONS = [
   ['home', '홈'], ['national', '전국'], ['regions', '지역'], ['politics', '정치'],
   ['economy', '경제'], ['industry', '산업'], ['fiscal', '재정'], ['media', '언론']
@@ -585,7 +597,14 @@ function kvRows(box, rows) {
   });
 }
 
-function srcButton(id, s) {
+// 오류 신고는 GitHub 이슈 양식으로 연다. 호 날짜와 위치를 미리 채운다
+function reportUrl(where) {
+  const q = new URLSearchParams({ template: 'correction.yml', title: ('[오류] ' + D.date + ' ' + where).trim(), issue: D.date });
+  if (where) q.set('where', where);
+  return REPO + '/issues/new?' + q.toString();
+}
+
+function srcButton(id, s, where) {
   const btn = el('button', { class: 'srcbtn', type: 'button', 'aria-expanded': 'false', 'aria-controls': id }, '출처 · ' + s.name.split(' ')[0]);
   const panel = el('div', { class: 'srcpanel', id });
   panel.hidden = true;
@@ -596,6 +615,7 @@ function srcButton(id, s) {
   dd.append(el('a', { href: s.url, target: '_blank', rel: 'noopener' }, '원문 열기'));
   dl.append(dd);
   panel.append(dl);
+  if (where) panel.append(el('a', { class: 'report', href: reportUrl(where), target: '_blank', rel: 'noopener' }, '이 숫자 오류 신고'));
   // 출처는 처음엔 접어 두고 누르면 펼친다
   btn.addEventListener('click', () => {
     const open = btn.getAttribute('aria-expanded') === 'true';
@@ -647,7 +667,7 @@ function renderNums() {
     const t = el('div', { class: 'tile' });
     t.append(el('div', { class: 'k' }, m.k), el('div', { class: 'v' }, m.v));
     const row = el('div', { class: 'row' });
-    const [btn, panel] = srcButton('sp' + i, m.src);
+    const [btn, panel] = srcButton('sp' + i, m.src, '경제 · ' + m.k);
     row.append(el('span', { class: 'dir ' + m.dir, 'aria-label': DIR_LABEL[m.dir] }, m.d), btn);
     t.append(row, el('div', { class: 'ref' }, m.ref + ' · 신뢰도 ' + m.grade), panel);
     $('nums').append(t);
@@ -999,6 +1019,48 @@ function renderLimits() {
   D.limits.forEach((t) => $('limits').append(el('li', {}, t)));
 }
 
+// 호 상태(시안·초안·공개)에 따라 맨 위 안내 문구를 바꾼다
+function renderNotice() {
+  const box = $('notice');
+  box.textContent = '';
+  const st = D.status;
+  if (st === 'published' && D.review) {
+    box.parentNode.parentNode.classList.add('ok');
+    const at = new Date(D.review.at).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' });
+    box.append(el('strong', {}, '편집자 확인을 마친 호입니다.'), document.createTextNode(' 머리기사와 핵심 숫자를 ' + at + '에 원문과 대조했습니다. 수집 한계는 맨 아래에 있습니다.'));
+  } else if (st === 'draft') {
+    box.append(el('strong', {}, '확인 전 초안입니다.'), document.createTextNode(' 사람이 원문과 대조하기 전이라 숫자가 바뀔 수 있습니다.'));
+  } else {
+    box.append(el('strong', {}, '시안 호입니다.'), document.createTextNode(' 수치는 공식 발표 원문이나 그 발표를 인용한 기사로 확인했습니다. 수집 한계는 맨 아래에 있습니다.'));
+  }
+}
+
+function renderCorrections(list) {
+  const ul = $('fixes');
+  $('reportLink').href = reportUrl('');
+  if (!list.length) { ul.append(el('li', {}, '아직 정정한 내용이 없습니다.')); return; }
+  // 최근 정정이 위로 오게 한다
+  list.slice().sort((a, b) => b.date.localeCompare(a.date)).forEach((c) => {
+    const li = el('li');
+    li.append(el('div', { class: 'fw' }, c.date.replace(/-/g, '.') + ' 정정 · ' + c.issue.replace(/-/g, '.') + '호 · ' + c.section));
+    const p = el('div');
+    p.append(el('del', {}, c.before), document.createTextNode(' → '), el('strong', {}, c.after));
+    li.append(p, el('div', { class: 'fw' }, '이유: ' + c.reason));
+    ul.append(li);
+  });
+}
+
+// 정정 기록을 못 읽어도 오늘 호는 그대로 보여 준다
+async function loadCorrections() {
+  try {
+    const res = await fetch('data/corrections.json', { cache: 'no-cache' });
+    if (!res.ok) return [];
+    return (await res.json()).items || [];
+  } catch (e) {
+    return [];
+  }
+}
+
 function setupControls() {
   $('natMore').addEventListener('click', () => {
     natAll = !natAll;
@@ -1081,6 +1143,7 @@ async function boot() {
     return;
   }
   ISSUE = parseDate(D.date);
+  renderNotice();
   renderLead();
   renderNational();
   renderRegions();
@@ -1090,6 +1153,7 @@ async function boot() {
   renderFiscal();
   showTheme(D.themes[0].id);
   renderLimits();
+  renderCorrections(await loadCorrections());
   setupControls();
   setupNav();
 }

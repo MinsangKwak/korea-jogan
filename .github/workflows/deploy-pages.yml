@@ -28,7 +28,7 @@ jobs:
           python-version: "3.12"
       # 검사에 실패하면 배포하지 않는다
       - name: 데이터 검사
-        run: python scripts/validate.py
+        run: python scripts/validate.py --deploy
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
