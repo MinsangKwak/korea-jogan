@@ -23,8 +23,8 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 
 | 워크플로 | 언제 | 무엇 |
 | --- | --- | --- |
-| `check.yml` | `dev`·`main` push, PR | 데이터 검사, PR 커밋 제목 검사 |
-| `deploy-pages.yml` | `deploy` push, 수동 실행 | 데이터 검사 뒤 GitHub Pages 배포 |
+| `check.yml` | `dev`·`main` push, PR | 데이터 검사, 스크립트 시험, PR 커밋 제목 검사 |
+| `deploy-pages.yml` | `deploy` push, 수동 실행 | 배포 규칙 검사(`--deploy`, 승인 전 초안 차단), RSS 생성 뒤 GitHub Pages 배포 |
 | `daily.yml` | 수동 실행 | 한국은행 ECOS 원본 수집(준비 중) |
 
 ## 저장소 설정

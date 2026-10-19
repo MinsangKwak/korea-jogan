@@ -21,6 +21,9 @@ jobs:
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
         run: python scripts/fetch_ecos.py
+      # 원본을 화면의 핵심 숫자(nums) 꼴로 바꾼다. 날짜는 수집기가 정한 발행일(한국 시간 오늘)
+      - name: 핵심 숫자로 변환
+        run: python scripts/ecos_nums.py "$(TZ=Asia/Seoul date +%F)"
       - name: 데이터 검사
         run: python scripts/validate.py
       # 지금은 원본만 아티팩트로 남기고, 발행 JSON 생성과 커밋은 다음 단계에서 붙인다

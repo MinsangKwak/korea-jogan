@@ -1,10 +1,13 @@
-"""한국은행 ECOS에서 환율·기준금리를 받아 data/raw/ecos/에 원본 그대로 저장한다.
+"""한국은행 ECOS에서 환율·기준금리·주가지수를 받아 data/raw/ecos/에 원본 그대로 저장한다.
 
 환경변수 ECOS_API_KEY가 필요하다. 키는 GitHub Secrets에만 두고 코드·페이지에 넣지 않는다.
 통계표·항목 코드는 ECOS '통계코드검색'에서 한 번 더 확인한 뒤 쓴다.
+사용: python scripts/fetch_ecos.py [--date YYYY-MM-DD]  (발행일. 없으면 한국 시간 오늘)
+조간 기준에 맞춰 발행일 전날까지의 값만 받는다.
 """
 from __future__ import annotations
 
+import argparse
 import datetime as dt
 import json
 import os
@@ -20,7 +23,10 @@ BASE = "https://ecos.bok.or.kr/api/StatisticSearch"
 SERIES = {
     "usdkrw": ("731Y001", "D", "0000001"),
     "base_rate": ("722Y001", "D", "0101000"),
+    "kospi": ("802Y001", "D", "0001000"),
+    "kosdaq": ("802Y001", "D", "0089000"),
 }
+KST = dt.timezone(dt.timedelta(hours=9))
 
 
 def fetch(key: str, stat: str, cycle: str, item: str, start: str, end: str) -> dict:
@@ -30,23 +36,35 @@ def fetch(key: str, stat: str, cycle: str, item: str, start: str, end: str) -> d
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--date", help="발행일 YYYY-MM-DD")
+    args = parser.parse_args()
     key = os.environ.get("ECOS_API_KEY")
     if not key:
         print("ECOS_API_KEY가 없습니다.")
         return 1
-    today = dt.date.today()
-    start = (today - dt.timedelta(days=14)).strftime("%Y%m%d")
-    end = today.strftime("%Y%m%d")
+    issue = dt.date.fromisoformat(args.date) if args.date else dt.datetime.now(KST).date()
+    # 조간은 전날까지 발표된 값만 담는다
+    last = issue - dt.timedelta(days=1)
+    start = (last - dt.timedelta(days=21)).strftime("%Y%m%d")
+    end = last.strftime("%Y%m%d")
 
-    result = {"collectedAt": dt.datetime.now(dt.timezone.utc).isoformat(), "series": {}}
+    result = {"collectedAt": dt.datetime.now(KST).isoformat(timespec="seconds"), "issue": issue.isoformat(), "series": {}}
+    failed = []
     for name, (stat, cycle, item) in SERIES.items():
-        result["series"][name] = fetch(key, stat, cycle, item, start, end)
+        data = fetch(key, stat, cycle, item, start, end)
+        # ECOS는 오류도 200으로 돌려주고 RESULT에 코드를 담는다
+        if "RESULT" in data:
+            failed.append(f"{name}: {data['RESULT'].get('CODE')} {data['RESULT'].get('MESSAGE')}")
+        result["series"][name] = data
 
     OUT.mkdir(parents=True, exist_ok=True)
-    path = OUT / f"{today.isoformat()}.json"
+    path = OUT / f"{issue.isoformat()}.json"
     path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"저장: {path.relative_to(ROOT)}")
-    return 0
+    for f in failed:
+        print(" - 받지 못함", f)
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

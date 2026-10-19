@@ -8,9 +8,19 @@
 <link rel="canonical" href="https://minsangkwak.github.io/korea-jogan/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="대한민국 조간">
-<meta property="og:description" content="데이터로 읽는 오늘의 대한민국">
+<meta property="og:description" content="같은 사실, 다른 숫자. 기사마다 숫자가 왜 갈렸는지 출처와 기준으로 보여 주는 아침 신문입니다.">
 <meta property="og:url" content="https://minsangkwak.github.io/korea-jogan/">
+<meta property="og:site_name" content="대한민국 조간">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:image" content="https://minsangkwak.github.io/korea-jogan/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="대한민국 조간 · 같은 사실, 다른 숫자">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="대한민국 조간" href="feed.xml">
 <meta name="color-scheme" content="light dark">
+<!-- 방문 측정(선택). GoatCounter 주소를 넣으면 켜진다. 예: https://korea-jogan.goatcounter.com/count -->
+<meta name="jg-goatcounter" content="">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -78,6 +88,9 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .mast-right { display: flex; align-items: center; gap: .8rem; font-size: .85rem; }
 .bigbtn { background: transparent; color: var(--head-ink); border: 1px solid rgba(255,255,255,.5); border-radius: 4px; min-height: 40px; padding: 0 .8rem; cursor: pointer; font-size: .85rem; }
 .bigbtn[aria-pressed="true"] { background: var(--head-ink); color: var(--head); }
+.mast-btns { display: flex; gap: .4rem; }
+.mast-right { flex-wrap: wrap; }
+.bigbtn { white-space: nowrap; }
 
 /* 분야 메뉴(넓은 화면) */
 .cats { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
@@ -90,6 +103,13 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .notice { background: var(--hl-soft); color: var(--ink); font-size: .88rem; line-height: 1.6; }
 .notice .in { padding-block: .7rem; }
 .notice p { margin: 0; }
+.notice.ok { background: var(--brand-soft); }
+.stale { background: var(--ink); color: var(--bg); font-size: .9rem; line-height: 1.6; }
+.stale .in { padding-block: .6rem; }
+.stale p { margin: 0; }
+.stale a { color: inherit; font-weight: 700; }
+.mast-right .asof { display: block; font-size: .75rem; opacity: .75; }
+.notice a { color: inherit; font-weight: 700; }
 
 /* 섹션 공통 */
 .sec { padding-block: 2.4rem; border-top: 1px solid var(--line); scroll-margin-top: calc(var(--nav-h) + 8px); }
@@ -127,6 +147,21 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .briefs .bk { font-weight: 700; line-height: 1.45; }
 .briefs .bm { font-size: .85rem; color: var(--ink-3); }
 
+/* 홈: 오늘 갈린 숫자 */
+.split { margin-top: 2.2rem; padding-top: 1.4rem; border-top: 3px solid var(--ink); }
+.split-head { display: flex; justify-content: space-between; align-items: baseline; gap: .6rem 1rem; flex-wrap: wrap; margin-bottom: .9rem; }
+.split-head h2 { margin: 0; font-size: 1.25rem; font-weight: 900; }
+.split-head p { margin: 0; font-size: .88rem; color: var(--ink-3); }
+.splits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 900px) { .splits { grid-template-columns: minmax(0, 1fr); } }
+.scard { background: var(--hl-soft); border-radius: 6px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: .45rem; min-width: 0; }
+.scard .st { font-size: .8rem; font-weight: 700; color: var(--hl); }
+.scard .sv { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .5rem; font-size: 1.45rem; font-weight: 900; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.scard .sv span + span::before { content: "vs"; margin-right: .5rem; font-size: .8rem; font-weight: 500; color: var(--ink-3); }
+.scard h3 { margin: 0; font-size: 1rem; line-height: 1.45; }
+.scard p { margin: 0; font-size: .9rem; color: var(--ink-2); }
+.scard button { align-self: flex-start; margin-top: auto; background: transparent; border: 0; padding: .3rem 0; min-height: 36px; color: var(--brand); font-weight: 700; font-size: .88rem; cursor: pointer; text-decoration: underline; }
+
 /* 경제: 숫자 타일 */
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 1rem; }
 .tile { background: var(--surface); border-radius: 6px; padding: 1rem 1.1rem; min-width: 0; display: flex; flex-direction: column; gap: .2rem; }
@@ -145,6 +180,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .srcpanel dl { display: grid; grid-template-columns: auto 1fr; gap: .1rem .8rem; margin: 0; }
 .srcpanel dt { color: var(--ink-3); }
 .srcpanel dd { margin: 0; min-width: 0; }
+.report { font-size: .8rem; color: var(--ink-3); }
 
 /* 언론: 비교 상자 */
 .compare { border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
@@ -316,6 +352,14 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
 .grade { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; list-style: none; padding: 0; }
 .grade b { margin-right: .3rem; color: var(--ink); }
 .foot p { margin: 0 0 .5rem; max-width: 50rem; }
+.fixes { list-style: none; padding: 0 !important; }
+.fixes li { padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.fixes li + li { margin-top: 0 !important; }
+.fixes .fw { font-size: .82rem; color: var(--ink-3); }
+.fixes del { color: var(--ink-3); }
+.archive { display: flex; flex-wrap: wrap; gap: .3rem 1rem; list-style: none; padding: 0 !important; }
+.archive li + li { margin-top: 0 !important; }
+.archive a[aria-current="page"] { font-weight: 700; color: var(--ink); text-decoration: none; }
 
 /* 하단 분야 메뉴(좁은 화면) */
 .tabbar { display: none; }
@@ -344,16 +388,22 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
     <div class="in">
       <a class="logo" href="#top">대한민국 조간<small>데이터로 읽는 오늘의 대한민국</small></a>
       <div class="mast-right">
-        <time id="issueDate" datetime="">—</time>
-        <button class="bigbtn" id="bigBtn" type="button" aria-pressed="false">가 글자 크게</button>
+        <span><time id="issueDate" datetime="">—</time><span class="asof" id="asOf"></span></span>
+        <span class="mast-btns">
+          <button class="bigbtn" id="shareBtn" type="button">공유</button>
+          <button class="bigbtn" id="bigBtn" type="button" aria-pressed="false">가 글자 크게</button>
+        </span>
       </div>
     </div>
   </div>
   <nav class="cats" aria-label="분야">
     <div class="in"><ul id="catNav"></ul></div>
   </nav>
+  <div class="stale" id="stale" role="status" hidden>
+    <div class="in"><p id="staleMsg"></p></div>
+  </div>
   <div class="notice" role="note">
-    <div class="in"><p id="notice"><strong>시안 호입니다.</strong> 수치는 공식 발표 원문이나 그 발표를 인용한 기사로 확인했습니다. 수집 한계는 맨 아래에 있습니다.</p></div>
+    <div class="in"><p id="notice">오늘 호를 불러오는 중입니다.</p></div>
   </div>
 </header>
 
@@ -371,6 +421,30 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
         <h2 id="briefH">오늘 꼭 볼 숫자</h2>
         <ol id="briefs"></ol>
       </aside>
+    </div>
+    <div class="in split" id="splitBox" hidden>
+      <div class="split-head">
+        <h2 id="splitH">오늘 기준이 갈린 숫자</h2>
+        <p id="splitMeta"></p>
+      </div>
+      <div class="splits" id="splits"></div>
+    </div>
+  </section>
+  <section class="sec" id="media" aria-labelledby="mediaH">
+    <div class="in">
+      <header class="sec-head">
+        <p class="label">언론</p>
+        <h2 id="mediaH">주제별 언론 보도</h2>
+        <p class="desc">주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
+      </header>
+      <form class="tsearch" id="tform" role="search">
+        <label class="skip" for="tq">주제·키워드 검색</label>
+        <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락, 호우 피해" autocomplete="off">
+        <button type="submit">찾기</button>
+      </form>
+      <p class="thint">이 호에서 볼 수 있는 주제</p>
+      <div class="ctrl" id="tchips" role="group" aria-label="주제 선택"></div>
+      <div class="tresult" id="tresult" aria-live="polite"></div>
     </div>
   </section>
 
@@ -496,23 +570,6 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
     </div>
   </section>
 
-  <section class="sec" id="media" aria-labelledby="mediaH">
-    <div class="in">
-      <header class="sec-head">
-        <p class="label">언론</p>
-        <h2 id="mediaH">주제별 언론 보도</h2>
-        <p class="desc">주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
-      </header>
-      <form class="tsearch" id="tform" role="search">
-        <label class="skip" for="tq">주제·키워드 검색</label>
-        <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락, 호우 피해" autocomplete="off">
-        <button type="submit">찾기</button>
-      </form>
-      <p class="thint">이 호에서 볼 수 있는 주제</p>
-      <div class="ctrl" id="tchips" role="group" aria-label="주제 선택"></div>
-      <div class="tresult" id="tresult" aria-live="polite"></div>
-    </div>
-  </section>
 </main>
 
 <footer class="foot">
@@ -528,6 +585,12 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
       <li><b>E</b>분석·계산</li>
     </ul>
     <p>정부·공공기관의 공식 자료를 먼저 쓰고, 부족한 부분은 공개 보도로 채웁니다. 잠정치는 나중에 바뀔 수 있습니다.</p>
+    <h2 id="archH">지난 호</h2>
+    <ul class="archive" id="archive" aria-labelledby="archH"></ul>
+    <p>매일 아침 받아 보려면 <a href="feed.xml">RSS</a>를 구독하세요.</p>
+    <h2 id="fixH">정정 기록</h2>
+    <ul class="fixes" id="fixes" aria-labelledby="fixH"></ul>
+    <p>숫자·문장·링크가 원문과 다르면 <a id="reportLink" href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" target="_blank" rel="noopener">오류 신고</a>로 알려 주세요. 확인한 뒤 고치고, 고친 내용은 이 기록에 남깁니다.</p>
     <p>코드 MIT · 글 CC BY 4.0 · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub</a></p>
   </div>
 </footer>
@@ -538,9 +601,10 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
 'use strict';
 
 const DAY = 86400000;
+const REPO = 'https://github.com/MinsangKwak/korea-jogan';
 const SECTIONS = [
-  ['home', '홈'], ['national', '전국'], ['regions', '지역'], ['politics', '정치'],
-  ['economy', '경제'], ['industry', '산업'], ['fiscal', '재정'], ['media', '언론']
+  ['home', '홈'], ['media', '언론'], ['national', '전국'], ['regions', '지역'],
+  ['politics', '정치'], ['economy', '경제'], ['industry', '산업'], ['fiscal', '재정']
 ];
 // 시도 타일 지도. [이름, 열, 행, 가로 칸 수]. 실제 위치를 4열 격자에 대략 옮긴 배치
 const REGIONS = [
@@ -556,6 +620,8 @@ const DIR_LABEL = { up: '상승', down: '하락', flat: '보합' };
 const ALLOC_COLORS = ['var(--brand)', 'var(--hl)', 'var(--bar)', 'var(--ink-3)', 'var(--line)', 'var(--ink)'];
 
 let D = null;
+let INDEX = null;
+let VIEWING_PAST = false;
 let ISSUE = new Date();
 let natCat = '전체';
 let natAll = false;
@@ -567,6 +633,25 @@ const one = (v) => v.toLocaleString('ko-KR', { minimumFractionDigits: 1, maximum
 const daysBetween = (a, b) => Math.round((b - a) / DAY);
 const utc = (y, m, d) => new Date(Date.UTC(y, m - 1, d));
 const parseDate = (s) => { const [y, m, d] = s.split('-').map(Number); return utc(y, m, d); };
+// 발행 기준은 한국 시간. 기기 시간대와 상관없이 오늘 날짜를 KST로 구한다
+const todayKST = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+const longDate = (s) => parseDate(s).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', timeZone: 'UTC' });
+
+// 방문·행동 측정. jg-goatcounter가 비어 있으면 아무것도 보내지 않는다
+// GoatCounter는 쿠키를 쓰지 않고 개인을 식별하지 않는다
+const GC = (document.querySelector('meta[name="jg-goatcounter"]') || {}).content || '';
+function setupMetrics() {
+  if (!GC) return;
+  const sc = document.createElement('script');
+  sc.async = true;
+  sc.src = 'https://gc.zgo.at/count.js';
+  sc.dataset.goatcounter = GC;
+  document.head.append(sc);
+}
+function track(name, title) {
+  if (!GC || !window.goatcounter || !window.goatcounter.count) return;
+  window.goatcounter.count({ path: name, title: title || name, event: true });
+}
 
 function el(tag, attrs, text) {
   const n = document.createElement(tag);
@@ -585,7 +670,14 @@ function kvRows(box, rows) {
   });
 }
 
-function srcButton(id, s) {
+// 오류 신고는 GitHub 이슈 양식으로 연다. 호 날짜와 위치를 미리 채운다
+function reportUrl(where) {
+  const q = new URLSearchParams({ template: 'correction.yml', title: ('[오류] ' + D.date + ' ' + where).trim(), issue: D.date });
+  if (where) q.set('where', where);
+  return REPO + '/issues/new?' + q.toString();
+}
+
+function srcButton(id, s, where) {
   const btn = el('button', { class: 'srcbtn', type: 'button', 'aria-expanded': 'false', 'aria-controls': id }, '출처 · ' + s.name.split(' ')[0]);
   const panel = el('div', { class: 'srcpanel', id });
   panel.hidden = true;
@@ -596,11 +688,17 @@ function srcButton(id, s) {
   dd.append(el('a', { href: s.url, target: '_blank', rel: 'noopener' }, '원문 열기'));
   dl.append(dd);
   panel.append(dl);
+  if (where) {
+    const rep = el('a', { class: 'report', href: reportUrl(where), target: '_blank', rel: 'noopener' }, '이 숫자 오류 신고');
+    rep.addEventListener('click', () => track('report', where));
+    panel.append(rep);
+  }
   // 출처는 처음엔 접어 두고 누르면 펼친다
   btn.addEventListener('click', () => {
     const open = btn.getAttribute('aria-expanded') === 'true';
     btn.setAttribute('aria-expanded', String(!open));
     panel.hidden = open;
+    if (!open) track('src-open', s.name);
   });
   return [btn, panel];
 }
@@ -647,7 +745,7 @@ function renderNums() {
     const t = el('div', { class: 'tile' });
     t.append(el('div', { class: 'k' }, m.k), el('div', { class: 'v' }, m.v));
     const row = el('div', { class: 'row' });
-    const [btn, panel] = srcButton('sp' + i, m.src);
+    const [btn, panel] = srcButton('sp' + i, m.src, '경제 · ' + m.k);
     row.append(el('span', { class: 'dir ' + m.dir, 'aria-label': DIR_LABEL[m.dir] }, m.d), btn);
     t.append(row, el('div', { class: 'ref' }, m.ref + ' · 신뢰도 ' + m.grade), panel);
     $('nums').append(t);
@@ -700,6 +798,7 @@ function showTheme(id) {
     box.append(el('h4', { class: 'sub' }, '기준이 달라 갈린 숫자'));
     t.diffs.forEach((c) => {
       const det = el('details', { class: 'compare' });
+      det.addEventListener('toggle', () => { if (det.open) track('split-open', c.q); });
       const sm = el('summary');
       sm.append(el('h4', {}, c.q), el('p', {}, c.a));
       const body = el('div', { class: 'body tbl' });
@@ -741,8 +840,46 @@ function showTheme(id) {
   box.append(links);
 }
 
+// 갈린 숫자는 표 첫 열에 모여 있다. pick이 있으면 그 두 줄을, 없으면 처음과 마지막 줄을 크게 보여 준다
+function splitValues(c) {
+  const vals = c.rows.map((r) => r[0]);
+  const [i, j] = c.pick || [0, vals.length - 1];
+  return vals[i] === vals[j] ? [vals[i]] : [vals[i], vals[j]];
+}
+
+// 홈에는 주제마다 첫 번째 갈린 숫자 하나씩만 둔다. 나머지는 언론 섹션에서 본다
+function renderSplits() {
+  const withDiffs = D.themes.filter((t) => t.diffs && t.diffs.length);
+  if (!withDiffs.length) return;
+  const total = withDiffs.reduce((n, t) => n + t.diffs.length, 0);
+  $('splitBox').hidden = false;
+  $('splitMeta').textContent = '같은 사실을 매체마다 다른 숫자로 썼습니다 · 이 호에서 ' + total + '건';
+  withDiffs.slice(0, 3).forEach((t) => {
+    const c = t.diffs[0];
+    const card = el('article', { class: 'scard' });
+    const sv = el('div', { class: 'sv', 'aria-label': '갈린 값: ' + splitValues(c).join(', ') });
+    splitValues(c).forEach((v) => sv.append(el('span', {}, v)));
+    const more = el('button', { type: 'button' }, t.diffs.length > 1 ? '왜 다른지 보기 · 이 주제 ' + t.diffs.length + '건' : '왜 다른지 보기');
+    more.addEventListener('click', () => { track('split-home', c.q); openDiff(t.id, 0); });
+    card.append(el('span', { class: 'st' }, t.title), sv, el('h3', {}, c.q), el('p', {}, c.a), more);
+    $('splits').append(card);
+  });
+}
+
+function openDiff(id, idx) {
+  $('tq').value = '';
+  showTheme(id);
+  const det = $('tresult').querySelectorAll('details.compare')[idx];
+  if (!det) return;
+  det.open = true;
+  det.scrollIntoView({ block: 'start' });
+  det.querySelector('summary').focus({ preventScroll: true });
+}
+
 function searchTheme(q) {
   const ranked = D.themes.map((t) => ({ t, ...scoreTheme(t, q) })).filter((r) => r.score > 0).sort((a, b) => b.score - a.score);
+  // 입력한 글은 보내지 않고 어느 주제가 걸렸는지만 센다
+  track('search', ranked.length ? ranked[0].t.title : '결과 없음');
   if (ranked.length) { showTheme(ranked[0].t.id); return; }
   themeId = '';
   renderThemeChips();
@@ -999,6 +1136,105 @@ function renderLimits() {
   D.limits.forEach((t) => $('limits').append(el('li', {}, t)));
 }
 
+// 조간은 00시 발행. 최신 호가 오늘 날짜가 아니면 지난 호를 보고 있다고 먼저 알린다
+function renderStale() {
+  const msg = $('staleMsg');
+  if (VIEWING_PAST) {
+    msg.append(document.createTextNode('지난 호(' + longDate(D.date) + ')를 보고 있습니다. '), el('a', { href: './' }, '최신 호 보기'));
+    $('stale').hidden = false;
+    return;
+  }
+  const today = todayKST();
+  if (D.date >= today) return;
+  msg.textContent = '오늘(' + longDate(today) + ') 호는 아직 발행되지 않았습니다. 아래는 ' + longDate(D.date) + ' 호입니다.';
+  $('stale').hidden = false;
+}
+
+function renderArchive() {
+  const ul = $('archive');
+  const list = INDEX ? INDEX.issues : [D.date];
+  list.forEach((d) => {
+    const li = el('li');
+    const a = el('a', { href: d === (INDEX && INDEX.latest) ? './' : '?d=' + d }, d.replace(/-/g, '.'));
+    if (d === D.date) a.setAttribute('aria-current', 'page');
+    a.addEventListener('click', () => track('archive', d));
+    li.append(a);
+    ul.append(li);
+  });
+}
+
+// 공유는 휴대폰 공유 창을 먼저 쓰고, 없으면 링크를 복사한다. 링크는 지금 보는 호를 가리킨다
+function setupShare() {
+  const btn = $('shareBtn');
+  btn.addEventListener('click', async () => {
+    if (!D) return;
+    const url = location.origin + location.pathname + '?d=' + D.date;
+    const data = { title: '대한민국 조간 · ' + longDate(D.date), text: D.lead.headline, url };
+    track('share', D.date);
+    if (navigator.share) {
+      try { await navigator.share(data); } catch (e) { /* 사용자가 공유 창을 닫은 경우 */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = '링크 복사됨';
+    } catch (e) {
+      window.prompt('이 링크를 복사하세요', url);
+    }
+    setTimeout(() => { btn.textContent = '공유'; }, 2000);
+  });
+}
+
+function renderAsOf() {
+  if (!D.collectedAt) return;
+  const t = new Date(D.collectedAt);
+  if (Number.isNaN(t.getTime())) return;
+  $('asOf').textContent = t.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' }) + ' 수집 기준';
+}
+
+// 호 상태(시안·초안·공개)에 따라 맨 위 안내 문구를 바꾼다
+function renderNotice() {
+  const box = $('notice');
+  box.textContent = '';
+  const st = D.status;
+  if (st === 'published' && D.review) {
+    box.parentNode.parentNode.classList.add('ok');
+    const at = new Date(D.review.at).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' });
+    box.append(el('strong', {}, '편집자 확인을 마친 호입니다.'), document.createTextNode(' 머리기사와 핵심 숫자를 ' + at + '에 원문과 대조했습니다. 수집 한계는 맨 아래에 있습니다.'));
+  } else if (st === 'draft') {
+    box.append(el('strong', {}, '확인 전 초안입니다.'), document.createTextNode(' 사람이 원문과 대조하기 전이라 숫자가 바뀔 수 있습니다.'));
+  } else {
+    box.append(el('strong', {}, '시안 호입니다.'), document.createTextNode(' 수치는 공식 발표 원문이나 그 발표를 인용한 기사로 확인했습니다. 수집 한계는 맨 아래에 있습니다.'));
+  }
+}
+
+function renderCorrections(list) {
+  const ul = $('fixes');
+  $('reportLink').href = reportUrl('');
+  $('reportLink').addEventListener('click', () => track('report', 'footer'));
+  if (!list.length) { ul.append(el('li', {}, '아직 정정한 내용이 없습니다.')); return; }
+  // 최근 정정이 위로 오게 한다
+  list.slice().sort((a, b) => b.date.localeCompare(a.date)).forEach((c) => {
+    const li = el('li');
+    li.append(el('div', { class: 'fw' }, c.date.replace(/-/g, '.') + ' 정정 · ' + c.issue.replace(/-/g, '.') + '호 · ' + c.section));
+    const p = el('div');
+    p.append(el('del', {}, c.before), document.createTextNode(' → '), el('strong', {}, c.after));
+    li.append(p, el('div', { class: 'fw' }, '이유: ' + c.reason));
+    ul.append(li);
+  });
+}
+
+// 정정 기록을 못 읽어도 오늘 호는 그대로 보여 준다
+async function loadCorrections() {
+  try {
+    const res = await fetch('data/corrections.json', { cache: 'no-cache' });
+    if (!res.ok) return [];
+    return (await res.json()).items || [];
+  } catch (e) {
+    return [];
+  }
+}
+
 function setupControls() {
   $('natMore').addEventListener('click', () => {
     natAll = !natAll;
@@ -1056,7 +1292,8 @@ function setupBig() {
   });
 }
 
-// 발행 데이터는 페이지 안에 실려 있으면 그것을, 없으면 data/issues/의 최신 호를 읽는다
+// 발행 데이터는 페이지 안에 실려 있으면 그것을, 없으면 data/issues/에서 읽는다
+// 주소에 ?d=YYYY-MM-DD가 있고 발행 목록에 있는 날이면 그 호를, 아니면 최신 호를 연다
 async function loadIssue() {
   const inline = document.getElementById('issue-data');
   if (inline) return JSON.parse(inline.textContent);
@@ -1065,13 +1302,18 @@ async function loadIssue() {
     if (!res.ok) throw new Error(path + ' ' + res.status);
     return res.json();
   };
-  const index = await get('data/issues/index.json');
-  return get('data/issues/' + index.latest + '.json');
+  INDEX = await get('data/issues/index.json');
+  const want = new URLSearchParams(location.search).get('d');
+  const date = want && INDEX.issues.includes(want) ? want : INDEX.latest;
+  VIEWING_PAST = date !== INDEX.latest;
+  return get('data/issues/' + date + '.json');
 }
 
 async function boot() {
+  setupMetrics();
   renderNav();
   setupBig();
+  setupShare();
   try {
     D = await loadIssue();
   } catch (e) {
@@ -1081,7 +1323,11 @@ async function boot() {
     return;
   }
   ISSUE = parseDate(D.date);
+  renderStale();
+  renderNotice();
+  renderAsOf();
   renderLead();
+  renderSplits();
   renderNational();
   renderRegions();
   renderPolitics();
@@ -1090,6 +1336,8 @@ async function boot() {
   renderFiscal();
   showTheme(D.themes[0].id);
   renderLimits();
+  renderArchive();
+  renderCorrections(await loadCorrections());
   setupControls();
   setupNav();
 }

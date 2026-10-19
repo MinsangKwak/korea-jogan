@@ -1,0 +1,34 @@
+name: 오류 신고
+description: 화면의 숫자·문장·링크가 원문과 다르면 알려 주세요
+title: "[오류] "
+labels: ["정정 요청"]
+body:
+  - type: input
+    id: issue
+    attributes:
+      label: 호
+      description: 화면 맨 위 날짜(YYYY-MM-DD)
+      placeholder: 2026-10-19
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: 위치
+      description: 섹션과 항목 이름
+      placeholder: 경제 · 원·달러 환율
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: 화면에 나온 내용
+    validations:
+      required: true
+  - type: textarea
+    id: right
+    attributes:
+      label: 맞다고 보는 내용과 근거
+      description: 원문 링크가 있으면 함께 적어 주세요
+    validations:
+      required: true

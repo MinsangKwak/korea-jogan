@@ -1,6 +1,10 @@
-"""발행 전 데이터 검사. 하나라도 실패하면 종료 코드 1로 배포를 멈춘다."""
+"""발행 전 데이터 검사. 하나라도 실패하면 종료 코드 1로 배포를 멈춘다.
+
+--deploy를 붙이면 배포 규칙을 더한다. 사람이 승인하지 않은 초안(draft) 호가 목록에 있으면 실패한다.
+"""
 from __future__ import annotations
 
+import datetime as dt
 import json
 import re
 import sys
@@ -13,6 +17,11 @@ REGIONS = {
     "서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종", "경기",
     "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주",
 }
+KST = dt.timezone(dt.timedelta(hours=9))
+STATUSES = ("prototype", "draft", "published")
+# 00시 발행 호는 이 시각(발행일 한국 시간) 뒤에 모은 자료를 담지 않는다
+COLLECT_DEADLINE = dt.time(6, 0)
+CORRECTION_KEYS = ("date", "issue", "section", "before", "after", "reason")
 REQUIRED = ("date", "lead", "briefs", "nums", "themes", "items", "industries", "trade", "debt", "fiscal", "nps", "agenda", "limits")
 
 
@@ -29,6 +38,9 @@ def check_issue(path: Path) -> list[str]:
 
     if not DATE_RE.match(issue["date"]) or f"{issue['date']}.json" != name:
         errors.append(f"{name}: date 값과 파일 이름이 맞지 않음")
+        return errors
+
+    errors.extend(check_status(name, issue))
 
     # 핵심 숫자는 모두 출처 기관과 원문 링크가 있어야 한다
     for i, m in enumerate(issue["nums"]):
@@ -72,7 +84,58 @@ def check_issue(path: Path) -> list[str]:
     return errors
 
 
-def main() -> int:
+def check_status(name: str, issue: dict) -> list[str]:
+    """호 상태와 승인 기록, 수집 시각을 본다."""
+    errors: list[str] = []
+    status = issue.get("status")
+    if status not in STATUSES:
+        errors.append(f"{name}: status는 {'/'.join(STATUSES)} 중 하나여야 함")
+        return errors
+    if status != "published":
+        return errors
+
+    # 공개 호는 누가 언제 머리기사와 핵심 숫자를 확인했는지 남아 있어야 한다
+    review = issue.get("review") or {}
+    if not str(review.get("by", "")).strip():
+        errors.append(f"{name}: published 호에 review.by(승인한 사람) 없음")
+    try:
+        dt.datetime.fromisoformat(str(review.get("at")))
+    except ValueError:
+        errors.append(f"{name}: published 호의 review.at이 ISO 8601 시각이 아님")
+
+    try:
+        collected = dt.datetime.fromisoformat(str(issue.get("collectedAt")))
+    except ValueError:
+        errors.append(f"{name}: published 호의 collectedAt이 ISO 8601 시각이 아님")
+        return errors
+    if collected.tzinfo is None:
+        errors.append(f"{name}: collectedAt에 시간대(+09:00)가 없음")
+        return errors
+    deadline = dt.datetime.combine(dt.date.fromisoformat(issue["date"]), COLLECT_DEADLINE, KST)
+    if collected > deadline:
+        errors.append(f"{name}: collectedAt이 발행일 {COLLECT_DEADLINE:%H:%M}(한국 시간)보다 늦음. 조간에는 그날 장중 자료를 넣지 않음")
+    return errors
+
+
+def check_corrections(dates: list[str]) -> list[str]:
+    """정정 기록은 항목마다 무엇을 왜 고쳤는지가 있고, 있는 호를 가리켜야 한다."""
+    path = ROOT / "public" / "data" / "corrections.json"
+    if not path.exists():
+        return ["corrections.json 파일 없음"]
+    errors: list[str] = []
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for i, c in enumerate(data.get("items", [])):
+        missing = [k for k in CORRECTION_KEYS if not str(c.get(k, "")).strip()]
+        if missing:
+            errors.append(f"corrections.json: items[{i}] {', '.join(missing)} 없음")
+            continue
+        if not DATE_RE.match(c["date"]) or c["issue"] not in dates:
+            errors.append(f"corrections.json: items[{i}] 날짜 형식 오류이거나 없는 호 '{c['issue']}'")
+    return errors
+
+
+def main(argv: list[str] | None = None) -> int:
+    deploy = "--deploy" in (argv if argv is not None else sys.argv[1:])
     index = json.loads((ISSUES / "index.json").read_text(encoding="utf-8"))
     errors: list[str] = []
     if index["latest"] not in index["issues"]:
@@ -83,13 +146,16 @@ def main() -> int:
             errors.append(f"index.json: {date}.json 파일 없음")
             continue
         errors.extend(check_issue(path))
+        if deploy and json.loads(path.read_text(encoding="utf-8")).get("status") == "draft":
+            errors.append(f"{date}.json: 승인 전 초안(draft)은 배포하지 않음. scripts/approve.py로 승인한 뒤 올림")
+    errors.extend(check_corrections(index["issues"]))
 
     if errors:
         print("검사 실패")
         for e in errors:
             print(" -", e)
         return 1
-    print(f"검사 통과: {len(index['issues'])}개 호")
+    print(f"검사 통과: {len(index['issues'])}개 호" + (" (배포 규칙 포함)" if deploy else ""))
     return 0
 
 
