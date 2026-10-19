@@ -8,539 +8,401 @@
 <link rel="canonical" href="https://minsangkwak.github.io/korea-jogan/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="대한민국 조간">
-<meta property="og:description" content="데이터로 읽는 오늘의 대한민국">
+<meta property="og:description" content="같은 사실, 다른 숫자. 기사마다 숫자가 왜 갈렸는지 출처와 기준으로 보여 주는 아침 신문입니다.">
 <meta property="og:url" content="https://minsangkwak.github.io/korea-jogan/">
+<meta property="og:site_name" content="대한민국 조간">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:image" content="https://minsangkwak.github.io/korea-jogan/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="대한민국 조간 · 같은 사실, 다른 숫자">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="대한민국 조간" href="feed.xml">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#111111">
+<!-- 방문 측정(선택). GoatCounter 주소를 넣으면 켜진다. 예: https://korea-jogan.goatcounter.com/count -->
+<meta name="jg-goatcounter" content="">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<!-- 디자인 시스템: 토큰(design/tokens.json에서 생성)과 kj- 컴포넌트 -->
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/kj.css">
 <style>
-/* 레이아웃: 기사 사이트형. 검은 제호 띠 + 분야 메뉴, 한 단 흐름의 섹션, 섹션 안에서만 격자 */
-:root {
-  --bg: #ffffff;
-  --surface: #f4f5f7;
-  --ink: #141414;
-  --ink-2: #474c54;
-  --ink-3: #62676f;
-  --line: #e1e3e7;
-  --brand: #0047a0;
-  --brand-soft: #e7eef8;
-  --hl: #a14a00;
-  --hl-soft: #fdf0dc;
-  --bar: #a7b0bc;
-  --head: #111111;
-  --head-ink: #ffffff;
-  --f-sans: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  --fs: 17px;
-  --wrap: 1120px;
-  --nav-h: 52px;
-}
-@media (min-width: 900px) { :root { --fs: 18px; } }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #121417; --surface: #1b1e23; --ink: #eceef1; --ink-2: #bcc1c8; --ink-3: #9aa0a9;
-    --line: #2d3138; --brand: #86aeea; --brand-soft: #1a2940; --hl: #f2b765; --hl-soft: #3a2c16;
-    --bar: #5c6573; --head: #000000; --head-ink: #ffffff; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #121417; --surface: #1b1e23; --ink: #eceef1; --ink-2: #bcc1c8; --ink-3: #9aa0a9;
-  --line: #2d3138; --brand: #86aeea; --brand-soft: #1a2940; --hl: #f2b765; --hl-soft: #3a2c16;
-  --bar: #5c6573; --head: #000000; --head-ink: #ffffff; color-scheme: dark;
-}
-:root.big { --fs: 21px; }
-
-* { box-sizing: border-box; }
-html { font-size: var(--fs); scroll-behavior: smooth; }
-body {
-  margin: 0; background: var(--bg); color: var(--ink);
-  font-family: var(--f-sans); font-size: 1rem; line-height: 1.7;
-  -webkit-font-smoothing: antialiased; word-break: keep-all; overflow-wrap: anywhere;
-}
-a { color: var(--brand); }
-button { font: inherit; color: inherit; }
-:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
-h1, h2, h3, h4 { text-wrap: balance; }
-.in {
-  max-width: var(--wrap); margin: 0 auto;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-}
+/* 이 페이지만의 배치. 색·간격·모서리는 모두 디자인 토큰을 쓴다 */
 .skip { position: absolute; left: -999px; }
-.skip:focus { left: 16px; top: 16px; background: var(--bg); padding: .4rem .8rem; z-index: 30; }
-.num { font-variant-numeric: tabular-nums; }
+.skip:focus { left: var(--gutter); top: var(--gutter); z-index: 30; background: var(--bg); color: var(--ink); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); }
+.kj-wrap { padding-right: max(var(--gutter), env(safe-area-inset-right, 0px)); }
+.sub { margin: var(--space-8) 0 var(--space-3); font-size: 1.15rem; font-weight: 700; line-height: 1.4; }
+.src-note { margin: var(--space-3) 0 0; font-size: 0.85rem; color: var(--ink-3); line-height: 1.6; }
+[hidden] { display: none !important; }
 
-/* 제호 띠 */
-.masthead { background: var(--head); color: var(--head-ink); }
-.masthead .in { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; padding-block: .8rem; }
-.logo { color: var(--head-ink); text-decoration: none; font-weight: 900; font-size: 1.5rem; letter-spacing: -.02em; line-height: 1.2; }
-.logo small { display: block; font-size: .78rem; font-weight: 500; letter-spacing: 0; opacity: .8; }
-.mast-right { display: flex; align-items: center; gap: .8rem; font-size: .85rem; }
-.bigbtn { background: transparent; color: var(--head-ink); border: 1px solid rgba(255,255,255,.5); border-radius: 4px; min-height: 40px; padding: 0 .8rem; cursor: pointer; font-size: .85rem; }
-.bigbtn[aria-pressed="true"] { background: var(--head-ink); color: var(--head); }
+/* 제호 */
+.mast-date { display: flex; flex-direction: column; line-height: 1.4; }
+.mast-date small { font-size: 0.8rem; opacity: 0.85; }
+.mast-btns { display: flex; gap: var(--space-2); }
 
-/* 분야 메뉴(넓은 화면) */
-.cats { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
-.cats ul { list-style: none; margin: 0; padding: 0; display: flex; gap: .2rem; overflow-x: auto; scrollbar-width: none; }
-.cats ul::-webkit-scrollbar { display: none; }
-.cats a { display: flex; align-items: center; height: var(--nav-h); padding: 0 1rem; color: var(--ink); text-decoration: none; font-weight: 700; font-size: .95rem; border-bottom: 3px solid transparent; white-space: nowrap; }
-.cats a:hover { color: var(--brand); }
-.cats a[aria-current="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+/* 홈 */
+.hero { padding-block: var(--space-8) var(--space-10); }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-10); }
+.hero .meta { margin: var(--space-4) 0 0; font-size: 0.85rem; color: var(--ink-3); }
+.briefs-box { border-left: var(--border-hairline) solid var(--line); padding-left: var(--space-6); }
+.briefs-box h2 { margin: 0 0 var(--space-2); font-size: 1.05rem; font-weight: 900; }
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+  .briefs-box { border-left: 0; padding-left: 0; border-top: var(--border-hairline) solid var(--line); padding-top: var(--space-4); }
+}
+.lead-skel { display: grid; gap: var(--space-3); }
 
-.notice { background: var(--hl-soft); color: var(--ink); font-size: .88rem; line-height: 1.6; }
-.notice .in { padding-block: .7rem; }
-.notice p { margin: 0; }
+/* 홈: 오늘 기준이 갈린 숫자 */
+.split { margin-top: var(--space-8); padding-top: var(--space-6); border-top: var(--border-rule) solid var(--ink); }
+.split-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2) var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-4); }
+.split-head h2 { margin: 0; font-size: 1.25rem; font-weight: 900; }
+.split-head p { margin: 0; font-size: 0.85rem; color: var(--ink-3); }
+.splits { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: var(--space-4); }
+.scard { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--space-4); background: var(--hl-soft); border-radius: var(--radius-md); }
+.scard .st { font-size: 0.8rem; font-weight: 700; color: var(--hl); }
+.scard .sv { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-2); font-size: 1.45rem; font-weight: 900; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.scard .sv span + span::before { content: "vs"; margin-right: var(--space-2); font-size: 0.8rem; font-weight: 500; color: var(--ink-2); }
+.scard h3 { margin: 0; font-size: 1rem; line-height: 1.45; }
+.scard p { margin: 0; font-size: 0.92rem; color: var(--ink-2); }
+.scard .kj-btn { align-self: flex-start; margin-top: auto; padding-inline: 0; }
+.scard .kj-btn:hover { background: transparent; text-decoration: underline; }
 
-/* 섹션 공통 */
-.sec { padding-block: 2.4rem; border-top: 1px solid var(--line); scroll-margin-top: calc(var(--nav-h) + 8px); }
-.sec-head { margin-bottom: 1.4rem; max-width: 46rem; }
-.label { display: inline-flex; align-items: center; gap: .5rem; margin: 0 0 .3rem; font-size: .9rem; font-weight: 700; color: var(--brand); }
-.label::before { content: ""; width: 4px; height: 1em; background: var(--brand); }
-.sec-head h2 { margin: 0 0 .4rem; font-size: clamp(1.45rem, 3.4vw, 1.9rem); line-height: 1.3; font-weight: 900; letter-spacing: -.02em; }
-.sec-head p.desc { margin: 0; color: var(--ink-2); }
-.sub { margin: 2rem 0 .8rem; font-size: 1.15rem; font-weight: 700; line-height: 1.4; }
-.src-note { font-size: .85rem; color: var(--ink-3); line-height: 1.6; margin: .8rem 0 0; }
-
-/* 머리기사 */
-.hero { padding-block: 2rem 2.4rem; }
-.hero-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 2.4rem; }
-@media (max-width: 900px) { .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 1.6rem; } }
-.kicker { margin: 0 0 .5rem; font-weight: 700; font-size: .9rem; color: var(--brand); }
-.hero h1 { margin: 0 0 .8rem; font-size: clamp(1.7rem, 4.4vw, 2.6rem); line-height: 1.3; font-weight: 900; letter-spacing: -.025em; }
-.standfirst { margin: 0 0 1.4rem; font-size: 1.1rem; color: var(--ink-2); max-width: 40rem; }
-.facts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
-@media (max-width: 640px) { .facts { grid-template-columns: minmax(0, 1fr); } }
-.facts li { border-top: 3px solid var(--ink); padding-top: .6rem; }
-.facts .t { font-size: .88rem; color: var(--ink-2); font-weight: 500; }
-.facts .v { font-size: 1.7rem; font-weight: 900; line-height: 1.25; font-variant-numeric: tabular-nums; }
-.facts .m { font-size: .82rem; color: var(--ink-3); line-height: 1.5; }
-.hero .meta { margin: 1.2rem 0 0; font-size: .85rem; color: var(--ink-3); }
-.briefs { border-left: 1px solid var(--line); padding-left: 1.6rem; }
-@media (max-width: 900px) { .briefs { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 1.2rem; } }
-.briefs h2 { margin: 0 0 .6rem; font-size: 1.05rem; font-weight: 900; }
-.briefs ol { list-style: none; margin: 0; padding: 0; counter-reset: b; }
-.briefs li { counter-increment: b; border-bottom: 1px solid var(--line); }
-.briefs li:last-child { border-bottom: 0; }
-.briefs a { display: grid; grid-template-columns: 2rem 1fr; gap: .2rem .6rem; padding: .8rem 0; text-decoration: none; color: var(--ink); }
-.briefs a::before { content: counter(b); grid-row: span 2; font-size: 1.6rem; font-weight: 900; color: var(--line); line-height: 1.1; }
-.briefs a:hover .bk { text-decoration: underline; }
-.briefs .bk { font-weight: 700; line-height: 1.45; }
-.briefs .bm { font-size: .85rem; color: var(--ink-3); }
-
-/* 경제: 숫자 타일 */
-.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 1rem; }
-.tile { background: var(--surface); border-radius: 6px; padding: 1rem 1.1rem; min-width: 0; display: flex; flex-direction: column; gap: .2rem; }
-.tile .k { font-size: .9rem; font-weight: 700; color: var(--ink-2); }
-.tile .v { font-size: 1.9rem; font-weight: 900; line-height: 1.25; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
-.tile .row { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; font-size: .9rem; }
-.tile .ref { font-size: .82rem; color: var(--ink-3); line-height: 1.5; }
-.dir { display: inline-flex; align-items: center; gap: .25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.dir::before { font-size: .7em; }
-.dir.up::before { content: "▲"; }
-.dir.down::before { content: "▼"; }
-.dir.flat::before { content: "■"; font-size: .55em; }
-.srcbtn { background: transparent; color: var(--brand); border: 1px solid var(--brand); border-radius: 999px; font-size: .78rem; padding: .1rem .6rem; min-height: 28px; cursor: pointer; }
-.srcbtn[aria-expanded="true"] { background: var(--brand); color: var(--bg); }
-.srcpanel { margin-top: .4rem; padding: .7rem .8rem; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; font-size: .85rem; line-height: 1.6; }
-.srcpanel dl { display: grid; grid-template-columns: auto 1fr; gap: .1rem .8rem; margin: 0; }
-.srcpanel dt { color: var(--ink-3); }
-.srcpanel dd { margin: 0; min-width: 0; }
-
-/* 언론: 비교 상자 */
-.compare { border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
-.compare + .compare { margin-top: .8rem; }
-.compare > summary { list-style: none; cursor: pointer; padding: 1rem 1.1rem; display: grid; grid-template-columns: 1fr auto; gap: .2rem 1rem; align-items: start; }
-.compare > summary::-webkit-details-marker { display: none; }
-.compare > summary h4 { margin: 0; font-size: 1.05rem; line-height: 1.45; }
-.compare > summary p { margin: 0; grid-column: 1; font-size: .92rem; color: var(--ink-2); }
-.compare > summary::after { content: "펼치기"; grid-column: 2; grid-row: 1; font-size: .82rem; color: var(--brand); font-weight: 700; white-space: nowrap; padding-top: .15rem; }
-.compare[open] > summary::after { content: "접기"; }
-.compare .body { padding: 0 1.1rem 1rem; }
-.tbl { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-size: .9rem; }
-th, td { text-align: left; padding: .55rem .6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { color: var(--ink-3); font-weight: 700; font-size: .82rem; white-space: nowrap; }
-td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
-
-/* 언론: 주제 검색 */
-.ctrl { display: flex; gap: .4rem; flex-wrap: wrap; margin: 0 0 1rem; }
-.chipbtn { border: 1px solid var(--line); background: var(--bg); min-height: 40px; padding: 0 1rem; border-radius: 999px; cursor: pointer; font-size: .88rem; font-weight: 500; }
-.chipbtn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.morebar { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; margin-top: 1.2rem; }
-.morebar button { border: 1px solid var(--ink); background: var(--bg); min-height: 44px; padding: 0 1.4rem; border-radius: 999px; cursor: pointer; font-size: .92rem; font-weight: 700; }
-.tsearch { display: flex; gap: .5rem; margin: 0 0 .8rem; max-width: 40rem; }
-.tsearch input { flex: 1; min-width: 0; min-height: 48px; padding: 0 1rem; border: 2px solid var(--ink); border-radius: 999px; background: var(--bg); color: var(--ink); font: inherit; }
-.tsearch input:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
-.tsearch button { min-height: 48px; padding: 0 1.4rem; border: 0; border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 700; cursor: pointer; }
-.thint { font-size: .85rem; color: var(--ink-3); margin: 0 0 .5rem; }
-.tresult { margin-top: 1.6rem; }
-.tresult > h3 { margin: 0 0 .2rem; font-size: clamp(1.3rem, 3vw, 1.6rem); font-weight: 900; line-height: 1.35; }
-.tmeta { margin: 0 0 1rem; font-size: .88rem; color: var(--ink-3); }
-.aisum { background: var(--brand-soft); border-radius: 8px; padding: 1.1rem 1.3rem; }
-.aisum .ah { display: flex; align-items: center; gap: .5rem; margin: 0 0 .5rem; font-weight: 900; }
-.aitag { font-size: .75rem; font-weight: 700; background: var(--brand); color: var(--bg); padding: .1rem .5rem; border-radius: 3px; }
-.aisum ul { margin: 0; padding-left: 1.2rem; }
-.aisum li + li { margin-top: .4rem; }
-.aisum .anote { margin: .8rem 0 0; font-size: .82rem; color: var(--ink-2); }
-.links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 2rem; }
-@media (max-width: 760px) { .links { grid-template-columns: minmax(0, 1fr); } }
-.links h4 { margin: 0 0 .3rem; font-size: .95rem; padding-bottom: .3rem; border-bottom: 3px solid var(--ink); }
+/* 언론 */
+.tchips { margin: var(--space-2) 0 var(--space-6); }
+.tresult > h3 { margin: 0 0 var(--space-1); font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 900; line-height: 1.35; }
+.tmeta { margin: 0 0 var(--space-4); font-size: 0.85rem; color: var(--ink-3); }
+.kj-acc td.n { text-align: left; }
+.links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 0 var(--space-8); }
+.links h4 { margin: 0 0 var(--space-1); padding-bottom: var(--space-1); font-size: 0.95rem; border-bottom: var(--border-rule) solid var(--ink); }
 .links .f h4 { border-bottom-color: var(--brand); }
-.links ul { list-style: none; margin: 0 0 1rem; padding: 0; }
-.links li { padding: .55rem 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: .8rem; font-size: .92rem; }
-@media (max-width: 520px) { .links li { grid-template-columns: minmax(0, 1fr); gap: .1rem; } }
+.links ul { list-style: none; margin: 0 0 var(--space-4); padding: 0; }
+.links li { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) 0; border-bottom: var(--border-hairline) solid var(--line); font-size: 0.92rem; }
 .links li b { font-weight: 700; }
+.links li small { display: block; color: var(--ink-3); font-size: 0.8rem; font-weight: 400; }
 .links li a { color: var(--ink); }
-.links li small { display: block; color: var(--ink-3); font-size: .78rem; }
-.noresult { padding: 1rem 1.2rem; background: var(--surface); border-radius: 6px; }
-
-/* 산업 */
-.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
-@media (max-width: 760px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.strip > div { border-top: 3px solid var(--ink); padding-top: .5rem; min-width: 0; }
-.strip .k { font-size: .85rem; color: var(--ink-2); font-weight: 500; }
-.strip .v { font-size: 1.5rem; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.3; }
-.strip .d { font-size: .85rem; }
-.bars { display: grid; gap: .5rem; }
-.brow { display: grid; grid-template-columns: 7rem minmax(0, 1fr) 8.6rem; gap: .8rem; align-items: center; font-size: .9rem; }
-@media (max-width: 520px) { .brow { grid-template-columns: 5.6rem minmax(0, 1fr); } .brow .v { grid-column: 2; font-size: .82rem; text-align: left !important; } }
-.brow .lab { white-space: nowrap; }
-.brow.trad .lab { font-weight: 700; }
-.brow .tr { height: 16px; position: relative; }
-.brow .b { position: absolute; inset: 0 auto 0 0; background: var(--bar); border-radius: 2px; }
-.brow.semi .b { background: var(--brand); }
-.brow.trad .b { background: var(--hl); }
-.brow .v { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; color: var(--ink-2); }
-.legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: .82rem; color: var(--ink-3); margin-top: .7rem; }
-.legend i { display: inline-block; width: .9rem; height: .7rem; margin-right: .35rem; vertical-align: middle; border-radius: 2px; }
-.callout { margin-top: 1.6rem; background: var(--surface); border-radius: 6px; padding: 1rem 1.2rem; }
-.callout h4 { margin: 0 0 .3rem; font-size: 1.02rem; }
-.callout p { margin: 0; font-size: .95rem; color: var(--ink-2); }
-.inds { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 1.6rem 2rem; margin-top: 2rem; }
-.ind { border-top: 3px solid var(--hl); padding-top: .7rem; min-width: 0; }
-.ind h4 { margin: 0 0 .3rem; font-size: 1.15rem; font-weight: 900; }
-.ind .sum { margin: 0 0 .6rem; font-size: .95rem; color: var(--ink-2); }
-.ind ul { list-style: none; margin: 0; padding: 0; }
-.ind li { padding: .45rem 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; gap: .1rem .8rem; font-size: .9rem; }
-.ind li .fv { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
-.ind li .fm { grid-column: 1 / -1; font-size: .78rem; color: var(--ink-3); }
-.ind .news { font-size: .88rem; margin: .7rem 0 0; color: var(--ink-3); }
-
-/* 재정 */
-.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.4rem; }
-@media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); gap: 2rem; } }
-.panel h3 { margin: 0 0 .6rem; font-size: 1.25rem; font-weight: 900; padding-bottom: .4rem; border-bottom: 3px solid var(--ink); }
-.panel h4 { margin: 1.4rem 0 .5rem; font-size: 1rem; }
-.kv { display: grid; grid-template-columns: 1fr auto; gap: 0 1rem; align-items: baseline; padding: .55rem 0; border-bottom: 1px solid var(--line); }
-.kv .kk { font-weight: 500; }
-.kv .km { grid-column: 1; font-size: .8rem; color: var(--ink-3); }
-.kv .kvv { grid-column: 2; grid-row: 1 / span 2; font-weight: 900; font-size: 1.05rem; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.drow { display: grid; grid-template-columns: 2.8rem minmax(0, 1fr) 5.8rem; gap: 0 .7rem; align-items: center; padding: .25rem 0; font-size: .9rem; }
-.drow .dy { font-variant-numeric: tabular-nums; color: var(--ink-2); }
-.drow .dtr { height: 12px; position: relative; }
-.drow .db { position: absolute; inset: 0 auto 0 0; background: var(--brand); border-radius: 2px; }
-.drow.fc .db { background: transparent; border: 1.5px dashed var(--brand); }
-.drow .dv { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.drow .dm { grid-column: 2 / -1; font-size: .78rem; color: var(--ink-3); line-height: 1.4; }
-.dgap { font-size: .78rem; color: var(--ink-3); padding: .15rem 0 .15rem 3.5rem; }
-.dleg i { display: inline-block; width: 1rem; height: .65rem; margin-right: .35rem; vertical-align: middle; background: var(--brand); border-radius: 2px; }
-.dleg i.fc { background: transparent; border: 1.5px dashed var(--brand); }
-.alloc { display: flex; height: 22px; margin: .8rem 0; border-radius: 3px; overflow: hidden; }
-.alloc i { display: block; height: 100%; }
-.alloc-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1.2rem; }
-.alloc-list li { display: flex; justify-content: space-between; gap: .6rem; padding: .4rem 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
-.alloc-list li span:last-child { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.sw { display: inline-block; width: .7rem; height: .7rem; margin-right: .4rem; border-radius: 2px; vertical-align: middle; }
+@media (max-width: 520px) { .links li { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
 
 /* 전국 */
-.flow { margin: 0 0 1.4rem; padding: 1rem 1.2rem; background: var(--surface); border-radius: 6px; }
-.flow h3 { margin: 0 0 .4rem; font-size: 1rem; }
-.flow ol { margin: 0; padding-left: 1.2rem; }
-.flow li + li { margin-top: .3rem; }
-.news { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 2rem; }
-@media (max-width: 760px) { .news { grid-template-columns: minmax(0, 1fr); } }
-.nitem { border-top: 1px solid var(--line); padding: 1rem 0; display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
-.nitem .ncat { font-size: .82rem; font-weight: 700; color: var(--brand); }
-.nitem h3 { margin: 0; font-size: 1.05rem; line-height: 1.5; font-weight: 700; }
-.nitem h3 a { color: var(--ink); text-decoration: none; }
-.nitem h3 a:hover { text-decoration: underline; }
-.nitem p { margin: 0; font-size: .95rem; color: var(--ink-2); }
-.figs { display: flex; flex-wrap: wrap; gap: .3rem; }
-.fig { font-size: .8rem; font-weight: 700; background: var(--surface); padding: .1rem .5rem; border-radius: 3px; font-variant-numeric: tabular-nums; }
-.nsrc { font-size: .82rem; color: var(--ink-3); display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.nat-flow { margin-bottom: var(--space-6); }
+.nat-chips { margin-bottom: var(--space-2); }
+.morebar { display: flex; justify-content: center; margin-top: var(--space-6); }
 
 /* 지역 */
-.reg { display: grid; grid-template-columns: minmax(0, 19rem) minmax(0, 1fr); gap: 2.4rem; align-items: start; }
-@media (max-width: 900px) { .reg { grid-template-columns: minmax(0, 1fr); gap: 1.4rem; } }
-.tmap { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; position: sticky; top: calc(var(--nav-h) + 16px); }
-@media (max-width: 900px) { .tmap { position: static; max-width: 22rem; } }
-.rtile { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; min-height: 52px; padding: .2rem; font-size: .88rem; font-weight: 700; color: var(--ink); }
-.rtile small { font-size: .75rem; font-weight: 500; color: var(--ink-3); }
-.rtile:hover { border-color: var(--brand); }
-.rtile[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--bg); }
-.rtile[aria-pressed="true"] small { color: var(--bg); }
-.rtile.none { opacity: .55; }
-.rtile.allbtn { grid-column: 1 / -1; flex-direction: row; gap: .5rem; min-height: 44px; }
-.rlist h3 { margin: 0 0 .3rem; font-size: 1.25rem; font-weight: 900; }
-.rlist .rsum { margin: 0 0 .6rem; color: var(--ink-2); }
+.reg { display: grid; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); gap: var(--space-10); align-items: start; }
+.reg .kj-tmap { position: sticky; top: calc(var(--nav-h) + var(--space-4)); }
+.rlist h3 { margin: 0 0 var(--space-1); font-size: 1.25rem; font-weight: 900; }
+.rlist .rsum { margin: 0 0 var(--space-3); color: var(--ink-2); }
 .digest { list-style: none; margin: 0; padding: 0; }
-.digest li { display: grid; grid-template-columns: 4rem minmax(0, 1fr); gap: .8rem; padding: .7rem 0; border-bottom: 1px solid var(--line); }
-.digest .rn { background: none; border: 0; padding: 0; text-align: left; font-weight: 900; color: var(--brand); cursor: pointer; min-height: 32px; align-self: start; }
-.digest .rn small { display: block; font-weight: 500; font-size: .75rem; color: var(--ink-3); }
-.digest p { margin: 0; font-size: .95rem; }
-.backbtn { margin-top: 1rem; border: 1px solid var(--ink); background: var(--bg); min-height: 44px; padding: 0 1.2rem; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: .9rem; }
+.digest li { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) 0; border-bottom: var(--border-hairline) solid var(--line); }
+.digest .rn { align-self: start; min-height: var(--tap-min); padding: 0; border: 0; background: none; text-align: left; font-weight: 900; color: var(--brand); cursor: pointer; line-height: 1.3; }
+.digest .rn small { display: block; font-size: 0.8rem; font-weight: 500; color: var(--ink-3); }
+.digest .rn:hover { text-decoration: underline; }
+.digest .rn:disabled { color: var(--ink-3); cursor: default; text-decoration: none; }
+.digest p { margin: 0; font-size: 0.95rem; padding-top: 2px; }
+.rlist .kj-btn { margin-top: var(--space-4); }
+@media (max-width: 900px) {
+  .reg { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+  .reg .kj-tmap { position: static; }
+}
 
-/* 정치 */
-.three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
+/* 정치·재정 다단 */
+.three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8); }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-10); }
 @media (max-width: 960px) { .three { grid-template-columns: minmax(0, 1fr); } }
-.term .big { font-size: 2.2rem; font-weight: 900; line-height: 1.2; font-variant-numeric: tabular-nums; }
-.pbar { height: 10px; background: var(--surface); border-radius: 999px; margin: .7rem 0 .4rem; overflow: hidden; }
-.pbar i { display: block; height: 100%; background: var(--brand); }
-.elec { list-style: none; margin: 0; padding: 0; }
-.elec li { padding: .7rem 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; gap: .1rem .8rem; }
-.elec .en { font-weight: 700; }
-.elec .dd { grid-column: 2; grid-row: 1 / span 2; font-size: 1.3rem; font-weight: 900; color: var(--brand); font-variant-numeric: tabular-nums; }
-.elec .em { font-size: .82rem; color: var(--ink-3); }
-.agenda { list-style: none; margin: 0; padding: 0; }
-.agenda li { display: grid; grid-template-columns: 4.4rem 1fr; gap: .8rem; padding: .7rem 0; border-bottom: 1px solid var(--line); font-size: .95rem; }
-.agenda .day { font-weight: 900; font-variant-numeric: tabular-nums; }
-.agenda .day small { display: block; font-weight: 500; font-size: .8rem; color: var(--ink-3); }
-.agenda .cat { display: inline-block; font-size: .78rem; font-weight: 700; color: var(--brand); margin-right: .4rem; }
+@media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); gap: var(--space-8); } }
+.kj-panel h4 { margin: var(--space-6) 0 var(--space-2); font-size: 1rem; }
+/* 국가채무 막대는 연도 옆 배지(중기전망)가 잘리지 않게 이름 칸을 넓힌다 */
+@media (max-width: 520px) {
+  #debtChart .kj-bar { grid-template-columns: 7.4rem minmax(0, 1fr); row-gap: 2px; }
+  #debtChart .kj-bar__m { margin-top: 0; }
+}
+.term .kj-progress { margin: var(--space-3) 0 0; }
+
+/* 산업 */
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.strip > div { min-width: 0; padding-top: var(--space-2); border-top: var(--border-rule) solid var(--ink); }
+.strip .k { font-size: 0.85rem; font-weight: 500; color: var(--ink-2); }
+.strip .v { font-size: 1.3rem; font-weight: 900; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.strip .d { font-size: 0.85rem; }
+@media (max-width: 760px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.oct { margin-top: var(--space-6); }
+.inds { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: var(--space-8); margin-top: var(--space-8); }
+.inds .kj-panel h3 { font-size: 1.15rem; }
+.inds .sum { margin: 0 0 var(--space-2); font-size: 0.95rem; color: var(--ink-2); }
+/* 산업 수치는 값이 문장처럼 길어 이름 · 값 · 기준을 세로로 쌓는다 */
+.inds .kj-kv li { grid-template-columns: minmax(0, 1fr); }
+.inds .kj-kv .v { grid-column: 1; grid-row: auto; order: 1; font-size: 0.95rem; font-weight: 700; white-space: normal; text-align: left; }
+.inds .kj-kv .m { order: 2; }
+.inds .news { margin: var(--space-3) 0 0; font-size: 0.85rem; color: var(--ink-3); }
 
 /* 바닥글 */
-.foot { background: var(--surface); border-top: 1px solid var(--line); margin-top: 1rem; }
-.foot .in { padding-block: 2rem 2.4rem; font-size: .9rem; color: var(--ink-2); }
-.foot h2 { font-size: 1rem; margin: 0 0 .5rem; color: var(--ink); }
-.foot ul { margin: 0 0 1.4rem; padding-left: 1.1rem; max-width: 50rem; }
-.foot li + li { margin-top: .3rem; }
-.grade { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; list-style: none; padding: 0; }
-.grade b { margin-right: .3rem; color: var(--ink); }
-.foot p { margin: 0 0 .5rem; max-width: 50rem; }
+.kj-foot .kj-grades { margin-bottom: var(--space-4); }
+.kj-foot p { margin: 0 0 var(--space-2); max-width: 50rem; }
+.kj-foot h2 { margin-top: var(--space-6); }
+.kj-foot h2:first-child { margin-top: 0; }
+.archive { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); list-style: none; padding: 0 !important; }
+.archive a[aria-current="page"] { font-weight: 700; color: var(--ink); text-decoration: none; }
+.fixes { list-style: none; padding: 0 !important; }
+.fixes li { padding: var(--space-2) 0; border-bottom: var(--border-hairline) solid var(--line); }
+.fixes li + li { margin-top: 0; }
+.fixes .fw { font-size: 0.8rem; color: var(--ink-3); }
+.fixes del { color: var(--ink-3); }
+.report { display: inline-flex; align-items: center; min-height: var(--tap-min); font-size: 0.85rem; }
 
-/* 하단 분야 메뉴(좁은 화면) */
-.tabbar { display: none; }
-@media (max-width: 860px) {
-  .cats { display: none; }
-  .sec { scroll-margin-top: 12px; }
-  body { padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px)); }
-  .tabbar {
-    display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
-    background: var(--bg); border-top: 1px solid var(--line);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px);
-  }
-  .tabbar ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); }
-  .tabbar a { display: flex; align-items: center; justify-content: center; min-height: 58px; color: var(--ink-3); text-decoration: none; font-size: .78rem; font-weight: 700; border-top: 3px solid transparent; margin-top: -1px; }
-  .tabbar a[aria-current="true"] { color: var(--brand); border-top-color: var(--brand); }
-}
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+/* 하단 탭바를 쓰는 좁은 화면 */
+@media (max-width: 860px) { .kj-sec { scroll-margin-top: var(--space-3); } }
 </style>
 </head>
-<body>
+<body class="has-tabbar">
 <a class="skip" href="#main">본문으로 건너뛰기</a>
 
 <header id="top">
-  <div class="masthead">
-    <div class="in">
-      <a class="logo" href="#top">대한민국 조간<small>데이터로 읽는 오늘의 대한민국</small></a>
-      <div class="mast-right">
-        <time id="issueDate" datetime="">—</time>
-        <button class="bigbtn" id="bigBtn" type="button" aria-pressed="false">가 글자 크게</button>
+  <div class="kj-mast">
+    <div class="kj-wrap kj-mast__in">
+      <a class="kj-mast__logo" href="#top">대한민국 조간<small>데이터로 읽는 오늘의 대한민국</small></a>
+      <div class="kj-mast__side">
+        <span class="mast-date"><time id="issueDate" datetime="">—</time><small id="asOf"></small></span>
+        <span class="mast-btns">
+          <button class="kj-sizebtn" id="shareBtn" type="button">공유</button>
+          <button class="kj-sizebtn" id="bigBtn" type="button" aria-pressed="false"><b>가</b> 글자 크게</button>
+        </span>
       </div>
     </div>
   </div>
-  <nav class="cats" aria-label="분야">
-    <div class="in"><ul id="catNav"></ul></div>
+  <nav class="kj-cats" id="cats" aria-label="분야">
+    <div class="kj-wrap"><ul id="catNav"></ul></div>
   </nav>
-  <div class="notice" role="note">
-    <div class="in"><p id="notice"><strong>시안 호입니다.</strong> 수치는 공식 발표 원문이나 그 발표를 인용한 기사로 확인했습니다. 수집 한계는 맨 아래에 있습니다.</p></div>
+  <div class="kj-notice kj-notice--stale" id="stale" role="status" hidden>
+    <div class="kj-wrap kj-notice__in"><p id="staleMsg"></p></div>
+  </div>
+  <div class="kj-notice" id="noticeBox" role="note">
+    <div class="kj-wrap kj-notice__in"><p id="notice">오늘 호를 불러오는 중입니다.</p></div>
   </div>
 </header>
 
 <main id="main">
   <section class="hero" id="home" aria-labelledby="leadH">
-    <div class="in hero-grid">
-      <article>
-        <p class="kicker" id="leadKicker"></p>
+    <div class="kj-wrap" id="loadError" hidden></div>
+    <div class="kj-wrap hero-grid" id="heroGrid">
+      <article class="kj-lead" aria-busy="true" id="leadBox">
+        <div class="lead-skel" id="leadSkel" aria-hidden="true">
+          <span class="kj-skel kj-skel--short"></span>
+          <span class="kj-skel kj-skel--title"></span>
+          <span class="kj-skel kj-skel--title" style="width:55%"></span>
+          <span class="kj-skel kj-skel--line"></span>
+          <span class="kj-skel kj-skel--num"></span>
+        </div>
+        <p class="kj-lead__kicker" id="leadKicker"></p>
         <h1 id="leadH"></h1>
-        <p class="standfirst" id="leadStand"></p>
-        <ul class="facts" id="leadFacts"></ul>
+        <p class="kj-lead__stand" id="leadStand"></p>
+        <ul class="kj-facts" id="leadFacts"></ul>
         <p class="meta" id="leadMeta"></p>
       </article>
-      <aside class="briefs" aria-labelledby="briefH">
+      <aside class="briefs-box" aria-labelledby="briefH">
         <h2 id="briefH">오늘 꼭 볼 숫자</h2>
-        <ol id="briefs"></ol>
+        <ol class="kj-briefs" id="briefs"></ol>
       </aside>
     </div>
-  </section>
-
-  <section class="sec" id="national" aria-labelledby="natH">
-    <div class="in">
-      <header class="sec-head">
-        <p class="label">전국</p>
-        <h2 id="natH">오늘의 전국 뉴스</h2>
-        <p class="desc">증시와 재정을 뺀 분야의 주요 뉴스입니다. 요약은 기사 원문을 바탕으로 새로 쓴 문장이고, 수치는 기사에 나온 그대로 옮겼습니다.</p>
-      </header>
-      <div class="flow" id="natFlow"></div>
-      <div class="ctrl" id="natCtrl" role="group" aria-label="분야 선택"></div>
-      <div class="news" id="natList"></div>
-      <div class="morebar"><button type="button" id="natMore" aria-controls="natList" aria-expanded="false">뉴스 더 보기</button></div>
+    <div class="kj-wrap split" id="splitBox" hidden>
+      <div class="split-head">
+        <h2 id="splitH">오늘 기준이 갈린 숫자</h2>
+        <p id="splitMeta"></p>
+      </div>
+      <div class="splits" id="splits"></div>
     </div>
   </section>
 
-  <section class="sec" id="regions" aria-labelledby="regH">
-    <div class="in">
-      <header class="sec-head">
-        <p class="label">지역</p>
+  <section class="kj-sec" id="media" aria-labelledby="mediaH">
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">언론</p>
+        <h2 id="mediaH">주제별 언론 보도</h2>
+        <p>주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
+        <p class="kj-sechead__meta" id="mediaMeta"></p>
+      </header>
+      <form class="kj-search" id="tform" role="search">
+        <label class="kj-sr" for="tq">주제·키워드 검색</label>
+        <div class="kj-search__field">
+          <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락, 호우 피해" autocomplete="off">
+          <button class="kj-search__clear" id="tclear" type="button" aria-label="검색어 지우기" hidden>×</button>
+        </div>
+        <button class="kj-btn" type="submit">찾기</button>
+      </form>
+      <p class="kj-search__hint">이 호에서 볼 수 있는 주제</p>
+      <div class="kj-chips tchips" id="tchips" role="group" aria-label="주제 선택"></div>
+      <div class="tresult" id="tresult" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="kj-sec" id="national" aria-labelledby="natH">
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">전국</p>
+        <h2 id="natH">오늘의 전국 뉴스</h2>
+        <p>증시와 재정을 뺀 분야의 주요 뉴스입니다. 요약은 기사 원문을 바탕으로 새로 쓴 문장이고, 수치는 기사에 나온 그대로 옮겼습니다.</p>
+        <p class="kj-sechead__meta" id="natMeta"></p>
+      </header>
+      <div class="kj-callout nat-flow" id="natFlow"></div>
+      <div class="kj-chips kj-chips--scroll nat-chips" id="natCtrl" role="group" aria-label="분야 선택"></div>
+      <div class="kj-news" id="natList"></div>
+      <div class="morebar"><button class="kj-btn kj-btn--secondary" type="button" id="natMore" aria-controls="natList" aria-expanded="false">뉴스 더 보기</button></div>
+    </div>
+  </section>
+
+  <section class="kj-sec" id="regions" aria-labelledby="regH">
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">지역</p>
         <h2 id="regH">17개 시도 소식</h2>
-        <p class="desc">지역 언론과 시·도 발표를 모았습니다. 지도에서 시도를 고르면 그 지역 기사만 봅니다.</p>
+        <p>지역 언론과 시·도 발표를 모았습니다. 지도에서 시도를 고르면 그 지역 기사만 봅니다.</p>
+        <p class="kj-sechead__meta" id="regMeta"></p>
       </header>
       <div class="reg">
-        <div class="tmap" id="tmap" role="group" aria-label="시도 선택"></div>
+        <div class="kj-tmap" id="tmap" role="group" aria-label="시도 선택"></div>
         <div class="rlist" id="rlist" aria-live="polite"></div>
       </div>
     </div>
   </section>
 
-  <section class="sec" id="politics" aria-labelledby="polH">
-    <div class="in">
-      <header class="sec-head">
-        <p class="label">정치</p>
+  <section class="kj-sec" id="politics" aria-labelledby="polH">
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">정치</p>
         <h2 id="polH">임기·선거·예산 일정</h2>
-        <p class="desc">법으로 정해진 날과 현행법 규칙으로 계산한 날을 구분해 표시합니다.</p>
+        <p>법으로 정해진 날과 현행법 규칙으로 계산한 날을 구분해 표시합니다.</p>
       </header>
       <div class="three">
-        <div class="panel term">
+        <div class="kj-panel term">
           <h3>대통령 임기</h3>
-          <div class="big" id="termDay">—</div>
-          <div class="pbar" role="progressbar" aria-label="임기 경과율" id="termBar" aria-valuemin="0" aria-valuemax="100"><i id="termFill"></i></div>
-          <div class="kv"><span class="kk">경과율</span><span class="kvv" id="termPct">—</span></div>
-          <div class="kv"><span class="kk">경과일</span><span class="kvv" id="termElapsed">—</span></div>
-          <div class="kv"><span class="kk">남은 날</span><span class="kvv" id="termLeft">—</span></div>
-          <div class="kv"><span class="kk">임기</span><span class="kvv">2025.06.04 ~ 2030.06.03</span></div>
+          <div class="kj-big" id="termDay">—</div>
+          <div class="kj-progress" role="progressbar" aria-label="임기 경과율" id="termBar" aria-valuemin="0" aria-valuemax="100"><i id="termFill"></i></div>
+          <div class="kj-progress__meta"><span>2025.06.04 취임</span><span id="termPct">—</span><span>2030.06.03 만료</span></div>
+          <ul class="kj-kv">
+            <li><span class="k">경과일</span><span class="v" id="termElapsed">—</span></li>
+            <li><span class="k">남은 날</span><span class="v" id="termLeft">—</span></li>
+          </ul>
         </div>
-        <div class="panel">
+        <div class="kj-panel">
           <h3>선거·예산 D-Day</h3>
-          <ul class="elec" id="elec"></ul>
+          <ul class="kj-dday" id="elec"></ul>
         </div>
-        <div class="panel">
+        <div class="kj-panel">
           <h3>이번 주 일정</h3>
-          <ul class="agenda" id="agenda"></ul>
+          <ul class="kj-agenda" id="agenda"></ul>
           <p class="src-note" id="agendaSrc"></p>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="sec" id="economy" aria-labelledby="ecoH">
-    <div class="in">
-      <header class="sec-head">
-        <p class="label">경제</p>
+  <section class="kj-sec" id="economy" aria-labelledby="ecoH">
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">경제</p>
         <h2 id="ecoH">오늘의 핵심 숫자</h2>
-        <p class="desc">항목마다 기준 시점이 다릅니다. '출처'를 누르면 기관, 발표일, 원문 링크를 볼 수 있습니다. 화살표는 오르내린 방향만 나타냅니다.</p>
+        <p>항목마다 기준 시점이 다릅니다. '출처'를 누르면 기관, 발표일, 원문 링크를 볼 수 있습니다. 화살표는 오르내린 방향만 나타냅니다.</p>
       </header>
-      <div class="tiles" id="nums"></div>
+      <div class="kj-stats" id="nums"></div>
     </div>
   </section>
 
-  <section class="sec" id="industry" aria-labelledby="indH">
-    <div class="in">
-      <header class="sec-head">
-        <p class="label">산업</p>
+  <section class="kj-sec" id="industry" aria-labelledby="indH">
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">산업</p>
         <h2 id="indH">반도체 밖의 한국 산업</h2>
-        <p class="desc" id="tradeIntro"></p>
+        <p id="tradeIntro"></p>
       </header>
       <div class="strip" id="tradeStats"></div>
       <p class="src-note" id="tradeSrc"></p>
-      <h3 class="sub">9월 품목별 수출액</h3>
-      <div class="bars" id="bars" role="img" aria-label="9월 품목별 수출액 막대 그래프"></div>
-      <div class="legend"><span><i style="background:var(--brand)"></i>반도체</span><span><i style="background:var(--hl)"></i>전통 주력산업</span><span><i style="background:var(--bar)"></i>그 밖의 품목</span><span>'약'은 소수점까지 확인하지 못한 값</span></div>
-      <div class="callout" id="octNote"></div>
+      <h3 class="sub" id="barsH">9월 품목별 수출액</h3>
+      <ul class="kj-bars" id="bars" aria-labelledby="barsH"></ul>
+      <ul class="kj-legend"><li><i class="c1"></i>반도체</li><li><i style="background:var(--hl)"></i>전통 주력산업</li><li><i style="background:var(--bar)"></i>그 밖의 품목</li><li>'약'은 소수점까지 확인하지 못한 값</li></ul>
+      <div class="kj-callout oct" id="octNote"></div>
       <div class="inds" id="inds"></div>
     </div>
   </section>
 
-  <section class="sec" id="fiscal" aria-labelledby="fisH">
-    <div class="in">
-      <header class="sec-head">
-        <p class="label">재정</p>
+  <section class="kj-sec" id="fiscal" aria-labelledby="fisH">
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">재정</p>
         <h2 id="fisH">국가채무와 국민연금</h2>
-        <p class="desc">새 공식 발표가 나온 날에만 바뀌는 상설 지표입니다.</p>
+        <p>새 공식 발표가 나온 날에만 바뀌는 상설 지표입니다.</p>
       </header>
       <div class="two">
-        <div class="panel">
+        <div class="kj-panel">
           <h3>국가채무</h3>
-          <div id="fisMonthly"></div>
+          <ul class="kj-kv" id="fisMonthly"></ul>
           <p class="src-note" id="fisMonthlySrc"></p>
-          <h4>연도별 국가채무 (중앙+지방, 조 원)</h4>
-          <div id="fisSummary"></div>
-          <div id="debtChart" role="img" aria-label="2015년부터 2030년 전망까지 연도별 국가채무 막대 그래프" style="margin-top:.6rem"></div>
-          <p class="legend dleg"><span><i></i>결산(확정)</span><span><i class="fc"></i>추경·정부안·중기전망</span></p>
+          <h4 id="debtH">연도별 국가채무 (중앙+지방, 조 원)</h4>
+          <ul class="kj-kv" id="fisSummary"></ul>
+          <ul class="kj-bars" id="debtChart" aria-labelledby="debtH" style="margin-top:var(--space-4)"></ul>
+          <ul class="kj-legend"><li><i class="c1"></i>결산(확정)</li><li><i class="fc"></i>추경·정부안·중기전망</li><li>금액을 확인하지 못한 해는 '미확인'</li></ul>
           <p class="src-note" id="debtSrc"></p>
           <h4>앞으로의 전망</h4>
-          <div id="fisOutlook"></div>
+          <ul class="kj-kv" id="fisOutlook"></ul>
           <p class="src-note" id="fisOutlookSrc"></p>
         </div>
-        <div class="panel">
+        <div class="kj-panel">
           <h3>국민연금 기금</h3>
-          <div id="npsKv"></div>
+          <ul class="kj-kv" id="npsKv"></ul>
           <h4>어디에 투자하나</h4>
-          <div class="alloc" id="npsBar" role="img"></div>
-          <ul class="alloc-list" id="npsList"></ul>
+          <div class="kj-alloc" id="npsBar" role="img"></div>
+          <ul class="kj-alloc-list" id="npsList"></ul>
           <p class="src-note" id="npsSrc"></p>
           <h4>연금개혁 확정 내용</h4>
-          <div id="npsReform"></div>
+          <ul class="kj-kv" id="npsReform"></ul>
           <p class="src-note" id="npsReformSrc"></p>
         </div>
       </div>
     </div>
   </section>
-
-  <section class="sec" id="media" aria-labelledby="mediaH">
-    <div class="in">
-      <header class="sec-head">
-        <p class="label">언론</p>
-        <h2 id="mediaH">주제별 언론 보도</h2>
-        <p class="desc">주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
-      </header>
-      <form class="tsearch" id="tform" role="search">
-        <label class="skip" for="tq">주제·키워드 검색</label>
-        <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락, 호우 피해" autocomplete="off">
-        <button type="submit">찾기</button>
-      </form>
-      <p class="thint">이 호에서 볼 수 있는 주제</p>
-      <div class="ctrl" id="tchips" role="group" aria-label="주제 선택"></div>
-      <div class="tresult" id="tresult" aria-live="polite"></div>
-    </div>
-  </section>
 </main>
 
-<footer class="foot">
-  <div class="in">
-    <h2>수집 방법과 한계</h2>
+<footer class="kj-foot" id="foot">
+  <div class="kj-wrap kj-foot__in">
+    <h2 id="limitsH">수집 방법과 한계</h2>
     <ul id="limits"></ul>
     <h2>출처 신뢰도</h2>
-    <ul class="grade">
-      <li><b>A</b>공식 확정 통계</li>
-      <li><b>B</b>공식 잠정 통계</li>
-      <li><b>C</b>공식 정책 발표</li>
-      <li><b>D</b>언론 보도·민간 집계</li>
-      <li><b>E</b>분석·계산</li>
+    <ul class="kj-grades">
+      <li class="kj-grade kj-grade--a"><b>A</b>공식 확정 통계</li>
+      <li class="kj-grade kj-grade--b"><b>B</b>공식 잠정 통계</li>
+      <li class="kj-grade kj-grade--c"><b>C</b>공식 정책 발표</li>
+      <li class="kj-grade kj-grade--d"><b>D</b>언론 보도·민간 집계</li>
+      <li class="kj-grade kj-grade--e"><b>E</b>분석·계산</li>
     </ul>
     <p>정부·공공기관의 공식 자료를 먼저 쓰고, 부족한 부분은 공개 보도로 채웁니다. 잠정치는 나중에 바뀔 수 있습니다.</p>
+    <h2 id="archH">지난 호</h2>
+    <ul class="archive" id="archive" aria-labelledby="archH"></ul>
+    <p>매일 아침 받아 보려면 <a href="feed.xml">RSS</a>를 구독하세요.</p>
+    <h2 id="fixH">정정 기록</h2>
+    <ul class="fixes" id="fixes" aria-labelledby="fixH"></ul>
+    <p>숫자·문장·링크가 원문과 다르면 <a id="reportLink" href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" target="_blank" rel="noopener">오류 신고</a>로 알려 주세요. 확인한 뒤 고치고, 고친 내용은 이 기록에 남깁니다.</p>
     <p>코드 MIT · 글 CC BY 4.0 · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub</a></p>
   </div>
 </footer>
 
-<nav class="tabbar" aria-label="분야별 이동"><ul id="tabNav"></ul></nav>
+<nav class="kj-tabbar" aria-label="분야별 이동"><ul id="tabNav"></ul></nav>
 
 <script>
 'use strict';
 
 const DAY = 86400000;
+const REPO = 'https://github.com/MinsangKwak/korea-jogan';
 const SECTIONS = [
-  ['home', '홈'], ['national', '전국'], ['regions', '지역'], ['politics', '정치'],
-  ['economy', '경제'], ['industry', '산업'], ['fiscal', '재정'], ['media', '언론']
+  ['home', '홈'], ['media', '언론'], ['national', '전국'], ['regions', '지역'],
+  ['politics', '정치'], ['economy', '경제'], ['industry', '산업'], ['fiscal', '재정']
+];
+// 하단 탭바는 8개 분야를 5칸으로 묶는다. [이름, 묶은 섹션, 아이콘 경로]
+const TABS = [
+  ['홈', ['home'], 'M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z'],
+  ['언론', ['media'], 'M5 5h14v14H5zM8 9h8M8 12h8M8 15h5'],
+  ['전국·지역', ['national', 'regions'], 'M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM12 12.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'],
+  ['정치', ['politics'], 'M4 20h16M6 17V10M10 17V10M14 17V10M18 17V10M3 10l9-6 9 6z'],
+  ['경제·재정', ['economy', 'industry', 'fiscal'], 'M4 19h16M6 16V9M11 16V5M16 16v-5']
 ];
 // 시도 타일 지도. [이름, 열, 행, 가로 칸 수]. 실제 위치를 4열 격자에 대략 옮긴 배치
 const REGIONS = [
@@ -553,9 +415,11 @@ const REGIONS = [
 ];
 const NAT_CATS = ['사회', '사건·안전', '날씨·재난', '안보·외교', '국제', '과학·IT', '생활·물가', '문화·스포츠'];
 const DIR_LABEL = { up: '상승', down: '하락', flat: '보합' };
-const ALLOC_COLORS = ['var(--brand)', 'var(--hl)', 'var(--bar)', 'var(--ink-3)', 'var(--line)', 'var(--ink)'];
+const BAR_CLASS = { semi: ' kj-bar--semi', trad: ' kj-bar--trad' };
 
 let D = null;
+let INDEX = null;
+let VIEWING_PAST = false;
 let ISSUE = new Date();
 let natCat = '전체';
 let natAll = false;
@@ -567,6 +431,27 @@ const one = (v) => v.toLocaleString('ko-KR', { minimumFractionDigits: 1, maximum
 const daysBetween = (a, b) => Math.round((b - a) / DAY);
 const utc = (y, m, d) => new Date(Date.UTC(y, m - 1, d));
 const parseDate = (s) => { const [y, m, d] = s.split('-').map(Number); return utc(y, m, d); };
+// 발행 기준은 한국 시간. 기기 시간대와 상관없이 오늘 날짜를 KST로 구한다
+const todayKST = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+const longDate = (s) => parseDate(s).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', timeZone: 'UTC' });
+// D-Day는 지난 날이면 D+로 쓴다
+const dday = (date) => { const n = daysBetween(ISSUE, date); return n >= 0 ? 'D-' + fmt(n) : 'D+' + fmt(-n); };
+
+// 방문·행동 측정. jg-goatcounter가 비어 있으면 아무것도 보내지 않는다
+// GoatCounter는 쿠키를 쓰지 않고 개인을 식별하지 않는다
+const GC = (document.querySelector('meta[name="jg-goatcounter"]') || {}).content || '';
+function setupMetrics() {
+  if (!GC) return;
+  const sc = document.createElement('script');
+  sc.async = true;
+  sc.src = 'https://gc.zgo.at/count.js';
+  sc.dataset.goatcounter = GC;
+  document.head.append(sc);
+}
+function track(name, title) {
+  if (!GC || !window.goatcounter || !window.goatcounter.count) return;
+  window.goatcounter.count({ path: name, title: title || name, event: true });
+}
 
 function el(tag, attrs, text) {
   const n = document.createElement(tag);
@@ -575,45 +460,75 @@ function el(tag, attrs, text) {
   return n;
 }
 
-function kvRows(box, rows) {
+function svgIcon(d) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  const p = document.createElementNS(ns, 'path');
+  p.setAttribute('d', d);
+  svg.append(p);
+  return svg;
+}
+
+// 이름 · 기준 · 값 목록(kj-kv)
+function kvRows(ul, rows) {
   rows.forEach((r) => {
-    const d = el('div', { class: 'kv' });
-    d.append(el('span', { class: 'kk' }, r.k));
-    if (r.m) d.append(el('span', { class: 'km' }, r.m));
-    d.append(el('span', { class: 'kvv' }, r.v));
-    box.append(d);
+    const li = el('li');
+    li.append(el('span', { class: 'k' }, r.k));
+    if (r.m) li.append(el('span', { class: 'm' }, r.m));
+    li.append(el('span', { class: 'v' }, r.v));
+    ul.append(li);
   });
 }
 
-function srcButton(id, s) {
-  const btn = el('button', { class: 'srcbtn', type: 'button', 'aria-expanded': 'false', 'aria-controls': id }, '출처 · ' + s.name.split(' ')[0]);
-  const panel = el('div', { class: 'srcpanel', id });
-  panel.hidden = true;
+// 오류 신고는 GitHub 이슈 양식으로 연다. 호 날짜와 위치를 미리 채운다
+function reportUrl(where) {
+  const q = new URLSearchParams({ template: 'correction.yml', title: ('[오류] ' + D.date + ' ' + where).trim(), issue: D.date });
+  if (where) q.set('where', where);
+  return REPO + '/issues/new?' + q.toString();
+}
+
+// 출처는 네이티브 details로 접어 두고 누르면 펼친다
+function srcDisclosure(s, where) {
+  const det = el('details', { class: 'kj-src' });
+  det.append(el('summary', {}, '출처 · ' + s.name.split(' ')[0]));
+  const panel = el('div', { class: 'kj-src__panel' });
   const dl = el('dl');
-  [['출처', s.name], ['자료', s.title], ['발표일', s.pub], ['기준', s.base]].forEach(([a, b]) => dl.append(el('dt', {}, a), el('dd', {}, b)));
+  [['기관', s.name], ['확인 자료', s.title], ['발표일', s.pub], ['기준', s.base]].forEach(([a, b]) => dl.append(el('dt', {}, a), el('dd', {}, b || '미확인')));
   dl.append(el('dt', {}, '링크'));
   const dd = el('dd');
   dd.append(el('a', { href: s.url, target: '_blank', rel: 'noopener' }, '원문 열기'));
   dl.append(dd);
   panel.append(dl);
-  // 출처는 처음엔 접어 두고 누르면 펼친다
-  btn.addEventListener('click', () => {
-    const open = btn.getAttribute('aria-expanded') === 'true';
-    btn.setAttribute('aria-expanded', String(!open));
-    panel.hidden = open;
-  });
-  return [btn, panel];
+  if (where) {
+    const rep = el('a', { class: 'report', href: reportUrl(where), target: '_blank', rel: 'noopener' }, '이 숫자 오류 신고');
+    rep.addEventListener('click', () => track('report', where));
+    panel.append(rep);
+  }
+  det.append(panel);
+  det.addEventListener('toggle', () => { if (det.open) track('src-open', s.name); });
+  return det;
+}
+
+function gradeBadge(g) {
+  const s = el('span', { class: 'kj-grade kj-grade--' + String(g).toLowerCase(), title: '출처 신뢰도 ' + g });
+  s.append(el('b', {}, g), document.createTextNode('신뢰도'));
+  return s;
 }
 
 function renderNav() {
-  // 위쪽 메뉴와 하단 메뉴는 같은 목록으로 만든다
-  ['catNav', 'tabNav'].forEach((id) => {
-    const ul = $(id);
-    SECTIONS.forEach(([sid, name]) => {
-      const li = el('li');
-      li.append(el('a', { href: '#' + sid, 'data-sec': sid }, name));
-      ul.append(li);
-    });
+  SECTIONS.forEach(([sid, name]) => {
+    const li = el('li');
+    li.append(el('a', { href: '#' + sid, 'data-sec': sid, 'data-group': sid }, name));
+    $('catNav').append(li);
+  });
+  TABS.forEach(([name, secs, icon]) => {
+    const li = el('li');
+    const a = el('a', { href: '#' + secs[0], 'data-sec': secs[0], 'data-group': secs.join(' ') });
+    a.append(svgIcon(icon), document.createTextNode(name));
+    li.append(a);
+    $('tabNav').append(li);
   });
 }
 
@@ -621,35 +536,37 @@ function renderLead() {
   const L = D.lead;
   $('issueDate').textContent = ISSUE.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', timeZone: 'UTC' });
   $('issueDate').setAttribute('datetime', D.date);
+  $('leadSkel').remove();
+  $('leadBox').removeAttribute('aria-busy');
   $('leadKicker').textContent = L.kicker;
   $('leadH').textContent = L.headline;
   $('leadStand').textContent = L.standfirst;
   $('leadMeta').textContent = L.meta;
   L.facts.forEach((f) => {
     const li = el('li');
-    li.append(el('div', { class: 't' }, f.t), el('div', { class: 'v' }, f.v), el('div', { class: 'm' }, f.m));
+    li.append(el('span', { class: 't' }, f.t), el('span', { class: 'v' }, f.v), el('span', { class: 'm' }, f.m));
     $('leadFacts').append(li);
   });
   D.briefs.forEach((b) => {
     const li = el('li');
     const a = el('a', { href: b.href });
-    let k = b.k;
-    // 처리기한처럼 날짜가 있는 항목은 남은 날을 붙인다
-    if (b.dday) k += ' · D-' + daysBetween(ISSUE, parseDate(b.dday));
-    a.append(el('span', { class: 'bk' }, k), el('span', { class: 'bm' }, b.m));
+    a.append(el('span', { class: 'bk' }, b.k), el('span', { class: 'bm' }, b.m));
+    // 처리기한처럼 날짜가 있는 항목은 남은 날을 배지로 붙인다
+    if (b.dday) a.append(el('span', { class: 'kj-badge kj-badge--brand' }, dday(parseDate(b.dday))));
     li.append(a);
     $('briefs').append(li);
   });
 }
 
 function renderNums() {
-  D.nums.forEach((m, i) => {
-    const t = el('div', { class: 'tile' });
-    t.append(el('div', { class: 'k' }, m.k), el('div', { class: 'v' }, m.v));
-    const row = el('div', { class: 'row' });
-    const [btn, panel] = srcButton('sp' + i, m.src);
-    row.append(el('span', { class: 'dir ' + m.dir, 'aria-label': DIR_LABEL[m.dir] }, m.d), btn);
-    t.append(row, el('div', { class: 'ref' }, m.ref + ' · 신뢰도 ' + m.grade), panel);
+  D.nums.forEach((m) => {
+    const t = el('div', { class: 'kj-stat' });
+    t.append(el('span', { class: 'kj-stat__k' }, m.k), el('span', { class: 'kj-stat__v' }, m.v));
+    const row = el('div', { class: 'kj-stat__row' });
+    row.append(el('span', { class: 'kj-dir kj-dir--' + m.dir, 'aria-label': DIR_LABEL[m.dir] + ' ' + m.d }, m.d));
+    const foot = el('div', { class: 'kj-stat__foot' });
+    foot.append(gradeBadge(m.grade), srcDisclosure(m.src, '경제 · ' + m.k));
+    t.append(row, el('span', { class: 'kj-stat__ref' }, m.ref), foot);
     $('nums').append(t);
   });
 }
@@ -672,8 +589,9 @@ function renderThemeChips() {
   const box = $('tchips');
   box.textContent = '';
   D.themes.forEach((t) => {
-    const b = el('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(t.id === themeId) }, t.title);
-    b.addEventListener('click', () => { $('tq').value = ''; showTheme(t.id); });
+    const b = el('button', { class: 'kj-chip', type: 'button', 'aria-pressed': String(t.id === themeId) }, t.title + ' ');
+    b.append(el('span', { class: 'kj-count' }, String(t.articles.length)));
+    b.addEventListener('click', () => { setQuery(''); showTheme(t.id); });
     box.append(b);
   });
 }
@@ -688,30 +606,31 @@ function showTheme(id) {
   const fr = t.articles.filter((a) => a.region === '해외');
   box.append(el('h3', {}, t.title), el('p', { class: 'tmeta' }, '기사 ' + t.articles.length + '건 · 국내 ' + dom.length + ' · 해외 ' + fr.length + ' · ' + t.period));
 
-  const ai = el('div', { class: 'aisum' });
-  const ah = el('p', { class: 'ah' });
-  ah.append(el('span', { class: 'aitag' }, 'AI 요약'), document.createTextNode('핵심만 먼저'));
+  const ai = el('section', { class: 'kj-ai', 'aria-label': 'AI 요약' });
+  const ah = el('p', { class: 'kj-ai__h' });
+  ah.append(el('span', { class: 'kj-badge kj-badge--solid' }, 'AI 요약'), document.createTextNode('핵심만 먼저'));
   const ul = el('ul');
   t.summary.forEach((x) => ul.append(el('li', {}, x)));
-  ai.append(ah, ul, el('p', { class: 'anote' }, '아래 기사와 공식 발표를 바탕으로 AI가 정리했습니다. 원문과 다를 수 있으니 중요한 내용은 링크로 확인해 주세요.'));
+  ai.append(ah, ul, el('p', { class: 'kj-ai__note' }, '아래 기사와 공식 발표를 바탕으로 AI가 정리했습니다. 원문과 다를 수 있으니 중요한 내용은 링크로 확인해 주세요.'));
   box.append(ai);
 
   if (t.diffs && t.diffs.length) {
-    box.append(el('h4', { class: 'sub' }, '기준이 달라 갈린 숫자'));
+    box.append(el('h4', { class: 'sub' }, '기준이 달라 갈린 숫자 ' + t.diffs.length + '건'));
     t.diffs.forEach((c) => {
-      const det = el('details', { class: 'compare' });
+      const det = el('details', { class: 'kj-acc' });
+      det.addEventListener('toggle', () => { if (det.open) track('split-open', c.q); });
       const sm = el('summary');
       sm.append(el('h4', {}, c.q), el('p', {}, c.a));
-      const body = el('div', { class: 'body tbl' });
+      const body = el('div', { class: 'kj-acc__body kj-tbl' });
       const table = el('table');
       const thead = el('thead');
       const hr = el('tr');
-      c.cols.forEach((h) => hr.append(el('th', {}, h)));
+      c.cols.forEach((h) => hr.append(el('th', { scope: 'col' }, h)));
       thead.append(hr);
       const tb = el('tbody');
       c.rows.forEach((r) => {
         const tr = el('tr');
-        r.forEach((v) => tr.append(el('td', {}, v)));
+        r.forEach((v, i) => tr.append(el('td', i === 0 ? { class: 'n' } : {}, v)));
         tb.append(tr);
       });
       table.append(thead, tb);
@@ -741,14 +660,63 @@ function showTheme(id) {
   box.append(links);
 }
 
+// 갈린 숫자는 표 첫 열에 모여 있다. pick이 있으면 그 두 줄을, 없으면 처음과 마지막 줄을 크게 보여 준다
+function splitValues(c) {
+  const vals = c.rows.map((r) => r[0]);
+  const [i, j] = c.pick || [0, vals.length - 1];
+  return vals[i] === vals[j] ? [vals[i]] : [vals[i], vals[j]];
+}
+
+// 홈에는 주제마다 첫 번째 갈린 숫자 하나씩만 둔다. 나머지는 언론 섹션에서 본다
+function renderSplits() {
+  const withDiffs = D.themes.filter((t) => t.diffs && t.diffs.length);
+  if (!withDiffs.length) return;
+  const total = withDiffs.reduce((n, t) => n + t.diffs.length, 0);
+  $('splitBox').hidden = false;
+  $('splitMeta').textContent = '같은 사실을 매체마다 다른 숫자로 썼습니다 · 이 호에서 ' + total + '건';
+  withDiffs.slice(0, 3).forEach((t) => {
+    const c = t.diffs[0];
+    const card = el('article', { class: 'scard' });
+    const sv = el('div', { class: 'sv', 'aria-label': '갈린 값: ' + splitValues(c).join(', ') });
+    splitValues(c).forEach((v) => sv.append(el('span', {}, v)));
+    const more = el('button', { class: 'kj-btn kj-btn--ghost', type: 'button' }, t.diffs.length > 1 ? '왜 다른지 보기 · 이 주제 ' + t.diffs.length + '건' : '왜 다른지 보기');
+    more.addEventListener('click', () => { track('split-home', c.q); openDiff(t.id, 0); });
+    card.append(el('span', { class: 'st' }, t.title), sv, el('h3', {}, c.q), el('p', {}, c.a), more);
+    $('splits').append(card);
+  });
+}
+
+function openDiff(id, idx) {
+  setQuery('');
+  showTheme(id);
+  const det = $('tresult').querySelectorAll('details.kj-acc')[idx];
+  if (!det) return;
+  det.open = true;
+  det.scrollIntoView({ block: 'start' });
+  det.querySelector('summary').focus({ preventScroll: true });
+}
+
+function setQuery(v) {
+  $('tq').value = v;
+  $('tclear').hidden = !v;
+}
+
 function searchTheme(q) {
   const ranked = D.themes.map((t) => ({ t, ...scoreTheme(t, q) })).filter((r) => r.score > 0).sort((a, b) => b.score - a.score);
+  // 입력한 글은 보내지 않고 어느 주제가 걸렸는지만 센다
+  track('search', ranked.length ? ranked[0].t.title : '결과 없음');
   if (ranked.length) { showTheme(ranked[0].t.id); return; }
   themeId = '';
   renderThemeChips();
   const box = $('tresult');
   box.textContent = '';
-  box.append(el('p', { class: 'noresult' }, '"' + q + '"에 맞는 주제가 이 호에는 없습니다. 위의 주제 중에서 골라 주세요.'));
+  // 빈 결과: 무엇이 없는지, 대신 볼 주제, 다음 행동
+  const st = el('div', { class: 'kj-state' });
+  st.append(el('h4', {}, '"' + q + '"에 맞는 주제가 이 호에는 없습니다'), el('p', {}, '이 호에서 다룬 주제는 ' + D.themes.map((t) => t.title).join(' · ') + '입니다.'));
+  const b = el('button', { class: 'kj-btn kj-btn--secondary kj-btn--sm', type: 'button' }, '첫 주제 보기');
+  b.addEventListener('click', () => { setQuery(''); showTheme(D.themes[0].id); });
+  st.append(b);
+  box.append(st);
 }
 
 function renderIndustry() {
@@ -756,8 +724,9 @@ function renderIndustry() {
   $('tradeIntro').textContent = T.intro;
   T.stats.forEach((s) => {
     const d = el('div');
-    d.append(el('div', { class: 'k' }, s.k), el('div', { class: 'v' }, s.v), el('div', { class: 'd' }, ''));
-    d.lastChild.append(el('span', { class: 'dir ' + s.dir }, s.d));
+    const dir = el('div', { class: 'd' });
+    dir.append(el('span', { class: 'kj-dir kj-dir--' + s.dir, 'aria-label': DIR_LABEL[s.dir] + ' ' + s.d }, s.d));
+    d.append(el('div', { class: 'k' }, s.k), el('div', { class: 'v' }, s.v), dir);
     $('tradeStats').append(d);
   });
   $('tradeSrc').textContent = '출처: ' + T.src;
@@ -765,24 +734,22 @@ function renderIndustry() {
 
   const max = Math.max(...D.items.map((i) => i.v));
   D.items.forEach((it) => {
-    const r = el('div', { class: 'brow ' + it.c });
-    const tr = el('div', { class: 'tr' });
-    const b = el('div', { class: 'b' });
+    const r = el('li', { class: 'kj-bar' + (BAR_CLASS[it.c] || '') });
+    const tr = el('span', { class: 'kj-bar__tr' });
+    const b = el('span', { class: 'kj-bar__b' });
     b.style.width = (it.v / max * 100) + '%';
     tr.append(b);
-    r.append(el('span', { class: 'lab' }, it.k), tr, el('span', { class: 'v' }, (it.approx ? '약 ' : '') + it.v + '억$ · ' + it.y));
+    const v = el('span', { class: 'kj-bar__v' });
+    v.append(el('b', {}, (it.approx ? '약 ' : '') + it.v + '억$'), document.createTextNode(' ' + it.y));
+    r.append(el('span', { class: 'kj-bar__lab' }, it.k), tr, v);
     $('bars').append(r);
   });
 
   D.industries.forEach((d) => {
-    const a = el('article', { class: 'ind' });
-    a.append(el('h4', {}, d.name), el('p', { class: 'sum' }, d.sum));
-    const ul = el('ul');
-    d.f.forEach(([k, v, m]) => {
-      const li = el('li');
-      li.append(el('span', {}, k), el('span', { class: 'fv' }, v), el('span', { class: 'fm' }, m));
-      ul.append(li);
-    });
+    const a = el('article', { class: 'kj-panel kj-panel--hl' });
+    a.append(el('h3', {}, d.name), el('p', { class: 'sum' }, d.sum));
+    const ul = el('ul', { class: 'kj-kv' });
+    kvRows(ul, d.f.map(([k, v, m]) => ({ k, v, m })));
     const p = el('p', { class: 'news' });
     p.append(document.createTextNode('관련 기사 · ' + d.news[0] + ' '));
     p.append(el('a', { href: d.news[2], target: '_blank', rel: 'noopener' }, d.news[1]));
@@ -804,18 +771,26 @@ function renderFiscal() {
   const max = Math.max(...D.debt.map((d) => d[1]));
   D.debt.forEach(([y, v, r, kind], i) => {
     const prev = i > 0 ? D.debt[i - 1] : null;
-    // 금액을 확인하지 못한 해는 막대를 그리지 않고 건너뛰었다고 적는다
-    if (prev && y - prev[0] > 1) box.append(el('div', { class: 'dgap' }, '⋮ ' + (prev[0] + 1) + '~' + (y - 1) + '년 금액 미확인'));
-    const row = el('div', { class: 'drow' + (kind === '결산' ? '' : ' fc') });
-    const tr = el('div', { class: 'dtr' });
-    const b = el('div', { class: 'db' });
+    // 금액을 확인하지 못한 해는 막대를 그리지 않고 '미확인'으로 적는다
+    if (prev && y - prev[0] > 1) {
+      const gap = el('li', { class: 'kj-bar kj-bar--unknown' });
+      const span = y - prev[0] === 2 ? String(prev[0] + 1) : (prev[0] + 1) + '~' + String(y - 1).slice(2);
+      gap.append(el('span', { class: 'kj-bar__lab' }, span), el('span', { class: 'kj-bar__tr' }), el('span', { class: 'kj-bar__v' }, '—'));
+      box.append(gap);
+    }
+    const settled = kind === '결산';
+    const row = el('li', { class: 'kj-bar' + (settled ? ' kj-bar--semi' : ' kj-bar--forecast') });
+    const lab = el('span', { class: 'kj-bar__lab' }, y + ' ');
+    lab.append(el('span', { class: 'kj-badge ' + (settled ? 'kj-badge--brand' : 'kj-badge--dashed') }, kind));
+    const tr = el('span', { class: 'kj-bar__tr' });
+    const b = el('span', { class: 'kj-bar__b' });
     b.style.width = (v / max * 100) + '%';
     tr.append(b);
-    const parts = [];
-    if (kind !== '결산') parts.push(kind);
-    parts.push('GDP 대비 ' + r.toFixed(1) + '%');
+    const parts = ['GDP 대비 ' + r.toFixed(1) + '%'];
     if (prev) parts.push((y - prev[0] > 1 ? (y - prev[0]) + '년간 ' : '전년 대비 ') + '+' + one(v - prev[1]) + '조');
-    row.append(el('span', { class: 'dy' }, String(y)), tr, el('span', { class: 'dv' }, one(v) + '조'), el('span', { class: 'dm' }, parts.join(' · ')));
+    const val = el('span', { class: 'kj-bar__v' });
+    val.append(el('b', {}, one(v) + '조'));
+    row.append(lab, tr, val, el('span', { class: 'kj-bar__m' }, parts.join(' · ')));
     box.append(row);
   });
 
@@ -823,17 +798,14 @@ function renderFiscal() {
   kvRows($('npsKv'), N.kv);
   const bar = $('npsBar');
   bar.setAttribute('aria-label', '자산군별 비중: ' + N.alloc.map((a) => a.a + ' ' + a.s + '%').join(', '));
+  // 조각 색은 차트 계열 c1~c6 순서. 6개를 넘으면 마지막 색을 다시 쓴다
   N.alloc.forEach((a, i) => {
-    const seg = el('i');
+    const c = 'c' + Math.min(i + 1, 6);
+    const seg = el('i', { class: c });
     seg.style.width = Math.max(a.s, 0.4) + '%';
-    seg.style.background = ALLOC_COLORS[i];
     bar.append(seg);
     const li = el('li');
-    const name = el('span');
-    const sw = el('span', { class: 'sw', 'aria-hidden': 'true' });
-    sw.style.background = ALLOC_COLORS[i];
-    name.append(sw, document.createTextNode(a.a));
-    li.append(name, el('span', {}, a.amt + ' · ' + a.s.toFixed(1) + '%'));
+    li.append(el('span', { class: 'kj-sw ' + c, 'aria-hidden': 'true' }), el('span', {}, a.a), el('span', {}, a.amt + ' · ' + a.s.toFixed(1) + '%'));
     $('npsList').append(li);
   });
   $('npsSrc').textContent = N.src;
@@ -842,20 +814,21 @@ function renderFiscal() {
 }
 
 function newsItem(it, label) {
-  const a = el('article', { class: 'nitem' });
-  a.append(el('span', { class: 'ncat' }, label));
+  const a = el('article', { class: 'kj-newscard' });
+  const cat = el('span', { class: 'kj-newscard__cat' }, label);
+  if (!it.body_read) cat.append(el('span', { class: 'kj-badge kj-badge--muted' }, '본문 미확인'));
+  a.append(cat);
   const h = el('h3');
   h.append(el('a', { href: it.url, target: '_blank', rel: 'noopener' }, it.title));
   a.append(h, el('p', {}, it.summary));
   if (it.figures && it.figures.length) {
-    const f = el('div', { class: 'figs', 'aria-label': '기사 속 수치' });
-    it.figures.forEach((x) => f.append(el('span', { class: 'fig' }, x)));
+    const f = el('ul', { class: 'kj-figs', 'aria-label': '기사 속 수치' });
+    it.figures.forEach((x) => f.append(el('li', {}, x)));
     a.append(f);
   }
-  const src = el('div', { class: 'nsrc' });
+  const src = el('div', { class: 'kj-newscard__src' });
   src.append(el('span', {}, it.outlet + ' · ' + it.date.slice(5).replace('-', '/')));
   if (it.figure_source) src.append(el('span', {}, '수치 출처 ' + it.figure_source));
-  if (!it.body_read) src.append(el('span', { class: 'badge warn' }, '본문 미확인'));
   a.append(src);
   return a;
 }
@@ -863,9 +836,10 @@ function newsItem(it, label) {
 function renderNational() {
   const N = D.national;
   if (!N) { $('national').hidden = true; return; }
+  $('natMeta').textContent = N.items.length + '건 · ' + asOfText();
   const flow = $('natFlow');
   flow.textContent = '';
-  flow.append(el('h3', {}, '오늘 전국 뉴스의 흐름'));
+  flow.append(el('h4', {}, '오늘 전국 뉴스의 흐름'));
   const ol = el('ol');
   N.flow.forEach((t) => ol.append(el('li', {}, t)));
   flow.append(ol);
@@ -875,9 +849,11 @@ function renderNational() {
   if (!ctrl.childNodes.length) {
     cats.forEach((c) => {
       const n = c === '전체' ? N.items.length : N.items.filter((i) => i.cat === c).length;
-      const b = el('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(c === natCat) }, c + ' ' + n);
+      const b = el('button', { class: 'kj-chip', type: 'button', 'aria-pressed': String(c === natCat) }, c + ' ');
+      b.append(el('span', { class: 'kj-count' }, String(n)));
       b.addEventListener('click', () => {
         natCat = c;
+        natAll = false;
         ctrl.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
         renderNational();
       });
@@ -904,19 +880,25 @@ function renderRegions() {
   const R = D.regions;
   if (!R) { $('regions').hidden = true; return; }
   const count = (name) => R.items.filter((i) => i.region === name).length;
+  const covered = REGIONS.filter(([name]) => count(name)).length;
+  $('regMeta').textContent = R.items.length + '건 · ' + covered + '개 시도 · ' + asOfText();
   const map = $('tmap');
   map.textContent = '';
-  const all = el('button', { class: 'rtile allbtn', type: 'button', 'aria-pressed': String(region === '') }, '전국 한눈에');
+  const all = el('button', { class: 'kj-rtile kj-rtile--all', type: 'button', 'aria-pressed': String(region === '') }, '전국 한눈에');
   all.append(el('small', {}, R.items.length + '건'));
   all.addEventListener('click', () => selectRegion(''));
   map.append(all);
   REGIONS.forEach(([name, c, r, span]) => {
     const n = count(name);
-    const t = el('button', { class: 'rtile' + (n ? '' : ' none'), type: 'button', 'aria-pressed': String(region === name), 'aria-label': name + ' ' + n + '건' }, name);
+    const attrs = { class: 'kj-rtile', type: 'button', 'aria-label': name + ' ' + n + '건' };
+    // 기사가 없는 시도는 고를 수 없게 하고 점선으로 표시한다
+    if (n) attrs['aria-pressed'] = String(region === name);
+    else attrs['aria-disabled'] = 'true';
+    const t = el('button', attrs, name);
     t.append(el('small', { 'aria-hidden': 'true' }, n + '건'));
     t.style.gridColumn = (c + 1) + ' / span ' + (span || 1);
     t.style.gridRow = String(r + 2);
-    t.addEventListener('click', () => selectRegion(name));
+    if (n) t.addEventListener('click', () => selectRegion(name));
     map.append(t);
   });
 
@@ -927,9 +909,11 @@ function renderRegions() {
     const ul = el('ul', { class: 'digest' });
     REGIONS.forEach(([name]) => {
       const li = el('li');
+      const n = count(name);
       const b = el('button', { class: 'rn', type: 'button' }, name);
-      b.append(el('small', {}, count(name) + '건'));
-      b.addEventListener('click', () => selectRegion(name));
+      b.append(el('small', {}, n + '건'));
+      if (n) b.addEventListener('click', () => selectRegion(name));
+      else b.disabled = true;
       const first = R.items.find((i) => i.region === name);
       li.append(b, el('p', {}, R.summary[name] || (first ? first.summary : '이번 호에는 확인한 기사가 없습니다.')));
       ul.append(li);
@@ -939,10 +923,8 @@ function renderRegions() {
   }
   box.append(el('h3', {}, region));
   if (R.summary[region]) box.append(el('p', { class: 'rsum' }, R.summary[region]));
-  const items = R.items.filter((i) => i.region === region);
-  if (!items.length) box.append(el('p', { class: 'rsum' }, '이번 호에는 확인한 기사가 없습니다.'));
-  items.forEach((it) => box.append(newsItem(it, it.cat)));
-  const back = el('button', { class: 'backbtn', type: 'button' }, '전국 한눈에 보기');
+  R.items.filter((i) => i.region === region).forEach((it) => box.append(newsItem(it, it.cat)));
+  const back = el('button', { class: 'kj-btn kj-btn--secondary', type: 'button' }, '전국 한눈에 보기');
   back.addEventListener('click', () => selectRegion(''));
   box.append(back);
 }
@@ -964,22 +946,22 @@ function renderPolitics() {
   $('termDay').textContent = '재임 ' + fmt(elapsed + 1) + '일째';
   $('termElapsed').textContent = fmt(elapsed) + '일';
   $('termLeft').textContent = fmt(daysBetween(ISSUE, end)) + '일';
-  $('termPct').textContent = pct + '%';
+  $('termPct').textContent = pct + '% 경과';
   $('termFill').style.width = pct + '%';
   $('termBar').setAttribute('aria-valuenow', pct);
 
-  // 확정일과 법 규칙으로 계산한 날짜는 상태 문구로 구분한다
+  // 법에 날짜가 있는 일정은 실선 배지, 규칙으로 계산한 일정은 점선 배지
   [
-    ['2027년도 예산안 국회 처리기한', utc(2026, 12, 2), '헌법 제54조'],
-    ['제23대 국회의원선거', utc(2028, 4, 12), '법정 선거일 기준 예정'],
-    ['제22대 대통령선거', utc(2030, 3, 27), '현행법 기준 예상'],
-    ['제10회 전국동시지방선거', utc(2030, 6, 5), '현행법 기준 예상']
-  ].forEach(([name, date, status]) => {
+    ['2027년도 예산안 국회 처리기한', utc(2026, 12, 2), '헌법 제54조', true],
+    ['제23대 국회의원선거', utc(2028, 4, 12), '법정 선거일 기준 예정', true],
+    ['제22대 대통령선거', utc(2030, 3, 27), '현행법 기준 예상', false],
+    ['제10회 전국동시지방선거', utc(2030, 6, 5), '현행법 기준 예상', false]
+  ].forEach(([name, date, status, legal]) => {
     const li = el('li');
     const iso = date.toISOString().slice(0, 10);
-    const m = el('span', { class: 'em' });
-    m.append(el('time', { datetime: iso }, iso.replace(/-/g, '.')), document.createTextNode(' · ' + status));
-    li.append(el('span', { class: 'en' }, name), el('span', { class: 'dd' }, 'D-' + fmt(daysBetween(ISSUE, date))), m);
+    const m = el('span', { class: 'm' });
+    m.append(el('time', { datetime: iso }, iso.replace(/-/g, '.')), el('span', { class: 'kj-badge ' + (legal ? 'kj-badge--brand' : 'kj-badge--dashed') }, status));
+    li.append(el('span', { class: 'n' }, name), el('span', { class: 'd' }, dday(date)), m);
     $('elec').append(li);
   });
 
@@ -999,6 +981,117 @@ function renderLimits() {
   D.limits.forEach((t) => $('limits').append(el('li', {}, t)));
 }
 
+// 조간은 00시 발행. 최신 호가 오늘 날짜가 아니면 지난 호를 보고 있다고 먼저 알린다
+function renderStale() {
+  const msg = $('staleMsg');
+  if (VIEWING_PAST) {
+    msg.append(document.createTextNode('지난 호(' + longDate(D.date) + ')를 보고 있습니다. '), el('a', { href: './' }, '최신 호 보기'));
+    $('stale').hidden = false;
+    return;
+  }
+  const today = todayKST();
+  if (D.date >= today) return;
+  msg.textContent = '오늘(' + longDate(today) + ') 호는 아직 발행되지 않았습니다. 아래는 ' + longDate(D.date) + ' 호입니다.';
+  $('stale').hidden = false;
+}
+
+function renderArchive() {
+  const ul = $('archive');
+  const list = INDEX ? INDEX.issues : [D.date];
+  list.forEach((d) => {
+    const li = el('li');
+    const a = el('a', { href: d === (INDEX && INDEX.latest) ? './' : '?d=' + d }, d.replace(/-/g, '.'));
+    if (d === D.date) a.setAttribute('aria-current', 'page');
+    a.addEventListener('click', () => track('archive', d));
+    li.append(a);
+    ul.append(li);
+  });
+}
+
+// 공유는 휴대폰 공유 창을 먼저 쓰고, 없으면 링크를 복사한다. 링크는 지금 보는 호를 가리킨다
+function setupShare() {
+  const btn = $('shareBtn');
+  btn.addEventListener('click', async () => {
+    if (!D) return;
+    const url = location.origin + location.pathname + '?d=' + D.date;
+    const data = { title: '대한민국 조간 · ' + longDate(D.date), text: D.lead.headline, url };
+    track('share', D.date);
+    if (navigator.share) {
+      try { await navigator.share(data); } catch (e) { /* 사용자가 공유 창을 닫은 경우 */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = '링크 복사됨';
+    } catch (e) {
+      window.prompt('이 링크를 복사하세요', url);
+    }
+    setTimeout(() => { btn.textContent = '공유'; }, 2000);
+  });
+}
+
+function asOfText() {
+  const t = new Date(D.collectedAt);
+  if (!D.collectedAt || Number.isNaN(t.getTime())) return longDate(D.date) + ' 호';
+  return t.toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' }) + ' 수집';
+}
+
+function renderAsOf() {
+  if (!D.collectedAt) return;
+  const t = new Date(D.collectedAt);
+  if (Number.isNaN(t.getTime())) return;
+  $('asOf').textContent = t.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' }) + ' 수집 기준';
+}
+
+// 호 상태(시안·초안·공개)에 따라 맨 위 안내 문구를 바꾼다. 자세한 한계는 바닥글로 잇는다
+function renderNotice() {
+  const box = $('notice');
+  box.textContent = '';
+  const st = D.status;
+  const more = el('a', { href: '#limitsH' }, '수집 한계 보기');
+  if (st === 'published' && D.review) {
+    $('noticeBox').classList.add('kj-notice--ok');
+    const at = new Date(D.review.at).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' });
+    box.append(el('strong', {}, '편집자 확인을 마친 호입니다.'), document.createTextNode(' 머리기사와 핵심 숫자를 ' + at + '에 원문과 대조했습니다. '), more);
+  } else if (st === 'draft') {
+    box.append(el('strong', {}, '확인 전 초안입니다.'), document.createTextNode(' 사람이 원문과 대조하기 전이라 숫자가 바뀔 수 있습니다. '), more);
+  } else {
+    box.append(el('strong', {}, '시안 호입니다.'), document.createTextNode(' 수치는 공식 발표 원문이나 그 발표를 인용한 기사로 확인했습니다. '), more);
+  }
+}
+
+function renderMediaMeta() {
+  const n = D.themes.reduce((s, t) => s + t.articles.length, 0);
+  $('mediaMeta').textContent = '주제 ' + D.themes.length + '개 · 기사 ' + n + '건 · ' + asOfText();
+}
+
+function renderCorrections(list) {
+  const ul = $('fixes');
+  $('reportLink').href = reportUrl('');
+  $('reportLink').addEventListener('click', () => track('report', 'footer'));
+  if (!list.length) { ul.append(el('li', {}, '아직 정정한 내용이 없습니다.')); return; }
+  // 최근 정정이 위로 오게 한다
+  list.slice().sort((a, b) => b.date.localeCompare(a.date)).forEach((c) => {
+    const li = el('li');
+    li.append(el('div', { class: 'fw' }, c.date.replace(/-/g, '.') + ' 정정 · ' + c.issue.replace(/-/g, '.') + '호 · ' + c.section));
+    const p = el('div');
+    p.append(el('del', {}, c.before), document.createTextNode(' → '), el('strong', {}, c.after));
+    li.append(p, el('div', { class: 'fw' }, '이유: ' + c.reason));
+    ul.append(li);
+  });
+}
+
+// 정정 기록을 못 읽어도 오늘 호는 그대로 보여 준다
+async function loadCorrections() {
+  try {
+    const res = await fetch('data/corrections.json', { cache: 'no-cache' });
+    if (!res.ok) return [];
+    return (await res.json()).items || [];
+  } catch (e) {
+    return [];
+  }
+}
+
 function setupControls() {
   $('natMore').addEventListener('click', () => {
     natAll = !natAll;
@@ -1010,11 +1103,14 @@ function setupControls() {
     const q = $('tq').value.trim();
     if (q) searchTheme(q);
   });
+  $('tq').addEventListener('input', () => { $('tclear').hidden = !$('tq').value; });
+  $('tclear').addEventListener('click', () => { setQuery(''); $('tq').focus(); });
 }
 
 function setupNav() {
   const links = Array.from(document.querySelectorAll('[data-sec]'));
   const targets = SECTIONS.map(([sid]) => $(sid));
+  const cats = $('cats');
   links.forEach((a) => a.addEventListener('click', (e) => {
     // 해시 이동 대신 직접 스크롤해 미리보기 틀 안에서도 확실히 움직이게 한다
     e.preventDefault();
@@ -1024,14 +1120,17 @@ function setupNav() {
   let ticking = false;
   const update = () => {
     ticking = false;
+    // 분야 메뉴가 화면 위에 붙으면 그림자로 본문과 나눈다
+    cats.classList.toggle('is-stuck', cats.getBoundingClientRect().top <= 0 && window.scrollY > 0);
     // 화면 위쪽 기준선을 지난 섹션 중 마지막 것을 지금 읽는 분야로 본다
     const line = window.matchMedia('(max-width: 860px)').matches ? 80 : 140;
     let cur = 'home';
-    targets.forEach((t) => { if (t.getBoundingClientRect().top <= line) cur = t.id; });
+    targets.forEach((t) => { if (!t.hidden && t.getBoundingClientRect().top <= line) cur = t.id; });
     if (cur === current) return;
     current = cur;
+    // 탭바는 묶은 섹션 중 하나만 읽어도 현재 칸으로 표시한다
     links.forEach((a) => {
-      if (a.dataset.sec === cur) a.setAttribute('aria-current', 'true');
+      if (a.dataset.group.split(' ').includes(cur)) a.setAttribute('aria-current', 'true');
       else a.removeAttribute('aria-current');
     });
   };
@@ -1056,7 +1155,22 @@ function setupBig() {
   });
 }
 
-// 발행 데이터는 페이지 안에 실려 있으면 그것을, 없으면 data/issues/의 최신 호를 읽는다
+// 불러오기 실패: 원인 추정과 다시 불러오기 단추. 나머지 섹션은 숨긴다
+function renderLoadError() {
+  $('notice').textContent = '오늘 호 데이터를 불러오지 못했습니다.';
+  $('heroGrid').hidden = true;
+  document.querySelectorAll('main .kj-sec').forEach((s) => { s.hidden = true; });
+  const st = el('div', { class: 'kj-state kj-state--error', role: 'alert' });
+  st.append(el('h4', {}, '오늘 호를 불러오지 못했습니다'), el('p', {}, '네트워크가 불안정하거나 발행 데이터를 고치는 중일 수 있습니다. 잠시 뒤 다시 시도해 주세요.'));
+  const b = el('button', { class: 'kj-btn kj-btn--primary kj-btn--sm', type: 'button' }, '다시 불러오기');
+  b.addEventListener('click', () => location.reload());
+  st.append(b);
+  $('loadError').append(st);
+  $('loadError').hidden = false;
+}
+
+// 발행 데이터는 페이지 안에 실려 있으면 그것을, 없으면 data/issues/에서 읽는다
+// 주소에 ?d=YYYY-MM-DD가 있고 발행 목록에 있는 날이면 그 호를, 아니면 최신 호를 연다
 async function loadIssue() {
   const inline = document.getElementById('issue-data');
   if (inline) return JSON.parse(inline.textContent);
@@ -1065,23 +1179,32 @@ async function loadIssue() {
     if (!res.ok) throw new Error(path + ' ' + res.status);
     return res.json();
   };
-  const index = await get('data/issues/index.json');
-  return get('data/issues/' + index.latest + '.json');
+  INDEX = await get('data/issues/index.json');
+  const want = new URLSearchParams(location.search).get('d');
+  const date = want && INDEX.issues.includes(want) ? want : INDEX.latest;
+  VIEWING_PAST = date !== INDEX.latest;
+  return get('data/issues/' + date + '.json');
 }
 
 async function boot() {
+  setupMetrics();
   renderNav();
   setupBig();
+  setupShare();
   try {
     D = await loadIssue();
   } catch (e) {
-    $('notice').textContent = '오늘 호 데이터를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.';
-    $('notice').setAttribute('role', 'alert');
+    renderLoadError();
     setupNav();
     return;
   }
   ISSUE = parseDate(D.date);
+  renderStale();
+  renderNotice();
+  renderAsOf();
   renderLead();
+  renderSplits();
+  renderMediaMeta();
   renderNational();
   renderRegions();
   renderPolitics();
@@ -1090,6 +1213,8 @@ async function boot() {
   renderFiscal();
   showTheme(D.themes[0].id);
   renderLimits();
+  renderArchive();
+  renderCorrections(await loadCorrections());
   setupControls();
   setupNav();
 }

@@ -20,8 +20,9 @@
 | 키 | 형식 | 화면 | 내용 |
 | --- | --- | --- | --- |
 | `date` | `"YYYY-MM-DD"` | 전체 | 발행일. ✔ 파일 이름과 같아야 합니다 |
-| `collectedAt` | ISO 8601 | 머리 | 수집 시각(한국 시간) |
-| `status` | 문자열 | — | 호 상태. 2026-10-19호는 `prototype` |
+| `collectedAt` | ISO 8601 | 머리 | 수집 시각(한국 시간, `+09:00` 포함). ✔ `published` 호는 발행일 06:00보다 늦으면 안 됩니다 |
+| `status` | 문자열 | 맨 위 안내 | ✔ `prototype`(시안) · `draft`(사람 확인 전 초안) · `published`(사람이 확인한 공개 호). 아래 [status · review](#status--review) |
+| `review` | 객체 | 맨 위 안내 | `published` 호를 확인한 사람과 시각 `{by, at, scope}`. ✔ `published`면 `by`·`at` 필수 |
 | `headline`, `topic`, `notes` | 문자열 | 머리 | 오늘의 한 줄, 주제, 비고 |
 | `lead` | 객체 | 홈 | 머리기사. 아래 [lead](#lead) |
 | `briefs` | 배열 | 홈 | 오늘 꼭 볼 숫자 `{k, m, href}` 4~6개 |
@@ -37,6 +38,36 @@
 | `nps` | 객체 | 재정 | 국민연금 `{kv, alloc, reform}`과 출처. `alloc`은 `{a: 자산군, amt: 금액, s: 비중%}` |
 | `themes` | 배열 | 언론 | 아래 [themes](#themes) |
 | `limits` | 문자열 배열 | 하단 | 수집 방법과 한계. 대체한 매체, 넓힌 날짜 범위 등 |
+
+## status · review
+
+자동 작업은 `draft`로만 씁니다. 사람이 머리기사(`lead`), 핵심 숫자(`nums`), 기준이 갈린 숫자(`themes[].diffs`)를 원문과 대조한 뒤 `scripts/approve.py`로 `published`로 바꿉니다.
+
+```json
+{ "status": "published", "review": { "by": "확인한 사람", "at": "2026-10-20T07:40+09:00", "scope": ["lead", "nums", "themes.diffs"] } }
+```
+
+| 규칙 | 내용 |
+| --- | --- |
+| ✔ 배포 | `validate.py --deploy`(배포 워크플로)는 목록에 `draft` 호가 있으면 실패합니다 |
+| ✔ 수집 시각 | 조간은 00시 발행입니다. 시장 숫자는 전 거래일 종가를 쓰고, 그날 장중 자료는 넣지 않습니다. `published` 호의 `collectedAt`은 발행일 06:00(한국 시간)을 넘을 수 없습니다 |
+| `prototype` | 승인 규칙을 적용하지 않는 시안. 화면에 '시안 호'로 표시합니다 |
+
+## corrections.json
+
+`public/data/corrections.json`은 모든 호의 정정 기록입니다. 화면 맨 아래 '정정 기록'에 최근 것부터 보여 줍니다.
+
+```json
+{ "items": [{ "date": "2026-10-20", "issue": "2026-10-19", "section": "경제 · 원·달러 환율", "before": "1,470.2원", "after": "1,471.2원", "reason": "기준 시각 오기" }] }
+```
+
+| 키 | 규칙 |
+| --- | --- |
+| `date` | 정정한 날. ✔ `YYYY-MM-DD` |
+| `issue` | 고친 호. ✔ `index.json`의 `issues`에 있어야 합니다 |
+| `section`, `before`, `after`, `reason` | ✔ 모두 필수. 무엇을 무엇으로, 왜 고쳤는지 |
+
+정정할 때는 그 호의 JSON을 고치고, 같은 커밋에서 이 파일에 한 줄을 더합니다. 제목은 `fix(issue): YYYY-MM-DD호 항목 정정`입니다.
 
 ## lead
 
@@ -120,7 +151,8 @@
 | `summary`, `articles`, `keywords` | ✔ 모두 비어 있으면 안 됩니다 |
 | `articles[].url` | ✔ `https` 링크 필수. 기사 본문은 저장하지 않습니다 |
 | `articles[].region` | `국내` 또는 `해외` |
-| `diffs` | 기사마다 기준이 달라 갈린 숫자. 예: 지난주 코스피 하락률 14.46%와 11.21%(출발점 차이) |
+| `diffs` | 기사마다 기준이 달라 갈린 숫자. 예: 지난주 코스피 하락률 14.46%와 11.21%(출발점 차이). 주제마다 첫 번째 항목이 홈 '오늘 기준이 갈린 숫자'에 나옵니다 |
+| `diffs[].pick` | 선택. 홈 카드에 크게 보여 줄 두 줄의 번호 `[i, j]`. 없으면 `rows`의 처음과 마지막 줄 첫 열을 씁니다 |
 | `keywords` | 주제 검색에 쓰는 낱말. 제목과 함께 검색 점수를 매깁니다 |
 
 ## debt
@@ -142,6 +174,7 @@
 
 1. 지난 호를 복사해 틀로 쓰고 `date`, `collectedAt`, `lead`, `briefs`, `agenda`, `national`, `regions`, `themes`, `nums`를 새로 씁니다.
 2. 재정·국민연금·수출입은 새 공식 발표가 있을 때만 바꿉니다.
-3. `index.json`의 `latest`를 바꾸고 `issues` 맨 앞에 넣은 뒤 `python3 scripts/validate.py`를 돌립니다.
+3. `status`를 `draft`로 두고, `index.json`의 `latest`를 바꾸고 `issues` 맨 앞에 넣은 뒤 `python3 scripts/validate.py`를 돌립니다.
+4. 사람이 확인한 뒤 `python3 scripts/approve.py YYYY-MM-DD --by 이름`으로 공개 호로 바꿉니다.
 
 전체 절차는 [DAILY_RUNBOOK.md](DAILY_RUNBOOK.md)에 있습니다.

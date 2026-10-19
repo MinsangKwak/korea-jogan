@@ -20,6 +20,10 @@ jobs:
           python-version: "3.12"
       - name: 데이터 검사
         run: python scripts/validate.py
+      - name: 디자인 토큰 CSS 최신 여부
+        run: python scripts/build_tokens.py --check
+      - name: 스크립트 시험
+        run: python -m unittest discover -s scripts/tests
 
   commit-msg:
     if: github.event_name == 'pull_request'
