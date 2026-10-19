@@ -13,7 +13,7 @@ REGIONS = {
     "서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종", "경기",
     "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주",
 }
-REQUIRED = ("date", "lead", "briefs", "nums", "media", "diffs", "views", "items", "industries", "trade", "debt", "fiscal", "nps", "agenda", "limits")
+REQUIRED = ("date", "lead", "briefs", "nums", "themes", "items", "industries", "trade", "debt", "fiscal", "nps", "agenda", "limits")
 
 
 def check_issue(path: Path) -> list[str]:
@@ -38,12 +38,13 @@ def check_issue(path: Path) -> list[str]:
         if m.get("dir") not in ("up", "down", "flat"):
             errors.append(f"{name}: nums[{i}] 방향 값은 up/down/flat만 허용")
 
-    # 출처 명시 수치가 전체 추출 수치보다 많을 수 없다
-    for i, m in enumerate(issue["media"]):
-        if not str(m.get("u", "")).startswith("https://"):
-            errors.append(f"{name}: media[{i}] '{m.get('o')}' 기사 링크 누락")
-        if not (0 <= m.get("s", -1) <= m.get("n", -1)):
-            errors.append(f"{name}: media[{i}] '{m.get('o')}' 수치 개수(s<=n) 오류")
+    # 주제마다 AI 요약과 기사 링크가 있어야 한다
+    for t in issue["themes"]:
+        if not t.get("summary") or not t.get("articles") or not t.get("keywords"):
+            errors.append(f"{name}: 주제 '{t.get('title')}' 요약·기사·키워드 누락")
+        for j, a in enumerate(t.get("articles", [])):
+            if not str(a.get("url", "")).startswith("https://"):
+                errors.append(f"{name}: 주제 '{t.get('title')}' 기사[{j}] 링크 누락")
 
     for i, it in enumerate(issue["items"]):
         if not isinstance(it.get("v"), (int, float)) or it["v"] <= 0:

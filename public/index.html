@@ -162,52 +162,37 @@ th, td { text-align: left; padding: .55rem .6rem; border-bottom: 1px solid var(-
 th { color: var(--ink-3); font-weight: 700; font-size: .82rem; white-space: nowrap; }
 td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-/* 언론: 기사 목록 */
+/* 언론: 주제 검색 */
 .ctrl { display: flex; gap: .4rem; flex-wrap: wrap; margin: 0 0 1rem; }
 .chipbtn { border: 1px solid var(--line); background: var(--bg); min-height: 40px; padding: 0 1rem; border-radius: 999px; cursor: pointer; font-size: .88rem; font-weight: 500; }
 .chipbtn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.ctrl .sep { width: 1px; background: var(--line); margin: 0 .3rem; }
-.stories { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 2rem; }
-@media (max-width: 760px) { .stories { grid-template-columns: minmax(0, 1fr); } }
-.story { border-top: 1px solid var(--line); padding: 1rem 0; display: flex; flex-direction: column; gap: .45rem; min-width: 0; }
-.story .meta { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; font-size: .85rem; color: var(--ink-3); }
-.story .meta b { color: var(--ink); font-size: .92rem; }
-.badge { font-size: .74rem; font-weight: 700; padding: .05rem .45rem; border-radius: 3px; background: var(--surface); color: var(--ink-2); }
-.badge.f { background: var(--brand-soft); color: var(--brand); }
-.badge.warn { background: var(--hl-soft); color: var(--hl); }
-.story h3 { margin: 0; font-size: 1.05rem; line-height: 1.5; font-weight: 700; }
-.story h3 a { color: var(--ink); text-decoration: none; }
-.story h3 a:hover { text-decoration: underline; }
-.stat { display: grid; grid-template-columns: auto 1fr; gap: .8rem; align-items: center; font-size: .85rem; color: var(--ink-2); }
-.stat b { color: var(--ink); font-variant-numeric: tabular-nums; }
-.track { height: 8px; background: transparent; position: relative; }
-.track .all { position: absolute; inset: 0 auto 0 0; background: var(--line); border-radius: 2px; }
-.track .src { position: absolute; inset: 0 auto 0 0; background: var(--brand); border-radius: 2px; }
-.story .frame { margin: 0; font-size: .88rem; color: var(--ink-2); }
-.story details > summary { list-style: none; cursor: pointer; font-size: .85rem; font-weight: 700; color: var(--brand); min-height: 36px; display: flex; align-items: center; }
-.story details > summary::-webkit-details-marker { display: none; }
-.story details > summary::after { content: " ↓"; margin-left: .2rem; }
-.story details[open] > summary::after { content: " ↑"; }
-.chips { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .5rem; }
-.chip { font-size: .8rem; background: var(--hl-soft); color: var(--hl); padding: .1rem .5rem; border-radius: 3px; }
-.story dl { margin: 0; font-size: .88rem; display: grid; grid-template-columns: 2.8rem 1fr; gap: .3rem .6rem; }
-.story dt { color: var(--ink-3); font-weight: 700; }
-.story dd { margin: 0; min-width: 0; }
 .morebar { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; margin-top: 1.2rem; }
 .morebar button { border: 1px solid var(--ink); background: var(--bg); min-height: 44px; padding: 0 1.4rem; border-radius: 999px; cursor: pointer; font-size: .92rem; font-weight: 700; }
-.morebar button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
-
-.map td { min-width: 8.5rem; }
-.map td:first-child, .map th:first-child { font-weight: 700; white-space: nowrap; }
-.o { display: inline-block; font-size: .78rem; padding: .05rem .4rem; margin: .1rem; border: 1px solid var(--ink-2); border-radius: 3px; white-space: nowrap; font-weight: 500; }
-.o.f { border-color: var(--brand); color: var(--brand); }
-.views { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.6rem; }
-@media (max-width: 700px) { .views { grid-template-columns: minmax(0, 1fr); } }
-.views > div { border-top: 3px solid var(--ink); padding-top: .7rem; }
-.views > div.f { border-top-color: var(--brand); }
-.views h4 { margin: 0 0 .4rem; font-size: 1rem; }
-.views ul { margin: 0; padding-left: 1.1rem; font-size: .95rem; }
-.views li + li { margin-top: .4rem; }
+.tsearch { display: flex; gap: .5rem; margin: 0 0 .8rem; max-width: 40rem; }
+.tsearch input { flex: 1; min-width: 0; min-height: 48px; padding: 0 1rem; border: 2px solid var(--ink); border-radius: 999px; background: var(--bg); color: var(--ink); font: inherit; }
+.tsearch input:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+.tsearch button { min-height: 48px; padding: 0 1.4rem; border: 0; border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 700; cursor: pointer; }
+.thint { font-size: .85rem; color: var(--ink-3); margin: 0 0 .5rem; }
+.tresult { margin-top: 1.6rem; }
+.tresult > h3 { margin: 0 0 .2rem; font-size: clamp(1.3rem, 3vw, 1.6rem); font-weight: 900; line-height: 1.35; }
+.tmeta { margin: 0 0 1rem; font-size: .88rem; color: var(--ink-3); }
+.aisum { background: var(--brand-soft); border-radius: 8px; padding: 1.1rem 1.3rem; }
+.aisum .ah { display: flex; align-items: center; gap: .5rem; margin: 0 0 .5rem; font-weight: 900; }
+.aitag { font-size: .75rem; font-weight: 700; background: var(--brand); color: var(--bg); padding: .1rem .5rem; border-radius: 3px; }
+.aisum ul { margin: 0; padding-left: 1.2rem; }
+.aisum li + li { margin-top: .4rem; }
+.aisum .anote { margin: .8rem 0 0; font-size: .82rem; color: var(--ink-2); }
+.links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 2rem; }
+@media (max-width: 760px) { .links { grid-template-columns: minmax(0, 1fr); } }
+.links h4 { margin: 0 0 .3rem; font-size: .95rem; padding-bottom: .3rem; border-bottom: 3px solid var(--ink); }
+.links .f h4 { border-bottom-color: var(--brand); }
+.links ul { list-style: none; margin: 0 0 1rem; padding: 0; }
+.links li { padding: .55rem 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: .8rem; font-size: .92rem; }
+@media (max-width: 520px) { .links li { grid-template-columns: minmax(0, 1fr); gap: .1rem; } }
+.links li b { font-weight: 700; }
+.links li a { color: var(--ink); }
+.links li small { display: block; color: var(--ink-3); font-size: .78rem; }
+.noresult { padding: 1rem 1.2rem; background: var(--surface); border-radius: 6px; }
 
 /* 산업 */
 .strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
@@ -515,36 +500,17 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
     <div class="in">
       <header class="sec-head">
         <p class="label">언론</p>
-        <h2 id="mediaH">언론 20곳은 이번 급락을 어떻게 썼나</h2>
-        <p class="desc" id="mediaDesc"></p>
+        <h2 id="mediaH">주제별 언론 보도</h2>
+        <p class="desc">주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
       </header>
-      <h3 class="sub" style="margin-top:0">기준이 달라 갈린 숫자</h3>
-      <div id="diffs"></div>
-
-      <h3 class="sub">기사별 분석</h3>
-      <div class="ctrl" role="group" aria-label="보기 선택">
-        <button class="chipbtn" type="button" data-f="all" aria-pressed="true">전체 20</button>
-        <button class="chipbtn" type="button" data-f="국내" aria-pressed="false">국내 10</button>
-        <button class="chipbtn" type="button" data-f="해외" aria-pressed="false">해외 10</button>
-        <span class="sep" aria-hidden="true"></span>
-        <button class="chipbtn" type="button" data-s="ratio" aria-pressed="false">출처 명시 비율순</button>
-        <button class="chipbtn" type="button" data-s="emo" aria-pressed="false">감정 표현 많은 순</button>
-      </div>
-      <div class="stories" id="stories"></div>
-      <div class="morebar">
-        <button type="button" id="moreBtn" aria-controls="stories" aria-expanded="false">기사 더 보기</button>
-        <button type="button" id="openAllBtn" aria-pressed="false">한 번에 모두 펼치기</button>
-      </div>
-
-      <h3 class="sub">매체별로 꼽은 원인과 전망</h3>
-      <div class="tbl map" id="map"></div>
-      <p class="src-note">검은 테두리는 국내, 파란 테두리는 해외 매체입니다. 한 기사가 원인을 여러 개 꼽으면 여러 칸에 나옵니다. 원인을 설명하지 않은 기사는 빠져 있습니다.</p>
-
-      <h3 class="sub">국내 언론과 해외 언론의 시각 차이</h3>
-      <div class="views">
-        <div><h4>국내 언론</h4><ul id="viewsDom"></ul></div>
-        <div class="f"><h4>해외 언론</h4><ul id="viewsFor"></ul></div>
-      </div>
+      <form class="tsearch" id="tform" role="search">
+        <label class="skip" for="tq">주제·키워드 검색</label>
+        <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락" autocomplete="off">
+        <button type="submit">찾기</button>
+      </form>
+      <p class="thint">이 호에서 볼 수 있는 주제</p>
+      <div class="ctrl" id="tchips" role="group" aria-label="주제 선택"></div>
+      <div class="tresult" id="tresult" aria-live="polite"></div>
     </div>
   </section>
 </main>
@@ -587,16 +553,10 @@ const REGIONS = [
 ];
 const NAT_CATS = ['사회', '사건·안전', '날씨·재난', '안보·외교', '국제', '과학·IT', '생활·물가', '문화·스포츠'];
 const DIR_LABEL = { up: '상승', down: '하락', flat: '보합' };
-const CAUSE = { ai: 'AI 투자 수익성·자금조달', macro: '금리·물가·유가', china: '중국 메모리 추격', struct: '반도체 쏠림·사이클 구조' };
-const LOOK = { rebound: '과매도·반등 쪽', down: '추가 하락 경계', both: '양론 병기', struct: '구조 변화론', none: '전망 없음·미확인' };
 const ALLOC_COLORS = ['var(--brand)', 'var(--hl)', 'var(--bar)', 'var(--ink-3)', 'var(--line)', 'var(--ink)'];
 
 let D = null;
 let ISSUE = new Date();
-let filter = 'all';
-let sortKey = '';
-let showAll = false;
-let openAll = false;
 let natCat = '전체';
 let natAll = false;
 let region = '';
@@ -694,108 +654,101 @@ function renderNums() {
   });
 }
 
-function renderDiffs() {
-  $('mediaDesc').textContent = '주제는 ' + D.topic + '입니다. 국내 10곳과 해외 10곳의 기사를 같은 기준으로 읽고, 쓴 수치와 그 출처, 수치 없이 분위기만 전한 표현, 원인과 전망의 해석을 비교했습니다.';
-  D.diffs.forEach((c, i) => {
-    const det = el('details', { class: 'compare' });
-    if (i === 0) det.open = true;
-    const s = el('summary');
-    s.append(el('h4', {}, c.q), el('p', {}, c.a));
-    const body = el('div', { class: 'body tbl' });
-    const table = el('table');
-    const hr = el('tr');
-    c.cols.forEach((h) => hr.append(el('th', {}, h)));
-    const thead = el('thead');
-    thead.append(hr);
-    const tb = el('tbody');
-    c.rows.forEach((r) => {
-      const tr = el('tr');
-      r.forEach((v) => tr.append(el('td', {}, v)));
-      tb.append(tr);
-    });
-    table.append(thead, tb);
-    body.append(table);
-    det.append(s, body);
-    $('diffs').append(det);
+// 검색어에서 뜻이 없는 말은 빼고, 남은 말이 주제 키워드에 들어 있거나 키워드를 품으면 점수를 준다
+const STOP = ['우리나라', '한국', '대한민국', '현재', '오늘', '지금', '최근', '요즘', '관련', '뉴스', '기사', '현황', '상황'];
+let themeId = '';
+
+function scoreTheme(t, q) {
+  const tokens = q.replace(/[^0-9A-Za-z가-힣\s]/g, ' ').split(/\s+/).filter((w) => w && !STOP.includes(w));
+  const words = t.keywords.concat([t.title]);
+  let score = 0;
+  tokens.forEach((w) => {
+    if (words.some((k) => k.includes(w) || w.includes(k))) score += 1;
   });
+  return { score, tokens: tokens.length };
 }
 
-function renderStories() {
-  const box = $('stories');
+function renderThemeChips() {
+  const box = $('tchips');
   box.textContent = '';
-  let list = D.media.filter((m) => filter === 'all' || m.r === filter);
-  if (sortKey === 'ratio') list = list.slice().sort((a, b) => (b.s / b.n) - (a.s / a.n) || b.n - a.n);
-  if (sortKey === 'emo') list = list.slice().sort((a, b) => b.emo.length - a.emo.length);
-  const maxN = Math.max(...D.media.map((m) => m.n));
-  // 휴대폰에서는 4개, 넓은 화면에서는 6개를 먼저 보이고 나머지는 단추로 펼친다
-  const limit = window.matchMedia('(max-width: 760px)').matches ? 4 : 6;
-  const total = list.length;
-  if (!showAll) list = list.slice(0, limit);
-  list.forEach((m) => {
-    const lang = m.r === '해외' ? 'en' : 'ko';
-    const a = el('article', { class: 'story' });
-    const meta = el('div', { class: 'meta' });
-    meta.append(el('b', {}, m.o), el('span', { class: 'badge' + (m.r === '해외' ? ' f' : '') }, m.r), el('span', {}, m.dt));
-    if (!m.read) meta.append(el('span', { class: 'badge warn' }, '본문 미확인'));
-    if (m.sub) meta.append(el('span', { class: 'badge' }, '대체 매체'));
-    const h = el('h3');
-    h.append(el('a', { href: m.u, target: '_blank', rel: 'noopener', lang }, m.t));
-
-    // 회색 막대는 뽑은 수치 수, 파란 부분은 그중 출처를 밝힌 수. 길이는 20개 기사 중 최댓값 기준
-    const stat = el('div', { class: 'stat' });
-    const label = el('span');
-    label.append(document.createTextNode('수치 '), el('b', {}, String(m.n)), document.createTextNode(' · 출처 명시 '), el('b', {}, String(m.s)));
-    const track = el('div', { class: 'track', 'aria-hidden': 'true' });
-    const all = el('div', { class: 'all' });
-    all.style.width = (m.n / maxN * 100) + '%';
-    const src = el('div', { class: 'src' });
-    src.style.width = (m.s / maxN * 100) + '%';
-    track.append(all, src);
-    stat.append(label, track);
-
-    const det = el('details');
-    if (openAll) det.open = true;
-    det.append(el('summary', {}, '표현·해석 보기'));
-    const chips = el('div', { class: 'chips', 'aria-label': '수치 없는 분위기 표현' });
-    if (m.emo.length === 0) chips.append(el('span', { class: 'src-note' }, '분위기 표현 추출 안 됨'));
-    m.emo.forEach((e) => chips.append(el('span', { class: 'chip', lang }, e)));
-    const dl = el('dl');
-    [['원인', m.cause], ['전망', m.look]].forEach(([k, v]) => dl.append(el('dt', {}, k), el('dd', {}, v)));
-    det.append(chips, dl);
-
-    a.append(meta, h, stat, el('p', { class: 'frame' }, '시각: ' + m.frame), det);
-    box.append(a);
+  D.themes.forEach((t) => {
+    const b = el('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(t.id === themeId) }, t.title);
+    b.addEventListener('click', () => { $('tq').value = ''; showTheme(t.id); });
+    box.append(b);
   });
-  const more = $('moreBtn');
-  const rest = total - Math.min(total, limit);
-  more.hidden = rest <= 0;
-  more.textContent = showAll ? '기사 목록 접기' : '기사 ' + rest + '개 더 보기';
-  more.setAttribute('aria-expanded', String(showAll));
 }
 
-function renderMap() {
-  const looks = Object.keys(LOOK);
-  const table = el('table');
-  const hr = el('tr');
-  hr.append(el('th', {}, '원인 \\ 전망'));
-  looks.forEach((k) => hr.append(el('th', {}, LOOK[k])));
-  const thead = el('thead');
-  thead.append(hr);
-  const tb = el('tbody');
-  Object.keys(CAUSE).forEach((ck) => {
-    const tr = el('tr');
-    tr.append(el('td', {}, CAUSE[ck]));
-    looks.forEach((lk) => {
-      const td = el('td');
-      D.media.filter((m) => m.ck.includes(ck) && m.ok === lk).forEach((m) => td.append(el('span', { class: 'o' + (m.r === '해외' ? ' f' : '') }, m.o)));
-      tr.append(td);
+function showTheme(id) {
+  themeId = id;
+  renderThemeChips();
+  const t = D.themes.find((x) => x.id === id);
+  const box = $('tresult');
+  box.textContent = '';
+  const dom = t.articles.filter((a) => a.region === '국내');
+  const fr = t.articles.filter((a) => a.region === '해외');
+  box.append(el('h3', {}, t.title), el('p', { class: 'tmeta' }, '기사 ' + t.articles.length + '건 · 국내 ' + dom.length + ' · 해외 ' + fr.length + ' · ' + t.period));
+
+  const ai = el('div', { class: 'aisum' });
+  const ah = el('p', { class: 'ah' });
+  ah.append(el('span', { class: 'aitag' }, 'AI 요약'), document.createTextNode('핵심만 먼저'));
+  const ul = el('ul');
+  t.summary.forEach((x) => ul.append(el('li', {}, x)));
+  ai.append(ah, ul, el('p', { class: 'anote' }, '아래 기사와 공식 발표를 바탕으로 AI가 정리했습니다. 원문과 다를 수 있으니 중요한 내용은 링크로 확인해 주세요.'));
+  box.append(ai);
+
+  if (t.diffs && t.diffs.length) {
+    box.append(el('h4', { class: 'sub' }, '기준이 달라 갈린 숫자'));
+    t.diffs.forEach((c) => {
+      const det = el('details', { class: 'compare' });
+      const sm = el('summary');
+      sm.append(el('h4', {}, c.q), el('p', {}, c.a));
+      const body = el('div', { class: 'body tbl' });
+      const table = el('table');
+      const thead = el('thead');
+      const hr = el('tr');
+      c.cols.forEach((h) => hr.append(el('th', {}, h)));
+      thead.append(hr);
+      const tb = el('tbody');
+      c.rows.forEach((r) => {
+        const tr = el('tr');
+        r.forEach((v) => tr.append(el('td', {}, v)));
+        tb.append(tr);
+      });
+      table.append(thead, tb);
+      body.append(table);
+      det.append(sm, body);
+      box.append(det);
     });
-    tb.append(tr);
+  }
+
+  box.append(el('h4', { class: 'sub' }, '언론사별 기사'));
+  const links = el('div', { class: 'links' });
+  [['국내', dom, ''], ['해외', fr, 'f']].forEach(([name, list, cls]) => {
+    if (!list.length) return;
+    const col = el('div', { class: cls });
+    col.append(el('h4', {}, name + ' ' + list.length));
+    const ulx = el('ul');
+    list.forEach((a) => {
+      const li = el('li');
+      const who = el('b', {}, a.outlet);
+      who.append(el('small', {}, a.date.slice(5).replace('-', '/') + (a.read ? '' : ' · 본문 미확인')));
+      li.append(who, el('a', { href: a.url, target: '_blank', rel: 'noopener', lang: name === '해외' ? 'en' : 'ko' }, a.title));
+      ulx.append(li);
+    });
+    col.append(ulx);
+    links.append(col);
   });
-  table.append(thead, tb);
-  $('map').append(table);
-  D.views.domestic.forEach((t) => $('viewsDom').append(el('li', {}, t)));
-  D.views.foreign.forEach((t) => $('viewsFor').append(el('li', {}, t)));
+  box.append(links);
+}
+
+function searchTheme(q) {
+  const ranked = D.themes.map((t) => ({ t, ...scoreTheme(t, q) })).filter((r) => r.score > 0).sort((a, b) => b.score - a.score);
+  if (ranked.length) { showTheme(ranked[0].t.id); return; }
+  themeId = '';
+  renderThemeChips();
+  const box = $('tresult');
+  box.textContent = '';
+  box.append(el('p', { class: 'noresult' }, '"' + q + '"에 맞는 주제가 이 호에는 없습니다. 위의 주제 중에서 골라 주세요.'));
 }
 
 function renderIndustry() {
@@ -1046,39 +999,16 @@ function renderLimits() {
   D.limits.forEach((t) => $('limits').append(el('li', {}, t)));
 }
 
-function setupStories() {
-  document.querySelectorAll('.ctrl .chipbtn').forEach((b) => {
-    b.addEventListener('click', () => {
-      if (b.dataset.f) {
-        filter = b.dataset.f;
-        document.querySelectorAll('.ctrl [data-f]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-      } else {
-        // 같은 정렬을 다시 누르면 원래 순서로 돌아간다
-        sortKey = sortKey === b.dataset.s ? '' : b.dataset.s;
-        document.querySelectorAll('.ctrl [data-s]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.s === sortKey)));
-      }
-      renderStories();
-    });
-  });
+function setupControls() {
   $('natMore').addEventListener('click', () => {
     natAll = !natAll;
     renderNational();
     if (!natAll) $('natList').scrollIntoView({ block: 'start' });
   });
-  $('moreBtn').addEventListener('click', () => {
-    showAll = !showAll;
-    renderStories();
-    if (!showAll) $('stories').scrollIntoView({ block: 'start' });
-  });
-  const ob = $('openAllBtn');
-  ob.addEventListener('click', () => {
-    openAll = !openAll;
-    // 한 번에 펼치기는 기사 20개와 기사별 표현·해석을 함께 연다
-    showAll = openAll;
-    ob.setAttribute('aria-pressed', String(openAll));
-    ob.textContent = openAll ? '모두 접기' : '한 번에 모두 펼치기';
-    renderStories();
-    if (!openAll) $('stories').scrollIntoView({ block: 'start' });
+  $('tform').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const q = $('tq').value.trim();
+    if (q) searchTheme(q);
   });
 }
 
@@ -1158,11 +1088,9 @@ async function boot() {
   renderNums();
   renderIndustry();
   renderFiscal();
-  renderDiffs();
-  renderStories();
-  renderMap();
+  showTheme(D.themes[0].id);
   renderLimits();
-  setupStories();
+  setupControls();
   setupNav();
 }
 
