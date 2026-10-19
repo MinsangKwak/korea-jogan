@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;900&display=swap">
+<style>
+/* 공유 미리보기 카드 1200×630. 색은 화면(index.html)의 밝은 테마 값과 같다 */
+* { box-sizing: border-box; margin: 0; }
+body { width: 1200px; height: 630px; word-break: keep-all; font-family: "Noto Sans KR", sans-serif; background: #ffffff; color: #141414; display: flex; flex-direction: column; }
+.top { background: #111111; color: #ffffff; padding: 56px 72px 44px; }
+.top h1 { font-size: 92px; font-weight: 900; letter-spacing: -.03em; line-height: 1.1; }
+.top p { margin-top: 14px; font-size: 32px; font-weight: 500; opacity: .85; }
+/* 카드는 늘 같은 이미지라 특정 호의 숫자를 넣지 않는다 */
+.body { flex: 1; padding: 40px 72px; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+.big { font-size: 74px; font-weight: 900; letter-spacing: -.03em; line-height: 1.2; }
+.big b { color: #a14a00; }
+.say { font-size: 34px; font-weight: 500; line-height: 1.45; color: #474c54; }
+.bar { height: 14px; background: #0047a0; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>대한민국 조간</h1>
+    <p>공식 숫자와 그 기준을 함께 읽는 아침 신문</p>
+  </div>
+  <div class="body">
+    <p class="big">같은 사실, <b>다른 숫자</b></p>
+    <p class="say">기사마다 숫자가 왜 갈렸는지 출처와 기준으로 보여 줍니다</p>
+  </div>
+  <div class="bar"></div>
+</body>
+</html>

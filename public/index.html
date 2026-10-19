@@ -8,8 +8,16 @@
 <link rel="canonical" href="https://minsangkwak.github.io/korea-jogan/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="대한민국 조간">
-<meta property="og:description" content="데이터로 읽는 오늘의 대한민국">
+<meta property="og:description" content="같은 사실, 다른 숫자. 기사마다 숫자가 왜 갈렸는지 출처와 기준으로 보여 주는 아침 신문입니다.">
 <meta property="og:url" content="https://minsangkwak.github.io/korea-jogan/">
+<meta property="og:site_name" content="대한민국 조간">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:image" content="https://minsangkwak.github.io/korea-jogan/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="대한민국 조간 · 같은 사실, 다른 숫자">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="대한민국 조간" href="feed.xml">
 <meta name="color-scheme" content="light dark">
 <!-- 방문 측정(선택). GoatCounter 주소를 넣으면 켜진다. 예: https://korea-jogan.goatcounter.com/count -->
 <meta name="jg-goatcounter" content="">
@@ -80,6 +88,9 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .mast-right { display: flex; align-items: center; gap: .8rem; font-size: .85rem; }
 .bigbtn { background: transparent; color: var(--head-ink); border: 1px solid rgba(255,255,255,.5); border-radius: 4px; min-height: 40px; padding: 0 .8rem; cursor: pointer; font-size: .85rem; }
 .bigbtn[aria-pressed="true"] { background: var(--head-ink); color: var(--head); }
+.mast-btns { display: flex; gap: .4rem; }
+.mast-right { flex-wrap: wrap; }
+.bigbtn { white-space: nowrap; }
 
 /* 분야 메뉴(넓은 화면) */
 .cats { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
@@ -346,6 +357,9 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
 .fixes li + li { margin-top: 0 !important; }
 .fixes .fw { font-size: .82rem; color: var(--ink-3); }
 .fixes del { color: var(--ink-3); }
+.archive { display: flex; flex-wrap: wrap; gap: .3rem 1rem; list-style: none; padding: 0 !important; }
+.archive li + li { margin-top: 0 !important; }
+.archive a[aria-current="page"] { font-weight: 700; color: var(--ink); text-decoration: none; }
 
 /* 하단 분야 메뉴(좁은 화면) */
 .tabbar { display: none; }
@@ -375,7 +389,10 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
       <a class="logo" href="#top">대한민국 조간<small>데이터로 읽는 오늘의 대한민국</small></a>
       <div class="mast-right">
         <span><time id="issueDate" datetime="">—</time><span class="asof" id="asOf"></span></span>
-        <button class="bigbtn" id="bigBtn" type="button" aria-pressed="false">가 글자 크게</button>
+        <span class="mast-btns">
+          <button class="bigbtn" id="shareBtn" type="button">공유</button>
+          <button class="bigbtn" id="bigBtn" type="button" aria-pressed="false">가 글자 크게</button>
+        </span>
       </div>
     </div>
   </div>
@@ -568,6 +585,9 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
       <li><b>E</b>분석·계산</li>
     </ul>
     <p>정부·공공기관의 공식 자료를 먼저 쓰고, 부족한 부분은 공개 보도로 채웁니다. 잠정치는 나중에 바뀔 수 있습니다.</p>
+    <h2 id="archH">지난 호</h2>
+    <ul class="archive" id="archive" aria-labelledby="archH"></ul>
+    <p>매일 아침 받아 보려면 <a href="feed.xml">RSS</a>를 구독하세요.</p>
     <h2 id="fixH">정정 기록</h2>
     <ul class="fixes" id="fixes" aria-labelledby="fixH"></ul>
     <p>숫자·문장·링크가 원문과 다르면 <a id="reportLink" href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" target="_blank" rel="noopener">오류 신고</a>로 알려 주세요. 확인한 뒤 고치고, 고친 내용은 이 기록에 남깁니다.</p>
@@ -600,6 +620,8 @@ const DIR_LABEL = { up: '상승', down: '하락', flat: '보합' };
 const ALLOC_COLORS = ['var(--brand)', 'var(--hl)', 'var(--bar)', 'var(--ink-3)', 'var(--line)', 'var(--ink)'];
 
 let D = null;
+let INDEX = null;
+let VIEWING_PAST = false;
 let ISSUE = new Date();
 let natCat = '전체';
 let natAll = false;
@@ -1116,10 +1138,51 @@ function renderLimits() {
 
 // 조간은 00시 발행. 최신 호가 오늘 날짜가 아니면 지난 호를 보고 있다고 먼저 알린다
 function renderStale() {
+  const msg = $('staleMsg');
+  if (VIEWING_PAST) {
+    msg.append(document.createTextNode('지난 호(' + longDate(D.date) + ')를 보고 있습니다. '), el('a', { href: './' }, '최신 호 보기'));
+    $('stale').hidden = false;
+    return;
+  }
   const today = todayKST();
   if (D.date >= today) return;
-  $('staleMsg').textContent = '오늘(' + longDate(today) + ') 호는 아직 발행되지 않았습니다. 아래는 ' + longDate(D.date) + ' 호입니다.';
+  msg.textContent = '오늘(' + longDate(today) + ') 호는 아직 발행되지 않았습니다. 아래는 ' + longDate(D.date) + ' 호입니다.';
   $('stale').hidden = false;
+}
+
+function renderArchive() {
+  const ul = $('archive');
+  const list = INDEX ? INDEX.issues : [D.date];
+  list.forEach((d) => {
+    const li = el('li');
+    const a = el('a', { href: d === (INDEX && INDEX.latest) ? './' : '?d=' + d }, d.replace(/-/g, '.'));
+    if (d === D.date) a.setAttribute('aria-current', 'page');
+    a.addEventListener('click', () => track('archive', d));
+    li.append(a);
+    ul.append(li);
+  });
+}
+
+// 공유는 휴대폰 공유 창을 먼저 쓰고, 없으면 링크를 복사한다. 링크는 지금 보는 호를 가리킨다
+function setupShare() {
+  const btn = $('shareBtn');
+  btn.addEventListener('click', async () => {
+    if (!D) return;
+    const url = location.origin + location.pathname + '?d=' + D.date;
+    const data = { title: '대한민국 조간 · ' + longDate(D.date), text: D.lead.headline, url };
+    track('share', D.date);
+    if (navigator.share) {
+      try { await navigator.share(data); } catch (e) { /* 사용자가 공유 창을 닫은 경우 */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = '링크 복사됨';
+    } catch (e) {
+      window.prompt('이 링크를 복사하세요', url);
+    }
+    setTimeout(() => { btn.textContent = '공유'; }, 2000);
+  });
 }
 
 function renderAsOf() {
@@ -1229,7 +1292,8 @@ function setupBig() {
   });
 }
 
-// 발행 데이터는 페이지 안에 실려 있으면 그것을, 없으면 data/issues/의 최신 호를 읽는다
+// 발행 데이터는 페이지 안에 실려 있으면 그것을, 없으면 data/issues/에서 읽는다
+// 주소에 ?d=YYYY-MM-DD가 있고 발행 목록에 있는 날이면 그 호를, 아니면 최신 호를 연다
 async function loadIssue() {
   const inline = document.getElementById('issue-data');
   if (inline) return JSON.parse(inline.textContent);
@@ -1238,14 +1302,18 @@ async function loadIssue() {
     if (!res.ok) throw new Error(path + ' ' + res.status);
     return res.json();
   };
-  const index = await get('data/issues/index.json');
-  return get('data/issues/' + index.latest + '.json');
+  INDEX = await get('data/issues/index.json');
+  const want = new URLSearchParams(location.search).get('d');
+  const date = want && INDEX.issues.includes(want) ? want : INDEX.latest;
+  VIEWING_PAST = date !== INDEX.latest;
+  return get('data/issues/' + date + '.json');
 }
 
 async function boot() {
   setupMetrics();
   renderNav();
   setupBig();
+  setupShare();
   try {
     D = await loadIssue();
   } catch (e) {
@@ -1268,6 +1336,7 @@ async function boot() {
   renderFiscal();
   showTheme(D.themes[0].id);
   renderLimits();
+  renderArchive();
   renderCorrections(await loadCorrections());
   setupControls();
   setupNav();
