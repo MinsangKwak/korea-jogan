@@ -1,0 +1,31 @@
+{
+  "note": "언론사 RSS 목록. 제목·링크·날짜만 가져온다. 본문·요약(description, content)은 받지도 저장하지도 않는다. 2026-10-19에 열리는지 확인한 주소만 넣었다",
+  "feeds": [
+    { "outlet": "연합뉴스", "region": "국내", "scope": "전국", "url": "https://www.yna.co.kr/rss/news.xml" },
+    { "outlet": "조선일보", "region": "국내", "scope": "전국", "url": "https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml" },
+    { "outlet": "동아일보", "region": "국내", "scope": "전국", "url": "https://www.donga.com/news/rss" },
+    { "outlet": "한겨레", "region": "국내", "scope": "전국", "url": "https://www.hani.co.kr/rss/" },
+    { "outlet": "경향신문", "region": "국내", "scope": "전국", "url": "https://www.khan.co.kr/rss/rssdata/total_news.xml" },
+    { "outlet": "국민일보", "region": "국내", "scope": "전국", "url": "https://www.kmib.co.kr/rss/data/kmibRssAll.xml" },
+    { "outlet": "세계일보", "region": "국내", "scope": "전국", "url": "https://www.segye.com/Articles/RSSList/segye_recent.xml" },
+    { "outlet": "한국경제", "region": "국내", "scope": "전국", "url": "https://www.hankyung.com/feed/all-news" },
+    { "outlet": "서울경제", "region": "국내", "scope": "전국", "url": "https://www.sedaily.com/rss/newsall" },
+    { "outlet": "파이낸셜뉴스", "region": "국내", "scope": "전국", "url": "https://www.fnnews.com/rss/r20/fn_realnews_all.xml" },
+    { "outlet": "머니투데이", "region": "국내", "scope": "전국", "url": "https://rss.mt.co.kr/mt_news.xml" },
+    { "outlet": "SBS", "region": "국내", "scope": "전국", "url": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=01" },
+    { "outlet": "MBC", "region": "국내", "scope": "전국", "url": "https://imnews.imbc.com/rss/google_news/narrativeNews.rss" },
+    { "outlet": "연합뉴스TV", "region": "국내", "scope": "전국", "url": "https://www.yonhapnewstv.co.kr/browse/feed/" },
+    { "outlet": "충청투데이", "region": "국내", "scope": "충청", "url": "https://www.cctoday.co.kr/rss/allArticle.xml" },
+    { "outlet": "대전일보", "region": "국내", "scope": "대전·충남", "url": "https://www.daejonilbo.com/rss/allArticle.xml" },
+    { "outlet": "전남일보", "region": "국내", "scope": "광주·전남", "url": "https://jnilbo.com/rss/allArticle.xml" },
+    { "outlet": "매일신문", "region": "국내", "scope": "대구·경북", "url": "https://www.imaeil.com/rss" },
+    { "outlet": "경북일보", "region": "국내", "scope": "경북", "url": "https://www.kyongbuk.co.kr/rss/allArticle.xml" },
+    { "outlet": "경상일보", "region": "국내", "scope": "울산", "url": "https://www.ksilbo.co.kr/rss/allArticle.xml" },
+    { "outlet": "제주일보", "region": "국내", "scope": "제주", "url": "https://www.jejunews.com/rss/allArticle.xml" },
+    { "outlet": "Korea Herald", "region": "해외", "scope": "영문", "url": "https://www.koreaherald.com/rss/newsAll" },
+    { "outlet": "Korea Times", "region": "해외", "scope": "영문", "url": "https://feed.koreatimes.co.kr/k/allnews.xml" },
+    { "outlet": "BBC", "region": "해외", "scope": "아시아", "url": "https://feeds.bbci.co.uk/news/world/asia/rss.xml" },
+    { "outlet": "New York Times", "region": "해외", "scope": "아시아", "url": "https://rss.nytimes.com/services/xml/rss/nyt/AsiaPacific.xml" },
+    { "outlet": "Guardian", "region": "해외", "scope": "한국", "url": "https://www.theguardian.com/world/south-korea/rss" }
+  ]
+}
