@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ISSUES = ROOT / "public" / "data" / "issues"
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-REQUIRED = ("date", "headline", "nums", "media", "items", "industries", "debt")
+REQUIRED = ("date", "lead", "briefs", "nums", "media", "diffs", "views", "items", "industries", "trade", "debt", "fiscal", "nps", "agenda", "limits")
 
 
 def check_issue(path: Path) -> list[str]:
