@@ -129,6 +129,21 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .briefs .bk { font-weight: 700; line-height: 1.45; }
 .briefs .bm { font-size: .85rem; color: var(--ink-3); }
 
+/* 홈: 오늘 갈린 숫자 */
+.split { margin-top: 2.2rem; padding-top: 1.4rem; border-top: 3px solid var(--ink); }
+.split-head { display: flex; justify-content: space-between; align-items: baseline; gap: .6rem 1rem; flex-wrap: wrap; margin-bottom: .9rem; }
+.split-head h2 { margin: 0; font-size: 1.25rem; font-weight: 900; }
+.split-head p { margin: 0; font-size: .88rem; color: var(--ink-3); }
+.splits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 900px) { .splits { grid-template-columns: minmax(0, 1fr); } }
+.scard { background: var(--hl-soft); border-radius: 6px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: .45rem; min-width: 0; }
+.scard .st { font-size: .8rem; font-weight: 700; color: var(--hl); }
+.scard .sv { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .5rem; font-size: 1.45rem; font-weight: 900; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.scard .sv span + span::before { content: "vs"; margin-right: .5rem; font-size: .8rem; font-weight: 500; color: var(--ink-3); }
+.scard h3 { margin: 0; font-size: 1rem; line-height: 1.45; }
+.scard p { margin: 0; font-size: .9rem; color: var(--ink-2); }
+.scard button { align-self: flex-start; margin-top: auto; background: transparent; border: 0; padding: .3rem 0; min-height: 36px; color: var(--brand); font-weight: 700; font-size: .88rem; cursor: pointer; text-decoration: underline; }
+
 /* 경제: 숫자 타일 */
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 1rem; }
 .tile { background: var(--surface); border-radius: 6px; padding: 1rem 1.1rem; min-width: 0; display: flex; flex-direction: column; gap: .2rem; }
@@ -380,6 +395,30 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
         <ol id="briefs"></ol>
       </aside>
     </div>
+    <div class="in split" id="splitBox" hidden>
+      <div class="split-head">
+        <h2 id="splitH">오늘 기준이 갈린 숫자</h2>
+        <p id="splitMeta"></p>
+      </div>
+      <div class="splits" id="splits"></div>
+    </div>
+  </section>
+  <section class="sec" id="media" aria-labelledby="mediaH">
+    <div class="in">
+      <header class="sec-head">
+        <p class="label">언론</p>
+        <h2 id="mediaH">주제별 언론 보도</h2>
+        <p class="desc">주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
+      </header>
+      <form class="tsearch" id="tform" role="search">
+        <label class="skip" for="tq">주제·키워드 검색</label>
+        <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락, 호우 피해" autocomplete="off">
+        <button type="submit">찾기</button>
+      </form>
+      <p class="thint">이 호에서 볼 수 있는 주제</p>
+      <div class="ctrl" id="tchips" role="group" aria-label="주제 선택"></div>
+      <div class="tresult" id="tresult" aria-live="polite"></div>
+    </div>
   </section>
 
   <section class="sec" id="national" aria-labelledby="natH">
@@ -504,23 +543,6 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
     </div>
   </section>
 
-  <section class="sec" id="media" aria-labelledby="mediaH">
-    <div class="in">
-      <header class="sec-head">
-        <p class="label">언론</p>
-        <h2 id="mediaH">주제별 언론 보도</h2>
-        <p class="desc">주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
-      </header>
-      <form class="tsearch" id="tform" role="search">
-        <label class="skip" for="tq">주제·키워드 검색</label>
-        <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락, 호우 피해" autocomplete="off">
-        <button type="submit">찾기</button>
-      </form>
-      <p class="thint">이 호에서 볼 수 있는 주제</p>
-      <div class="ctrl" id="tchips" role="group" aria-label="주제 선택"></div>
-      <div class="tresult" id="tresult" aria-live="polite"></div>
-    </div>
-  </section>
 </main>
 
 <footer class="foot">
@@ -551,8 +573,8 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
 const DAY = 86400000;
 const REPO = 'https://github.com/MinsangKwak/korea-jogan';
 const SECTIONS = [
-  ['home', '홈'], ['national', '전국'], ['regions', '지역'], ['politics', '정치'],
-  ['economy', '경제'], ['industry', '산업'], ['fiscal', '재정'], ['media', '언론']
+  ['home', '홈'], ['media', '언론'], ['national', '전국'], ['regions', '지역'],
+  ['politics', '정치'], ['economy', '경제'], ['industry', '산업'], ['fiscal', '재정']
 ];
 // 시도 타일 지도. [이름, 열, 행, 가로 칸 수]. 실제 위치를 4열 격자에 대략 옮긴 배치
 const REGIONS = [
@@ -759,6 +781,42 @@ function showTheme(id) {
     links.append(col);
   });
   box.append(links);
+}
+
+// 갈린 숫자는 표 첫 열에 모여 있다. pick이 있으면 그 두 줄을, 없으면 처음과 마지막 줄을 크게 보여 준다
+function splitValues(c) {
+  const vals = c.rows.map((r) => r[0]);
+  const [i, j] = c.pick || [0, vals.length - 1];
+  return vals[i] === vals[j] ? [vals[i]] : [vals[i], vals[j]];
+}
+
+// 홈에는 주제마다 첫 번째 갈린 숫자 하나씩만 둔다. 나머지는 언론 섹션에서 본다
+function renderSplits() {
+  const withDiffs = D.themes.filter((t) => t.diffs && t.diffs.length);
+  if (!withDiffs.length) return;
+  const total = withDiffs.reduce((n, t) => n + t.diffs.length, 0);
+  $('splitBox').hidden = false;
+  $('splitMeta').textContent = '같은 사실을 매체마다 다른 숫자로 썼습니다 · 이 호에서 ' + total + '건';
+  withDiffs.slice(0, 3).forEach((t) => {
+    const c = t.diffs[0];
+    const card = el('article', { class: 'scard' });
+    const sv = el('div', { class: 'sv', 'aria-label': '갈린 값: ' + splitValues(c).join(', ') });
+    splitValues(c).forEach((v) => sv.append(el('span', {}, v)));
+    const more = el('button', { type: 'button' }, t.diffs.length > 1 ? '왜 다른지 보기 · 이 주제 ' + t.diffs.length + '건' : '왜 다른지 보기');
+    more.addEventListener('click', () => openDiff(t.id, 0));
+    card.append(el('span', { class: 'st' }, t.title), sv, el('h3', {}, c.q), el('p', {}, c.a), more);
+    $('splits').append(card);
+  });
+}
+
+function openDiff(id, idx) {
+  $('tq').value = '';
+  showTheme(id);
+  const det = $('tresult').querySelectorAll('details.compare')[idx];
+  if (!det) return;
+  det.open = true;
+  det.scrollIntoView({ block: 'start' });
+  det.querySelector('summary').focus({ preventScroll: true });
 }
 
 function searchTheme(q) {
@@ -1145,6 +1203,7 @@ async function boot() {
   ISSUE = parseDate(D.date);
   renderNotice();
   renderLead();
+  renderSplits();
   renderNational();
   renderRegions();
   renderPolitics();
