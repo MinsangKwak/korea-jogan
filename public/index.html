@@ -11,6 +11,8 @@
 <meta property="og:description" content="데이터로 읽는 오늘의 대한민국">
 <meta property="og:url" content="https://minsangkwak.github.io/korea-jogan/">
 <meta name="color-scheme" content="light dark">
+<!-- 방문 측정(선택). GoatCounter 주소를 넣으면 켜진다. 예: https://korea-jogan.goatcounter.com/count -->
+<meta name="jg-goatcounter" content="">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -613,6 +615,22 @@ const parseDate = (s) => { const [y, m, d] = s.split('-').map(Number); return ut
 const todayKST = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
 const longDate = (s) => parseDate(s).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', timeZone: 'UTC' });
 
+// 방문·행동 측정. jg-goatcounter가 비어 있으면 아무것도 보내지 않는다
+// GoatCounter는 쿠키를 쓰지 않고 개인을 식별하지 않는다
+const GC = (document.querySelector('meta[name="jg-goatcounter"]') || {}).content || '';
+function setupMetrics() {
+  if (!GC) return;
+  const sc = document.createElement('script');
+  sc.async = true;
+  sc.src = 'https://gc.zgo.at/count.js';
+  sc.dataset.goatcounter = GC;
+  document.head.append(sc);
+}
+function track(name, title) {
+  if (!GC || !window.goatcounter || !window.goatcounter.count) return;
+  window.goatcounter.count({ path: name, title: title || name, event: true });
+}
+
 function el(tag, attrs, text) {
   const n = document.createElement(tag);
   Object.entries(attrs || {}).forEach(([k, v]) => n.setAttribute(k, v));
@@ -648,12 +666,17 @@ function srcButton(id, s, where) {
   dd.append(el('a', { href: s.url, target: '_blank', rel: 'noopener' }, '원문 열기'));
   dl.append(dd);
   panel.append(dl);
-  if (where) panel.append(el('a', { class: 'report', href: reportUrl(where), target: '_blank', rel: 'noopener' }, '이 숫자 오류 신고'));
+  if (where) {
+    const rep = el('a', { class: 'report', href: reportUrl(where), target: '_blank', rel: 'noopener' }, '이 숫자 오류 신고');
+    rep.addEventListener('click', () => track('report', where));
+    panel.append(rep);
+  }
   // 출처는 처음엔 접어 두고 누르면 펼친다
   btn.addEventListener('click', () => {
     const open = btn.getAttribute('aria-expanded') === 'true';
     btn.setAttribute('aria-expanded', String(!open));
     panel.hidden = open;
+    if (!open) track('src-open', s.name);
   });
   return [btn, panel];
 }
@@ -753,6 +776,7 @@ function showTheme(id) {
     box.append(el('h4', { class: 'sub' }, '기준이 달라 갈린 숫자'));
     t.diffs.forEach((c) => {
       const det = el('details', { class: 'compare' });
+      det.addEventListener('toggle', () => { if (det.open) track('split-open', c.q); });
       const sm = el('summary');
       sm.append(el('h4', {}, c.q), el('p', {}, c.a));
       const body = el('div', { class: 'body tbl' });
@@ -814,7 +838,7 @@ function renderSplits() {
     const sv = el('div', { class: 'sv', 'aria-label': '갈린 값: ' + splitValues(c).join(', ') });
     splitValues(c).forEach((v) => sv.append(el('span', {}, v)));
     const more = el('button', { type: 'button' }, t.diffs.length > 1 ? '왜 다른지 보기 · 이 주제 ' + t.diffs.length + '건' : '왜 다른지 보기');
-    more.addEventListener('click', () => openDiff(t.id, 0));
+    more.addEventListener('click', () => { track('split-home', c.q); openDiff(t.id, 0); });
     card.append(el('span', { class: 'st' }, t.title), sv, el('h3', {}, c.q), el('p', {}, c.a), more);
     $('splits').append(card);
   });
@@ -832,6 +856,8 @@ function openDiff(id, idx) {
 
 function searchTheme(q) {
   const ranked = D.themes.map((t) => ({ t, ...scoreTheme(t, q) })).filter((r) => r.score > 0).sort((a, b) => b.score - a.score);
+  // 입력한 글은 보내지 않고 어느 주제가 걸렸는지만 센다
+  track('search', ranked.length ? ranked[0].t.title : '결과 없음');
   if (ranked.length) { showTheme(ranked[0].t.id); return; }
   themeId = '';
   renderThemeChips();
@@ -1122,6 +1148,7 @@ function renderNotice() {
 function renderCorrections(list) {
   const ul = $('fixes');
   $('reportLink').href = reportUrl('');
+  $('reportLink').addEventListener('click', () => track('report', 'footer'));
   if (!list.length) { ul.append(el('li', {}, '아직 정정한 내용이 없습니다.')); return; }
   // 최근 정정이 위로 오게 한다
   list.slice().sort((a, b) => b.date.localeCompare(a.date)).forEach((c) => {
@@ -1216,6 +1243,7 @@ async function loadIssue() {
 }
 
 async function boot() {
+  setupMetrics();
   renderNav();
   setupBig();
   try {
