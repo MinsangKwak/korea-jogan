@@ -1,0 +1,53 @@
+"""한국은행 ECOS에서 환율·기준금리를 받아 data/raw/ecos/에 원본 그대로 저장한다.
+
+환경변수 ECOS_API_KEY가 필요하다. 키는 GitHub Secrets에만 두고 코드·페이지에 넣지 않는다.
+통계표·항목 코드는 ECOS '통계코드검색'에서 한 번 더 확인한 뒤 쓴다.
+"""
+from __future__ import annotations
+
+import datetime as dt
+import json
+import os
+import sys
+import urllib.request
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "data" / "raw" / "ecos"
+BASE = "https://ecos.bok.or.kr/api/StatisticSearch"
+
+# 이름: (통계표 코드, 주기, 항목 코드)
+SERIES = {
+    "usdkrw": ("731Y001", "D", "0000001"),
+    "base_rate": ("722Y001", "D", "0101000"),
+}
+
+
+def fetch(key: str, stat: str, cycle: str, item: str, start: str, end: str) -> dict:
+    url = f"{BASE}/{key}/json/kr/1/100/{stat}/{cycle}/{start}/{end}/{item}"
+    with urllib.request.urlopen(url, timeout=30) as res:
+        return json.load(res)
+
+
+def main() -> int:
+    key = os.environ.get("ECOS_API_KEY")
+    if not key:
+        print("ECOS_API_KEY가 없습니다.")
+        return 1
+    today = dt.date.today()
+    start = (today - dt.timedelta(days=14)).strftime("%Y%m%d")
+    end = today.strftime("%Y%m%d")
+
+    result = {"collectedAt": dt.datetime.now(dt.timezone.utc).isoformat(), "series": {}}
+    for name, (stat, cycle, item) in SERIES.items():
+        result["series"][name] = fetch(key, stat, cycle, item, start, end)
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / f"{today.isoformat()}.json"
+    path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"저장: {path.relative_to(ROOT)}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
