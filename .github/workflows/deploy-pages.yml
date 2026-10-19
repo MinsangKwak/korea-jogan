@@ -1,8 +1,9 @@
+# deploy 브랜치에 올라온 것만 GitHub Pages로 배포한다. 개발(dev)·최종본(main)은 여기서 배포하지 않는다
 name: 사이트 배포
 
 on:
   push:
-    branches: [main]
+    branches: [deploy]
   workflow_dispatch:
 
 permissions:

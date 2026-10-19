@@ -1,6 +1,6 @@
 # 일일 발행 절차
 
-매일 00시(한국 시간) 예약 작업이 이 절차대로 그날 호를 만들어 `main`에 올립니다. `main`에 올라가면 `pages.yml`이 검사 후 GitHub Pages에 배포합니다.
+매일 00시(한국 시간) 예약 작업이 이 절차대로 그날 호를 만듭니다. 작업은 `dev`에서 하고, 검사를 통과하면 `main`과 `deploy`를 같은 커밋으로 올립니다. `deploy`에 올라가면 `deploy-pages.yml`이 다시 검사한 뒤 GitHub Pages에 배포합니다. 브랜치 규칙은 [BRANCHES.md](BRANCHES.md), 커밋 규칙은 [COMMITS.md](COMMITS.md)를 따릅니다.
 
 ## 원칙
 
@@ -13,7 +13,7 @@
 
 ## 순서
 
-1. 오늘 날짜(KST)를 `YYYY-MM-DD`로 정합니다. `public/data/issues/index.json`의 `latest` 호를 읽어 새 호의 틀로 씁니다.
+1. `git fetch origin` 뒤 `dev` 브랜치로 가서 `origin/dev`와 맞춥니다. 오늘 날짜(KST)를 `YYYY-MM-DD`로 정합니다. `public/data/issues/index.json`의 `latest` 호를 읽어 새 호의 틀로 씁니다.
 2. 아래 수집을 하위 에이전트로 동시에 돌립니다. 각 에이전트에게 위 원칙과 결과 JSON 모양(지난 호의 같은 항목)을 그대로 넘깁니다.
    - 핵심 숫자(`nums`): 전 거래일 코스피·코스닥 종가, 원·달러 환율, 두바이유·휘발유 평균가. 출처 기관과 원문 링크 필수.
    - 전국 뉴스(`national`): 지난 하루 분야별 2~4건, 총 18~24건과 흐름 3줄. 분야는 사회, 사건·안전, 날씨·재난, 안보·외교, 국제(한국 관련), 과학·IT, 생활·물가, 문화·스포츠.
@@ -23,7 +23,7 @@
 3. 결과를 합쳐 `public/data/issues/YYYY-MM-DD.json`을 만듭니다. `date`, `collectedAt`, `lead`(머리기사·요약·핵심 수치 3개), `briefs`(4~6개), `agenda`(이번 주 일정)를 새로 씁니다.
 4. `index.json`의 `latest`를 오늘로 바꾸고 `issues` 목록 맨 앞에 오늘을 넣습니다.
 5. `python3 scripts/validate.py`를 돌립니다. 실패하면 고칠 수 있는 것은 고치고, 끝내 고치지 못하면 그 섹션을 지난 호 값으로 되돌린 뒤 다시 검사합니다. 검사를 통과하지 못하면 올리지 않습니다.
-6. `feat(issue): YYYY-MM-DD호 발행` 제목으로 커밋해 `main`에 올립니다.
+6. `data(issue): YYYY-MM-DD호 발행` 제목으로 `dev`에 커밋하고 push 합니다. 이어서 `git push origin dev:main`, `git push origin dev:deploy`로 세 브랜치를 같은 커밋으로 맞춥니다. 빨리 감기가 안 되면(누가 `main`에 따로 올린 경우) 억지로 덮어쓰지 말고 멈춘 뒤 보고합니다.
 7. 배포가 끝나면 `https://minsangkwak.github.io/korea-jogan/data/issues/index.json`의 `latest`가 오늘인지 확인합니다.
 
 ## 접속이 막힌 매체
