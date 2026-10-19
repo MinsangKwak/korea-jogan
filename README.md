@@ -3,6 +3,8 @@
 **공식 통계로 읽는 오늘의 대한민국. 수치의 출처와 기준을 함께 보여 주는 비영리 데이터 신문입니다.**
 매일 00시(한국 시간)에 전국·17개 시도 뉴스, 핵심 경제 숫자, 주력산업, 국가 재정을 한 화면에 모아 발행합니다. 기획부터 데이터 조사, 화면, 검사, 자동 발행, 배포까지 혼자 만들고 운영합니다.
 
+### [▶ 대한민국 조간 바로가기](https://minsangkwak.github.io/korea-jogan/)
+
 [서비스](https://minsangkwak.github.io/korea-jogan/) · [문서 안내](docs/README.md) · [서비스 기획](docs/portfolio/01-product.md) · [구조와 자동화](docs/portfolio/02-architecture.md) · [발행 데이터 형식](docs/DATA.md)
 
 > 2026-10-19 기준으로 `main`·`dev`·`deploy`는 같은 커밋이며, 2026-10-19호 하나가 GitHub Pages에 배포돼 있습니다. 이 호의 `status`는 `prototype`(시안)입니다.
