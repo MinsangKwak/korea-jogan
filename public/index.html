@@ -267,6 +267,44 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
 .alloc-list li span:last-child { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .sw { display: inline-block; width: .7rem; height: .7rem; margin-right: .4rem; border-radius: 2px; vertical-align: middle; }
 
+/* 전국 */
+.flow { margin: 0 0 1.4rem; padding: 1rem 1.2rem; background: var(--surface); border-radius: 6px; }
+.flow h3 { margin: 0 0 .4rem; font-size: 1rem; }
+.flow ol { margin: 0; padding-left: 1.2rem; }
+.flow li + li { margin-top: .3rem; }
+.news { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 2rem; }
+@media (max-width: 760px) { .news { grid-template-columns: minmax(0, 1fr); } }
+.nitem { border-top: 1px solid var(--line); padding: 1rem 0; display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.nitem .ncat { font-size: .82rem; font-weight: 700; color: var(--brand); }
+.nitem h3 { margin: 0; font-size: 1.05rem; line-height: 1.5; font-weight: 700; }
+.nitem h3 a { color: var(--ink); text-decoration: none; }
+.nitem h3 a:hover { text-decoration: underline; }
+.nitem p { margin: 0; font-size: .95rem; color: var(--ink-2); }
+.figs { display: flex; flex-wrap: wrap; gap: .3rem; }
+.fig { font-size: .8rem; font-weight: 700; background: var(--surface); padding: .1rem .5rem; border-radius: 3px; font-variant-numeric: tabular-nums; }
+.nsrc { font-size: .82rem; color: var(--ink-3); display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+
+/* 지역 */
+.reg { display: grid; grid-template-columns: minmax(0, 19rem) minmax(0, 1fr); gap: 2.4rem; align-items: start; }
+@media (max-width: 900px) { .reg { grid-template-columns: minmax(0, 1fr); gap: 1.4rem; } }
+.tmap { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; position: sticky; top: calc(var(--nav-h) + 16px); }
+@media (max-width: 900px) { .tmap { position: static; max-width: 22rem; } }
+.rtile { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; min-height: 52px; padding: .2rem; font-size: .88rem; font-weight: 700; color: var(--ink); }
+.rtile small { font-size: .75rem; font-weight: 500; color: var(--ink-3); }
+.rtile:hover { border-color: var(--brand); }
+.rtile[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--bg); }
+.rtile[aria-pressed="true"] small { color: var(--bg); }
+.rtile.none { opacity: .55; }
+.rtile.allbtn { grid-column: 1 / -1; flex-direction: row; gap: .5rem; min-height: 44px; }
+.rlist h3 { margin: 0 0 .3rem; font-size: 1.25rem; font-weight: 900; }
+.rlist .rsum { margin: 0 0 .6rem; color: var(--ink-2); }
+.digest { list-style: none; margin: 0; padding: 0; }
+.digest li { display: grid; grid-template-columns: 4rem minmax(0, 1fr); gap: .8rem; padding: .7rem 0; border-bottom: 1px solid var(--line); }
+.digest .rn { background: none; border: 0; padding: 0; text-align: left; font-weight: 900; color: var(--brand); cursor: pointer; min-height: 32px; align-self: start; }
+.digest .rn small { display: block; font-weight: 500; font-size: .75rem; color: var(--ink-3); }
+.digest p { margin: 0; font-size: .95rem; }
+.backbtn { margin-top: 1rem; border: 1px solid var(--ink); background: var(--bg); min-height: 44px; padding: 0 1.2rem; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: .9rem; }
+
 /* 정치 */
 .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
 @media (max-width: 960px) { .three { grid-template-columns: minmax(0, 1fr); } }
@@ -306,8 +344,8 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
     padding-bottom: env(safe-area-inset-bottom, 0px);
     padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px);
   }
-  .tabbar ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .tabbar a { display: flex; align-items: center; justify-content: center; min-height: 58px; color: var(--ink-3); text-decoration: none; font-size: .82rem; font-weight: 700; border-top: 3px solid transparent; margin-top: -1px; }
+  .tabbar ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .tabbar a { display: flex; align-items: center; justify-content: center; min-height: 58px; color: var(--ink-3); text-decoration: none; font-size: .78rem; font-weight: 700; border-top: 3px solid transparent; margin-top: -1px; }
   .tabbar a[aria-current="true"] { color: var(--brand); border-top-color: var(--brand); }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
@@ -348,6 +386,34 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
         <h2 id="briefH">오늘 꼭 볼 숫자</h2>
         <ol id="briefs"></ol>
       </aside>
+    </div>
+  </section>
+
+  <section class="sec" id="national" aria-labelledby="natH">
+    <div class="in">
+      <header class="sec-head">
+        <p class="label">전국</p>
+        <h2 id="natH">오늘의 전국 뉴스</h2>
+        <p class="desc">증시와 재정을 뺀 분야의 주요 뉴스입니다. 요약은 기사 원문을 바탕으로 새로 쓴 문장이고, 수치는 기사에 나온 그대로 옮겼습니다.</p>
+      </header>
+      <div class="flow" id="natFlow"></div>
+      <div class="ctrl" id="natCtrl" role="group" aria-label="분야 선택"></div>
+      <div class="news" id="natList"></div>
+      <div class="morebar"><button type="button" id="natMore" aria-controls="natList" aria-expanded="false">뉴스 더 보기</button></div>
+    </div>
+  </section>
+
+  <section class="sec" id="regions" aria-labelledby="regH">
+    <div class="in">
+      <header class="sec-head">
+        <p class="label">지역</p>
+        <h2 id="regH">17개 시도 소식</h2>
+        <p class="desc">지역 언론과 시·도 발표를 모았습니다. 지도에서 시도를 고르면 그 지역 기사만 봅니다.</p>
+      </header>
+      <div class="reg">
+        <div class="tmap" id="tmap" role="group" aria-label="시도 선택"></div>
+        <div class="rlist" id="rlist" aria-live="polite"></div>
+      </div>
     </div>
   </section>
 
@@ -507,9 +573,19 @@ td:first-child { font-weight: 700; white-space: nowrap; font-variant-numeric: ta
 
 const DAY = 86400000;
 const SECTIONS = [
-  ['home', '홈'], ['politics', '정치'], ['economy', '경제'],
-  ['industry', '산업'], ['fiscal', '재정'], ['media', '언론']
+  ['home', '홈'], ['national', '전국'], ['regions', '지역'], ['politics', '정치'],
+  ['economy', '경제'], ['industry', '산업'], ['fiscal', '재정'], ['media', '언론']
 ];
+// 시도 타일 지도. [이름, 열, 행, 가로 칸 수]. 실제 위치를 4열 격자에 대략 옮긴 배치
+const REGIONS = [
+  ['서울', 1, 0], ['강원', 2, 0, 2],
+  ['인천', 0, 1], ['경기', 1, 1], ['충북', 2, 1], ['경북', 3, 1],
+  ['충남', 0, 2], ['세종', 1, 2], ['대전', 2, 2], ['대구', 3, 2],
+  ['전북', 0, 3], ['경남', 2, 3], ['울산', 3, 3],
+  ['광주', 0, 4], ['전남', 1, 4], ['부산', 3, 4],
+  ['제주', 0, 5]
+];
+const NAT_CATS = ['사회', '사건·안전', '날씨·재난', '안보·외교', '국제', '과학·IT', '생활·물가', '문화·스포츠'];
 const DIR_LABEL = { up: '상승', down: '하락', flat: '보합' };
 const CAUSE = { ai: 'AI 투자 수익성·자금조달', macro: '금리·물가·유가', china: '중국 메모리 추격', struct: '반도체 쏠림·사이클 구조' };
 const LOOK = { rebound: '과매도·반등 쪽', down: '추가 하락 경계', both: '양론 병기', struct: '구조 변화론', none: '전망 없음·미확인' };
@@ -521,6 +597,9 @@ let filter = 'all';
 let sortKey = '';
 let showAll = false;
 let openAll = false;
+let natCat = '전체';
+let natAll = false;
+let region = '';
 
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => n.toLocaleString('ko-KR');
@@ -809,6 +888,119 @@ function renderFiscal() {
   $('npsReformSrc').textContent = N.reformSrc;
 }
 
+function newsItem(it, label) {
+  const a = el('article', { class: 'nitem' });
+  a.append(el('span', { class: 'ncat' }, label));
+  const h = el('h3');
+  h.append(el('a', { href: it.url, target: '_blank', rel: 'noopener' }, it.title));
+  a.append(h, el('p', {}, it.summary));
+  if (it.figures && it.figures.length) {
+    const f = el('div', { class: 'figs', 'aria-label': '기사 속 수치' });
+    it.figures.forEach((x) => f.append(el('span', { class: 'fig' }, x)));
+    a.append(f);
+  }
+  const src = el('div', { class: 'nsrc' });
+  src.append(el('span', {}, it.outlet + ' · ' + it.date.slice(5).replace('-', '/')));
+  if (it.figure_source) src.append(el('span', {}, '수치 출처 ' + it.figure_source));
+  if (!it.body_read) src.append(el('span', { class: 'badge warn' }, '본문 미확인'));
+  a.append(src);
+  return a;
+}
+
+function renderNational() {
+  const N = D.national;
+  if (!N) { $('national').hidden = true; return; }
+  const flow = $('natFlow');
+  flow.textContent = '';
+  flow.append(el('h3', {}, '오늘 전국 뉴스의 흐름'));
+  const ol = el('ol');
+  N.flow.forEach((t) => ol.append(el('li', {}, t)));
+  flow.append(ol);
+
+  const cats = ['전체'].concat(NAT_CATS.filter((c) => N.items.some((i) => i.cat === c)));
+  const ctrl = $('natCtrl');
+  if (!ctrl.childNodes.length) {
+    cats.forEach((c) => {
+      const n = c === '전체' ? N.items.length : N.items.filter((i) => i.cat === c).length;
+      const b = el('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(c === natCat) }, c + ' ' + n);
+      b.addEventListener('click', () => {
+        natCat = c;
+        ctrl.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        renderNational();
+      });
+      ctrl.append(b);
+    });
+  }
+  const box = $('natList');
+  box.textContent = '';
+  let list = N.items.filter((i) => natCat === '전체' || i.cat === natCat);
+  // 전체 보기에서는 분야 순서대로 정렬해 같은 분야가 모여 보이게 한다
+  list = list.slice().sort((a, b) => NAT_CATS.indexOf(a.cat) - NAT_CATS.indexOf(b.cat));
+  const limit = window.matchMedia('(max-width: 760px)').matches ? 4 : 8;
+  const total = list.length;
+  if (!natAll) list = list.slice(0, limit);
+  list.forEach((it) => box.append(newsItem(it, it.cat + (it.region && it.region !== '전국' ? ' · ' + it.region : ''))));
+  const more = $('natMore');
+  const rest = total - Math.min(total, limit);
+  more.hidden = rest <= 0 && !natAll;
+  more.textContent = natAll ? '목록 접기' : '뉴스 ' + rest + '건 더 보기';
+  more.setAttribute('aria-expanded', String(natAll));
+}
+
+function renderRegions() {
+  const R = D.regions;
+  if (!R) { $('regions').hidden = true; return; }
+  const count = (name) => R.items.filter((i) => i.region === name).length;
+  const map = $('tmap');
+  map.textContent = '';
+  const all = el('button', { class: 'rtile allbtn', type: 'button', 'aria-pressed': String(region === '') }, '전국 한눈에');
+  all.append(el('small', {}, R.items.length + '건'));
+  all.addEventListener('click', () => selectRegion(''));
+  map.append(all);
+  REGIONS.forEach(([name, c, r, span]) => {
+    const n = count(name);
+    const t = el('button', { class: 'rtile' + (n ? '' : ' none'), type: 'button', 'aria-pressed': String(region === name), 'aria-label': name + ' ' + n + '건' }, name);
+    t.append(el('small', { 'aria-hidden': 'true' }, n + '건'));
+    t.style.gridColumn = (c + 1) + ' / span ' + (span || 1);
+    t.style.gridRow = String(r + 2);
+    t.addEventListener('click', () => selectRegion(name));
+    map.append(t);
+  });
+
+  const box = $('rlist');
+  box.textContent = '';
+  if (!region) {
+    box.append(el('h3', {}, '시도별 한 줄'));
+    const ul = el('ul', { class: 'digest' });
+    REGIONS.forEach(([name]) => {
+      const li = el('li');
+      const b = el('button', { class: 'rn', type: 'button' }, name);
+      b.append(el('small', {}, count(name) + '건'));
+      b.addEventListener('click', () => selectRegion(name));
+      const first = R.items.find((i) => i.region === name);
+      li.append(b, el('p', {}, R.summary[name] || (first ? first.summary : '이번 호에는 확인한 기사가 없습니다.')));
+      ul.append(li);
+    });
+    box.append(ul);
+    return;
+  }
+  box.append(el('h3', {}, region));
+  if (R.summary[region]) box.append(el('p', { class: 'rsum' }, R.summary[region]));
+  const items = R.items.filter((i) => i.region === region);
+  if (!items.length) box.append(el('p', { class: 'rsum' }, '이번 호에는 확인한 기사가 없습니다.'));
+  items.forEach((it) => box.append(newsItem(it, it.cat)));
+  const back = el('button', { class: 'backbtn', type: 'button' }, '전국 한눈에 보기');
+  back.addEventListener('click', () => selectRegion(''));
+  box.append(back);
+}
+
+function selectRegion(name) {
+  region = name;
+  renderRegions();
+  // 좁은 화면에서는 지도 아래 목록으로 내려가 바로 읽게 한다
+  if (window.matchMedia('(max-width: 900px)').matches) $('rlist').scrollIntoView({ block: 'start' });
+}
+
 function renderPolitics() {
   const start = utc(2025, 6, 4);
   const end = utc(2030, 6, 3);
@@ -867,6 +1059,11 @@ function setupStories() {
       }
       renderStories();
     });
+  });
+  $('natMore').addEventListener('click', () => {
+    natAll = !natAll;
+    renderNational();
+    if (!natAll) $('natList').scrollIntoView({ block: 'start' });
   });
   $('moreBtn').addEventListener('click', () => {
     showAll = !showAll;
@@ -955,6 +1152,8 @@ async function boot() {
   }
   ISSUE = parseDate(D.date);
   renderLead();
+  renderNational();
+  renderRegions();
   renderPolitics();
   renderNums();
   renderIndustry();

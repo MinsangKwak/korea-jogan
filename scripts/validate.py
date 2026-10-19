@@ -9,6 +9,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ISSUES = ROOT / "public" / "data" / "issues"
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+REGIONS = {
+    "서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종", "경기",
+    "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주",
+}
 REQUIRED = ("date", "lead", "briefs", "nums", "media", "diffs", "views", "items", "industries", "trade", "debt", "fiscal", "nps", "agenda", "limits")
 
 
@@ -53,6 +57,16 @@ def check_issue(path: Path) -> list[str]:
         year, amount, ratio, _kind = row
         if not (100 <= amount <= 5000) or not (10 <= ratio <= 150):
             errors.append(f"{name}: debt {year} 값이 정상 범위를 벗어남")
+
+    # 전국·지역 뉴스는 기사 링크와 요약이 있어야 하고, 지역은 17개 시도 이름만 쓴다
+    for i, it in enumerate(issue.get("national", {}).get("items", [])):
+        if not str(it.get("url", "")).startswith("https://") or not it.get("summary"):
+            errors.append(f"{name}: national[{i}] 링크·요약 누락")
+    for i, it in enumerate(issue.get("regions", {}).get("items", [])):
+        if it.get("region") not in REGIONS:
+            errors.append(f"{name}: regions[{i}] 시도 이름 오류 '{it.get('region')}'")
+        if not str(it.get("url", "")).startswith("https://") or not it.get("summary"):
+            errors.append(f"{name}: regions[{i}] 링크·요약 누락")
 
     return errors
 
