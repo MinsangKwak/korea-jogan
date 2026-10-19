@@ -23,7 +23,7 @@
 | 해결하려는 문제 | 정확한 수치 없이 '폭락', '최악' 같은 표현만 앞세우는 기사, 같은 사실이 기준점에 따라 다른 숫자로 보도되는 문제 |
 | 주요 독자 | 20대부터 70대까지. 모바일로 아침에 한 번 훑어보는 독자를 기준으로 화면을 짰습니다 |
 | 주요 기능 | 머리기사와 핵심 숫자, 전국 뉴스, 17개 시도 지도, 임기·선거·예산 D-Day, 주력산업·수출입, 국가채무 연도별 추이, 국민연금, 주제·키워드별 언론 보도 비교 |
-| 화면 | 정적 HTML 한 장 · 바닐라 JavaScript(`'use strict'`) · CSS 변수 · 빌드 도구 없음 |
+| 화면 | 정적 HTML 한 장 · 바닐라 JavaScript(`'use strict'`) · 디자인 시스템(토큰 CSS 변수 + `kj-` 컴포넌트) · 빌드 도구 없음 |
 | 데이터 | 날짜별 JSON 한 개. 공식 발표 원문과 그 발표를 인용한 기사에서만 수치를 가져옵니다 |
 | 검사·배포 | Python 검사 스크립트 · GitHub Actions · GitHub Pages(`deploy` 브랜치 전용) |
 | 자동 발행 | Claude 예약 작업이 매일 00시에 조사 → 초안 JSON 작성 → 검사 → `dev` 커밋. 사람이 머리기사·핵심 숫자를 대조해 승인한 뒤 배포 |
@@ -70,18 +70,24 @@
 ```text
 korea-jogan/
 ├── public/                         GitHub Pages로 배포하는 정적 사이트. 이 폴더만 배포됩니다
-│   ├── index.html                  화면 전체(HTML·CSS·JS 한 파일). 데이터는 아래 JSON에서 읽습니다
+│   ├── index.html                  화면(배치 CSS·마크업·JS). 데이터는 아래 JSON에서 읽습니다
+│   ├── assets/
+│   │   ├── tokens.css              디자인 토큰 CSS 변수. design/tokens.json에서 만듭니다(손으로 고치지 않음)
+│   │   └── kj.css                  디자인 시스템 컴포넌트(kj- 접두사)
 │   ├── og.png                      공유 미리보기 이미지(1200×630). scripts/og/에서 만듭니다
 │   └── data/
 │       ├── corrections.json        정정 기록
 │       └── issues/                 날짜별 발행 데이터
 │           ├── index.json          최신 호(latest)와 발행 목록(issues)
 │           └── YYYY-MM-DD.json     그날 호. 형식은 docs/DATA.md
+├── design/
+│   └── tokens.json                 디자인 토큰 원본(색·글자·간격·모서리·선·크기, 밝은·어두운 테마)
 ├── data/raw/                       공공 API 수집 원본(기관별). 지금은 ECOS 자리만 있습니다
 ├── scripts/
 │   ├── validate.py                 발행 전 검사. --deploy면 승인 전 초안도 막습니다
 │   ├── approve.py                  사람이 확인한 초안을 공개(published)로 바꿉니다
 │   ├── build_feed.py               RSS(feed.xml). 배포할 때 만듭니다
+│   ├── build_tokens.py             design/tokens.json → public/assets/tokens.css. --check로 최신 여부 검사
 │   ├── ecos_nums.py                ECOS 원본을 핵심 숫자(nums) 꼴로 바꿉니다
 │   ├── og/                         공유 미리보기 카드(card.html)와 이미지 생성(build.mjs)
 │   ├── tests/                      스크립트 시험(unittest)
@@ -90,7 +96,7 @@ korea-jogan/
 ├── .githooks/
 │   └── commit-msg                  로컬 커밋 제목 검사 훅
 ├── .github/workflows/
-│   ├── check.yml                   dev·main push와 PR에서 데이터 검사·스크립트 시험, PR 커밋 제목 검사
+│   ├── check.yml                   dev·main push와 PR에서 데이터 검사·토큰 CSS 검사·스크립트 시험, PR 커밋 제목 검사
 │   ├── deploy-pages.yml            deploy push 시 배포 규칙까지 검사하고 RSS를 만든 뒤 GitHub Pages 배포
 │   └── daily.yml                   ECOS 원본 수집(수동 실행)
 ├── docs/

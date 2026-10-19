@@ -22,7 +22,9 @@ flowchart LR
 
 | 구성 | 파일 | 하는 일 |
 | --- | --- | --- |
-| 화면 | [public/index.html](../../public/index.html) | HTML·CSS·JS 한 파일. 최신 호 JSON을 읽어 섹션별로 그립니다 |
+| 화면 | [public/index.html](../../public/index.html) | 배치 CSS·마크업·JS. 최신 호 JSON을 읽어 섹션별로 그립니다 |
+| 디자인 시스템 | [design/tokens.json](../../design/tokens.json) · [public/assets/](../../public/assets) | 토큰 원본과, 그것으로 만든 `tokens.css`, `kj-` 컴포넌트 `kj.css` |
+| 토큰 CSS 생성 | [scripts/build_tokens.py](../../scripts/build_tokens.py) | `tokens.json`을 CSS 변수로 바꿉니다. CI가 `--check`로 어긋남을 막습니다 |
 | 발행 데이터 | [public/data/issues/](../../public/data/issues) | `index.json`(최신 호·목록)과 날짜별 호. 형식은 [DATA.md](../DATA.md) |
 | 발행 전 검사 | [scripts/validate.py](../../scripts/validate.py) | 필수 항목, 출처·링크, 값 범위, 날짜, 시도 이름을 검사합니다 |
 | 커밋 제목 검사 | [scripts/check_commit_msg.mjs](../../scripts/check_commit_msg.mjs) | 로컬 훅과 PR에서 `종류(범위): 제목` 규칙을 검사합니다 |
@@ -33,7 +35,7 @@ flowchart LR
 
 ## 화면 구현
 
-빌드 없이 브라우저가 바로 읽는 파일 하나로 만들었습니다. 1인 운영에서 의존성 업데이트와 빌드 실패를 관리할 일을 없애기 위해서입니다.
+빌드 없이 브라우저가 바로 읽는 정적 파일로 만들었습니다. 1인 운영에서 의존성 업데이트와 빌드 실패를 관리할 일을 없애기 위해서입니다. 화면은 `index.html` 하나에 배치·마크업·JS를 두고, 색·글자·간격은 디자인 시스템 CSS 두 개(`assets/tokens.css`, `assets/kj.css`)에서 가져옵니다.
 
 | 기능 | 구현 |
 | --- | --- |
@@ -44,7 +46,9 @@ flowchart LR
 | 국가채무 그래프 | 최댓값 대비 비율로 막대 폭을 정하고, 전망치는 다른 모양으로, 빠진 연도는 '미확인' 줄로 표시합니다. 전년 대비 증가액을 함께 적습니다 |
 | D-Day | 대통령 임기 경과율과 선거·예산 처리기한 남은 날을 발행일 기준으로 계산합니다 |
 | 글자 크기 | 루트 글자 크기 변수 하나만 바꿔 전체를 키웁니다. 선택은 `localStorage`에 두고, 저장이 막힌 환경에서도 화면은 그대로 동작합니다 |
-| 테마·접근성 | CSS 변수로 색을 정의하고 `prefers-color-scheme`으로 어두운 화면을 지원합니다. `prefers-reduced-motion`이면 부드러운 스크롤을 끕니다 |
+| 디자인 시스템 | 색 27개·글자 16단계·간격·모서리·선·크기를 `design/tokens.json` 한 곳에 두고 `build_tokens.py`로 CSS 변수를 만듭니다. 컴포넌트(숫자 카드, 출처 펼치기, 신뢰도 배지, 막대 그래프 등)는 `kj-` 클래스로 씁니다 |
+| 테마·접근성 | 본문 4.5:1, 막대·테두리 3:1 이상을 두 테마 모두에서 지킵니다. `prefers-color-scheme`으로 어두운 화면, 누르는 요소는 모두 44px 이상, 가장 작은 글자는 0.8rem입니다. 신뢰도·결산/전망·법정일/계산일은 색이 아니라 모양(채움·실선·점선)과 글자로 구분합니다. `prefers-reduced-motion`이면 부드러운 스크롤과 뼈대 깜빡임을 끕니다 |
+| 상태 | 불러오는 중에는 뼈대, 실패하면 '다시 불러오기' 오류 상자, 검색 결과가 없으면 대신 볼 주제를 보여 줍니다 |
 
 스크립트는 `'use strict'`로 실행하고, 화면 문자열은 `textContent`로 넣어 데이터 안의 HTML이 실행되지 않게 했습니다.
 
