@@ -53,6 +53,7 @@
   --nav-h: 52px;
   --tabbar-h: 60px;
   --drawer-w: min(24rem, 88vw);
+  --rail-w: 9rem;
   --wrap: 1120px;
   --measure: 42rem;
   --font-sans: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
