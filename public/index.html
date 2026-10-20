@@ -38,9 +38,7 @@
 [hidden] { display: none !important; }
 
 /* 제호 */
-.mast-date { display: flex; flex-direction: column; line-height: 1.4; }
-.mast-date small { font-size: 0.8rem; opacity: 0.85; }
-.mast-btns { display: flex; gap: var(--space-2); }
+
 
 /* 홈 */
 .hero { padding-block: var(--space-8) var(--space-10); }
@@ -167,17 +165,22 @@
   <div class="kj-mast">
     <div class="kj-wrap kj-mast__in">
       <a class="kj-mast__logo" href="#top">대한민국 조간<small>데이터로 읽는 오늘의 대한민국</small></a>
-      <div class="kj-mast__side">
-        <span class="mast-date"><time id="issueDate" datetime="">—</time><small id="asOf"></small></span>
-        <span class="mast-btns">
-          <button class="kj-sizebtn" id="shareBtn" type="button">공유</button>
-          <button class="kj-sizebtn" id="bigBtn" type="button" aria-pressed="false"><b>가</b> 글자 크게</button>
-        </span>
-      </div>
+      <p class="kj-mast__meta">
+        <time id="issueDate" datetime="">—</time>
+        <span id="asOf"></span>
+        <a class="kj-status" id="statusChip" href="#limitsH" hidden></a>
+      </p>
+      <span class="kj-mast__actions">
+        <button class="kj-sizebtn kj-iconbtn" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="kj-iconbtn__lbl" id="shareLbl">공유</span></button>
+        <button class="kj-sizebtn kj-iconbtn" id="bigBtn" type="button" aria-pressed="false"><b aria-hidden="true">가</b><span class="kj-iconbtn__lbl">글자 크게</span></button>
+      </span>
     </div>
   </div>
   <div class="kj-notice kj-notice--stale" id="stale" role="status" hidden>
     <div class="kj-wrap kj-notice__in"><p id="staleMsg"></p></div>
+  </div>
+  <div class="kj-notice" id="noticeBox" role="note">
+    <div class="kj-wrap kj-notice__in"><p id="notice">오늘 호를 불러오는 중입니다.</p></div>
   </div>
   <section class="kj-live" id="live" aria-labelledby="liveH" hidden>
     <div class="kj-wrap kj-live__in">
@@ -185,9 +188,6 @@
       <ul class="kj-live__list" id="liveList"></ul>
     </div>
   </section>
-  <div class="kj-notice" id="noticeBox" role="note">
-    <div class="kj-wrap kj-notice__in"><p id="notice">오늘 호를 불러오는 중입니다.</p></div>
-  </div>
 </header>
 
 <nav class="kj-cats" id="cats" aria-label="분야">
@@ -700,7 +700,10 @@ function setupDrawer() {
 
 function renderLead() {
   const L = D.lead;
-  $('issueDate').textContent = ISSUE.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', timeZone: 'UTC' });
+  // 좁은 화면에서는 연도를 숨겨 호 정보가 한 줄에 들어가게 한다
+  const dateEl = $('issueDate');
+  dateEl.textContent = '';
+  dateEl.append(el('span', { class: 'y' }, ISSUE.getUTCFullYear() + '년 '), document.createTextNode(ISSUE.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long', timeZone: 'UTC' })));
   $('issueDate').setAttribute('datetime', D.date);
   $('leadSkel').remove();
   $('leadBox').removeAttribute('aria-busy');
@@ -762,9 +765,12 @@ async function renderLive() {
   });
   const at = new Date(L.updatedAt);
   const hours = (Date.now() - at.getTime()) / 3600000;
-  const when = at.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
+  const sameDay = new Date(at.getTime() + 9 * 3600000).toISOString().slice(0, 10) === todayKST();
+  const when = at.toLocaleString('ko-KR', sameDay ? { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' } : { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
   // 평일 낮에는 1시간마다 갱신한다. 반나절 넘게 멈췄으면 그 사실을 함께 적는다
-  $('liveMeta').textContent = (oneDay ? oneDay + ' 기준 · ' : '') + when + ' 갱신' + (hours > 12 ? ' · 갱신이 늦어지고 있습니다' : '') + ' · 출처 ' + L.source;
+  // 안내 줄은 한 줄에 들어가게 출처를 줄여 쓰고, 전체 이름은 마우스를 올리면 보인다
+  $('liveMeta').textContent = (oneDay ? oneDay + ' 기준 · ' : '') + when + ' 갱신' + (hours > 12 ? ' · 갱신이 늦어지고 있습니다' : '') + ' · 출처 ECOS';
+  $('liveMeta').title = '출처: ' + L.source;
   $('live').hidden = false;
 }
 
@@ -1219,11 +1225,12 @@ function setupShare() {
     }
     try {
       await navigator.clipboard.writeText(url);
-      btn.textContent = '링크 복사됨';
+      $('shareLbl').textContent = '링크 복사됨';
+      btn.setAttribute('aria-label', '링크 복사됨');
     } catch (e) {
       window.prompt('이 링크를 복사하세요', url);
     }
-    setTimeout(() => { btn.textContent = '공유'; }, 2000);
+    setTimeout(() => { $('shareLbl').textContent = '공유'; btn.removeAttribute('aria-label'); }, 2000);
   });
 }
 
@@ -1237,7 +1244,10 @@ function renderAsOf() {
   if (!D.collectedAt) return;
   const t = new Date(D.collectedAt);
   if (Number.isNaN(t.getTime())) return;
-  $('asOf').textContent = t.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' }) + ' 수집 기준';
+  // 발행일과 같은 날 모았으면 날짜는 이미 옆에 있으니 시각만 적는다
+  const kst = new Date(t.getTime() + 9 * 3600000).toISOString();
+  const opts = kst.slice(0, 10) === D.date ? { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' } : { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' };
+  $('asOf').textContent = t.toLocaleString('ko-KR', opts) + ' 수집';
 }
 
 // 호 상태(시안·초안·공개)에 따라 맨 위 안내 문구를 바꾼다. 자세한 한계는 바닥글로 잇는다
@@ -1246,10 +1256,19 @@ function renderNotice() {
   box.textContent = '';
   const st = D.status;
   const more = el('a', { href: '#limitsH' }, '수집 한계 보기');
+  // 정상(편집자 확인)일 때는 띠를 접고 제호 안에 확인 표시만 둔다. 초안·시안은 띠로 경고한다
   if (st === 'published' && D.review) {
-    $('noticeBox').classList.add('kj-notice--ok');
-    const at = new Date(D.review.at).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' });
-    box.append(el('strong', {}, '편집자 확인을 마친 호입니다.'), document.createTextNode(' 머리기사와 핵심 숫자를 ' + at + '에 원문과 대조했습니다. '), more);
+    const at = new Date(D.review.at);
+    const hm = at.toLocaleString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
+    const full = at.toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' });
+    const chip = $('statusChip');
+    chip.textContent = '';
+    chip.append(svgIcon('M5 12.5 10 17 19 7'), document.createTextNode('편집자 확인 ' + hm));
+    chip.setAttribute('aria-label', '편집자 확인을 마친 호. 머리기사와 핵심 숫자를 ' + full + '에 원문과 대조했습니다. 수집 한계 보기');
+    chip.title = '머리기사와 핵심 숫자를 ' + full + '에 원문과 대조했습니다';
+    chip.hidden = false;
+    $('noticeBox').hidden = true;
+    return;
   } else if (st === 'draft') {
     box.append(el('strong', {}, '확인 전 초안입니다.'), document.createTextNode(' 사람이 원문과 대조하기 전이라 숫자가 바뀔 수 있습니다. '), more);
   } else {
