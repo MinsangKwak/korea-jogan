@@ -87,7 +87,7 @@
 .nat-chips { margin-bottom: var(--space-2); }
 
 /* 지역 */
-.reg { display: grid; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); gap: var(--space-10); align-items: start; }
+.reg { display: grid; grid-template-columns: minmax(0, 22rem) minmax(0, 1fr); gap: var(--space-10); align-items: start; }
 .reg .kj-tmap { position: sticky; top: calc(var(--nav-h) + var(--space-4)); }
 .rlist h3 { margin: 0 0 var(--space-1); font-size: 1.25rem; font-weight: 900; }
 .rlist .rsum { margin: 0 0 var(--space-3); color: var(--ink-2); }
@@ -101,8 +101,9 @@
 .rlist .kj-btn { margin-top: var(--space-4); }
 .rlist .kj-more .kj-btn { margin-top: 0; }
 .links .kj-more { margin-bottom: var(--space-6); }
+/* 900px 이하는 시도 선택을 기사 위 한 줄 띠로 두고, 기사는 그 아래 전체 폭으로 보인다 */
 @media (max-width: 900px) {
-  .reg { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+  .reg { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
   .reg .kj-tmap { position: static; }
 }
 
@@ -281,7 +282,7 @@
       <header class="kj-sechead">
         <p class="kj-label">지역</p>
         <h2 id="regH">17개 시도 소식</h2>
-        <p>지역 언론과 시·도 발표를 모았습니다. 지도에서 시도를 고르면 그 지역 기사만 봅니다.</p>
+        <p>지역 언론과 시·도 발표를 모았습니다. 권역별로 시도를 고르면 그 지역 기사만 봅니다.</p>
         <p class="kj-sechead__meta" id="regMeta"></p>
       </header>
       <div class="reg">
@@ -463,15 +464,16 @@ const TABS = [
   ['정치', ['politics'], 'M4 20h16M6 17V10M10 17V10M14 17V10M18 17V10M3 10l9-6 9 6z'],
   ['경제·재정', ['economy', 'industry', 'fiscal'], 'M4 19h16M6 16V9M11 16V5M16 16v-5']
 ];
-// 시도 타일 지도. [이름, 열, 행, 가로 칸 수]. 실제 위치를 4열 격자에 대략 옮긴 배치
-const REGIONS = [
-  ['서울', 1, 0], ['강원', 2, 0, 2],
-  ['인천', 0, 1], ['경기', 1, 1], ['충북', 2, 1], ['경북', 3, 1],
-  ['충남', 0, 2], ['세종', 1, 2], ['대전', 2, 2], ['대구', 3, 2],
-  ['전북', 0, 3], ['경남', 2, 3], ['울산', 3, 3],
-  ['광주', 0, 4], ['전남', 1, 4], ['부산', 3, 4],
-  ['제주', 0, 5]
+// 시도는 권역별로 묶어 고른다. 지도 모양 격자는 빈칸이 생겨 찾기 어려웠다
+const REGION_GROUPS = [
+  ['수도권', ['서울', '인천', '경기']],
+  ['강원', ['강원']],
+  ['충청', ['대전', '세종', '충북', '충남']],
+  ['호남', ['광주', '전북', '전남']],
+  ['영남', ['부산', '대구', '울산', '경북', '경남']],
+  ['제주', ['제주']]
 ];
+const REGIONS = REGION_GROUPS.flatMap(([, names]) => names.map((n) => [n]));
 const NAT_CATS = ['사회', '사건·안전', '날씨·재난', '안보·외교', '국제', '과학·IT', '생활·물가', '문화·스포츠'];
 const DIR_LABEL = { up: '상승', down: '하락', flat: '보합' };
 const BAR_CLASS = { semi: ' kj-bar--semi', trad: ' kj-bar--trad' };
@@ -1136,23 +1138,29 @@ function renderRegions() {
   $('regMeta').textContent = R.items.length + '건 · ' + covered + '개 시도 · ' + asOfText();
   const map = $('tmap');
   map.textContent = '';
-  const all = el('button', { class: 'kj-rtile kj-rtile--all', type: 'button', 'aria-pressed': String(region === '') }, '전국 한눈에');
-  all.append(el('small', {}, R.items.length + '건'));
-  all.addEventListener('click', () => selectRegion(''));
-  map.append(all);
-  REGIONS.forEach(([name, c, r, span]) => {
-    const n = count(name);
+  // 한 줄에 권역 이름과 그 권역의 시도 칩을 둔다. 맨 위 '전국' 줄은 모든 시도 보기
+  const row = (label, chips) => {
+    const r = el('div', { class: 'kj-tmap__row', role: 'group', 'aria-label': label });
+    const box = el('div', { class: 'kj-tmap__chips' });
+    chips.forEach((c) => box.append(c));
+    r.append(el('span', { class: 'kj-tmap__label', 'aria-hidden': 'true' }, label), box);
+    map.append(r);
+  };
+  const chip = (name, n, pressed, onPick) => {
     const attrs = { class: 'kj-rtile', type: 'button', 'aria-label': name + ' ' + n + '건' };
     // 기사가 없는 시도는 고를 수 없게 하고 점선으로 표시한다
-    if (n) attrs['aria-pressed'] = String(region === name);
+    if (n) attrs['aria-pressed'] = String(pressed);
     else attrs['aria-disabled'] = 'true';
     const t = el('button', attrs, name);
-    t.append(el('small', { 'aria-hidden': 'true' }, n + '건'));
-    t.style.gridColumn = (c + 1) + ' / span ' + (span || 1);
-    t.style.gridRow = String(r + 2);
-    if (n) t.addEventListener('click', () => selectRegion(name));
-    map.append(t);
-  });
+    t.append(el('small', { 'aria-hidden': 'true' }, String(n)));
+    if (n) t.addEventListener('click', onPick);
+    return t;
+  };
+  row('전국', [chip('전체', R.items.length, region === '', () => selectRegion(''))]);
+  REGION_GROUPS.forEach(([label, names]) => row(label, names.map((name) => chip(name, count(name), region === name, () => selectRegion(name)))));
+  // 한 줄 띠(좁은 화면)에서는 고른 시도가 띠 가운데 오도록 띠만 가로로 민다
+  const picked = map.querySelector('[aria-pressed="true"]');
+  if (picked && map.scrollWidth > map.clientWidth) map.scrollLeft = picked.offsetLeft - map.offsetLeft - (map.clientWidth - picked.offsetWidth) / 2;
 
   const box = $('rlist');
   box.textContent = '';
