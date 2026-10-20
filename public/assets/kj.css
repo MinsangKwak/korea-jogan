@@ -97,10 +97,13 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .kj-sizebtn b { font-size: 1.15em; font-weight: 900; }
 .kj-sizebtn[aria-pressed="true"] { background: var(--head-ink); color: var(--head); }
 
-/* 분야 메뉴 */
+/* 분야 메뉴. 본문 전체에 걸쳐 위에 붙어 있도록 header 밖, body 바로 아래에 둔다 */
 .kj-cats { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: var(--border-hairline) solid var(--line); }
 .kj-cats.is-stuck { box-shadow: var(--shadow-sticky); }
-.kj-cats ul { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--space-1); overflow-x: auto; scrollbar-width: none; }
+.kj-cats__in { display: flex; align-items: center; gap: var(--space-2); }
+.kj-cats__logo { display: none; flex: none; padding-right: var(--space-2); color: var(--ink); font-weight: 900; font-size: 1.05rem; text-decoration: none; white-space: nowrap; }
+.kj-cats.is-stuck .kj-cats__logo { display: flex; align-items: center; height: var(--nav-h); }
+.kj-cats ul { flex: 1; min-width: 0; list-style: none; margin: 0; padding: 0; display: flex; gap: var(--space-1); overflow-x: auto; scrollbar-width: none; }
 .kj-cats a {
   display: flex; align-items: center; height: var(--nav-h); padding: 0 var(--space-4); color: var(--ink);
   text-decoration: none; font-weight: 700; font-size: 0.95rem; white-space: nowrap;
@@ -109,13 +112,114 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .kj-cats a:hover { color: var(--brand); }
 .kj-cats a[aria-current="true"] { color: var(--brand); border-bottom-color: var(--brand); }
 
+/* 오른쪽 세로 메뉴. 1200px 이상에서 위쪽 분야 메뉴 대신 화면 오른쪽 가운데에 늘 떠 있다 */
+.kj-rail { display: none; }
+@media (min-width: 1200px) {
+  .kj-cats { display: none; }
+  .kj-rail {
+    display: flex; flex-direction: column; position: fixed; z-index: 20; right: var(--gutter); top: 50%; transform: translateY(-50%);
+    width: var(--rail-w); max-height: calc(100vh - 2 * var(--gutter)); overflow-y: auto;
+    padding: var(--space-2); background: var(--surface-raised); border: var(--border-hairline) solid var(--line);
+    border-radius: var(--radius-md); box-shadow: var(--shadow-sticky);
+  }
+}
+.kj-rail__title { margin: 0; padding: var(--space-1) var(--space-2) var(--space-2); font-size: 0.75rem; font-weight: 700; color: var(--ink-3); }
+.kj-rail ol { list-style: none; margin: 0; padding: 0; }
+.kj-rail ol a {
+  display: flex; align-items: center; min-height: 40px; padding: 0 var(--space-2); color: var(--ink-2); text-decoration: none;
+  font-size: 0.92rem; font-weight: 700; border-left: var(--border-rule) solid transparent; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.kj-rail ol a:hover { color: var(--brand); background: var(--surface); }
+.kj-rail ol a[aria-current="true"] { color: var(--brand); border-left-color: var(--brand); background: var(--brand-soft); }
+.kj-rail__tools { display: grid; gap: var(--space-1); margin-top: var(--space-2); padding-top: var(--space-2); border-top: var(--border-hairline) solid var(--line); }
+.kj-rail__tools button, .kj-rail__tools a {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-1); min-height: 40px; padding: 0 var(--space-2);
+  background: transparent; color: var(--ink); border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-sm);
+  font-size: 0.82rem; font-weight: 700; text-decoration: none; cursor: pointer;
+}
+.kj-rail__tools a { border-color: transparent; color: var(--ink-3); }
+.kj-rail__tools button:hover, .kj-rail__tools a:hover { color: var(--brand); border-color: var(--brand); }
+.kj-rail__tools svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* 맨 위로 단추. 1199px 이하에서 한 화면 넘게 내려가면 오른쪽 아래에 뜬다(넓은 화면은 세로 메뉴에 있음) */
+.kj-totop {
+  position: fixed; z-index: 24; right: max(var(--gutter), env(safe-area-inset-right, 0px));
+  bottom: calc(var(--gutter) + env(safe-area-inset-bottom, 0px));
+  display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px;
+  background: var(--surface-raised); color: var(--ink); border: var(--border-hairline) solid var(--line-strong);
+  border-radius: var(--radius-pill); box-shadow: var(--shadow-sticky); cursor: pointer;
+  opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.kj-totop.is-shown { opacity: 1; transform: none; pointer-events: auto; }
+.kj-totop:hover { color: var(--brand); border-color: var(--brand); }
+.kj-totop svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 860px) { body.has-tabbar .kj-totop { bottom: calc(var(--tabbar-h) + var(--space-3) + env(safe-area-inset-bottom, 0px)); } }
+@media (min-width: 1200px) { .kj-totop { display: none; } }
+@media (prefers-reduced-motion: reduce) { .kj-totop { transition: none; } }
+
+/* 전체 메뉴 단추(햄버거) */
+.kj-menubtn {
+  flex: none; display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap-min); padding: 0 var(--space-3);
+  background: transparent; color: var(--ink); border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-sm);
+  font-size: 0.88rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.kj-menubtn:hover { border-color: var(--brand); color: var(--brand); }
+.kj-menubtn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+/* 전체 메뉴 서랍. 오른쪽에서 열리고, 뒤 화면은 가림막으로 덮는다 */
+.kj-drawer { position: fixed; inset: 0; z-index: 40; }
+.kj-drawer__scrim { position: absolute; inset: 0; background: var(--scrim); opacity: 0; transition: opacity 0.2s ease; }
+.kj-drawer__panel {
+  position: absolute; top: 0; right: 0; bottom: 0; width: var(--drawer-w); display: flex; flex-direction: column;
+  background: var(--bg); box-shadow: var(--shadow-drawer); transform: translateX(100%); transition: transform 0.22s ease;
+  padding-bottom: env(safe-area-inset-bottom, 0px); outline: none;
+}
+.kj-drawer.is-open .kj-drawer__scrim { opacity: 1; }
+.kj-drawer.is-open .kj-drawer__panel { transform: none; }
+.kj-drawer__head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4); background: var(--head); color: var(--head-ink);
+}
+.kj-drawer__head h2 { margin: 0; font-size: 1.05rem; font-weight: 900; }
+.kj-drawer__close {
+  display: inline-flex; align-items: center; justify-content: center; width: var(--tap-min); height: var(--tap-min);
+  background: transparent; color: var(--head-ink); border: var(--border-hairline) solid var(--head-line); border-radius: var(--radius-sm); cursor: pointer;
+}
+.kj-drawer__close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.kj-drawer__body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: var(--space-2) var(--space-4) var(--space-6); }
+.kj-drawer__secs { list-style: none; margin: 0; padding: 0; }
+.kj-drawer__secs > li { border-bottom: var(--border-hairline) solid var(--line); padding-block: var(--space-2); }
+.kj-drawer__sec { display: grid; gap: 2px; padding: var(--space-2) 0; color: var(--ink); text-decoration: none; }
+.kj-drawer__sec b { font-size: 1.05rem; font-weight: 900; }
+.kj-drawer__sec span { font-size: 0.82rem; color: var(--ink-3); line-height: 1.5; }
+.kj-drawer__sec:hover b, .kj-drawer__sec[aria-current="true"] b { color: var(--brand); }
+.kj-drawer__sec[aria-current="true"] b::after { content: " · 지금 읽는 곳"; font-size: 0.75rem; font-weight: 700; }
+.kj-drawer__subs { display: flex; flex-wrap: wrap; gap: var(--space-1); list-style: none; margin: 0 0 var(--space-1); padding: 0; }
+.kj-drawer__subs button {
+  min-height: 36px; padding: 0 var(--space-3); background: var(--surface); color: var(--ink-2); border: 0; border-radius: var(--radius-pill);
+  font-size: 0.82rem; font-weight: 500; cursor: pointer;
+}
+.kj-drawer__subs button:hover { background: var(--brand-soft); color: var(--brand); }
+.kj-drawer__tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin-top: var(--space-4); }
+.kj-drawer__tools button {
+  min-height: var(--tap-min); background: var(--surface); color: var(--ink); border: var(--border-hairline) solid var(--line);
+  border-radius: var(--radius-sm); font-size: 0.88rem; font-weight: 700; cursor: pointer;
+}
+.kj-drawer__tools button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.kj-drawer__links { list-style: none; margin: var(--space-4) 0 0; padding: 0; font-size: 0.9rem; }
+.kj-drawer__links li { border-top: var(--border-hairline) solid var(--line); }
+.kj-drawer__links a { display: flex; align-items: center; min-height: var(--tap-min); color: var(--ink-2); text-decoration: none; }
+.kj-drawer__links a:hover { color: var(--brand); }
+body.is-locked { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .kj-drawer__scrim, .kj-drawer__panel { transition: none; } }
+
 /* 하단 탭바 */
 .kj-tabbar {
   display: none; position: fixed; inset: auto 0 0 0; z-index: 25; background: var(--bg);
   border-top: var(--border-hairline) solid var(--line); box-shadow: var(--shadow-sticky);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-.kj-tabbar ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.kj-tabbar ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .kj-tabbar a, .kj-tabbar button {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 100%;
   min-height: var(--tabbar-h); color: var(--ink-2); text-decoration: none; font-size: 0.8rem; font-weight: 700;
@@ -123,6 +227,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
 }
 .kj-tabbar svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .kj-tabbar [aria-current="true"] { color: var(--brand); border-top-color: var(--brand); }
+.kj-tabbar [aria-expanded="true"] { color: var(--brand); }
 @media (max-width: 860px) {
   .kj-cats { display: none; }
   .kj-tabbar { display: block; }
