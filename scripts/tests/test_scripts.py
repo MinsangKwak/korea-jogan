@@ -35,6 +35,8 @@ class Site(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         shutil.copytree(REPO / "public", self.tmp / "public")
         self.issues = self.tmp / "public" / "data" / "issues"
+        # 매일 새 호(초안 포함)가 쌓여도 시험 결과가 바뀌지 않게, 목록을 기준 호 하나로 고정한다
+        (self.issues / "index.json").write_text(json.dumps({"latest": DATE, "issues": [DATE]}), encoding="utf-8")
         self.saved = (validate.ROOT, validate.ISSUES, approve.ISSUES, build_feed.PUBLIC, build_feed.ISSUES)
         validate.ROOT, validate.ISSUES = self.tmp, self.issues
         approve.ISSUES = self.issues
