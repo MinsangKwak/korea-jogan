@@ -1,10 +1,14 @@
 # deploy 브랜치에 올라온 것만 GitHub Pages로 배포한다. 개발(dev)·최종본(main)은 여기서 배포하지 않는다
+# 평일 낮에는 1시간마다 같은 deploy 커밋을 다시 배포하면서 ECOS 최신 숫자(live.json)만 새로 만든다. 커밋은 하지 않는다
 name: 사이트 배포
 
 on:
   push:
     branches: [deploy]
   workflow_dispatch:
+  schedule:
+    # 한국 시간 평일 09:17~22:17 매시(UTC 00~13시)
+    - cron: "17 0-13 * * 1-5"
 
 permissions:
   contents: read
@@ -21,20 +25,46 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
     steps:
+      # 예약 실행은 기본 브랜치에서 시작하므로 배포 대상인 deploy를 직접 받는다
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+        with:
+          ref: deploy
+      # 키가 없으면 예약 실행은 다시 배포할 이유가 없어 여기서 멈춘다
+      - id: gate
+        name: 예약 실행 조건
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ -z "$ECOS_API_KEY" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "ECOS_API_KEY가 없어 예약 배포를 건너뜁니다."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       # 검사에 실패하면 배포하지 않는다
       - name: 데이터 검사
+        if: steps.gate.outputs.run == 'true'
         run: python scripts/validate.py --deploy
       # RSS는 저장소에 두지 않고 배포할 때마다 발행 목록으로 새로 만든다
       - name: RSS 만들기
+        if: steps.gate.outputs.run == 'true'
         run: python scripts/build_feed.py
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      # 최신 숫자를 받지 못해도 조간 배포는 막지 않는다. 화면은 파일이 없으면 띠를 숨긴다
+      - name: 최신 공식 숫자 만들기
+        if: steps.gate.outputs.run == 'true'
+        continue-on-error: true
+        run: python scripts/build_live.py
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/configure-pages@v5
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: public
       - id: deployment
+        if: steps.gate.outputs.run == 'true'
         uses: actions/deploy-pages@v4

@@ -179,6 +179,12 @@
   <div class="kj-notice kj-notice--stale" id="stale" role="status" hidden>
     <div class="kj-wrap kj-notice__in"><p id="staleMsg"></p></div>
   </div>
+  <section class="kj-live" id="live" aria-labelledby="liveH" hidden>
+    <div class="kj-wrap kj-live__in">
+      <p class="kj-live__head"><b id="liveH">최신 공식 숫자</b><span class="kj-live__tag">자동 갱신 · 사람 확인 전</span><span id="liveMeta"></span></p>
+      <ul class="kj-live__list" id="liveList"></ul>
+    </div>
+  </section>
   <div class="kj-notice" id="noticeBox" role="note">
     <div class="kj-wrap kj-notice__in"><p id="notice">오늘 호를 불러오는 중입니다.</p></div>
   </div>
@@ -729,6 +735,37 @@ function renderNums() {
     t.append(row, el('span', { class: 'kj-stat__ref' }, m.ref), foot);
     $('nums').append(t);
   });
+}
+
+// 승인된 조간과 별개인 자동 갱신 숫자(data/live.json). 없거나 못 읽으면 띠를 숨긴 채 둔다
+// 지난 호를 볼 때는 그날 숫자와 헷갈리지 않게 보이지 않는다
+async function renderLive() {
+  if (VIEWING_PAST) return;
+  let L = null;
+  try {
+    const res = await fetch('data/live.json', { cache: 'no-cache' });
+    if (res.ok) L = await res.json();
+  } catch (e) {
+    return;
+  }
+  if (!L || !L.items || !L.items.length) return;
+  const ul = $('liveList');
+  const day = (m) => m.src.base.slice(5).replace('-', '/');
+  // 기준일이 모두 같으면 항목마다 적지 않고 맨 위에 한 번만 적는다
+  const oneDay = L.items.every((m) => m.src.base === L.items[0].src.base) ? day(L.items[0]) : '';
+  L.items.forEach((m) => {
+    const li = el('li');
+    li.append(el('span', { class: 'k' }, m.k), el('span', { class: 'v' }, m.v));
+    li.append(el('span', { class: 'kj-dir kj-dir--' + m.dir, 'aria-label': DIR_LABEL[m.dir] + ' ' + m.d }, m.d));
+    if (!oneDay) li.append(el('small', {}, day(m) + ' 기준'));
+    ul.append(li);
+  });
+  const at = new Date(L.updatedAt);
+  const hours = (Date.now() - at.getTime()) / 3600000;
+  const when = at.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
+  // 평일 낮에는 1시간마다 갱신한다. 반나절 넘게 멈췄으면 그 사실을 함께 적는다
+  $('liveMeta').textContent = (oneDay ? oneDay + ' 기준 · ' : '') + when + ' 갱신' + (hours > 12 ? ' · 갱신이 늦어지고 있습니다' : '') + ' · 출처 ' + L.source;
+  $('live').hidden = false;
 }
 
 // 검색어에서 뜻이 없는 말은 빼고, 남은 말이 주제 키워드에 들어 있거나 키워드를 품으면 점수를 준다
@@ -1395,6 +1432,7 @@ async function boot() {
   setupControls();
   renderDrawerSubs();
   setupNav();
+  renderLive();
 }
 
 boot();
