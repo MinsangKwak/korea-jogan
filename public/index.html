@@ -171,9 +171,6 @@
       </div>
     </div>
   </div>
-  <nav class="kj-cats" id="cats" aria-label="분야">
-    <div class="kj-wrap"><ul id="catNav"></ul></div>
-  </nav>
   <div class="kj-notice kj-notice--stale" id="stale" role="status" hidden>
     <div class="kj-wrap kj-notice__in"><p id="staleMsg"></p></div>
   </div>
@@ -181,6 +178,14 @@
     <div class="kj-wrap kj-notice__in"><p id="notice">오늘 호를 불러오는 중입니다.</p></div>
   </div>
 </header>
+
+<nav class="kj-cats" id="cats" aria-label="분야">
+  <div class="kj-wrap kj-cats__in">
+    <a class="kj-cats__logo" href="#top">대한민국 조간</a>
+    <ul id="catNav"></ul>
+    <button class="kj-menubtn" id="menuBtn" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>전체 메뉴</button>
+  </div>
+</nav>
 
 <main id="main">
   <section class="hero" id="home" aria-labelledby="leadH">
@@ -387,15 +392,47 @@
 
 <nav class="kj-tabbar" aria-label="분야별 이동"><ul id="tabNav"></ul></nav>
 
+<div class="kj-drawer" id="drawer" hidden>
+  <div class="kj-drawer__scrim" data-close></div>
+  <div class="kj-drawer__panel" role="dialog" aria-modal="true" aria-labelledby="drawerH" tabindex="-1">
+    <div class="kj-drawer__head">
+      <h2 id="drawerH">전체 메뉴</h2>
+      <button class="kj-drawer__close" type="button" data-close aria-label="전체 메뉴 닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="kj-drawer__body">
+      <nav aria-label="전체 분야"><ul class="kj-drawer__secs" id="drawerNav"></ul></nav>
+      <div class="kj-drawer__tools">
+        <button type="button" id="drawerBig" aria-pressed="false">가 글자 크게</button>
+        <button type="button" id="drawerShare">이 호 공유</button>
+      </div>
+      <ul class="kj-drawer__links">
+        <li><a href="#archH" data-jump="archH">지난 호</a></li>
+        <li><a href="#limitsH" data-jump="limitsH">수집 방법과 한계</a></li>
+        <li><a href="#fixH" data-jump="fixH">정정 기록</a></li>
+        <li><a id="drawerReport" href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" target="_blank" rel="noopener">오류 신고</a></li>
+        <li><a href="feed.xml">RSS 구독</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
 
 const DAY = 86400000;
 const REPO = 'https://github.com/MinsangKwak/korea-jogan';
+// [id, 이름, 전체 메뉴에 보일 한 줄 설명]
 const SECTIONS = [
-  ['home', '홈'], ['media', '언론'], ['national', '전국'], ['regions', '지역'],
-  ['politics', '정치'], ['economy', '경제'], ['industry', '산업'], ['fiscal', '재정']
+  ['home', '홈', '머리기사, 오늘 꼭 볼 숫자, 기준이 갈린 숫자'],
+  ['media', '언론', '주제별 언론 보도와 매체마다 다른 숫자'],
+  ['national', '전국', '분야별 전국 뉴스와 오늘의 흐름'],
+  ['regions', '지역', '17개 시도 소식'],
+  ['politics', '정치', '임기, 선거·예산 D-Day, 이번 주 일정'],
+  ['economy', '경제', '증시·환율·유가 핵심 숫자'],
+  ['industry', '산업', '주력산업과 수출입'],
+  ['fiscal', '재정', '국가채무와 국민연금']
 ];
+const MENU_ICON = 'M4 7h16M4 12h16M4 17h16';
 // 하단 탭바는 8개 분야를 5칸으로 묶는다. [이름, 묶은 섹션, 아이콘 경로]
 const TABS = [
   ['홈', ['home'], 'M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z'],
@@ -529,6 +566,106 @@ function renderNav() {
     a.append(svgIcon(icon), document.createTextNode(name));
     li.append(a);
     $('tabNav').append(li);
+  });
+  // 좁은 화면에서는 탭바 마지막 칸이 전체 메뉴를 연다
+  const li = el('li');
+  const more = el('button', { type: 'button', id: 'tabMenu', 'aria-controls': 'drawer', 'aria-expanded': 'false', 'aria-haspopup': 'dialog' });
+  more.append(svgIcon(MENU_ICON), document.createTextNode('메뉴'));
+  li.append(more);
+  $('tabNav').append(li);
+  // 전체 메뉴의 섹션 목록. 하위 항목은 데이터를 읽은 뒤 renderDrawerSubs가 채운다
+  SECTIONS.forEach(([sid, name, desc]) => {
+    const item = el('li', { id: 'dn-' + sid });
+    const a = el('a', { class: 'kj-drawer__sec', href: '#' + sid, 'data-sec': sid, 'data-group': sid });
+    a.append(el('b', {}, name), el('span', {}, desc));
+    item.append(a);
+    $('drawerNav').append(item);
+  });
+}
+
+// 전체 메뉴에서 섹션 안의 항목(언론 주제, 전국 분야, 시도)으로 바로 간다
+function renderDrawerSubs() {
+  const add = (sid, items) => {
+    if (!items.length) return;
+    const ul = el('ul', { class: 'kj-drawer__subs' });
+    items.forEach(([label, go]) => {
+      const li = el('li');
+      const b = el('button', { type: 'button' }, label);
+      b.addEventListener('click', () => { closeDrawer(false); go(); track('menu-sub', sid + ' · ' + label); });
+      li.append(b);
+      ul.append(li);
+    });
+    $('dn-' + sid).append(ul);
+  };
+  const jump = (id) => () => $(id).scrollIntoView({ block: 'start' });
+  add('home', [['오늘 꼭 볼 숫자', jump('briefH')]].concat($('splitBox').hidden ? [] : [['기준이 갈린 숫자', jump('splitBox')]]));
+  add('media', D.themes.map((t) => [t.title, () => { setQuery(''); showTheme(t.id); $('tresult').scrollIntoView({ block: 'start' }); }]));
+  if (D.national) {
+    const cats = NAT_CATS.filter((c) => D.national.items.some((i) => i.cat === c));
+    add('national', cats.map((c) => [c, () => {
+      const chip = Array.from($('natCtrl').querySelectorAll('button')).find((x) => x.firstChild.textContent.trim() === c);
+      if (chip) chip.click();
+      $('national').scrollIntoView({ block: 'start' });
+    }]));
+  }
+  if (D.regions) add('regions', REGIONS.map(([name]) => [name, () => { selectRegion(name); $('regions').scrollIntoView({ block: 'start' }); }]));
+  $('drawerReport').href = reportUrl('');
+}
+
+let drawerOpener = null;
+
+function openDrawer(opener) {
+  const dr = $('drawer');
+  drawerOpener = opener;
+  dr.hidden = false;
+  document.body.classList.add('is-locked');
+  ['menuBtn', 'tabMenu'].forEach((id) => $(id).setAttribute('aria-expanded', 'true'));
+  // 숨김을 푼 다음 프레임에 열림 상태를 줘야 미끄러지는 전환이 보인다
+  window.requestAnimationFrame(() => dr.classList.add('is-open'));
+  dr.querySelector('.kj-drawer__close').focus();
+  track('menu-open', opener ? opener.id : '');
+}
+
+// 섹션으로 이동하며 닫을 때는 포커스를 연 단추로 돌리지 않는다
+function closeDrawer(restoreFocus = true) {
+  const dr = $('drawer');
+  if (dr.hidden) return;
+  dr.classList.remove('is-open');
+  document.body.classList.remove('is-locked');
+  ['menuBtn', 'tabMenu'].forEach((id) => $(id).setAttribute('aria-expanded', 'false'));
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.setTimeout(() => { if (!dr.classList.contains('is-open')) dr.hidden = true; }, reduce ? 0 : 230);
+  if (restoreFocus && drawerOpener) drawerOpener.focus();
+}
+
+function setupDrawer() {
+  const dr = $('drawer');
+  const panel = dr.querySelector('.kj-drawer__panel');
+  $('menuBtn').addEventListener('click', (e) => openDrawer(e.currentTarget));
+  $('tabMenu').addEventListener('click', (e) => openDrawer(e.currentTarget));
+  dr.querySelectorAll('[data-close]').forEach((x) => x.addEventListener('click', () => closeDrawer()));
+  dr.querySelectorAll('[data-jump]').forEach((a) => a.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeDrawer(false);
+    $(a.dataset.jump).scrollIntoView({ block: 'start' });
+  }));
+  // 서랍 안의 글자 크기·공유 단추는 제호의 같은 단추를 그대로 누른다
+  const big = $('drawerBig');
+  const syncBig = () => big.setAttribute('aria-pressed', $('bigBtn').getAttribute('aria-pressed'));
+  big.addEventListener('click', () => { $('bigBtn').click(); syncBig(); });
+  $('bigBtn').addEventListener('click', syncBig);
+  syncBig();
+  $('drawerShare').addEventListener('click', () => $('shareBtn').click());
+  // Esc로 닫고, Tab은 서랍 안에서만 돈다
+  dr.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); closeDrawer(); return; }
+    if (e.key !== 'Tab') return;
+    const items = Array.from(panel.querySelectorAll('a[href], button')).filter((x) => x.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   });
 }
 
@@ -1114,6 +1251,7 @@ function setupNav() {
   links.forEach((a) => a.addEventListener('click', (e) => {
     // 해시 이동 대신 직접 스크롤해 미리보기 틀 안에서도 확실히 움직이게 한다
     e.preventDefault();
+    closeDrawer(false);
     $(a.dataset.sec).scrollIntoView({ block: 'start' });
   }));
   let current = '';
@@ -1191,6 +1329,7 @@ async function boot() {
   renderNav();
   setupBig();
   setupShare();
+  setupDrawer();
   try {
     D = await loadIssue();
   } catch (e) {
@@ -1216,6 +1355,7 @@ async function boot() {
   renderArchive();
   renderCorrections(await loadCorrections());
   setupControls();
+  renderDrawerSubs();
   setupNav();
 }
 

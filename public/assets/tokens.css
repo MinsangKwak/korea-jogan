@@ -18,6 +18,7 @@
   --head: #111111;
   --head-ink: #ffffff;
   --head-line: rgba(255,255,255,0.6);
+  --scrim: rgba(17,17,17,0.45);
   --bar: #7d8693;
   --danger: #b42318;
   --danger-soft: #fdecea;
@@ -29,6 +30,7 @@
   --chart-5: #5b6573;
   --chart-6: #946f12;
   --shadow-sticky: 0 2px 8px rgba(20,20,20,0.08);
+  --shadow-drawer: -8px 0 24px rgba(20,20,20,0.16);
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -50,6 +52,7 @@
   --tap-min: 44px;
   --nav-h: 52px;
   --tabbar-h: 60px;
+  --drawer-w: min(24rem, 88vw);
   --wrap: 1120px;
   --measure: 42rem;
   --font-sans: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
@@ -74,6 +77,7 @@
     --head: #000000;
     --head-ink: #ffffff;
     --head-line: rgba(255,255,255,0.6);
+    --scrim: rgba(0,0,0,0.6);
     --bar: #6f7885;
     --danger: #ff8a80;
     --danger-soft: #3a1a18;
@@ -85,6 +89,7 @@
     --chart-5: #9aa3af;
     --chart-6: #d9bb6a;
     --shadow-sticky: 0 2px 8px rgba(0,0,0,0.5);
+    --shadow-drawer: -8px 0 24px rgba(0,0,0,0.6);
     color-scheme: dark;
   }
 }
@@ -107,6 +112,7 @@
   --head: #000000;
   --head-ink: #ffffff;
   --head-line: rgba(255,255,255,0.6);
+  --scrim: rgba(0,0,0,0.6);
   --bar: #6f7885;
   --danger: #ff8a80;
   --danger-soft: #3a1a18;
@@ -118,5 +124,6 @@
   --chart-5: #9aa3af;
   --chart-6: #d9bb6a;
   --shadow-sticky: 0 2px 8px rgba(0,0,0,0.5);
+  --shadow-drawer: -8px 0 24px rgba(0,0,0,0.6);
   color-scheme: dark;
 }
