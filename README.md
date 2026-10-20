@@ -82,7 +82,7 @@ korea-jogan/
 │           └── YYYY-MM-DD.json     그날 호. 형식은 docs/DATA.md
 ├── design/
 │   └── tokens.json                 디자인 토큰 원본(색·글자·간격·모서리·선·크기, 밝은·어두운 테마)
-├── data/raw/                       공공 API 수집 원본(기관별). 지금은 ECOS 자리만 있습니다
+├── data/raw/                       수집 원본. ecos/(한국은행), rss/(언론사 RSS 기사 목록, 저장소에는 올리지 않음)
 ├── scripts/
 │   ├── validate.py                 발행 전 검사. --deploy면 승인 전 초안도 막습니다
 │   ├── approve.py                  사람이 확인한 초안을 공개(published)로 바꿉니다
@@ -92,13 +92,15 @@ korea-jogan/
 │   ├── og/                         공유 미리보기 카드(card.html)와 이미지 생성(build.mjs)
 │   ├── tests/                      스크립트 시험(unittest)
 │   ├── check_commit_msg.mjs        커밋 제목 검사(메시지 파일 또는 --range)
+│   ├── fetch_rss.py                언론사 RSS에서 전날 기사의 제목·링크·날짜만 모읍니다(본문은 받지 않음)
+│   ├── feeds.json                  RSS 피드 목록(국내 전국지·지역지, 해외)
 │   └── fetch_ecos.py               한국은행 ECOS 수집기(환율·기준금리·코스피·코스닥, ECOS_API_KEY 필요)
 ├── .githooks/
 │   └── commit-msg                  로컬 커밋 제목 검사 훅
 ├── .github/workflows/
 │   ├── check.yml                   dev·main push와 PR에서 데이터 검사·토큰 CSS 검사·스크립트 시험, PR 커밋 제목 검사
 │   ├── deploy-pages.yml            deploy push 시 배포 규칙까지 검사하고 RSS를 만든 뒤 GitHub Pages 배포
-│   └── daily.yml                   ECOS 원본 수집(수동 실행)
+│   └── daily.yml                   언론사 RSS·ECOS 원본 수집(수동 실행)
 ├── docs/
 │   ├── README.md                   문서 안내
 │   ├── portfolio/
@@ -167,7 +169,7 @@ git config core.hooksPath .githooks
 
 ## 알려진 한계
 
-- 수집 환경에서 일부 국내외 매체(조선·중앙·동아·한겨레·매일경제·연합뉴스·KBS, FT·WSJ·NYT·BBC·Economist) 접속이 막힙니다. 다른 매체로 대체하고 그 사실을 화면 하단 '수집 방법과 한계'에 적습니다.
+- 여러 국내외 매체가 robots.txt나 서버 차단으로 AI의 본문 접근을 막습니다. 기사 목록은 언론사 RSS(26곳)로 넓혔지만, 본문을 읽고 숫자를 비교하는 일은 열린 매체에서만 합니다. 막힌 매체 기사는 '본문 미확인'으로 표시하고, 대체한 사실을 화면 하단 '수집 방법과 한계'에 적습니다. 자세한 내용은 [일일 발행 절차](docs/DAILY_RUNBOOK.md#접속이-막힌-매체)에 있습니다.
 - 공공 API 수집기는 아직 ECOS 뼈대만 있습니다. 지금 수치는 공식 발표 원문과 기사를 조사해 채웁니다.
 - 방문 측정(GoatCounter)은 주소를 넣어야 켜집니다. 지금은 꺼져 있습니다.
 - `ECOS_API_KEY`를 아직 등록하지 않아 ECOS 수집기와 변환기는 시험 데이터로만 확인했습니다.

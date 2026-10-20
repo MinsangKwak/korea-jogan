@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 .DS_Store
 public/feed.xml
+data/raw/rss/*.json

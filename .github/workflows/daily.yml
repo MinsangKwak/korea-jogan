@@ -10,6 +10,21 @@ permissions:
   contents: read
 
 jobs:
+  # 언론사 RSS는 키가 필요 없어 ECOS와 따로 돌린다. 피드가 살아 있는지 점검할 때도 쓴다
+  rss:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 언론사 RSS 수집
+        run: python scripts/fetch_rss.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rss-${{ github.run_id }}
+          path: data/raw/rss/
+
   collect:
     runs-on: ubuntu-latest
     steps:
