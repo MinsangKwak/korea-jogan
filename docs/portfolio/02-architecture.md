@@ -31,7 +31,8 @@ flowchart LR
 | 승인 | [scripts/approve.py](../../scripts/approve.py) | 사람이 확인한 초안을 `published`로 바꾸고 확인한 사람·시각을 남깁니다 |
 | RSS | [scripts/build_feed.py](../../scripts/build_feed.py) | 승인된 호로 `feed.xml`을 만듭니다. 배포 때 실행 |
 | 공공 API 수집기 | [scripts/fetch_ecos.py](../../scripts/fetch_ecos.py) · [ecos_nums.py](../../scripts/ecos_nums.py) | ECOS 원본(환율·기준금리·코스피·코스닥) 수집과 핵심 숫자 변환 |
-| 워크플로 | [.github/workflows/](../../.github/workflows) | `check.yml` 검사, `deploy-pages.yml` 배포, `daily.yml` 수집 |
+| 워크플로 | [.github/workflows/](../../.github/workflows) | `check.yml` 검사, `deploy-pages.yml` 배포(평일 낮 매시 최신 공식 숫자 갱신 포함), `daily.yml` 수집 |
+| 최신 공식 숫자 | [scripts/build_live.py](../../scripts/build_live.py) | ECOS 최신 일별 확정값으로 `live.json`을 만듭니다. 승인된 조간과 별개로 '자동 갱신 · 사람 확인 전'으로 표시합니다. 서버 없이 배포 워크플로가 매시 커밋 없이 다시 배포해 갱신합니다 |
 
 ## 화면 구현
 

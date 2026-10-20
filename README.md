@@ -61,6 +61,8 @@
 | 산업 | 반도체 밖의 주력산업(철강·조선·자동차·석유화학·에너지)과 수출입 |
 | 재정 | 국가채무 연도별 추이(결산·전망 구분), 월간 재정동향, 국민연금 자산 배분과 개혁 내용 |
 
+제호 아래 '최신 공식 숫자' 띠는 승인된 조간과 별개로, 한국은행 ECOS의 코스피·코스닥 종가, 원·달러 환율, 기준금리를 평일 낮 1시간마다 다시 받아 보여 줍니다. '자동 갱신 · 사람 확인 전'으로 표시해 조간 숫자와 구분합니다. ECOS는 장중 시세를 주지 않아, 새 일별 확정값이 나오면 다음 갱신 때 반영됩니다. `ECOS_API_KEY`가 없으면 띠는 보이지 않습니다.
+
 바닥글에는 수집 한계, 출처 신뢰도, 지난 호 목록(`?d=YYYY-MM-DD`), RSS, 정정 기록과 오류 신고가 있습니다. 제호의 '공유' 단추는 지금 보는 호의 링크를 건넵니다.
 
 2026-10-19호에는 전국 뉴스 22건, 시도 뉴스 49건, 언론 주제 3개(국내외 기사 42건), 국가채무 14개 연도를 담았습니다.
@@ -89,6 +91,7 @@ korea-jogan/
 │   ├── build_feed.py               RSS(feed.xml). 배포할 때 만듭니다
 │   ├── build_tokens.py             design/tokens.json → public/assets/tokens.css. --check로 최신 여부 검사
 │   ├── ecos_nums.py                ECOS 원본을 핵심 숫자(nums) 꼴로 바꿉니다
+│   ├── build_live.py               ECOS 최신 공식 숫자(public/data/live.json). 배포할 때 만들고 저장소에는 올리지 않음
 │   ├── og/                         공유 미리보기 카드(card.html)와 이미지 생성(build.mjs)
 │   ├── tests/                      스크립트 시험(unittest)
 │   ├── check_commit_msg.mjs        커밋 제목 검사(메시지 파일 또는 --range)
@@ -99,7 +102,7 @@ korea-jogan/
 │   └── commit-msg                  로컬 커밋 제목 검사 훅
 ├── .github/workflows/
 │   ├── check.yml                   dev·main push와 PR에서 데이터 검사·토큰 CSS 검사·스크립트 시험, PR 커밋 제목 검사
-│   ├── deploy-pages.yml            deploy push 시 배포 규칙까지 검사하고 RSS를 만든 뒤 GitHub Pages 배포
+│   ├── deploy-pages.yml            deploy push 시 배포 규칙까지 검사하고 RSS·최신 공식 숫자를 만든 뒤 GitHub Pages 배포. 평일 낮 매시 다시 배포
 │   └── daily.yml                   언론사 RSS·ECOS 원본 수집(수동 실행)
 ├── docs/
 │   ├── README.md                   문서 안내

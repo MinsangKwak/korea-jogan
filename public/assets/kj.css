@@ -234,6 +234,26 @@ body.is-locked { overflow: hidden; }
   body.has-tabbar { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
 }
 
+/* 최신 공식 숫자 띠. 승인된 조간과 별개로 자동 갱신되는 ECOS 숫자. 조간과 구분되게 바탕색을 달리한다 */
+.kj-live { background: var(--surface); border-bottom: var(--border-hairline) solid var(--line); font-size: 0.88rem; }
+.kj-live__in { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-6); padding-block: var(--space-2); }
+.kj-live__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-2); margin: 0; }
+.kj-live__head b { font-weight: 900; }
+.kj-live__head span { font-size: 0.78rem; color: var(--ink-3); }
+.kj-live__tag { display: inline-block; padding: 0 var(--space-2); border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-pill); font-size: 0.72rem; font-weight: 700; color: var(--ink-2); }
+.kj-live__list { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-6); list-style: none; margin: 0; padding: 0; }
+.kj-live__list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-2); min-width: 0; }
+.kj-live__list .k { color: var(--ink-2); }
+.kj-live__list .v { font-weight: 900; font-variant-numeric: tabular-nums; }
+.kj-live__list .kj-dir { font-size: 0.82rem; }
+.kj-live__list small { font-size: 0.75rem; color: var(--ink-3); }
+/* 좁은 화면에서는 두 칸 격자로 줄여 머리기사를 덜 밀어낸다 */
+@media (max-width: 860px) {
+  .kj-live__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2) var(--space-4); width: 100%; }
+  .kj-live__list li { gap: 0 var(--space-2); }
+  .kj-live__list .k { flex-basis: 100%; font-size: 0.78rem; }
+}
+
 /* 알림 띠 */
 .kj-notice { background: var(--hl-soft); color: var(--ink); font-size: 0.88rem; line-height: 1.6; }
 .kj-notice__in { display: flex; gap: var(--space-3); align-items: flex-start; padding-block: var(--space-3); }
