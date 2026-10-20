@@ -289,6 +289,14 @@ body.is-locked { overflow: hidden; }
   .kj-live__list { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; gap: var(--space-4); -webkit-mask-image: linear-gradient(to right, #000 88%, transparent); mask-image: linear-gradient(to right, #000 88%, transparent); padding-right: var(--space-6); }
 }
 
+/* 더보기. 목록이 3개를 넘으면 앞의 3개만 보이고 이 단추로 펼친다 */
+.kj-more { display: flex; justify-content: center; margin-top: var(--space-4); }
+.kj-more--start { justify-content: flex-start; margin-top: var(--space-2); }
+.kj-more .kj-btn { gap: var(--space-1); }
+.kj-more svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.15s ease; }
+.kj-more [aria-expanded="true"] svg { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .kj-more svg { transition: none; } }
+
 /* 알림 띠 */
 .kj-notice { background: var(--hl-soft); color: var(--ink); font-size: 0.88rem; line-height: 1.6; }
 .kj-notice__in { display: flex; gap: var(--space-3); align-items: flex-start; padding-block: var(--space-3); }
