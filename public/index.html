@@ -406,6 +406,8 @@
 
 <nav class="kj-tabbar" aria-label="분야별 이동"><ul id="tabNav"></ul></nav>
 
+<button class="kj-totop" id="toTop" type="button" aria-label="맨 위로" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+
 <div class="kj-drawer" id="drawer" hidden>
   <div class="kj-drawer__scrim" data-close></div>
   <div class="kj-drawer__panel" role="dialog" aria-modal="true" aria-labelledby="drawerH" tabindex="-1">
@@ -1265,6 +1267,15 @@ function setupControls() {
   $('tclear').addEventListener('click', () => { setQuery(''); $('tq').focus(); });
 }
 
+function setupToTop() {
+  $('toTop').addEventListener('click', () => {
+    window.scrollTo({ top: 0 });
+    // 맨 위로 간 뒤에는 키보드 사용자가 길을 잃지 않게 제호로 포커스를 옮긴다
+    document.querySelector('.kj-mast__logo').focus({ preventScroll: true });
+    track('to-top', '');
+  });
+}
+
 function setupNav() {
   const links = Array.from(document.querySelectorAll('[data-sec]'));
   const targets = SECTIONS.map(([sid]) => $(sid));
@@ -1277,8 +1288,13 @@ function setupNav() {
   }));
   let current = '';
   let ticking = false;
+  const toTop = $('toTop');
   const update = () => {
     ticking = false;
+    // 한 화면 넘게 내려가면 맨 위로 단추를 보인다. 숨었을 때는 키보드 순서에서도 뺀다
+    const far = window.scrollY > window.innerHeight;
+    toTop.classList.toggle('is-shown', far);
+    toTop.tabIndex = far ? 0 : -1;
     // 분야 메뉴가 화면 위에 붙으면 그림자로 본문과 나눈다
     cats.classList.toggle('is-stuck', cats.getBoundingClientRect().top <= 0 && window.scrollY > 0);
     // 화면 위쪽 기준선을 지난 섹션 중 마지막 것을 지금 읽는 분야로 본다
@@ -1351,6 +1367,7 @@ async function boot() {
   setupBig();
   setupShare();
   setupDrawer();
+  setupToTop();
   try {
     D = await loadIssue();
   } catch (e) {
