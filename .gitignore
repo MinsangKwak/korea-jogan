@@ -4,5 +4,6 @@ __pycache__/
 *.pyc
 .DS_Store
 public/feed.xml
+public/sitemap.xml
 data/raw/rss/*.json
 public/data/live.json
