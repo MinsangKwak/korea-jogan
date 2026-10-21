@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>대한민국 조간</title>
 <meta name="description" content="공식 통계와 공개 자료로 읽는 오늘의 대한민국. 수치의 출처와 기준을 함께 보여 줍니다.">
+<meta name="author" content="MinsangKwak">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="format-detection" content="telephone=no">
 <link rel="canonical" href="https://minsangkwak.github.io/korea-jogan/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="대한민국 조간">
@@ -15,13 +18,54 @@
 <meta property="og:image" content="https://minsangkwak.github.io/korea-jogan/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:alt" content="대한민국 조간 · 같은 사실, 다른 숫자">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="대한민국 조간">
+<meta name="twitter:description" content="같은 사실, 다른 숫자. 기사마다 숫자가 왜 갈렸는지 출처와 기준으로 보여 주는 아침 신문입니다.">
+<meta name="twitter:image" content="https://minsangkwak.github.io/korea-jogan/og.png">
+<meta name="twitter:image:alt" content="대한민국 조간 · 같은 사실, 다른 숫자">
 <link rel="alternate" type="application/rss+xml" title="대한민국 조간" href="feed.xml">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#111111">
+<meta name="application-name" content="대한민국 조간">
+<meta name="apple-mobile-web-app-title" content="조간">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- 검색엔진 소유 확인(선택). Search Console·네이버 서치어드바이저에서 받은 값을 content에 넣는다 -->
+<meta name="google-site-verification" content="">
+<meta name="naver-site-verification" content="">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://minsangkwak.github.io/korea-jogan/#website",
+      "url": "https://minsangkwak.github.io/korea-jogan/",
+      "name": "대한민국 조간",
+      "description": "공식 통계와 공개 자료로 읽는 오늘의 대한민국. 수치의 출처와 기준을 함께 보여 줍니다.",
+      "inLanguage": "ko-KR",
+      "publisher": { "@id": "https://minsangkwak.github.io/korea-jogan/#org" }
+    },
+    {
+      "@type": "NewsMediaOrganization",
+      "@id": "https://minsangkwak.github.io/korea-jogan/#org",
+      "name": "대한민국 조간",
+      "url": "https://minsangkwak.github.io/korea-jogan/",
+      "logo": { "@type": "ImageObject", "url": "https://minsangkwak.github.io/korea-jogan/icon-512.png", "width": 512, "height": 512 },
+      "correctionsPolicy": "https://github.com/MinsangKwak/korea-jogan/blob/main/docs/DAILY_RUNBOOK.md#정정",
+      "sameAs": ["https://github.com/MinsangKwak/korea-jogan"]
+    }
+  ]
+}
+</script>
 <!-- 방문 측정(선택). GoatCounter 주소를 넣으면 켜진다. 예: https://korea-jogan.goatcounter.com/count -->
 <meta name="jg-goatcounter" content="">
+<!-- GA4 측정 ID를 넣으면 켜진다. 예: G-XXXXXXXXXX -->
+<meta name="jg-ga4" content="">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -497,20 +541,53 @@ const longDate = (s) => parseDate(s).toLocaleDateString('ko-KR', { month: 'long'
 // D-Day는 지난 날이면 D+로 쓴다
 const dday = (date) => { const n = daysBetween(ISSUE, date); return n >= 0 ? 'D-' + fmt(n) : 'D+' + fmt(-n); };
 
-// 방문·행동 측정. jg-goatcounter가 비어 있으면 아무것도 보내지 않는다
-// GoatCounter는 쿠키를 쓰지 않고 개인을 식별하지 않는다
-const GC = (document.querySelector('meta[name="jg-goatcounter"]') || {}).content || '';
-function setupMetrics() {
-  if (!GC) return;
+// 방문·행동 측정. jg-goatcounter·jg-ga4가 비어 있으면 그 도구로는 아무것도 보내지 않는다
+// GoatCounter는 쿠키를 쓰지 않고 개인을 식별하지 않는다. GA4는 쿠키(_ga)를 쓴다
+const metaContent = (name) => (document.querySelector('meta[name="' + name + '"]') || {}).content || '';
+const GC = metaContent('jg-goatcounter');
+const GA = /^G-[A-Z0-9]+$/.test(metaContent('jg-ga4')) ? metaContent('jg-ga4') : '';
+function addScript(src, data) {
   const sc = document.createElement('script');
   sc.async = true;
-  sc.src = 'https://gc.zgo.at/count.js';
-  sc.dataset.goatcounter = GC;
+  sc.src = src;
+  Object.assign(sc.dataset, data || {});
   document.head.append(sc);
 }
+function setupMetrics() {
+  if (GC) addScript('https://gc.zgo.at/count.js', { goatcounter: GC });
+  if (GA) {
+    window.dataLayer = window.dataLayer || [];
+    // gtag.js는 arguments 객체 그대로를 받는다
+    window.gtag = function gtag() { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    // 첫 page_view는 호를 읽은 뒤 issue_date를 붙여 직접 보낸다
+    window.gtag('config', GA, { send_page_view: false });
+    addScript('https://www.googletagmanager.com/gtag/js?id=' + GA);
+  }
+}
+// GA4 page_view. 어느 호를 열었는지(issue_date)와 지난 호인지(past)를 함께 남긴다
+function trackView(date, past) {
+  if (!GA) return;
+  window.gtag('event', 'page_view', { page_title: document.title, page_location: location.href, issue_date: date || '', past: !!past });
+}
+// GA4 이벤트 이름은 영문·숫자·밑줄만 받는다. menu-open → menu_open
 function track(name, title) {
-  if (!GC || !window.goatcounter || !window.goatcounter.count) return;
-  window.goatcounter.count({ path: name, title: title || name, event: true });
+  if (GC && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: name, title: title || name, event: true });
+  if (GA) window.gtag('event', name.replace(/[^A-Za-z0-9_]/g, '_'), { label: title || '' });
+}
+
+// 지난 호(?d=)를 열면 제목·대표 주소·공유 주소를 그 호에 맞춘다. 최신 호는 머리기사만 제목에 붙인다
+function renderHead() {
+  const headline = (D.lead && D.lead.headline) || D.headline || '';
+  const issue = D.date.replace(/-/g, '.') + '호';
+  document.title = (headline ? headline + ' · ' : '') + issue + ' · 대한민국 조간';
+  if (!VIEWING_PAST) return;
+  // 로컬에서 열어도 공개 주소를 쓰도록 canonical에 적힌 주소를 바탕으로 만든다
+  const canon = document.querySelector('link[rel="canonical"]');
+  const url = new URL('?d=' + D.date, canon ? canon.href : location.href).href;
+  if (canon) canon.setAttribute('href', url);
+  const og = document.querySelector('meta[property="og:url"]');
+  if (og) og.setAttribute('content', url);
 }
 
 function el(tag, attrs, text) {
@@ -1487,9 +1564,12 @@ async function boot() {
   } catch (e) {
     renderLoadError();
     setupNav();
+    trackView('', false);
     return;
   }
   ISSUE = parseDate(D.date);
+  renderHead();
+  trackView(D.date, VIEWING_PAST);
   renderStale();
   renderNotice();
   renderAsOf();

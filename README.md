@@ -82,6 +82,8 @@ korea-jogan/
 │   │   ├── tokens.css              디자인 토큰 CSS 변수. design/tokens.json에서 만듭니다(손으로 고치지 않음)
 │   │   └── kj.css                  디자인 시스템 컴포넌트(kj- 접두사)
 │   ├── og.png                      공유 미리보기 이미지(1200×630). scripts/og/에서 만듭니다
+│   ├── favicon.svg · icon-*.png    파비콘·앱 아이콘. PNG는 scripts/og/에서 만듭니다
+│   ├── manifest.webmanifest        홈 화면 추가용 앱 정보
 │   └── data/
 │       ├── corrections.json        정정 기록
 │       └── issues/                 날짜별 발행 데이터
@@ -93,7 +95,7 @@ korea-jogan/
 ├── scripts/
 │   ├── validate.py                 발행 전 검사. --deploy면 승인 전 초안도 막습니다
 │   ├── approve.py                  사람이 확인한 초안을 공개(published)로 바꿉니다
-│   ├── build_feed.py               RSS(feed.xml). 배포할 때 만듭니다
+│   ├── build_feed.py               RSS(feed.xml)·사이트맵(sitemap.xml). 배포할 때 만듭니다
 │   ├── build_tokens.py             design/tokens.json → public/assets/tokens.css. --check로 최신 여부 검사
 │   ├── ecos_nums.py                ECOS 원본을 핵심 숫자(nums) 꼴로 바꿉니다
 │   ├── build_live.py               ECOS 최신 공식 숫자(public/data/live.json). 배포할 때 만들고 저장소에는 올리지 않음

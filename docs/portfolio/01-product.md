@@ -35,7 +35,7 @@
 
 ## 성공 지표
 
-측정은 [GoatCounter](https://www.goatcounter.com/)로 합니다. 쿠키를 쓰지 않고 개인을 식별하지 않습니다. `public/index.html`의 `<meta name="jg-goatcounter">`에 주소를 넣으면 켜지고, 비워 두면 아무것도 보내지 않습니다. 검색어 원문은 보내지 않고 걸린 주제 이름만 셉니다.
+측정은 [GoatCounter](https://www.goatcounter.com/)와 Google Analytics 4로 합니다. `public/index.html`의 `<meta name="jg-goatcounter">`에 주소를, `<meta name="jg-ga4">`에 측정 ID(`G-…`)를 넣으면 각각 켜지고, 비워 두면 그 도구로는 아무것도 보내지 않습니다. GoatCounter는 쿠키를 쓰지 않고 개인을 식별하지 않습니다. GA4는 쿠키(`_ga`)를 쓰며, 아래 이벤트 이름을 그대로 받고(`-`는 `_`로 바뀜) 제목은 `label`, 연 호는 `page_view`의 `issue_date`로 남깁니다. 두 도구 모두 검색어 원문은 보내지 않고 걸린 주제 이름만 셉니다.
 
 | 구분 | 지표 | 어떻게 재나 |
 | --- | --- | --- |
