@@ -1,6 +1,7 @@
-"""발행 목록으로 RSS 2.0(public/feed.xml)을 만든다. 배포 워크플로가 올리기 직전에 돌린다.
+"""발행 목록으로 RSS 2.0(public/feed.xml)과 사이트맵(public/sitemap.xml)을 만든다. 배포 워크플로가 올리기 직전에 돌린다.
 
-승인 전 초안(draft)은 넣지 않는다. 호마다 머리기사, 요약, 그날 갈린 숫자의 질문을 담는다.
+승인 전 초안(draft)은 넣지 않는다. RSS는 호마다 머리기사, 요약, 그날 갈린 숫자의 질문을 담는다.
+사이트맵은 최신 호(첫 화면)와 지난 호 주소(?d=YYYY-MM-DD)를 담는다.
 """
 from __future__ import annotations
 
@@ -41,7 +42,7 @@ def item_xml(issue: dict) -> str:
     )
 
 
-def build() -> str:
+def published() -> list[dict]:
     index = json.loads((ISSUES / "index.json").read_text(encoding="utf-8"))
     issues = []
     for date in index["issues"]:
@@ -49,7 +50,32 @@ def build() -> str:
         if issue.get("status") == "draft":
             continue
         issues.append(issue)
-    issues.sort(key=lambda x: x["date"], reverse=True)
+    return sorted(issues, key=lambda x: x["date"], reverse=True)
+
+
+def build_sitemap() -> str:
+    issues = published()
+    # 첫 화면은 최신 호를 보여 주므로 최신 호 날짜를 마지막 수정일로 쓴다
+    urls = [(SITE, issues[0]["date"] if issues else None, "daily")]
+    # 지난 호도 정정으로 바뀔 수 있어 변경 주기는 적지 않는다
+    urls += [(f"{SITE}?d={i['date']}", i["date"], None) for i in issues[1:]]
+    rows = "".join(
+        f"  <url>\n    <loc>{escape(loc)}</loc>\n"
+        + (f"    <lastmod>{mod}</lastmod>\n" if mod else "")
+        + (f"    <changefreq>{freq}</changefreq>\n" if freq else "")
+        + "  </url>\n"
+        for loc, mod, freq in urls
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{rows}"
+        "</urlset>\n"
+    )
+
+
+def build() -> str:
+    issues = published()
     items = "".join(item_xml(i) for i in issues[:LIMIT])
     built = email.utils.format_datetime(dt.datetime.now(KST))
     return (
@@ -69,9 +95,10 @@ def build() -> str:
 
 
 def main() -> int:
-    out = PUBLIC / "feed.xml"
-    out.write_text(build(), encoding="utf-8")
-    print(f"저장: {out.relative_to(ROOT)}")
+    for name, text in (("feed.xml", build()), ("sitemap.xml", build_sitemap())):
+        out = PUBLIC / name
+        out.write_text(text, encoding="utf-8")
+        print(f"저장: {out.relative_to(ROOT)}")
     return 0
 
 

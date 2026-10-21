@@ -29,7 +29,7 @@ flowchart LR
 | 발행 전 검사 | [scripts/validate.py](../../scripts/validate.py) | 필수 항목, 출처·링크, 값 범위, 날짜, 시도 이름을 검사합니다 |
 | 커밋 제목 검사 | [scripts/check_commit_msg.mjs](../../scripts/check_commit_msg.mjs) | 로컬 훅과 PR에서 `종류(범위): 제목` 규칙을 검사합니다 |
 | 승인 | [scripts/approve.py](../../scripts/approve.py) | 사람이 확인한 초안을 `published`로 바꾸고 확인한 사람·시각을 남깁니다 |
-| RSS | [scripts/build_feed.py](../../scripts/build_feed.py) | 승인된 호로 `feed.xml`을 만듭니다. 배포 때 실행 |
+| RSS·사이트맵 | [scripts/build_feed.py](../../scripts/build_feed.py) | 승인된 호로 `feed.xml`·`sitemap.xml`을 만듭니다. 배포 때 실행 |
 | 언론사 RSS 수집기 | [scripts/fetch_rss.py](../../scripts/fetch_rss.py) · [feeds.json](../../scripts/feeds.json) | 26개 언론사 RSS에서 전날 기사의 제목·링크·날짜만 모읍니다. robots.txt를 지키고 본문은 받지 않습니다 |
 | 공공 API 수집기 | [scripts/fetch_ecos.py](../../scripts/fetch_ecos.py) · [ecos_nums.py](../../scripts/ecos_nums.py) | ECOS 원본(환율·기준금리·코스피·코스닥) 수집과 핵심 숫자 변환 |
 | 워크플로 | [.github/workflows/](../../.github/workflows) | `check.yml` 검사, `deploy-pages.yml` 배포(평일 낮 매시 최신 공식 숫자 갱신 포함), `daily.yml` 수집 |

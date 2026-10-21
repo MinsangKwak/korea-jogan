@@ -16,7 +16,7 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 - `dev → main` PR을 병합하면 `main`에 병합 커밋이 하나 생깁니다. 바로 `git push origin main:dev`로 `dev`를 `main`에 맞춰 둡니다. 그래야 다음 일일 발행이 빨리 감기로 `main`·`deploy`까지 올라갑니다.
 - `main`과 `deploy`에는 직접 커밋하지 않습니다. `deploy`는 항상 `main`과 같은 커밋을 가리킵니다.
 - 화면·스크립트 변경: `dev`에서 작업 브랜치를 따서 `dev`로 PR → `dev → main` PR(`sync: dev → main`) → `main`을 `deploy`로 올림.
-- 일일 발행: 예약 작업이 `dev`에 `data(issue)` 커밋을 올리고, 검사를 통과하면 `main`과 `deploy`를 같은 커밋으로 빨리 감기(fast-forward)합니다.
+- 일일 발행: 00시 예약 작업이 `dev`에 초안을 올리고, 사람이 승인 커밋을 `dev`에 올립니다. 06시 `publish.yml`이 승인된 오늘 호를 확인한 뒤 `main`과 `deploy`를 같은 커밋으로 빨리 감기(fast-forward)합니다.
 - 다 쓴 작업 브랜치는 병합 뒤 원격과 로컬에서 지웁니다.
 
 ## 검사와 배포 워크플로
@@ -25,6 +25,7 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 | --- | --- | --- |
 | `check.yml` | `dev`·`main` push, PR | 데이터 검사, 스크립트 시험, PR 커밋 제목 검사 |
 | `deploy-pages.yml` | `deploy` push, 수동 실행, 평일 09:17~22:17(한국 시간) 매시 | 배포 규칙 검사(`--deploy`, 승인 전 초안 차단), RSS·최신 공식 숫자(`live.json`) 생성 뒤 GitHub Pages 배포. 예약 실행은 `deploy` 브랜치를 그대로 받아 커밋 없이 다시 배포하며, `ECOS_API_KEY`가 없으면 건너뜁니다 |
+| `publish.yml` | 매일 06:00(한국 시간), 수동 실행 | `dev`의 오늘 호가 승인(`published`)됐고 최신 호이면 `--deploy` 검사 뒤 `main`·`deploy`를 빨리 감기하고 `deploy-pages.yml`을 실행합니다. 승인 전이거나 빨리 감기가 안 되면 올리지 않습니다 |
 | `daily.yml` | 수동 실행 | 언론사 RSS 기사 목록과 한국은행 ECOS 원본 수집 |
 
 ## 저장소 설정
