@@ -82,6 +82,8 @@ korea-jogan/
 │   │   ├── tokens.css              디자인 토큰 CSS 변수. design/tokens.json에서 만듭니다(손으로 고치지 않음)
 │   │   └── kj.css                  디자인 시스템 컴포넌트(kj- 접두사)
 │   ├── og.png                      공유 미리보기 이미지(1200×630). scripts/og/에서 만듭니다
+│   ├── favicon.svg · icon-*.png    파비콘·앱 아이콘. PNG는 scripts/og/에서 만듭니다
+│   ├── manifest.webmanifest        홈 화면 추가용 앱 정보
 │   └── data/
 │       ├── corrections.json        정정 기록
 │       └── issues/                 날짜별 발행 데이터
@@ -93,7 +95,7 @@ korea-jogan/
 ├── scripts/
 │   ├── validate.py                 발행 전 검사. --deploy면 승인 전 초안도 막습니다
 │   ├── approve.py                  사람이 확인한 초안을 공개(published)로 바꿉니다
-│   ├── build_feed.py               RSS(feed.xml). 배포할 때 만듭니다
+│   ├── build_feed.py               RSS(feed.xml)·사이트맵(sitemap.xml). 배포할 때 만듭니다
 │   ├── build_tokens.py             design/tokens.json → public/assets/tokens.css. --check로 최신 여부 검사
 │   ├── ecos_nums.py                ECOS 원본을 핵심 숫자(nums) 꼴로 바꿉니다
 │   ├── build_live.py               ECOS 최신 공식 숫자(public/data/live.json). 배포할 때 만들고 저장소에는 올리지 않음
@@ -107,6 +109,7 @@ korea-jogan/
 │   └── commit-msg                  로컬 커밋 제목 검사 훅
 ├── .github/workflows/
 │   ├── check.yml                   dev·main push와 PR에서 데이터 검사·토큰 CSS 검사·스크립트 시험, PR 커밋 제목 검사
+│   ├── publish.yml                 매일 06시 dev에 승인된 오늘 호가 있으면 main·deploy를 빨리 감기하고 배포 실행
 │   ├── deploy-pages.yml            deploy push 시 배포 규칙까지 검사하고 RSS·최신 공식 숫자를 만든 뒤 GitHub Pages 배포. 평일 낮 매시 다시 배포
 │   └── daily.yml                   언론사 RSS·ECOS 원본 수집(수동 실행)
 ├── docs/
@@ -145,7 +148,7 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 2. 결과를 합쳐 `public/data/issues/YYYY-MM-DD.json`을 쓰고 `index.json`의 `latest`를 바꿉니다.
 3. `status: "draft"`로 두고 `scripts/validate.py`를 통과하면 `data(issue): YYYY-MM-DD호 초안`으로 `dev`에 커밋합니다. 자동 작업은 여기서 멈춥니다.
 4. 사람이 머리기사·핵심 숫자·갈린 숫자를 원문과 대조하고 `scripts/approve.py`로 승인합니다.
-5. `main`과 `deploy`를 같은 커밋으로 빨리 감기합니다. `deploy-pages.yml`이 승인 여부까지 검사하고 RSS를 만든 뒤 배포합니다.
+5. 승인 커밋을 `dev`에 올려 두면 06시(한국 시간) `publish.yml`이 `main`과 `deploy`를 같은 커밋으로 빨리 감기합니다. 이어서 `deploy-pages.yml`이 승인 여부까지 검사하고 RSS를 만든 뒤 배포합니다. 06시까지 승인되지 않으면 지난 호를 그대로 둡니다.
 
 검사에 실패하면 올리지 않습니다. 재정·국민연금·수출입 같은 상설 지표는 새 공식 발표가 있을 때만 바꿉니다.
 

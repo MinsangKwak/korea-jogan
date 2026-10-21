@@ -1,0 +1,76 @@
+# 매일 06:00(한국 시간) dev에 승인된 오늘 호가 있으면 main·deploy를 같은 커밋으로 빨리 감기하고 배포를 띄운다
+# 승인 전 초안이거나 오늘 호가 없으면 아무것도 올리지 않고 지난 호를 그대로 둔다
+name: 아침 발행
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 한국 시간 06:00(UTC 21:00). GitHub 예약 실행은 몇 분 늦게 시작할 수 있다
+    - cron: "0 21 * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # 오늘(KST) 호가 승인(published)됐고 목록의 최신 호인지 본다
+      - id: gate
+        name: 오늘 호 승인 여부
+        run: |
+          DATE="$(TZ=Asia/Seoul date +%F)"
+          python3 - "$DATE" <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          date = sys.argv[1]
+          issues = Path("public/data/issues")
+          path = issues / f"{date}.json"
+          latest = json.loads((issues / "index.json").read_text(encoding="utf-8")).get("latest")
+          status = json.loads(path.read_text(encoding="utf-8")).get("status") if path.exists() else None
+          run = status == "published" and latest == date
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"run={str(run).lower()}\n")
+          if not run:
+              print(f"::notice::{date}호를 올리지 않습니다(상태: {status or '없음'}, 최신 호: {latest})")
+          PY
+      - name: 배포 규칙 검사
+        if: steps.gate.outputs.run == 'true'
+        run: python scripts/validate.py --deploy
+      # main이 dev의 조상이 아니면(누가 main에 따로 올린 경우) 덮어쓰지 않고 멈춘다
+      - id: push
+        name: main·deploy 빨리 감기
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          git fetch origin main deploy
+          if [ "$(git rev-parse origin/deploy)" = "$(git rev-parse HEAD)" ]; then
+            echo "deploy가 이미 dev와 같은 커밋입니다."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          for b in main deploy; do
+            if ! git merge-base --is-ancestor "origin/$b" HEAD; then
+              echo "::error::$b가 dev의 조상이 아니라 빨리 감기할 수 없습니다. 브랜치를 손으로 맞춘 뒤 다시 실행합니다"
+              exit 1
+            fi
+          done
+          git push origin HEAD:main HEAD:deploy
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+      # GITHUB_TOKEN으로 올린 push는 다른 워크플로를 띄우지 않으므로 배포는 직접 실행한다
+      - name: 사이트 배포 실행
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-pages.yml --ref deploy

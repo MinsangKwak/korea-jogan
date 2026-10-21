@@ -125,6 +125,15 @@ class FeedTest(Site):
         doc = xml.dom.minidom.parseString(build_feed.build().encode("utf-8"))
         self.assertEqual(len(doc.getElementsByTagName("item")), 0)
 
+    def test_sitemap_lists_home_and_skips_drafts(self):
+        doc = xml.dom.minidom.parseString(build_feed.build_sitemap().encode("utf-8"))
+        locs = [n.firstChild.data for n in doc.getElementsByTagName("loc")]
+        self.assertEqual(locs, [build_feed.SITE])
+        self.assertEqual(doc.getElementsByTagName("lastmod")[0].firstChild.data, DATE)
+        self.edit(lambda i: i.update(status="draft"))
+        doc = xml.dom.minidom.parseString(build_feed.build_sitemap().encode("utf-8"))
+        self.assertEqual(len(doc.getElementsByTagName("lastmod")), 0)
+
 
 def ecos(*pairs):
     return {"StatisticSearch": {"list_total_count": len(pairs), "row": [{"TIME": t, "DATA_VALUE": v} for t, v in pairs]}}
