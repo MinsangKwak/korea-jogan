@@ -1,204 +1,112 @@
 # 대한민국 조간
 
-**공식 통계로 읽는 오늘의 대한민국. 수치의 출처와 기준을 함께 보여 주는 비영리 데이터 신문입니다.**
-매일 00시(한국 시간)에 전국·17개 시도 뉴스, 핵심 경제 숫자, 주력산업, 국가 재정을 한 화면에 모아 발행합니다. 기획부터 데이터 조사, 화면, 검사, 자동 발행, 배포까지 혼자 만들고 운영합니다.
+**기사마다 다르게 보도되는 숫자를 출처와 기준으로 비교하는 데이터 신문입니다.** 전국·17개 시도 뉴스와 경제·산업·재정 지표를 하루 한 호로 정리합니다.
 
-### [▶ 대한민국 조간 바로가기](https://korea-jogan.com/)
+[서비스 보기](https://korea-jogan.com/) · [기획 배경](docs/planning/01-product.md) · [기술 설계](docs/dev/architecture.md) · [디자인 시스템](design/guide.md)
 
-[서비스](https://korea-jogan.com/) · [서비스 기획](docs/planning/01-product.md) · [구조와 자동화](docs/dev/architecture.md) · [서비스 소개와 디자인 가이드](design/guide.md) · [발행 데이터 형식](docs/planning/data-spec.md)
+## 프로젝트 소개
 
-> 2026-10-20 기준으로 `main`·`dev`·`deploy`는 같은 커밋입니다. 2026-10-19호(시안)와 사람이 승인한 2026-10-20호가 GitHub Pages에 배포돼 있고, 제호 아래 '최신 공식 숫자' 띠는 평일 낮 1시간마다 한국은행 ECOS에서 다시 받습니다.
+같은 사건을 다룬 기사에서도 집계 기간이나 비교 시점에 따라 숫자가 달라집니다. 숫자만 요약하면 이 차이가 사라져, 독자가 원문을 다시 찾아야 합니다. 대한민국 조간은 **값과 함께 출처·기준일·집계 조건을 보여 주는 것**에서 출발했습니다.
 
-## 포트폴리오 — 세 장으로 읽기
-
-| 순서 | 문서 | 확인할 내용 |
-| --- | --- | --- |
-| 01 | [서비스 기획](docs/planning/01-product.md) | 왜 만들었는지, 누구를 위한 화면인지, 무엇을 넣고 뺐는지 |
-| 02 | [구조와 자동화](docs/dev/architecture.md) | 정적 사이트 구조, 검사 → 발행 → 배포 흐름, 기술 선택 이유 |
-| 03 | [서비스 소개와 디자인 가이드](design/guide.md) | 이름이 왜 '대한민국 조간'인지, 왜 이런 모양으로 그렸는지, 색·글자·컴포넌트 쓰는 법 |
-
-## 프로젝트 한눈에 보기
+1인 프로젝트로 서비스 기획, 정보 구조, 디자인 시스템, 화면 구현, 데이터 규격, 검사와 배포 흐름을 구성했습니다. AI는 자료 조사와 초안 작성에 활용하고, 사람이 확인한 호와 자동으로 공개된 호를 데이터와 화면에서 구분합니다.
 
 | 항목 | 내용 |
 | --- | --- |
-| 해결하려는 문제 | 정확한 수치 없이 '폭락', '최악' 같은 표현만 앞세우는 기사, 같은 사실이 기준점에 따라 다른 숫자로 보도되는 문제 |
-| 주요 독자 | 20대부터 70대까지. 모바일로 아침에 한 번 훑어보는 독자를 기준으로 화면을 짰습니다 |
-| 주요 기능 | 머리기사와 핵심 숫자, 전국 뉴스, 권역별 17개 시도 뉴스, 최신 공식 숫자 띠(ECOS), 임기·선거·예산 D-Day, 주력산업·수출입, 국가채무 연도별 추이, 국민연금, 주제·키워드별 언론 보도 비교 |
-| 화면 | 정적 HTML · 바닐라 JavaScript(`'use strict'`)를 공통(core)과 섹션별 컴포넌트로 분리 · 디자인 시스템(토큰 CSS 변수 + `kj-` 컴포넌트) · 빌드 도구 없음 |
-| 데이터 | 날짜별 JSON 한 개. 공식 발표 원문과 그 발표를 인용한 기사에서만 수치를 가져옵니다 |
-| 검사·배포 | Python 검사 스크립트 · GitHub Actions · GitHub Pages(`deploy` 브랜치 전용) |
-| 자동 발행 | Claude 예약 작업이 매일 00시에 조사 → 초안 JSON 작성 → 검사 → `dev` 커밋. 06시에 `main`·`deploy`로 올려 배포. 사람이 대조한 호는 '편집자 확인', 아니면 '자동 발행'으로 표시 |
-| 운영 | 1인 운영, 비영리. 광고·회원 기능 없음 |
+| 형태 | 비영리 데이터 신문, 하루 한 호 발행 |
+| 주요 화면 | 홈·언론·전국·지역·정치·경제·산업·재정, 총 8개 섹션 |
+| 화면 기술 | HTML, CSS, 바닐라 JavaScript. 프레임워크·번들러 없이 실행 |
+| 데이터·자동화 | 날짜별 JSON, Python 수집·검증·생성 스크립트 |
+| 배포 | GitHub Actions, GitHub Pages, `dev`·`main`·`deploy` 브랜치 분리 |
+| 디자인 | JSON 토큰에서 CSS 변수 생성, 밝은·어두운 테마, 공통 컴포넌트 |
+| 측정 | GA4 측정 ID 연결, 출처 확인·숫자 비교·검색 등 행동 이벤트 구현 |
 
-## 대표 구현과 근거
+## 직접 설계한 부분
 
-표는 **문제 → 해결 방법 → 코드 근거** 순서입니다.
+### 숫자를 보여 주는 데서 출처를 확인하는 흐름까지
 
-| 문제 | 구현한 접근 | 확인할 근거 |
+핵심 숫자에 기관명·원문 링크·발표일·기준일을 붙였습니다. 같은 주제에서 기준이 다른 수치는 비교 표로 분리하고, 홈에서도 바로 열 수 있게 했습니다. 출처를 확인하는 행동이 서비스의 핵심이라고 보고 `src-open`, `split-open`, `split-home` 이벤트를 마련했습니다.
+
+[출처 UI](dev/web/src/core/ui.js) · [언론 비교](dev/web/src/components/media/media.js) · [홈 비교 카드](dev/web/src/components/splits/splits.js)
+
+### 많은 정보를 모바일에서도 읽을 수 있게
+
+17개 시도를 6개 권역으로 묶고, 긴 목록은 3건씩 먼저 보여 줍니다. 화면 폭에 따라 하단 탭·상단 메뉴·오른쪽 세로 메뉴를 사용하되, 모두 같은 섹션 설정을 참조합니다. 전체 메뉴에는 키보드 포커스 이동, Esc 닫기, 닫은 뒤 포커스 복귀를 적용했습니다.
+
+[공통 메뉴 설정](dev/web/src/core/config.js) · [탐색과 서랍](dev/web/src/components/nav/nav.js) · [지역 선택](dev/web/src/components/regions/regions.js)
+
+### 디자인 기준을 코드로 관리
+
+색·글자·간격·모서리 등의 원본을 `design/tokens.json`에 모았습니다. Python으로 CSS 변수를 생성하고, CI에서 원본과 생성 파일의 일치 여부를 검사합니다. 상승·하락은 기호와 글자로, 결산·전망은 선과 배지 형태로 구분했습니다.
+
+[디자인 토큰](design/tokens.json) · [토큰 생성기](dev/pipeline/build/build_tokens.py) · [컴포넌트 스타일](dev/web/src/styles/kj.css)
+
+### 반복 발행과 오류 대응을 함께 설계
+
+00시 조사 작업이 초안을 만들고, 06시 워크플로가 검사를 통과한 호를 공개합니다. 사람의 원문 대조 여부는 `review`에 별도로 기록합니다. 필수 데이터·출처 링크·수치 범위·호 상태를 검사하고, 오류를 수정할 때는 변경 전후 값과 이유를 정정 기록에 남깁니다.
+
+검사 통과는 데이터 형식과 일부 운영 조건을 만족했다는 뜻입니다. 원문의 정확성까지 자동으로 보증하지 않으므로, 본문 열람 여부와 수집 한계도 공개합니다.
+
+[검증](dev/pipeline/publish/validate.py) · [공개 상태 전환](dev/pipeline/publish/approve.py) · [일일 운영 절차](docs/planning/runbook.md)
+
+### 정적 사이트의 검색 노출 보완
+
+브라우저에서 JSON을 읽는 화면만으로는 검색 로봇이 내용을 놓칠 수 있습니다. 배포 시 호별 HTML에 제목·설명·대표 주소·본문 요약·구조화 데이터를 미리 생성하도록 구성했습니다. RSS와 사이트맵도 같은 발행 목록에서 만들고, 새 주소는 IndexNow로 알립니다.
+
+[호별 페이지 생성](dev/pipeline/build/build_pages.py) · [RSS·사이트맵](dev/pipeline/build/build_feed.py) · [IndexNow](dev/pipeline/publish/indexnow.py)
+
+## 변경 이력에서 볼 수 있는 설계 과정
+
+| 변화 | 판단과 구현 | 관련 커밋 |
 | --- | --- | --- |
-| 출처 없는 숫자가 화면에 올라갈 수 있음 | 핵심 숫자마다 출처 기관과 `https` 원문 링크를 필수로 두고, 빠지면 배포를 멈춤. 기준일·발표일도 함께 표시 | [발행 전 검사](dev/pipeline/publish/validate.py) · [배포 워크플로](.github/workflows/deploy-pages.yml) |
-| 같은 사실이 기사마다 다른 숫자로 보도됨 | 주제별로 언론사 기사 링크를 모으고, 기준이 갈린 숫자(`diffs`)를 표로 나란히 표시 | [언론 컴포넌트](dev/web/src/components/media/media.js) · [데이터 형식](docs/planning/data-spec.md#themes) |
-| 확정치·잠정치·전망치가 섞여 보임 | 출처 신뢰도 A~E 등급, 국가채무 막대에 결산·전망 구분, 금액을 확인하지 못한 해는 막대 대신 '미확인' 표시 | [재정 컴포넌트 `renderFiscal`](dev/web/src/components/fiscal/fiscal.js) |
-| 기사 수가 많아 모바일에서 길어짐 | 3개를 넘는 목록은 모두 접고 '더보기', 860px 이하 하단 탭바, 오른쪽 전체 메뉴 서랍, 맨 위로 단추, 현재 섹션 표시(`aria-current`) | [`collapse`](dev/web/src/core/ui.js) · [`setupNav`·`setupDrawer`](dev/web/src/components/nav/nav.js) |
-| 20~70대 독자의 글자 크기 차이 | '가 글자 크게' 단추로 기준 글자 크기를 바꾸고 선택을 기기에 저장 | [제호 컴포넌트 `setupBig`](dev/web/src/components/header/header.js) |
-| AI가 쓴 숫자를 사람이 확인했는지 독자가 알 수 없음 | 사람이 원문과 대조한 호는 `approve.py --by`로 '편집자 확인', 확인 없이 06시에 나간 호는 `--auto`로 '자동 발행'을 남겨 제호 옆에 구분해 표시. 출처 없는 숫자는 검사가 막음 | [일일 발행 절차](docs/planning/runbook.md) · [승인](dev/pipeline/publish/approve.py) · [발행 전 검사](dev/pipeline/publish/validate.py) |
-| 틀린 숫자를 고쳐도 독자가 알 수 없음 | 화면마다 GitHub 이슈 양식으로 이어지는 오류 신고, 바닥글의 정정 기록(`corrections.json`) | [정정 기록 형식](docs/planning/data-spec.md#correctionsjson) · [오류 신고 양식](.github/ISSUE_TEMPLATE/correction.yml) |
-| 승인이 늦으면 어제 숫자를 오늘 숫자로 읽음 | 최신 호가 한국 시간 오늘이 아니면 맨 위에 미발행 띠, 제호 옆에 수집 시각 | [제호 컴포넌트 `renderStale`](dev/web/src/components/header/header.js) |
-| 이 서비스만의 기능(갈린 숫자 비교)이 맨 아래에 묻힘 | 홈 머리기사 아래 '오늘 기준이 갈린 숫자' 카드, 언론 섹션을 두 번째로 | [갈린 숫자 컴포넌트 `renderSplits`](dev/web/src/components/splits/splits.js) |
-| 커밋 기록만으로 변경 흐름을 읽기 어려움 | `종류(범위): 제목` 규칙과 로컬 훅·PR 검사 | [커밋 규칙](docs/dev/commits.md) · [제목 검사](dev/tools/check_commit_msg.mjs) |
+| 신뢰 정보 보강 | 승인 기록·정정·미발행 안내를 추가해 데이터 상태를 드러냈습니다 | [88a700a](https://github.com/MinsangKwak/korea-jogan/commit/88a700a) · [4c9af47](https://github.com/MinsangKwak/korea-jogan/commit/4c9af47) |
+| 화면 기준 통합 | 디자인 토큰 생성과 공통 스타일을 도입했습니다 | [8fc4304](https://github.com/MinsangKwak/korea-jogan/commit/8fc4304) · [5d4dbcc](https://github.com/MinsangKwak/korea-jogan/commit/5d4dbcc) |
+| 읽기 흐름 개선 | 권역별 지역 선택과 목록 접기로 정보 밀도를 조정했습니다 | [4affa10](https://github.com/MinsangKwak/korea-jogan/commit/4affa10) · [80255a0](https://github.com/MinsangKwak/korea-jogan/commit/80255a0) |
+| 발행 정책 변경 | 사람 확인을 기다리던 흐름에 06시 자동 공개를 추가하고 확인 여부를 구분했습니다 | [af8c746](https://github.com/MinsangKwak/korea-jogan/commit/af8c746) |
+| 검색과 유지보수 보완 | 호별 검색 페이지를 만들고, 소스·디자인·문서의 위치를 정리했습니다 | [f8592fe](https://github.com/MinsangKwak/korea-jogan/commit/f8592fe) · [f8e5401](https://github.com/MinsangKwak/korea-jogan/commit/f8e5401) · [4d1cc37](https://github.com/MinsangKwak/korea-jogan/commit/4d1cc37) |
 
-## 화면 구성
+위 내용은 구현 범위와 의사결정의 기록입니다. 사용자 증가나 읽기 시간 단축 등의 성과는 측정 결과가 확보되기 전까지 제시하지 않습니다.
 
-섹션 메뉴는 화면 폭에 따라 모양이 바뀝니다. 1200px 이상에서는 오른쪽 가운데에 세로 메뉴가 늘 떠 있고, 861~1199px에서는 분류 메뉴가 스크롤 내내 위에 붙으며, 860px 이하에서는 하단 탭바를 씁니다. 메뉴 오른쪽 끝(모바일은 탭바의 '메뉴')의 **전체 메뉴**를 누르면 오른쪽에서 서랍이 열립니다. 서랍에서는 모든 섹션과 그 안의 항목(언론 주제, 전국 분야, 시도)으로 바로 가고, 글자 크기·공유·지난 호·정정 기록·오류 신고도 엽니다. 배치는 BBC·NYT와 국내 일간지 사이트의 '고정 상단 바 + 전체 메뉴'를 참고했습니다.
+## 실행과 확인
 
-헤더는 제호 한 줄(로고 · 날짜·수집 시각·편집자 확인 · 공유·글자 크게)과 '최신 공식 숫자' 띠, 두 단입니다. 전체 폭 안내 띠는 초안·시안·미발행처럼 독자가 알아야 할 상태일 때만 띄우고, 편집자 확인을 마친 정상 호는 제호 안의 '✓ 편집자 확인' 표시로만 알립니다. 600px 이하에서는 공유·글자 크게 단추가 아이콘으로 줄고, 최신 숫자는 한 줄에 두어 가로로 밀어 봅니다.
-
-항목이 3개를 넘는 목록은 앞의 3개만 보여 주고 '더보기 (N건)' 단추로 펼칩니다. 대상은 오늘 꼭 볼 숫자, 언론사별 기사, 기준이 갈린 숫자, 전국 뉴스, 시도별 한 줄과 시도 기사, 이번 주 일정, 주력산업, 수집 방법과 한계입니다. 핵심 숫자 타일과 그래프, AI 요약처럼 한눈에 비교해야 하는 것은 접지 않습니다.
-
-| 메뉴 | 내용 |
-| --- | --- |
-| 홈 | 머리기사·요약·핵심 수치 3개, 오늘 꼭 볼 숫자, 오늘 기준이 갈린 숫자 카드 |
-| 언론 | 주제·키워드 검색. 위에는 AI 요약과 기준이 갈린 숫자, 아래에는 언론사별 기사 제목과 링크만 |
-| 전국 | 분야별 전국 뉴스(사회·사건·안전·날씨·재난·안보·외교·국제·과학·IT·생활·물가·문화·스포츠)와 흐름 요약 3줄 |
-| 지역 | 수도권·강원·충청·호남·영남·제주 권역으로 묶은 17개 시도. 시도를 누르면 지역 언론 기사, 고르기 전에는 시도별 한 줄 요약. 900px 이하에서는 시도 단추를 한 줄로 밀어 봅니다 |
-| 정치 | 대통령 임기 경과율, 선거·예산 처리기한 D-Day, 이번 주 일정. 정당 공방과 인물 평가는 넣지 않습니다 |
-| 경제 | 증시·환율·유가 핵심 숫자. 상승·보합·하락 방향만 표시하고 좋고 나쁨을 평가하지 않습니다 |
-| 산업 | 반도체 밖의 주력산업(철강·조선·자동차·석유화학·에너지)과 수출입 |
-| 재정 | 국가채무 연도별 추이(결산·전망 구분), 월간 재정동향, 국민연금 자산 배분과 개혁 내용 |
-
-제호 아래 '최신 공식 숫자' 띠는 승인된 조간과 별개입니다. 한국은행 ECOS의 코스피·코스닥 종가, 원·달러 환율, 기준금리를 평일 낮 1시간마다 다시 받고, '자동 갱신 · 사람 확인 전'으로 표시해 조간 숫자와 구분합니다. ECOS는 장중 시세를 주지 않으므로 새 일별 확정값이 나와야 다음 갱신 때 반영됩니다.
-
-바닥글에는 수집 한계, 출처 신뢰도, 지난 호 목록, RSS, 정정 기록과 오류 신고, 만든 사람 링크가 있습니다. 제호의 '공유' 단추는 지금 보는 호의 링크를 건넵니다.
-
-호마다 고유 주소(`https://korea-jogan.com/YYYY-MM-DD`)가 있고, 예전 주소(`?d=YYYY-MM-DD`)도 그대로 열립니다. 배포할 때 `build_pages.py`가 호별 제목·설명·대표 주소와 머리기사·숫자·기사 제목 요약을 HTML에 미리 넣어 두므로, JavaScript를 실행하지 않는 검색 로봇도 내용을 읽습니다. 이 요약은 화면이 그려지면 지워집니다.
-
-2026-10-20호에는 전국 뉴스 24건, 시도 뉴스 43건, 언론 주제 3개(국내외 기사 40건, 기준이 갈린 숫자 6개), 국가채무 14개 연도를 담았습니다.
-
-## 디렉터리
-
-문서는 `docs/` 한곳에 기획(`planning/`)과 개발(`dev/`)로 나눠 두고, 디자인 산출물은 `design/`, 코드는 `dev/`에 둡니다. 화면 코드는 공통(`core`)과 섹션별 컴포넌트(`components`)로 나누고, 컴포넌트마다 JS와 CSS를 한 폴더에 둡니다.
-
-```text
-korea-jogan/
-├── docs/                             문서
-│   ├── planning/                     기획: 서비스 기획(01-product.md), 발행 데이터 규격(data-spec.md),
-│   │                                 매일 00시 발행 절차(runbook.md)
-│   └── dev/                          개발: 구조와 자동화(architecture.md), 브랜치(branches.md),
-│                                     커밋 규칙(commits.md), Claude 작업 지침(CLAUDE.md)
-├── design/                           디자인
-│   ├── guide.md                      이름·컨셉, 색·글자·간격·컴포넌트 규칙
-│   ├── tokens.json                   디자인 토큰 원본(밝은·어두운 테마). 화면의 tokens.css는 여기서 만듭니다
-│   └── og/                           공유 카드(card.html)·앱 아이콘(icon.html) 원본과 이미지 생성(build.mjs)
-├── dev/                              개발
-│   ├── web/                          GitHub Pages로 배포하는 정적 사이트. 이 폴더만 배포됩니다
-│   │   ├── index.html                마크업과 메타데이터
-│   │   ├── src/
-│   │   │   ├── styles/               tokens.css(생성) · kj.css(디자인 시스템) · layout.css(공통 배치)
-│   │   │   ├── core/                 config · format · ui · data · metrics · seo
-│   │   │   ├── components/           header · nav · lead · splits · media · national · regions
-│   │   │   │                         politics · economy · industry · fiscal · footer (폴더마다 .js와 .css)
-│   │   │   └── main.js               진입점. 데이터를 읽고 컴포넌트를 차례로 그립니다
-│   │   ├── assets/images/            공유 미리보기(og.png)·파비콘·앱 아이콘
-│   │   ├── data/                     발행 데이터(issues/)와 정정 기록(corrections.json)
-│   │   ├── manifest.webmanifest
-│   │   └── robots.txt
-│   ├── pipeline/                     데이터 파이프라인(Python)
-│   │   ├── collect/                  수집: 언론사 RSS, 한국은행 ECOS. 받은 원본은 collect/raw/
-│   │   ├── build/                    배포 때 만드는 파일: RSS·사이트맵, 호별 페이지, 최신 공식 숫자, 토큰 CSS
-│   │   └── publish/                  발행: 검사(validate.py), 승인(approve.py), IndexNow 알림
-│   ├── tests/                        파이프라인 시험(unittest)
-│   └── tools/                        커밋 제목 검사(check_commit_msg.mjs)와 Git 훅(githooks/)
-├── .github/                          워크플로(검사·아침 발행·배포·수집)와 오류 신고 양식
-├── LICENSE                           MIT
-└── README.md
-```
-
-## 브랜치와 배포
-
-```text
-main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대로 올림)──▶ deploy ──▶ GitHub Pages
-```
-
-| 브랜치 | 역할 |
-| --- | --- |
-| `dev` | 개발 중인 소스와 데이터. 모든 작업과 일일 발행이 여기서 시작합니다 |
-| `main` | 검사를 통과한 최종본 |
-| `deploy` | 배포 전용. 여기에 올라온 커밋만 GitHub Pages에 나갑니다 |
-
-`main`과 `deploy`에는 직접 커밋하지 않습니다. 자세한 순서와 저장소 설정은 [docs/dev/branches.md](docs/dev/branches.md)에 있습니다. 커밋 제목은 [docs/dev/commits.md](docs/dev/commits.md)의 `종류(범위): 제목` 꼴을 따릅니다.
-
-## 매일 발행
-
-매일 00시(한국 시간) Claude 예약 작업이 [docs/planning/runbook.md](docs/planning/runbook.md) 절차대로 그날 호를 만듭니다.
-
-1. 분야별 하위 에이전트가 공식 발표와 기사를 동시에 조사합니다(핵심 숫자 · 전국 · 지역 두 묶음 · 언론 주제).
-2. 결과를 합쳐 `dev/web/data/issues/YYYY-MM-DD.json`을 쓰고 `index.json`의 `latest`를 바꿉니다.
-3. `status: "draft"`로 두고 `dev/pipeline/publish/validate.py`를 통과하면 `data(issue): YYYY-MM-DD호 초안`으로 `dev`에 커밋합니다.
-4. 06시 전에 사람이 머리기사·핵심 숫자·갈린 숫자를 원문과 대조했으면 `dev/pipeline/publish/approve.py --by 이름`으로 승인합니다('편집자 확인').
-5. 06시(한국 시간) `publish.yml`이 승인되지 않은 초안을 `--auto`로 자동 발행하고, `main`과 `deploy`를 같은 커밋으로 빨리 감기합니다. 이어서 `deploy-pages.yml`이 검사하고 RSS를 만든 뒤 배포합니다.
-
-검사에 실패하면 올리지 않습니다. 재정·국민연금·수출입 같은 상설 지표는 새 공식 발표가 있을 때만 바꿉니다.
-
-## 로컬에서 보기
-
-`index.html`은 JSON을 `fetch`로 읽으므로 파일을 바로 열면 데이터가 비어 보입니다. 간단한 서버로 엽니다.
+저장소 루트에서 실행합니다. 화면이 JSON을 `fetch`하므로 HTML 파일을 직접 열지 않고 HTTP 서버를 사용합니다. CI 기준은 Python 3.12, Node.js 22입니다.
 
 ```bash
 python3 -m http.server -d dev/web 8000
-# http://localhost:8000
 ```
 
-데이터를 고친 뒤에는 검사를 돌리고, 커밋 제목 훅을 켜 둡니다.
+브라우저에서 `http://localhost:8000`을 엽니다. 검사는 아래 명령으로 실행합니다.
 
 ```bash
 python3 dev/pipeline/publish/validate.py
+python3 dev/pipeline/build/build_tokens.py --check
 python3 -m unittest discover -s dev/tests
 git config core.hooksPath dev/tools/githooks
 ```
 
-실행 기준은 CI와 같은 Python 3.12 · Node 22입니다.
+## 저장소 안내
 
-## 데이터 원칙
-
-- 숫자는 공식 발표 원문이나 그 발표를 인용한 기사에 있는 것만 씁니다. 기억이나 추측으로 채우지 않습니다.
-- 잠정·확정·전망과 발표일·기준일·수집일을 구분합니다. 출처마다 신뢰도 등급(A 공식 확정 ~ E 분석·계산)을 붙입니다.
-- 기사 본문을 읽지 못하고 검색 요약만 봤으면 그 사실을 데이터에 남깁니다(`read`·`body_read`).
-- 기사 본문은 저장·재배포하지 않습니다. 제목·직접 쓴 짧은 요약·링크만 둡니다.
-- 정부·정당·인물을 평가하지 않습니다.
-
-## 알려진 한계
-
-- 여러 국내외 매체가 robots.txt나 서버 차단으로 AI의 본문 접근을 막습니다. 기사 목록은 언론사 RSS(26곳)로 넓혔지만, 본문을 읽고 숫자를 비교하는 일은 열린 매체에서만 합니다. 막힌 매체 기사는 '본문 미확인'으로 표시하고, 대체한 사실을 화면 하단 '수집 방법과 한계'에 적습니다. 자세한 내용은 [일일 발행 절차](docs/planning/runbook.md#접속이-막힌-매체)에 있습니다.
-- 공공 API는 한국은행 ECOS만 붙었습니다. '최신 공식 숫자' 띠는 ECOS에서 받지만, 조간 본문의 숫자는 아직 공식 발표 원문과 기사를 조사해 채웁니다.
-- ECOS 환율은 매매기준율이라, 조간의 주간 종가 환율과 소수점 아래가 다를 수 있습니다.
-- 방문 측정(GoatCounter)은 주소를 넣어야 켜집니다. 지금은 꺼져 있습니다.
-
-## 다음 단계
-
-- [x] 화면과 발행 데이터 분리(JSON)
-- [x] 전국·17개 시도 뉴스, 주제·키워드 검색
-- [x] 매일 00시 자동 초안, 06시 자동 발행(사람이 확인한 호는 '편집자 확인'으로 구분)
-- [x] 정정 기록과 오류 신고
-- [x] 홈 '오늘 기준이 갈린 숫자', 미발행 표시
-- [x] 지난 호 아카이브(`?d=`), RSS(`/feed.xml`), 공유 미리보기
-- [x] `dev` → `main` → `deploy` 분리와 GitHub Pages 배포
-- [x] 언론사 RSS 기사 목록 수집(26곳), ECOS 최신 공식 숫자 띠
-- [x] 오른쪽 세로 메뉴·전체 메뉴 서랍, 목록 접기, 권역별 시도 선택
-- [ ] KOSIS·관세청·국회 수집기 추가, 조간 핵심 숫자를 API 값으로 옮기기
-- [ ] GoatCounter 주소 등록, 1차 독자 가설 확정([서비스 기획](docs/planning/01-product.md#1차-독자-가설-확정-필요))
-
-## 비밀 관리
-
-API 키는 GitHub Secrets에만 둡니다. 페이지나 코드, 문서에 넣지 않습니다.
-
-| Secret | 용도 |
+| 경로 | 역할 |
 | --- | --- |
-| `ECOS_API_KEY` | 한국은행 ECOS |
-| `KOSIS_API_KEY` | 통계청 KOSIS(예정) |
-| `DATA_GO_KR_API_KEY` | 공공데이터포털(관세청·국회, 예정) |
+| [dev/web/](dev/web/) | 실제 배포하는 화면, 섹션별 JS·CSS, 발행 JSON |
+| [dev/pipeline/](dev/pipeline/) | 자료 수집, 데이터 검사, 배포 파일 생성 |
+| [dev/tests/](dev/tests/) | 파이프라인 회귀 검사 |
+| [design/](design/) | 디자인 가이드, 토큰 원본, 공유 이미지 원본 |
+| [docs/planning/](docs/planning/) | 서비스 기획, 데이터 규격, 발행 절차 |
+| [docs/dev/](docs/dev/) | 기술 설계, 브랜치·커밋 규칙, AI 작업 지침 |
+| [.github/](.github/) | 검사·발행·배포 워크플로와 오류 신고 양식 |
 
-## 라이선스
+일반 변경은 `dev`에서 검증해 `main`으로 병합합니다. 웹 배포는 `deploy`를 통해 별도로 진행합니다. [브랜치 운영 규칙](docs/dev/branches.md)과 [커밋 규칙](docs/dev/commits.md)에 상세 절차가 있습니다.
 
-- 코드: [MIT](LICENSE)
-- 이 서비스가 쓴 글: CC BY 4.0
-- 원자료: 각 기관의 이용조건(공공누리 유형)을 따릅니다.
+## 현재 한계와 다음 과제
+
+- 조간 본문은 공식 발표와 기사를 조사해 작성합니다. ECOS 수집기는 구현돼 있지만, 모든 지표가 API로 연결된 상태는 아닙니다. KOSIS·관세청·국회 수집은 후속 과제입니다.
+- 최신 숫자 띠는 ECOS의 일별 확정값이며 장중 시세가 아닙니다. 승인된 조간과 별개로 갱신하고 사람 확인 전임을 표시합니다.
+- RSS 피드 설정은 26곳입니다. 피드 상태에 따라 실제 수집 범위가 달라지며, 본문을 읽지 못한 기사는 그 사실을 데이터에 남깁니다.
+- GA4 측정 코드는 연결돼 있습니다. GoatCounter 주소는 비어 있습니다. 수집 결과를 검토해 핵심 독자 가설과 섹션 우선순위를 검증할 예정입니다.
+- 출처 링크의 존재와 형식 검사는 원문의 사실 확인을 대신하지 않습니다. 자동 발행 이후에도 정정 절차가 필요합니다.
+
+API 키는 GitHub Secrets에서 관리합니다. 현재 ECOS는 `ECOS_API_KEY`를 사용하며, 후속 API 키는 해당 수집기를 도입할 때 설정합니다.
+
+## 이용 조건
+
+코드는 [MIT](LICENSE), 서비스에서 직접 작성한 글은 CC BY 4.0을 적용합니다. 기사와 통계 등 원자료는 각 권리자·기관의 이용 조건을 따릅니다.
