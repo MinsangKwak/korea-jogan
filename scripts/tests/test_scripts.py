@@ -110,6 +110,15 @@ class ApproveTest(Site):
         self.assertEqual(issue["review"]["by"], "검토자")
         self.assertEqual(self.run_validate("--deploy")[0], 0)
 
+    def test_auto_publish_is_marked_not_reviewed(self):
+        self.edit(lambda i: i.update(status="draft", collectedAt="2026-10-19T00:20:00+09:00"))
+        now = dt.datetime(2026, 10, 19, 6, 0, tzinfo=approve.KST)
+        approve.approve(DATE, "", now, auto=True)
+        issue = json.loads((self.issues / f"{DATE}.json").read_text(encoding="utf-8"))
+        self.assertEqual(issue["status"], "published")
+        self.assertEqual((issue["review"]["by"], issue["review"]["auto"], issue["review"]["scope"]), ("자동 발행", True, []))
+        self.assertEqual(self.run_validate("--deploy")[0], 0)
+
     def test_only_drafts(self):
         with self.assertRaises(ValueError):
             approve.approve(DATE, "검토자")

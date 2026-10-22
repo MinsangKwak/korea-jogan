@@ -11,7 +11,7 @@ flowchart LR
     C --> D{"validate.py"}
     D -- 실패 --> X["발행 중단"]
     D -- 통과 --> E["dev 커밋(draft)"]
-    E --> R["사람이 원문 대조<br/>approve.py"]
+    E --> R["06시 전 사람 확인 --by<br/>없으면 06시 자동 발행 --auto"]
     R --> F["main · deploy 빨리 감기"]
     F --> G{"deploy-pages.yml<br/>--deploy 검사 · RSS"}
     G -- 통과 --> H["GitHub Pages"]
@@ -28,7 +28,7 @@ flowchart LR
 | 발행 데이터 | [public/data/issues/](../../public/data/issues) | `index.json`(최신 호·목록)과 날짜별 호. 형식은 [DATA.md](../DATA.md) |
 | 발행 전 검사 | [scripts/validate.py](../../scripts/validate.py) | 필수 항목, 출처·링크, 값 범위, 날짜, 시도 이름을 검사합니다 |
 | 커밋 제목 검사 | [scripts/check_commit_msg.mjs](../../scripts/check_commit_msg.mjs) | 로컬 훅과 PR에서 `종류(범위): 제목` 규칙을 검사합니다 |
-| 승인 | [scripts/approve.py](../../scripts/approve.py) | 사람이 확인한 초안을 `published`로 바꾸고 확인한 사람·시각을 남깁니다 |
+| 승인 | [scripts/approve.py](../../scripts/approve.py) | 초안을 `published`로 바꿉니다. `--by`는 확인한 사람·시각, `--auto`는 자동 발행 표시(`review.auto`)를 남깁니다 |
 | RSS·사이트맵 | [scripts/build_feed.py](../../scripts/build_feed.py) | 승인된 호로 `feed.xml`·`sitemap.xml`을 만듭니다. 배포 때 실행 |
 | 언론사 RSS 수집기 | [scripts/fetch_rss.py](../../scripts/fetch_rss.py) · [feeds.json](../../scripts/feeds.json) | 26개 언론사 RSS에서 전날 기사의 제목·링크·날짜만 모읍니다. robots.txt를 지키고 본문은 받지 않습니다 |
 | 공공 API 수집기 | [scripts/fetch_ecos.py](../../scripts/fetch_ecos.py) · [ecos_nums.py](../../scripts/ecos_nums.py) | ECOS 원본(환율·기준금리·코스피·코스닥) 수집과 핵심 숫자 변환 |
@@ -92,7 +92,7 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 | 조사 | 분야별 하위 에이전트를 동시에 돌립니다(핵심 숫자 · 전국 · 지역 두 묶음 · 언론 주제) |
 | 상설 지표 | 재정·국민연금·수출입은 새 공식 발표가 있을 때만 바꾸고, 없으면 지난 호 값을 씁니다 |
 | 실패 처리 | 고칠 수 없는 섹션은 지난 호 값으로 되돌린 뒤 다시 검사하고, 그래도 실패하면 발행하지 않습니다 |
-| 사람 확인 | 자동 작업은 `draft`까지만 씁니다. 머리기사·핵심 숫자·갈린 숫자를 사람이 원문과 대조해 승인해야 배포됩니다 |
+| 사람 확인 | 06시 전에 사람이 머리기사·핵심 숫자·갈린 숫자를 대조하면 '편집자 확인' 호로, 아니면 검사를 통과한 초안을 '자동 발행' 호로 06시에 냅니다. 독자는 제호 옆 표시로 둘을 구분합니다 |
 
 절차 전체는 [DAILY_RUNBOOK.md](../DAILY_RUNBOOK.md)에 있습니다.
 

@@ -1,6 +1,6 @@
 # 일일 발행 절차
 
-매일 00시(한국 시간) 예약 작업이 이 절차대로 그날 호의 **초안**을 만들어 `dev`에 올립니다. 사람이 머리기사와 핵심 숫자를 원문과 대조해 승인한 뒤에만, 06시 `publish.yml`이 `main`과 `deploy`를 같은 커밋으로 올립니다. `deploy`에 올라가면 `deploy-pages.yml`이 승인 여부까지 다시 검사한 뒤 GitHub Pages에 배포합니다. 브랜치 규칙은 [BRANCHES.md](BRANCHES.md), 커밋 규칙은 [COMMITS.md](COMMITS.md)를 따릅니다.
+매일 00시(한국 시간) 예약 작업이 이 절차대로 그날 호의 **초안**을 만들어 `dev`에 올립니다. 06시 `publish.yml`이 그날 호를 `main`과 `deploy`에 같은 커밋으로 올립니다. 그때까지 사람이 승인했으면 '편집자 확인' 호로, 승인하지 않았으면 검사를 통과한 초안을 '자동 발행' 호로 공개합니다. `deploy`에 올라가면 `deploy-pages.yml`이 승인 여부까지 다시 검사한 뒤 GitHub Pages에 배포합니다. 브랜치 규칙은 [BRANCHES.md](BRANCHES.md), 커밋 규칙은 [COMMITS.md](COMMITS.md)를 따릅니다.
 
 ## 원칙
 
@@ -25,14 +25,16 @@
 4. 결과를 합쳐 `public/data/issues/YYYY-MM-DD.json`을 만듭니다. `status`는 `draft`로 둡니다. `date`, `collectedAt`, `lead`(머리기사·요약·핵심 수치 3개), `briefs`(4~6개), `agenda`(이번 주 일정)를 새로 씁니다.
 5. `index.json`의 `latest`를 오늘로 바꾸고 `issues` 목록 맨 앞에 오늘을 넣습니다.
 6. `python3 scripts/validate.py`를 돌립니다. 실패하면 고칠 수 있는 것은 고치고, 끝내 고치지 못하면 그 섹션을 지난 호 값으로 되돌린 뒤 다시 검사합니다. 검사를 통과하지 못하면 올리지 않습니다.
-7. `data(issue): YYYY-MM-DD호 초안` 제목으로 `dev`에 커밋하고 push 합니다. **자동 작업은 여기서 멈춥니다.** `main`·`deploy`에는 올리지 않고, 확인할 항목(머리기사, 핵심 숫자, 갈린 숫자)과 원문 링크를 보고합니다.
+7. `data(issue): YYYY-MM-DD호 초안` 제목으로 `dev`에 커밋하고 push 합니다. 예약 작업은 여기서 멈추고 확인할 항목(머리기사, 핵심 숫자, 갈린 숫자)과 원문 링크를 보고합니다. `main`·`deploy`에는 06시 `publish.yml`이 올립니다.
 
 ## 사람 확인과 공개
+
+06시 전에 사람이 확인할 수 있으면 아래 8~10번을 합니다. 확인하지 못하면 06시 `publish.yml`이 `python3 scripts/approve.py YYYY-MM-DD --auto`로 자동 발행하고 `data(issue): YYYY-MM-DD호 자동 발행` 커밋을 `dev`에 남깁니다. 자동 발행 호는 화면에 '자동 발행'으로 보이고, 나중에 틀린 값이 나오면 아래 '정정' 절차로 고칩니다.
 
 8. 확인하는 사람이 로컬에서 `python3 -m http.server -d public 8000`으로 초안을 열고 `lead`, `nums`, `themes[].diffs`를 원문과 대조합니다. 틀린 값은 고치거나 뺍니다.
 9. `python3 scripts/approve.py YYYY-MM-DD --by 이름`으로 `published`로 바꾸고 `python3 scripts/validate.py --deploy`를 돌립니다.
 10. `data(issue): YYYY-MM-DD호 승인` 제목으로 `dev`에 커밋하고 push 합니다. 06:00에 `publish.yml`이 `main`·`deploy`를 같은 커밋으로 빨리 감기하고 배포를 실행합니다. 06시가 지나 승인했다면 Actions에서 `아침 발행`을 수동 실행합니다. 빨리 감기가 안 되면(누가 `main`에 따로 올린 경우) 워크플로가 실패로 멈추니, 억지로 덮어쓰지 말고 브랜치를 맞춥니다.
-11. 배포가 끝나면 `https://minsangkwak.github.io/korea-jogan/data/issues/index.json`의 `latest`가 오늘인지 확인합니다. 승인이 늦어지는 동안 화면은 지난 호를 보여 주며, 맨 위에 '오늘 호는 아직 발행되지 않았습니다'를 띄웁니다.
+11. 배포가 끝나면 `https://minsangkwak.github.io/korea-jogan/data/issues/index.json`의 `latest`가 오늘인지 확인합니다. 오늘 호가 없거나 검사에 실패해 올리지 못하면 화면은 지난 호를 보여 주며, 맨 위에 '오늘 호는 아직 발행되지 않았습니다'를 띄웁니다.
 
 ## 정정
 

@@ -21,8 +21,8 @@
 | --- | --- | --- | --- |
 | `date` | `"YYYY-MM-DD"` | 전체 | 발행일. ✔ 파일 이름과 같아야 합니다 |
 | `collectedAt` | ISO 8601 | 머리 | 수집 시각(한국 시간, `+09:00` 포함). ✔ `published` 호는 발행일 06:00보다 늦으면 안 됩니다 |
-| `status` | 문자열 | 맨 위 안내 | ✔ `prototype`(시안) · `draft`(사람 확인 전 초안) · `published`(사람이 확인한 공개 호). 아래 [status · review](#status--review) |
-| `review` | 객체 | 맨 위 안내 | `published` 호를 확인한 사람과 시각 `{by, at, scope}`. ✔ `published`면 `by`·`at` 필수 |
+| `status` | 문자열 | 맨 위 안내 | ✔ `prototype`(시안) · `draft`(공개 전 초안) · `published`(공개 호. 사람 확인 또는 자동 발행). 아래 [status · review](#status--review) |
+| `review` | 객체 | 맨 위 안내 | `published` 호를 확인한 사람과 시각 `{by, at, scope}`. 자동 발행이면 `{by: "자동 발행", at, scope: [], auto: true}`. ✔ `published`면 `by`·`at` 필수 |
 | `headline`, `topic`, `notes` | 문자열 | 머리 | 오늘의 한 줄, 주제, 비고 |
 | `lead` | 객체 | 홈 | 머리기사. 아래 [lead](#lead) |
 | `briefs` | 배열 | 홈 | 오늘 꼭 볼 숫자 `{k, m, href}` 4~6개 |
@@ -45,6 +45,12 @@
 
 ```json
 { "status": "published", "review": { "by": "확인한 사람", "at": "2026-10-20T07:40+09:00", "scope": ["lead", "nums", "themes.diffs"] } }
+```
+
+06시까지 사람이 확인하지 않으면 아침 발행 워크플로가 `approve.py --auto`로 바꿉니다. 화면은 '편집자 확인' 대신 '자동 발행'으로 표시합니다.
+
+```json
+{ "status": "published", "review": { "by": "자동 발행", "at": "2026-10-22T06:03+09:00", "scope": [], "auto": true } }
 ```
 
 | 규칙 | 내용 |
