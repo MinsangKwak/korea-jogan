@@ -37,7 +37,7 @@ jobs:
           import json, os, sys
           from pathlib import Path
           date = sys.argv[1]
-          issues = Path("public/data/issues")
+          issues = Path("dev/web/data/issues")
           path = issues / f"{date}.json"
           latest = json.loads((issues / "index.json").read_text(encoding="utf-8")).get("latest")
           status = json.loads(path.read_text(encoding="utf-8")).get("status") if path.exists() else None
@@ -52,15 +52,15 @@ jobs:
       - name: 자동 발행
         if: steps.gate.outputs.run == 'true' && steps.gate.outputs.status == 'draft'
         run: |
-          python scripts/publish/validate.py
-          python scripts/publish/approve.py "${{ steps.gate.outputs.date }}" --auto
+          python dev/pipeline/publish/validate.py
+          python dev/pipeline/publish/approve.py "${{ steps.gate.outputs.date }}" --auto
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "data(issue): ${{ steps.gate.outputs.date }}호 자동 발행"
           git push origin HEAD:dev
       - name: 배포 규칙 검사
         if: steps.gate.outputs.run == 'true'
-        run: python scripts/publish/validate.py --deploy
+        run: python dev/pipeline/publish/validate.py --deploy
       # main이 dev의 조상이 아니면(누가 main에 따로 올린 경우) 덮어쓰지 않고 멈춘다
       - id: push
         name: main·deploy 빨리 감기
