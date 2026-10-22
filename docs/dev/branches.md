@@ -1,34 +1,44 @@
-# 브랜치와 배포 흐름
+# 브랜치 운영과 배포 절차
 
-| 브랜치 | 역할 | 누가 올리나 |
+**작업·최종본·웹 배포를 `dev`, `main`, `deploy`로 나눕니다.** 작업 중인 변경이 바로 웹에 공개되지 않도록 배포 기준을 별도로 둡니다.
+
+| 브랜치 | 역할 | 반영 방식 |
 | --- | --- | --- |
-| `dev` | 개발 중인 소스와 데이터. 모든 작업은 여기서 시작합니다 | 개발 작업, 일일 발행 |
-| `main` | 검사를 통과한 최종본 | `dev`에서 병합 |
-| `deploy` | 배포 전용. 여기에 올라온 것만 GitHub Pages에 나갑니다 | `main`에서 그대로 올림 |
+| `dev` | 개발 소스와 일일 초안 | 작업 커밋 또는 작업 브랜치 PR |
+| `main` | 검증한 최종본 | `dev` PR 병합 또는 아침 발행의 빨리 감기 |
+| `deploy` | GitHub Pages 배포 기준 | 검증한 `main` 커밋으로 빨리 감기 |
 
-## 흐름
+## 일반 변경
 
-```text
-main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대로 올림)──▶ deploy ──▶ GitHub Pages
-```
+작업 전에 원격 이력을 확인하고 `dev`를 `main`에 빨리 감기로 맞춥니다. 이력이 갈라져 있으면 강제로 덮어쓰지 않고 차이를 먼저 확인합니다.
 
-한 바퀴는 `main → dev → main → deploy`입니다. 작업을 시작할 때 `dev`를 `main`에 맞추고(빨리 감기), `dev`에서 개발해 `main`에 병합하고 `main`을 그대로 `deploy`에 올립니다. `main`·`deploy`에는 직접 커밋하지 않고, `deploy`는 늘 `main`과 같은 커밋을 가리킵니다.
+화면·스크립트 수정은 `dev`에서 작업 브랜치를 만들고 `dev` 대상 PR로 검토합니다. 문서 변경도 주제별 커밋으로 나눕니다. 검사를 통과하면 `dev → main` PR을 병합합니다. 병합 커밋이 생겼다면 `dev`도 그 커밋에 맞춰 다음 자동 발행이 빨리 감기로 진행되게 합니다.
 
-화면·스크립트 변경은 `dev`에서 작업 브랜치를 따서 `dev`로 PR을 낸 뒤 `dev → main` PR(`sync: dev → main`)을 거쳐 `main`을 `deploy`로 올립니다. 다 쓴 작업 브랜치는 병합 뒤 원격과 로컬에서 지웁니다.
+`main`과 `deploy`에 직접 수정 커밋을 만들지 않습니다. 배포 시에는 `deploy`를 `main`과 같은 커밋에 맞춥니다. 검증·배포 사이에는 두 브랜치가 잠시 다를 수 있습니다. 사용이 끝난 작업 브랜치는 병합을 확인한 뒤 정리합니다.
 
-`dev → main` PR을 병합하면 `main`에 병합 커밋이 하나 생기니 바로 `git push origin main:dev`로 `dev`를 `main`에 맞춰 둡니다. 그래야 다음 일일 발행이 빨리 감기로 `main`·`deploy`까지 올라갑니다.
+## 일일 발행
 
-일일 발행에서는 00시 예약 작업이 `dev`에 초안을 올리고, 06시 `publish.yml`이 승인되지 않은 초안의 자동 발행 커밋을 `dev`에 더한 뒤 `main`과 `deploy`를 같은 커밋으로 빨리 감기(fast-forward)합니다.
+00시 외부 예약 작업이 오늘 호의 초안을 `dev`에 저장합니다. 06시 `publish.yml`은 오늘 호가 최신 호이며 상태가 `draft` 또는 `published`인지 확인합니다. 초안이면 검사 후 자동 발행 기록을 남깁니다.
 
-## 검사와 배포 워크플로
+배포 규칙 검사에 통과하면 `main`과 `deploy`를 현재 `dev` 커밋으로 빨리 감기합니다. 어느 한 브랜치라도 `dev`의 조상이 아니면 중단합니다. 이후 배포 워크플로를 명시적으로 실행합니다. 오늘 호가 없거나 최신 호가 다르면 브랜치를 올리지 않습니다.
 
-| 워크플로 | 언제 | 무엇 |
+이 구조는 변경 이력을 덮어쓰지 않는 데 목적이 있습니다. 자동 발행이 멈췄다면 호 데이터뿐 아니라 브랜치 관계도 확인해야 합니다.
+
+## 워크플로별 책임
+
+| 파일 | 실행 조건 | 수행 내용 |
 | --- | --- | --- |
-| `check.yml` | `dev`·`main` push, PR | 데이터 검사, 스크립트 시험, PR 커밋 제목 검사 |
-| `deploy-pages.yml` | `deploy` push, 수동 실행, 평일 09:17~22:17(한국 시간) 매시 | 배포 규칙 검사(`--deploy`, 승인 전 초안 차단), RSS·사이트맵·호별 검색 페이지·최신 공식 숫자(`live.json`) 생성 뒤 GitHub Pages 배포, 새 호는 IndexNow로 알림. 예약 실행은 `deploy` 브랜치를 그대로 받아 커밋 없이 다시 배포하며, `ECOS_API_KEY`가 없으면 건너뜁니다 |
-| `publish.yml` | 매일 06:00(한국 시간), 수동 실행 | `dev`의 오늘 호가 최신 호이면, 초안은 `approve.py --auto`로 자동 발행해 `dev`에 커밋하고 `--deploy` 검사 뒤 `main`·`deploy`를 빨리 감기하고 `deploy-pages.yml`을 실행합니다. 오늘 호가 없거나 검사·빨리 감기에 실패하면 올리지 않습니다 |
-| `daily.yml` | 수동 실행 | 언론사 RSS 기사 목록과 한국은행 ECOS 원본 수집 |
+| [check.yml](../../.github/workflows/check.yml) | `dev`·`main` push, 대상 브랜치 PR | 데이터·토큰 생성 결과·Python 테스트 검사. PR은 커밋 제목도 검사 |
+| [publish.yml](../../.github/workflows/publish.yml) | 한국 시간 매일 06시 예약, 수동 | 오늘 호 상태 확인, 자동 발행 전환, 배포 검사, 브랜치 빨리 감기, 배포 호출 |
+| [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `deploy` push, 수동, 평일 매시 예약 | `deploy` 체크아웃, 검사·파일 생성·Pages 배포 |
+| [daily.yml](../../.github/workflows/daily.yml) | 수동 | RSS 목록·ECOS 원자료 수집 |
 
-## 저장소 설정
+평일 갱신 예약은 한국 시간 09:17~22:17입니다. ECOS 키가 있으면 같은 `deploy` 소스에서 최신 숫자 파일을 만들어 다시 배포합니다. 커밋은 추가하지 않습니다. 예약 시각은 실행 목표이며 GitHub에서 지연될 수 있습니다.
 
-GitHub Pages는 `github-pages` 환경을 통해 배포합니다. Settings → Environments → `github-pages` → Deployment branches에 `deploy`가 허용돼 있어야 합니다.
+`check.yml`의 커밋 제목 검사는 실패 상태를 표시합니다. 실제 병합 차단 여부는 저장소 보호 설정에 달려 있으므로 워크플로 파일만으로 보장하지 않습니다.
+
+## 저장소 설정과 복구
+
+GitHub Pages는 Actions로 배포하고 `github-pages` 환경에서 `deploy` 실행을 허용해야 합니다. 환경의 허용 브랜치와 보호 규칙은 저장소 Settings에서 확인합니다.
+
+빨리 감기 실패 시 원격 `dev`·`main`·`deploy`를 가져와 추가된 커밋을 비교합니다. 필요한 변경을 보존해 이력을 정리한 뒤 다시 실행합니다. 강제 push로 우회하지 않습니다. 데이터 누락·발행 실패별 대응은 [발행 런북](../planning/runbook.md)에 있습니다.
