@@ -1,0 +1,130 @@
+/* 대한민국 조간 — generated from design/tokens.json by dev/pipeline/build/build_tokens.py. 손으로 고치지 않는다 */
+
+:root {
+  --bg: #ffffff;
+  --surface: #f4f5f7;
+  --surface-raised: #ffffff;
+  --ink: #141414;
+  --ink-2: #474c54;
+  --ink-3: #62676f;
+  --line: #e1e3e7;
+  --line-strong: #868c95;
+  --brand: #0047a0;
+  --brand-strong: #00357a;
+  --brand-soft: #e7eef8;
+  --on-brand: #ffffff;
+  --hl: #a14a00;
+  --hl-soft: #fdf0dc;
+  --head: #111111;
+  --head-ink: #ffffff;
+  --head-line: rgba(255,255,255,0.6);
+  --scrim: rgba(17,17,17,0.45);
+  --bar: #7d8693;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --focus: var(--brand);
+  --chart-1: var(--brand);
+  --chart-2: var(--hl);
+  --chart-3: #00796b;
+  --chart-4: #8e4a8a;
+  --chart-5: #5b6573;
+  --chart-6: #946f12;
+  --shadow-sticky: 0 2px 8px rgba(20,20,20,0.08);
+  --shadow-drawer: -8px 0 24px rgba(20,20,20,0.16);
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --gutter: 16px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-pill: 999px;
+  --border-hairline: 1px;
+  --border-rule: 3px;
+  --border-focus: 3px;
+  --fs: 17px;
+  --fs-wide: 18px;
+  --fs-big: 21px;
+  --tap-min: 44px;
+  --nav-h: 52px;
+  --tabbar-h: 60px;
+  --drawer-w: min(24rem, 88vw);
+  --rail-w: 9rem;
+  --wrap: 1120px;
+  --measure: 42rem;
+  --font-sans: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121417;
+    --surface: #1b1e23;
+    --surface-raised: #22262c;
+    --ink: #eceef1;
+    --ink-2: #bcc1c8;
+    --ink-3: #9aa0a9;
+    --line: #2d3138;
+    --line-strong: #6b727c;
+    --brand: #86aeea;
+    --brand-strong: #a9c6f2;
+    --brand-soft: #1a2940;
+    --on-brand: #121417;
+    --hl: #f2b765;
+    --hl-soft: #3a2c16;
+    --head: #000000;
+    --head-ink: #ffffff;
+    --head-line: rgba(255,255,255,0.6);
+    --scrim: rgba(0,0,0,0.6);
+    --bar: #6f7885;
+    --danger: #ff8a80;
+    --danger-soft: #3a1a18;
+    --focus: var(--brand);
+    --chart-1: var(--brand);
+    --chart-2: var(--hl);
+    --chart-3: #4fb3a4;
+    --chart-4: #d49ad0;
+    --chart-5: #9aa3af;
+    --chart-6: #d9bb6a;
+    --shadow-sticky: 0 2px 8px rgba(0,0,0,0.5);
+    --shadow-drawer: -8px 0 24px rgba(0,0,0,0.6);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #121417;
+  --surface: #1b1e23;
+  --surface-raised: #22262c;
+  --ink: #eceef1;
+  --ink-2: #bcc1c8;
+  --ink-3: #9aa0a9;
+  --line: #2d3138;
+  --line-strong: #6b727c;
+  --brand: #86aeea;
+  --brand-strong: #a9c6f2;
+  --brand-soft: #1a2940;
+  --on-brand: #121417;
+  --hl: #f2b765;
+  --hl-soft: #3a2c16;
+  --head: #000000;
+  --head-ink: #ffffff;
+  --head-line: rgba(255,255,255,0.6);
+  --scrim: rgba(0,0,0,0.6);
+  --bar: #6f7885;
+  --danger: #ff8a80;
+  --danger-soft: #3a1a18;
+  --focus: var(--brand);
+  --chart-1: var(--brand);
+  --chart-2: var(--hl);
+  --chart-3: #4fb3a4;
+  --chart-4: #d49ad0;
+  --chart-5: #9aa3af;
+  --chart-6: #d9bb6a;
+  --shadow-sticky: 0 2px 8px rgba(0,0,0,0.5);
+  --shadow-drawer: -8px 0 24px rgba(0,0,0,0.6);
+  color-scheme: dark;
+}
