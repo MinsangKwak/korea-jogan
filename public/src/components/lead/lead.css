@@ -1,0 +1,11 @@
+/* 홈 */
+.hero { padding-block: var(--space-8) var(--space-10); }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-10); }
+.hero .meta { margin: var(--space-4) 0 0; font-size: 0.85rem; color: var(--ink-3); }
+.briefs-box { border-left: var(--border-hairline) solid var(--line); padding-left: var(--space-6); }
+.briefs-box h2 { margin: 0 0 var(--space-2); font-size: 1.05rem; font-weight: 900; }
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+  .briefs-box { border-left: 0; padding-left: 0; border-top: var(--border-hairline) solid var(--line); padding-top: var(--space-4); }
+}
+.lead-skel { display: grid; gap: var(--space-3); }

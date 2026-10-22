@@ -1,0 +1,14 @@
+/* 언론 */
+.tchips { margin: var(--space-2) 0 var(--space-6); }
+.tresult > h3 { margin: 0 0 var(--space-1); font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 900; line-height: 1.35; }
+.tmeta { margin: 0 0 var(--space-4); font-size: 0.85rem; color: var(--ink-3); }
+.kj-acc td.n { text-align: left; }
+.links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 0 var(--space-8); }
+.links h4 { margin: 0 0 var(--space-1); padding-bottom: var(--space-1); font-size: 0.95rem; border-bottom: var(--border-rule) solid var(--ink); }
+.links .f h4 { border-bottom-color: var(--brand); }
+.links ul { list-style: none; margin: 0 0 var(--space-4); padding: 0; }
+.links li { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) 0; border-bottom: var(--border-hairline) solid var(--line); font-size: 0.92rem; }
+.links li b { font-weight: 700; }
+.links li small { display: block; color: var(--ink-3); font-size: 0.8rem; font-weight: 400; }
+.links li a { color: var(--ink); }
+@media (max-width: 520px) { .links li { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
