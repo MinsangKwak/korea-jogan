@@ -129,7 +129,7 @@ class FeedTest(Site):
         doc = xml.dom.minidom.parseString(build_feed.build().encode("utf-8"))
         items = doc.getElementsByTagName("item")
         self.assertEqual(len(items), 1)
-        self.assertIn(f"?d={DATE}", items[0].getElementsByTagName("link")[0].firstChild.data)
+        self.assertEqual(items[0].getElementsByTagName("link")[0].firstChild.data, build_feed.SITE + DATE)
         self.edit(lambda i: i.update(status="draft"))
         doc = xml.dom.minidom.parseString(build_feed.build().encode("utf-8"))
         self.assertEqual(len(doc.getElementsByTagName("item")), 0)
@@ -137,7 +137,7 @@ class FeedTest(Site):
     def test_sitemap_lists_home_and_skips_drafts(self):
         doc = xml.dom.minidom.parseString(build_feed.build_sitemap().encode("utf-8"))
         locs = [n.firstChild.data for n in doc.getElementsByTagName("loc")]
-        self.assertEqual(locs, [build_feed.SITE])
+        self.assertEqual(locs, [build_feed.SITE, build_feed.SITE + DATE])
         self.assertEqual(doc.getElementsByTagName("lastmod")[0].firstChild.data, DATE)
         self.edit(lambda i: i.update(status="draft"))
         doc = xml.dom.minidom.parseString(build_feed.build_sitemap().encode("utf-8"))
