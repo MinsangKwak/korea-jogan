@@ -34,7 +34,7 @@
 8. 확인하는 사람이 로컬에서 `python3 -m http.server -d public 8000`으로 초안을 열고 `lead`, `nums`, `themes[].diffs`를 원문과 대조합니다. 틀린 값은 고치거나 뺍니다.
 9. `python3 scripts/approve.py YYYY-MM-DD --by 이름`으로 `published`로 바꾸고 `python3 scripts/validate.py --deploy`를 돌립니다.
 10. `data(issue): YYYY-MM-DD호 승인` 제목으로 `dev`에 커밋하고 push 합니다. 06:00에 `publish.yml`이 `main`·`deploy`를 같은 커밋으로 빨리 감기하고 배포를 실행합니다. 06시가 지나 승인했다면 Actions에서 `아침 발행`을 수동 실행합니다. 빨리 감기가 안 되면(누가 `main`에 따로 올린 경우) 워크플로가 실패로 멈추니, 억지로 덮어쓰지 말고 브랜치를 맞춥니다.
-11. 배포가 끝나면 `https://minsangkwak.github.io/korea-jogan/data/issues/index.json`의 `latest`가 오늘인지 확인합니다. 오늘 호가 없거나 검사에 실패해 올리지 못하면 화면은 지난 호를 보여 주며, 맨 위에 '오늘 호는 아직 발행되지 않았습니다'를 띄웁니다.
+11. 배포가 끝나면 `https://korea-jogan.com/data/issues/index.json`의 `latest`가 오늘인지 확인합니다. 오늘 호가 없거나 검사에 실패해 올리지 못하면 화면은 지난 호를 보여 주며, 맨 위에 '오늘 호는 아직 발행되지 않았습니다'를 띄웁니다.
 
 ## 정정
 

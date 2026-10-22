@@ -3,9 +3,9 @@
 **공식 통계로 읽는 오늘의 대한민국. 수치의 출처와 기준을 함께 보여 주는 비영리 데이터 신문입니다.**
 매일 00시(한국 시간)에 전국·17개 시도 뉴스, 핵심 경제 숫자, 주력산업, 국가 재정을 한 화면에 모아 발행합니다. 기획부터 데이터 조사, 화면, 검사, 자동 발행, 배포까지 혼자 만들고 운영합니다.
 
-### [▶ 대한민국 조간 바로가기](https://minsangkwak.github.io/korea-jogan/)
+### [▶ 대한민국 조간 바로가기](https://korea-jogan.com/)
 
-[서비스](https://minsangkwak.github.io/korea-jogan/) · [문서 안내](docs/README.md) · [서비스 기획](docs/portfolio/01-product.md) · [구조와 자동화](docs/portfolio/02-architecture.md) · [서비스 소개와 디자인 가이드](docs/portfolio/03-design.md) · [발행 데이터 형식](docs/DATA.md)
+[서비스](https://korea-jogan.com/) · [문서 안내](docs/README.md) · [서비스 기획](docs/portfolio/01-product.md) · [구조와 자동화](docs/portfolio/02-architecture.md) · [서비스 소개와 디자인 가이드](docs/portfolio/03-design.md) · [발행 데이터 형식](docs/DATA.md)
 
 > 2026-10-20 기준으로 `main`·`dev`·`deploy`는 같은 커밋입니다. 2026-10-19호(시안)와 사람이 승인한 2026-10-20호가 GitHub Pages에 배포돼 있고, 제호 아래 '최신 공식 숫자' 띠는 평일 낮 1시간마다 한국은행 ECOS에서 다시 받습니다.
 
@@ -82,6 +82,7 @@ korea-jogan/
 │   │   ├── tokens.css              디자인 토큰 CSS 변수. design/tokens.json에서 만듭니다(손으로 고치지 않음)
 │   │   └── kj.css                  디자인 시스템 컴포넌트(kj- 접두사)
 │   ├── og.png                      공유 미리보기 이미지(1200×630). scripts/og/에서 만듭니다
+│   ├── robots.txt                  검색 로봇 규칙과 사이트맵 위치
 │   ├── favicon.svg · icon-*.png    파비콘·앱 아이콘. PNG는 scripts/og/에서 만듭니다
 │   ├── manifest.webmanifest        홈 화면 추가용 앱 정보
 │   └── data/
