@@ -2,7 +2,7 @@
 
 **대한민국 조간은 하루 한 번, 아침에 다 읽고 덮을 수 있는 신문입니다.** 무한히 흘러가는 피드가 아니라 '오늘 호'가 있고, 숫자마다 어디서 왔는지가 붙어 있습니다. 화면은 그 두 가지를 지키려고 종이 신문의 문법을 빌렸습니다.
 
-[▶ 서비스 바로가기](https://minsangkwak.github.io/korea-jogan/) · 토큰 원본 [design/tokens.json](../../design/tokens.json) · 컴포넌트 [public/assets/kj.css](../../public/assets/kj.css)
+[▶ 서비스 바로가기](https://korea-jogan.com/) · 토큰 원본 [design/tokens.json](../../design/tokens.json) · 컴포넌트 [public/assets/kj.css](../../public/assets/kj.css)
 
 ## 서비스 소개
 
