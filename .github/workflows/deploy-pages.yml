@@ -49,20 +49,20 @@ jobs:
       # 검사에 실패하면 배포하지 않는다
       - name: 데이터 검사
         if: steps.gate.outputs.run == 'true'
-        run: python scripts/validate.py --deploy
+        run: python scripts/publish/validate.py --deploy
       # RSS·사이트맵은 저장소에 두지 않고 배포할 때마다 발행 목록으로 새로 만든다
       - name: RSS·사이트맵 만들기
         if: steps.gate.outputs.run == 'true'
-        run: python scripts/build_feed.py
+        run: python scripts/build/build_feed.py
       # JavaScript를 실행하지 않는 검색 로봇도 읽게 첫 화면 요약과 호별 페이지(/YYYY-MM-DD)를 만든다
       - name: 호별 검색 페이지 만들기
         if: steps.gate.outputs.run == 'true'
-        run: python scripts/build_pages.py
+        run: python scripts/build/build_pages.py
       # 최신 숫자를 받지 못해도 조간 배포는 막지 않는다. 화면은 파일이 없으면 띠를 숨긴다
       - name: 최신 공식 숫자 만들기
         if: steps.gate.outputs.run == 'true'
         continue-on-error: true
-        run: python scripts/build_live.py
+        run: python scripts/build/build_live.py
       - if: steps.gate.outputs.run == 'true'
         uses: actions/configure-pages@v5
       - if: steps.gate.outputs.run == 'true'
@@ -76,4 +76,4 @@ jobs:
       - name: 검색엔진에 새 주소 알리기(IndexNow)
         if: steps.gate.outputs.run == 'true' && github.event_name != 'schedule'
         continue-on-error: true
-        run: python scripts/indexnow.py
+        run: python scripts/publish/indexnow.py

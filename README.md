@@ -5,7 +5,7 @@
 
 ### [▶ 대한민국 조간 바로가기](https://korea-jogan.com/)
 
-[서비스](https://korea-jogan.com/) · [문서 안내](docs/README.md) · [서비스 기획](docs/portfolio/01-product.md) · [구조와 자동화](docs/portfolio/02-architecture.md) · [서비스 소개와 디자인 가이드](docs/portfolio/03-design.md) · [발행 데이터 형식](docs/DATA.md)
+[서비스](https://korea-jogan.com/) · [문서 안내](docs/README.md) · [서비스 기획](docs/portfolio/01-product.md) · [구조와 자동화](docs/portfolio/02-architecture.md) · [서비스 소개와 디자인 가이드](docs/portfolio/03-design.md) · [발행 데이터 형식](docs/guides/DATA.md)
 
 > 2026-10-20 기준으로 `main`·`dev`·`deploy`는 같은 커밋입니다. 2026-10-19호(시안)와 사람이 승인한 2026-10-20호가 GitHub Pages에 배포돼 있고, 제호 아래 '최신 공식 숫자' 띠는 평일 낮 1시간마다 한국은행 ECOS에서 다시 받습니다.
 
@@ -36,16 +36,16 @@
 
 | 문제 | 구현한 접근 | 확인할 근거 |
 | --- | --- | --- |
-| 출처 없는 숫자가 화면에 올라갈 수 있음 | 핵심 숫자마다 출처 기관과 `https` 원문 링크를 필수로 두고, 빠지면 배포를 멈춤. 기준일·발표일도 함께 표시 | [발행 전 검사](scripts/validate.py) · [배포 워크플로](.github/workflows/deploy-pages.yml) |
-| 같은 사실이 기사마다 다른 숫자로 보도됨 | 주제별로 언론사 기사 링크를 모으고, 기준이 갈린 숫자(`diffs`)를 표로 나란히 표시 | [화면](public/index.html) · [데이터 형식](docs/DATA.md#themes) |
+| 출처 없는 숫자가 화면에 올라갈 수 있음 | 핵심 숫자마다 출처 기관과 `https` 원문 링크를 필수로 두고, 빠지면 배포를 멈춤. 기준일·발표일도 함께 표시 | [발행 전 검사](scripts/publish/validate.py) · [배포 워크플로](.github/workflows/deploy-pages.yml) |
+| 같은 사실이 기사마다 다른 숫자로 보도됨 | 주제별로 언론사 기사 링크를 모으고, 기준이 갈린 숫자(`diffs`)를 표로 나란히 표시 | [화면](public/index.html) · [데이터 형식](docs/guides/DATA.md#themes) |
 | 확정치·잠정치·전망치가 섞여 보임 | 출처 신뢰도 A~E 등급, 국가채무 막대에 결산·전망 구분, 금액을 확인하지 못한 해는 막대 대신 '미확인' 표시 | [화면 `renderFiscal`](public/index.html) |
 | 기사 수가 많아 모바일에서 길어짐 | 3개를 넘는 목록은 모두 접고 '더보기', 860px 이하 하단 탭바, 오른쪽 전체 메뉴 서랍, 맨 위로 단추, 현재 섹션 표시(`aria-current`) | [화면 `collapse`·`setupNav`·`setupDrawer`](public/index.html) |
 | 20~70대 독자의 글자 크기 차이 | '가 글자 크게' 단추로 기준 글자 크기를 바꾸고 선택을 기기에 저장 | [화면 `setupBig`](public/index.html) |
-| AI가 쓴 숫자를 사람이 확인했는지 독자가 알 수 없음 | 사람이 원문과 대조한 호는 `approve.py --by`로 '편집자 확인', 확인 없이 06시에 나간 호는 `--auto`로 '자동 발행'을 남겨 제호 옆에 구분해 표시. 출처 없는 숫자는 검사가 막음 | [일일 발행 절차](docs/DAILY_RUNBOOK.md) · [승인](scripts/approve.py) · [발행 전 검사](scripts/validate.py) |
-| 틀린 숫자를 고쳐도 독자가 알 수 없음 | 화면마다 GitHub 이슈 양식으로 이어지는 오류 신고, 바닥글의 정정 기록(`corrections.json`) | [정정 기록 형식](docs/DATA.md#correctionsjson) · [오류 신고 양식](.github/ISSUE_TEMPLATE/correction.yml) |
+| AI가 쓴 숫자를 사람이 확인했는지 독자가 알 수 없음 | 사람이 원문과 대조한 호는 `approve.py --by`로 '편집자 확인', 확인 없이 06시에 나간 호는 `--auto`로 '자동 발행'을 남겨 제호 옆에 구분해 표시. 출처 없는 숫자는 검사가 막음 | [일일 발행 절차](docs/guides/DAILY_RUNBOOK.md) · [승인](scripts/publish/approve.py) · [발행 전 검사](scripts/publish/validate.py) |
+| 틀린 숫자를 고쳐도 독자가 알 수 없음 | 화면마다 GitHub 이슈 양식으로 이어지는 오류 신고, 바닥글의 정정 기록(`corrections.json`) | [정정 기록 형식](docs/guides/DATA.md#correctionsjson) · [오류 신고 양식](.github/ISSUE_TEMPLATE/correction.yml) |
 | 승인이 늦으면 어제 숫자를 오늘 숫자로 읽음 | 최신 호가 한국 시간 오늘이 아니면 맨 위에 미발행 띠, 제호 옆에 수집 시각 | [화면 `renderStale`](public/index.html) |
 | 이 서비스만의 기능(갈린 숫자 비교)이 맨 아래에 묻힘 | 홈 머리기사 아래 '오늘 기준이 갈린 숫자' 카드, 언론 섹션을 두 번째로 | [화면 `renderSplits`](public/index.html) |
-| 커밋 기록만으로 변경 흐름을 읽기 어려움 | `종류(범위): 제목` 규칙과 로컬 훅·PR 검사 | [커밋 규칙](docs/COMMITS.md) · [제목 검사](scripts/check_commit_msg.mjs) |
+| 커밋 기록만으로 변경 흐름을 읽기 어려움 | `종류(범위): 제목` 규칙과 로컬 훅·PR 검사 | [커밋 규칙](docs/guides/COMMITS.md) · [제목 검사](scripts/tools/check_commit_msg.mjs) |
 
 ## 화면 구성
 
@@ -76,58 +76,61 @@
 
 ## 디렉터리
 
+화면은 빌드 없이 브라우저가 바로 읽는 정적 파일입니다. 공통 코드(`core`)와 화면 단위 컴포넌트(`components`)를 나누고, 컴포넌트마다 JS와 CSS를 한 폴더에 둡니다. 데이터 파이프라인 스크립트는 수집 → 빌드 → 발행 역할별로 나눴습니다.
+
 ```text
 korea-jogan/
-├── public/                         GitHub Pages로 배포하는 정적 사이트. 이 폴더만 배포됩니다
-│   ├── index.html                  화면(배치 CSS·마크업·JS). 데이터는 아래 JSON에서 읽습니다
-│   ├── assets/
-│   │   ├── tokens.css              디자인 토큰 CSS 변수. design/tokens.json에서 만듭니다(손으로 고치지 않음)
-│   │   └── kj.css                  디자인 시스템 컴포넌트(kj- 접두사)
-│   ├── og.png                      공유 미리보기 이미지(1200×630). scripts/og/에서 만듭니다
-│   ├── robots.txt                  검색 로봇 규칙과 사이트맵 위치
-│   ├── favicon.svg · icon-*.png    파비콘·앱 아이콘. PNG는 scripts/og/에서 만듭니다
-│   ├── manifest.webmanifest        홈 화면 추가용 앱 정보
-│   └── data/
-│       ├── corrections.json        정정 기록
-│       └── issues/                 날짜별 발행 데이터
-│           ├── index.json          최신 호(latest)와 발행 목록(issues)
-│           └── YYYY-MM-DD.json     그날 호. 형식은 docs/DATA.md
-├── design/
-│   └── tokens.json                 디자인 토큰 원본(색·글자·간격·모서리·선·크기, 밝은·어두운 테마)
-├── data/raw/                       수집 원본. ecos/(한국은행), rss/(언론사 RSS 기사 목록, 저장소에는 올리지 않음)
-├── scripts/
-│   ├── validate.py                 발행 전 검사. --deploy면 승인 전 초안도 막습니다
-│   ├── approve.py                  초안을 공개(published)로 바꿉니다. --by 이름(편집자 확인) 또는 --auto(자동 발행)
-│   ├── build_feed.py               RSS(feed.xml)·사이트맵(sitemap.xml). 배포할 때 만듭니다
-│   ├── build_pages.py              검색용 호별 페이지(/YYYY-MM-DD)와 첫 화면 요약·뉴스 구조화 데이터. 배포할 때 만듭니다
-│   ├── indexnow.py                 배포 직후 새 주소를 IndexNow로 Bing·네이버에 알립니다
-│   ├── build_tokens.py             design/tokens.json → public/assets/tokens.css. --check로 최신 여부 검사
-│   ├── ecos_nums.py                ECOS 원본을 핵심 숫자(nums) 꼴로 바꿉니다
-│   ├── build_live.py               ECOS 최신 공식 숫자(public/data/live.json). 배포할 때 만들고 저장소에는 올리지 않음
-│   ├── og/                         공유 미리보기 카드(card.html)와 이미지 생성(build.mjs)
-│   ├── tests/                      스크립트 시험(unittest)
-│   ├── check_commit_msg.mjs        커밋 제목 검사(메시지 파일 또는 --range)
-│   ├── fetch_rss.py                언론사 RSS에서 전날 기사의 제목·링크·날짜만 모읍니다(본문은 받지 않음)
-│   ├── feeds.json                  RSS 피드 목록(국내 전국지·지역지, 해외)
-│   └── fetch_ecos.py               한국은행 ECOS 수집기(환율·기준금리·코스피·코스닥, ECOS_API_KEY 필요)
-├── .githooks/
-│   └── commit-msg                  로컬 커밋 제목 검사 훅
-├── .github/workflows/
-│   ├── check.yml                   dev·main push와 PR에서 데이터 검사·토큰 CSS 검사·스크립트 시험, PR 커밋 제목 검사
-│   ├── publish.yml                 매일 06시 dev의 오늘 호를 main·deploy로 빨리 감기하고 배포 실행. 승인 전 초안은 자동 발행
-│   ├── deploy-pages.yml            deploy push 시 배포 규칙까지 검사하고 RSS·최신 공식 숫자를 만든 뒤 GitHub Pages 배포. 평일 낮 매시 다시 배포
-│   └── daily.yml                   언론사 RSS·ECOS 원본 수집(수동 실행)
-├── docs/
-│   ├── README.md                   문서 안내
-│   ├── portfolio/
-│   │   ├── 01-product.md           서비스 기획
-│   │   ├── 02-architecture.md      구조와 자동화
-│   │   └── 03-design.md            서비스 소개와 디자인 가이드
-│   ├── DATA.md                     발행 JSON 형식과 검사 규칙
-│   ├── DAILY_RUNBOOK.md            매일 00시 자동 발행 절차
-│   ├── BRANCHES.md                 dev → main → deploy 흐름과 저장소 설정
-│   └── COMMITS.md                  커밋 제목 규칙
-├── LICENSE                         MIT
+├── public/                           GitHub Pages로 배포하는 정적 사이트. 이 폴더만 배포됩니다
+│   ├── index.html                    마크업과 메타데이터. 스타일·스크립트는 src/에서 읽습니다
+│   ├── src/
+│   │   ├── styles/
+│   │   │   ├── tokens.css            디자인 토큰 CSS 변수. design/tokens.json에서 만듭니다(손으로 고치지 않음)
+│   │   │   ├── kj.css                디자인 시스템 컴포넌트(kj- 접두사)
+│   │   │   └── layout.css            페이지 공통 배치(본문 폭, 다단)
+│   │   ├── core/                     여러 컴포넌트가 함께 쓰는 코드
+│   │   │   ├── config.js             섹션·탭·권역 상수와 화면 상태
+│   │   │   ├── format.js             숫자·날짜 서식
+│   │   │   ├── ui.js                 요소 생성, 목록 접기, 아이콘, 출처 펼치기, 뉴스 항목
+│   │   │   ├── data.js               발행 데이터 불러오기
+│   │   │   ├── metrics.js            GoatCounter·GA4 측정
+│   │   │   └── seo.js                호에 맞춘 제목·대표 주소
+│   │   ├── components/               화면 단위. 폴더마다 <이름>.js와(필요하면) <이름>.css
+│   │   │   ├── header/               제호: 호 날짜·상태 안내·공유·글자 크게
+│   │   │   ├── nav/                  분야 메뉴·하단 탭바·세로 메뉴·전체 메뉴 서랍
+│   │   │   ├── lead/                 홈 머리기사
+│   │   │   ├── splits/               홈 '기준이 갈린 숫자'
+│   │   │   ├── media/                언론 주제·검색·매체 비교
+│   │   │   ├── national/             전국 뉴스
+│   │   │   ├── regions/              지역(권역별 시도)
+│   │   │   ├── politics/             정치 일정·D-Day
+│   │   │   ├── economy/              핵심 숫자·최신 공식 숫자 띠
+│   │   │   ├── industry/             주력산업·수출입
+│   │   │   ├── fiscal/               국가채무·국민연금
+│   │   │   └── footer/               수집 한계·지난 호·정정 기록
+│   │   └── main.js                   진입점. 데이터를 읽고 컴포넌트를 차례로 그립니다
+│   ├── assets/images/                공유 미리보기(og.png)·파비콘·앱 아이콘. scripts/tools/og/에서 만듭니다
+│   ├── data/
+│   │   ├── corrections.json          정정 기록
+│   │   └── issues/                   날짜별 발행 데이터(index.json, YYYY-MM-DD.json). 형식은 docs/guides/DATA.md
+│   ├── manifest.webmanifest          홈 화면 추가용 앱 정보
+│   └── robots.txt                    검색 로봇 규칙과 사이트맵 위치
+├── scripts/                          데이터 파이프라인(Python)과 개발 도구(Node)
+│   ├── collect/                      수집: 언론사 RSS(fetch_rss.py·feeds.json), 한국은행 ECOS(fetch_ecos.py·ecos_nums.py)
+│   ├── build/                        배포 때 만드는 파일: RSS·사이트맵(build_feed.py), 호별 페이지(build_pages.py),
+│   │                                 최신 공식 숫자(build_live.py), 토큰 CSS(build_tokens.py)
+│   ├── publish/                      발행: 검사(validate.py), 승인(approve.py), IndexNow 알림(indexnow.py)
+│   └── tools/                        개발 도구: 커밋 제목 검사(check_commit_msg.mjs), 공유 이미지·아이콘 생성(og/)
+├── tests/                            스크립트 시험(unittest)
+├── design/tokens.json                디자인 토큰 원본(색·글자·간격·모서리·선·크기, 밝은·어두운 테마)
+├── data/raw/                         수집 원본. ecos/(한국은행), rss/(저장소에는 올리지 않음)
+├── docs/                             문서 모음. 안내는 docs/README.md
+│   ├── CLAUDE.md                     작업 지침(언어·커밋 규칙)
+│   ├── guides/                       운영 문서: 일일 발행, 데이터 형식, 브랜치, 커밋 규칙
+│   └── portfolio/                    포트폴리오 세 장: 기획, 구조와 자동화, 디자인
+├── .github/                          워크플로(검사·아침 발행·배포·수집)와 오류 신고 양식
+├── .githooks/commit-msg              로컬 커밋 제목 검사 훅
+├── .claude/CLAUDE.md                 docs/CLAUDE.md를 불러오는 연결 파일(Claude Code가 읽는 위치)
+├── LICENSE                           MIT
 └── README.md
 ```
 
@@ -143,16 +146,16 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 | `main` | 검사를 통과한 최종본 |
 | `deploy` | 배포 전용. 여기에 올라온 커밋만 GitHub Pages에 나갑니다 |
 
-`main`과 `deploy`에는 직접 커밋하지 않습니다. 자세한 순서와 저장소 설정은 [docs/BRANCHES.md](docs/BRANCHES.md)에 있습니다. 커밋 제목은 [docs/COMMITS.md](docs/COMMITS.md)의 `종류(범위): 제목` 꼴을 따릅니다.
+`main`과 `deploy`에는 직접 커밋하지 않습니다. 자세한 순서와 저장소 설정은 [docs/guides/BRANCHES.md](docs/guides/BRANCHES.md)에 있습니다. 커밋 제목은 [docs/guides/COMMITS.md](docs/guides/COMMITS.md)의 `종류(범위): 제목` 꼴을 따릅니다.
 
 ## 매일 발행
 
-매일 00시(한국 시간) Claude 예약 작업이 [docs/DAILY_RUNBOOK.md](docs/DAILY_RUNBOOK.md) 절차대로 그날 호를 만듭니다.
+매일 00시(한국 시간) Claude 예약 작업이 [docs/guides/DAILY_RUNBOOK.md](docs/guides/DAILY_RUNBOOK.md) 절차대로 그날 호를 만듭니다.
 
 1. 분야별 하위 에이전트가 공식 발표와 기사를 동시에 조사합니다(핵심 숫자 · 전국 · 지역 두 묶음 · 언론 주제).
 2. 결과를 합쳐 `public/data/issues/YYYY-MM-DD.json`을 쓰고 `index.json`의 `latest`를 바꿉니다.
-3. `status: "draft"`로 두고 `scripts/validate.py`를 통과하면 `data(issue): YYYY-MM-DD호 초안`으로 `dev`에 커밋합니다.
-4. 06시 전에 사람이 머리기사·핵심 숫자·갈린 숫자를 원문과 대조했으면 `scripts/approve.py --by 이름`으로 승인합니다('편집자 확인').
+3. `status: "draft"`로 두고 `scripts/publish/validate.py`를 통과하면 `data(issue): YYYY-MM-DD호 초안`으로 `dev`에 커밋합니다.
+4. 06시 전에 사람이 머리기사·핵심 숫자·갈린 숫자를 원문과 대조했으면 `scripts/publish/approve.py --by 이름`으로 승인합니다('편집자 확인').
 5. 06시(한국 시간) `publish.yml`이 승인되지 않은 초안을 `--auto`로 자동 발행하고, `main`과 `deploy`를 같은 커밋으로 빨리 감기합니다. 이어서 `deploy-pages.yml`이 검사하고 RSS를 만든 뒤 배포합니다.
 
 검사에 실패하면 올리지 않습니다. 재정·국민연금·수출입 같은 상설 지표는 새 공식 발표가 있을 때만 바꿉니다.
@@ -169,8 +172,8 @@ python3 -m http.server -d public 8000
 데이터를 고친 뒤에는 검사를 돌리고, 커밋 제목 훅을 켜 둡니다.
 
 ```bash
-python3 scripts/validate.py
-python3 -m unittest discover -s scripts/tests
+python3 scripts/publish/validate.py
+python3 -m unittest discover -s tests
 git config core.hooksPath .githooks
 ```
 
@@ -186,7 +189,7 @@ git config core.hooksPath .githooks
 
 ## 알려진 한계
 
-- 여러 국내외 매체가 robots.txt나 서버 차단으로 AI의 본문 접근을 막습니다. 기사 목록은 언론사 RSS(26곳)로 넓혔지만, 본문을 읽고 숫자를 비교하는 일은 열린 매체에서만 합니다. 막힌 매체 기사는 '본문 미확인'으로 표시하고, 대체한 사실을 화면 하단 '수집 방법과 한계'에 적습니다. 자세한 내용은 [일일 발행 절차](docs/DAILY_RUNBOOK.md#접속이-막힌-매체)에 있습니다.
+- 여러 국내외 매체가 robots.txt나 서버 차단으로 AI의 본문 접근을 막습니다. 기사 목록은 언론사 RSS(26곳)로 넓혔지만, 본문을 읽고 숫자를 비교하는 일은 열린 매체에서만 합니다. 막힌 매체 기사는 '본문 미확인'으로 표시하고, 대체한 사실을 화면 하단 '수집 방법과 한계'에 적습니다. 자세한 내용은 [일일 발행 절차](docs/guides/DAILY_RUNBOOK.md#접속이-막힌-매체)에 있습니다.
 - 공공 API는 한국은행 ECOS만 붙었습니다. '최신 공식 숫자' 띠는 ECOS에서 받지만, 조간 본문의 숫자는 아직 공식 발표 원문과 기사를 조사해 채웁니다.
 - ECOS 환율은 매매기준율이라, 조간의 주간 종가 환율과 소수점 아래가 다를 수 있습니다.
 - 방문 측정(GoatCounter)은 주소를 넣어야 켜집니다. 지금은 꺼져 있습니다.

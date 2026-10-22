@@ -1,0 +1,13 @@
+/* 바닥글 */
+.kj-foot .kj-grades { margin-bottom: var(--space-4); }
+.kj-foot p { margin: 0 0 var(--space-2); max-width: 50rem; }
+.kj-foot h2 { margin-top: var(--space-6); }
+.kj-foot h2:first-child { margin-top: 0; }
+.archive { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); list-style: none; padding: 0 !important; }
+.archive a[aria-current="page"] { font-weight: 700; color: var(--ink); text-decoration: none; }
+.fixes { list-style: none; padding: 0 !important; }
+.fixes li { padding: var(--space-2) 0; border-bottom: var(--border-hairline) solid var(--line); }
+.fixes li + li { margin-top: 0; }
+.fixes .fw { font-size: 0.8rem; color: var(--ink-3); }
+.fixes del { color: var(--ink-3); }
+.report { display: inline-flex; align-items: center; min-height: var(--tap-min); font-size: 0.85rem; }

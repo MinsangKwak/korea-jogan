@@ -1,0 +1,16 @@
+/* 산업 */
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.strip > div { min-width: 0; padding-top: var(--space-2); border-top: var(--border-rule) solid var(--ink); }
+.strip .k { font-size: 0.85rem; font-weight: 500; color: var(--ink-2); }
+.strip .v { font-size: 1.3rem; font-weight: 900; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.strip .d { font-size: 0.85rem; }
+@media (max-width: 760px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.oct { margin-top: var(--space-6); }
+.inds { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: var(--space-8); margin-top: var(--space-8); }
+.inds .kj-panel h3 { font-size: 1.15rem; }
+.inds .sum { margin: 0 0 var(--space-2); font-size: 0.95rem; color: var(--ink-2); }
+/* 산업 수치는 값이 문장처럼 길어 이름 · 값 · 기준을 세로로 쌓는다 */
+.inds .kj-kv li { grid-template-columns: minmax(0, 1fr); }
+.inds .kj-kv .v { grid-column: 1; grid-row: auto; order: 1; font-size: 0.95rem; font-weight: 700; white-space: normal; text-align: left; }
+.inds .kj-kv .m { order: 2; }
+.inds .news { margin: var(--space-3) 0 0; font-size: 0.85rem; color: var(--ink-3); }
