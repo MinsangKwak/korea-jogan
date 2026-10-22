@@ -5,5 +5,7 @@ __pycache__/
 .DS_Store
 public/feed.xml
 public/sitemap.xml
+# 배포 때 build_pages.py가 만드는 호별 페이지
+public/20[0-9][0-9]-[0-9][0-9]-[0-9][0-9].html
 data/raw/rss/*.json
 public/data/live.json

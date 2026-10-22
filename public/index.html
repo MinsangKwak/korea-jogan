@@ -1,16 +1,17 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" class="no-js">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>대한민국 조간</title>
-<meta name="description" content="공식 통계와 공개 자료로 읽는 오늘의 대한민국. 수치의 출처와 기준을 함께 보여 줍니다.">
+<title>대한민국 조간 | 오늘의 코스피·환율·국가채무와 뉴스 요약</title>
+<meta name="description" content="매일 아침 6시 발행. 코스피·환율·기준금리·국가채무 같은 공식 숫자와 전국·17개 시도 뉴스를 출처와 기준일까지 함께 정리합니다. 언론사마다 숫자가 왜 다른지도 나란히 비교합니다.">
+<meta name="keywords" content="대한민국 조간, 오늘의 뉴스, 경제 뉴스 요약, 오늘 코스피, 환율, 기준금리, 국가채무, 국민연금, 수출, 지역 뉴스, 언론 보도 비교, 숫자 팩트체크">
 <meta name="author" content="MinsangKwak">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <meta name="format-detection" content="telephone=no">
 <link rel="canonical" href="https://korea-jogan.com/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="대한민국 조간">
+<meta property="og:title" content="대한민국 조간 | 같은 사실, 다른 숫자">
 <meta property="og:description" content="같은 사실, 다른 숫자. 기사마다 숫자가 왜 갈렸는지 출처와 기준으로 보여 주는 아침 신문입니다.">
 <meta property="og:url" content="https://korea-jogan.com/">
 <meta property="og:site_name" content="대한민국 조간">
@@ -21,7 +22,7 @@
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:alt" content="대한민국 조간 · 같은 사실, 다른 숫자">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="대한민국 조간">
+<meta name="twitter:title" content="대한민국 조간 | 같은 사실, 다른 숫자">
 <meta name="twitter:description" content="같은 사실, 다른 숫자. 기사마다 숫자가 왜 갈렸는지 출처와 기준으로 보여 주는 아침 신문입니다.">
 <meta name="twitter:image" content="https://korea-jogan.com/og.png">
 <meta name="twitter:image:alt" content="대한민국 조간 · 같은 사실, 다른 숫자">
@@ -34,6 +35,7 @@
 <link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
+<script>'use strict'; document.documentElement.classList.replace('no-js', 'js');</script>
 <!-- 검색엔진 소유 확인(선택). Search Console·네이버 서치어드바이저에서 받은 값을 content에 넣는다 -->
 <meta name="google-site-verification" content="QC_N9kgbNKdt5f0L4vzA4TvW_r1dt1tnb3Oyl6mFMzQ">
 <meta name="naver-site-verification" content="12e012c980bff0c1f1162ea2cea82687b21970a2">
@@ -57,7 +59,8 @@
       "url": "https://korea-jogan.com/",
       "logo": { "@type": "ImageObject", "url": "https://korea-jogan.com/icon-512.png", "width": 512, "height": 512 },
       "correctionsPolicy": "https://github.com/MinsangKwak/korea-jogan/blob/main/docs/DAILY_RUNBOOK.md#정정",
-      "sameAs": ["https://github.com/MinsangKwak/korea-jogan"]
+      "sameAs": ["https://github.com/MinsangKwak/korea-jogan"],
+      "founder": { "@type": "Person", "name": "MinsangKwak", "url": "https://github.com/MinsangKwak" }
     }
   ]
 }
@@ -254,6 +257,8 @@
 </nav>
 
 <main id="main">
+  <!-- kj:digest -->
+  <!-- /kj:digest -->
   <section class="hero" id="home" aria-labelledby="leadH">
     <div class="kj-wrap" id="loadError" hidden></div>
     <div class="kj-wrap hero-grid" id="heroGrid">
@@ -451,7 +456,8 @@
     <h2 id="fixH">정정 기록</h2>
     <ul class="fixes" id="fixes" aria-labelledby="fixH"></ul>
     <p>숫자·문장·링크가 원문과 다르면 <a id="reportLink" href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" target="_blank" rel="noopener">오류 신고</a>로 알려 주세요. 확인한 뒤 고치고, 고친 내용은 이 기록에 남깁니다.</p>
-    <p>코드 MIT · 글 CC BY 4.0 · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub</a></p>
+    <p class="kj-foot__dev">만든 사람 <a href="https://github.com/MinsangKwak" rel="author">MinsangKwak</a> · 기획·데이터·디자인·개발 1인 운영</p>
+    <p>코드 MIT · 글 CC BY 4.0 · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub 저장소</a></p>
   </div>
 </footer>
 
@@ -538,6 +544,8 @@ const parseDate = (s) => { const [y, m, d] = s.split('-').map(Number); return ut
 // 발행 기준은 한국 시간. 기기 시간대와 상관없이 오늘 날짜를 KST로 구한다
 const todayKST = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
 const longDate = (s) => parseDate(s).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', timeZone: 'UTC' });
+// 호별 공개 주소. 로컬에서 열어도 canonical에 적힌 공개 도메인을 바탕으로 만든다
+const issueUrl = (d) => { const c = document.querySelector('link[rel="canonical"]'); return new URL(d, c ? c.href : location.href).href; };
 // D-Day는 지난 날이면 D+로 쓴다
 const dday = (date) => { const n = daysBetween(ISSUE, date); return n >= 0 ? 'D-' + fmt(n) : 'D+' + fmt(-n); };
 
@@ -576,15 +584,13 @@ function track(name, title) {
   if (GA) window.gtag('event', name.replace(/[^A-Za-z0-9_]/g, '_'), { label: title || '' });
 }
 
-// 지난 호(?d=)를 열면 제목·대표 주소·공유 주소를 그 호에 맞춘다. 최신 호는 머리기사만 제목에 붙인다
+// 최신 호 첫 화면은 검색용 제목을 그대로 두고, 지난 호는 호별 페이지(/YYYY-MM-DD)와 같은 제목·주소를 쓴다
 function renderHead() {
-  const headline = (D.lead && D.lead.headline) || D.headline || '';
-  const issue = D.date.replace(/-/g, '.') + '호';
-  document.title = (headline ? headline + ' · ' : '') + issue + ' · 대한민국 조간';
   if (!VIEWING_PAST) return;
-  // 로컬에서 열어도 공개 주소를 쓰도록 canonical에 적힌 주소를 바탕으로 만든다
+  const headline = (D.lead && D.lead.headline) || D.headline || '';
+  document.title = (headline ? headline + ' | ' : '') + ISSUE.getUTCFullYear() + '년 ' + longDate(D.date) + ' 대한민국 조간';
+  const url = issueUrl(D.date);
   const canon = document.querySelector('link[rel="canonical"]');
-  const url = new URL('?d=' + D.date, canon ? canon.href : location.href).href;
   if (canon) canon.setAttribute('href', url);
   const og = document.querySelector('meta[property="og:url"]');
   if (og) og.setAttribute('content', url);
@@ -1343,7 +1349,7 @@ function renderArchive() {
   const list = INDEX ? INDEX.issues : [D.date];
   list.forEach((d) => {
     const li = el('li');
-    const a = el('a', { href: d === (INDEX && INDEX.latest) ? './' : '?d=' + d }, d.replace(/-/g, '.'));
+    const a = el('a', { href: d === (INDEX && INDEX.latest) ? './' : d }, d.replace(/-/g, '.'));
     if (d === D.date) a.setAttribute('aria-current', 'page');
     a.addEventListener('click', () => track('archive', d));
     li.append(a);
@@ -1356,7 +1362,7 @@ function setupShare() {
   const btn = $('shareBtn');
   btn.addEventListener('click', async () => {
     if (!D) return;
-    const url = location.origin + location.pathname + '?d=' + D.date;
+    const url = issueUrl(D.date);
     const data = { title: '대한민국 조간 · ' + longDate(D.date), text: D.lead.headline, url };
     track('share', D.date);
     if (navigator.share) {
@@ -1530,6 +1536,8 @@ function setupBig() {
 
 // 불러오기 실패: 원인 추정과 다시 불러오기 단추. 나머지 섹션은 숨긴다
 function renderLoadError() {
+  // 데이터를 못 읽어도 배포 때 넣어 둔 요약은 보이게 한다
+  document.documentElement.classList.remove('js');
   $('notice').textContent = '오늘 호 데이터를 불러오지 못했습니다.';
   $('heroGrid').hidden = true;
   document.querySelectorAll('main .kj-sec').forEach((s) => { s.hidden = true; });
@@ -1553,7 +1561,9 @@ async function loadIssue() {
     return res.json();
   };
   INDEX = await get('data/issues/index.json');
-  const want = new URLSearchParams(location.search).get('d');
+  // 호별 페이지(/YYYY-MM-DD)는 kj-date로, 예전 주소는 ?d=로 날짜를 받는다
+  const page = document.querySelector('meta[name="kj-date"]');
+  const want = new URLSearchParams(location.search).get('d') || (page && page.content);
   const date = want && INDEX.issues.includes(want) ? want : INDEX.latest;
   VIEWING_PAST = date !== INDEX.latest;
   return get('data/issues/' + date + '.json');
@@ -1575,6 +1585,8 @@ async function boot() {
     return;
   }
   ISSUE = parseDate(D.date);
+  // 검색엔진용으로 미리 넣어 둔 요약은 화면이 그려지면 지운다
+  if ($('seoDigest')) $('seoDigest').remove();
   renderHead();
   trackView(D.date, VIEWING_PAST);
   renderStale();

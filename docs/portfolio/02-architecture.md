@@ -29,6 +29,7 @@ flowchart LR
 | 발행 전 검사 | [scripts/validate.py](../../scripts/validate.py) | 필수 항목, 출처·링크, 값 범위, 날짜, 시도 이름을 검사합니다 |
 | 커밋 제목 검사 | [scripts/check_commit_msg.mjs](../../scripts/check_commit_msg.mjs) | 로컬 훅과 PR에서 `종류(범위): 제목` 규칙을 검사합니다 |
 | 승인 | [scripts/approve.py](../../scripts/approve.py) | 초안을 `published`로 바꿉니다. `--by`는 확인한 사람·시각, `--auto`는 자동 발행 표시(`review.auto`)를 남깁니다 |
+| 검색용 호별 페이지 | [scripts/build_pages.py](../../scripts/build_pages.py) · [indexnow.py](../../scripts/indexnow.py) | 배포 때 호마다 `/YYYY-MM-DD` 페이지를 만들고 제목·설명·`NewsArticle` 구조화 데이터·본문 요약을 미리 넣습니다. 배포 직후 IndexNow로 새 주소를 알립니다 |
 | RSS·사이트맵 | [scripts/build_feed.py](../../scripts/build_feed.py) | 승인된 호로 `feed.xml`·`sitemap.xml`을 만듭니다. 배포 때 실행 |
 | 언론사 RSS 수집기 | [scripts/fetch_rss.py](../../scripts/fetch_rss.py) · [feeds.json](../../scripts/feeds.json) | 26개 언론사 RSS에서 전날 기사의 제목·링크·날짜만 모읍니다. robots.txt를 지키고 본문은 받지 않습니다 |
 | 공공 API 수집기 | [scripts/fetch_ecos.py](../../scripts/fetch_ecos.py) · [ecos_nums.py](../../scripts/ecos_nums.py) | ECOS 원본(환율·기준금리·코스피·코스닥) 수집과 핵심 숫자 변환 |
@@ -109,4 +110,4 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 ## 앞으로 바꿀 부분
 
 - 핵심 숫자는 공공 API(ECOS·KOSIS·관세청) 수집기로 옮겨, 에이전트 조사는 기사·요약에만 쓰게 합니다. ECOS는 '최신 공식 숫자' 띠에서 먼저 쓰고 있습니다.
-- 지난 호 아카이브는 `?d=YYYY-MM-DD`로 같은 화면에서 엽니다. 호가 수백 개로 늘면 목록을 달·연 단위로 나눕니다.
+- 지난 호는 호별 페이지(`/YYYY-MM-DD`)로 엽니다. 호가 수백 개로 늘면 목록을 달·연 단위로 나눕니다.

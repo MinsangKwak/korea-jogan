@@ -546,3 +546,13 @@ body.is-locked { overflow: hidden; }
 
 /* 좁은 화면에서는 긴 값도 줄바꿈해 이름 칸이 짓눌리지 않게 한다 */
 @media (max-width: 520px) { .kj-kv .v { white-space: normal; max-width: 60vw; } }
+
+/* 검색엔진용 호 요약. 화면이 그려지면 스크립트가 지우고, 스크립트가 도는 동안에는 숨긴다 */
+.js .kj-digest { display: none; }
+.kj-digest { padding-block: var(--space-8); max-width: var(--measure); }
+.kj-digest h2 { font-size: 1.5rem; line-height: 1.35; margin: var(--space-2) 0; }
+.kj-digest h3 { font-size: 1.05rem; margin: var(--space-6) 0 var(--space-2); }
+.kj-digest ul { padding-left: 1.1rem; }
+.kj-digest li + li { margin-top: var(--space-1); }
+.kj-digest__date { color: var(--ink-3); font-size: 0.85rem; margin: 0; }
+.kj-foot__dev { color: var(--ink); }

@@ -24,7 +24,7 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 | 워크플로 | 언제 | 무엇 |
 | --- | --- | --- |
 | `check.yml` | `dev`·`main` push, PR | 데이터 검사, 스크립트 시험, PR 커밋 제목 검사 |
-| `deploy-pages.yml` | `deploy` push, 수동 실행, 평일 09:17~22:17(한국 시간) 매시 | 배포 규칙 검사(`--deploy`, 승인 전 초안 차단), RSS·최신 공식 숫자(`live.json`) 생성 뒤 GitHub Pages 배포. 예약 실행은 `deploy` 브랜치를 그대로 받아 커밋 없이 다시 배포하며, `ECOS_API_KEY`가 없으면 건너뜁니다 |
+| `deploy-pages.yml` | `deploy` push, 수동 실행, 평일 09:17~22:17(한국 시간) 매시 | 배포 규칙 검사(`--deploy`, 승인 전 초안 차단), RSS·사이트맵·호별 검색 페이지·최신 공식 숫자(`live.json`) 생성 뒤 GitHub Pages 배포, 새 호는 IndexNow로 알림. 예약 실행은 `deploy` 브랜치를 그대로 받아 커밋 없이 다시 배포하며, `ECOS_API_KEY`가 없으면 건너뜁니다 |
 | `publish.yml` | 매일 06:00(한국 시간), 수동 실행 | `dev`의 오늘 호가 최신 호이면, 초안은 `approve.py --auto`로 자동 발행해 `dev`에 커밋하고 `--deploy` 검사 뒤 `main`·`deploy`를 빨리 감기하고 `deploy-pages.yml`을 실행합니다. 오늘 호가 없거나 검사·빨리 감기에 실패하면 올리지 않습니다 |
 | `daily.yml` | 수동 실행 | 언론사 RSS 기사 목록과 한국은행 ECOS 원본 수집 |
 
