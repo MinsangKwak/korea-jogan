@@ -27,7 +27,7 @@
 | 화면 | 정적 HTML 한 장 · 바닐라 JavaScript(`'use strict'`) · 디자인 시스템(토큰 CSS 변수 + `kj-` 컴포넌트) · 빌드 도구 없음 |
 | 데이터 | 날짜별 JSON 한 개. 공식 발표 원문과 그 발표를 인용한 기사에서만 수치를 가져옵니다 |
 | 검사·배포 | Python 검사 스크립트 · GitHub Actions · GitHub Pages(`deploy` 브랜치 전용) |
-| 자동 발행 | Claude 예약 작업이 매일 00시에 조사 → 초안 JSON 작성 → 검사 → `dev` 커밋. 사람이 머리기사·핵심 숫자를 대조해 승인한 뒤 배포 |
+| 자동 발행 | Claude 예약 작업이 매일 00시에 조사 → 초안 JSON 작성 → 검사 → `dev` 커밋. 06시에 `main`·`deploy`로 올려 배포. 사람이 대조한 호는 '편집자 확인', 아니면 '자동 발행'으로 표시 |
 | 운영 | 1인 운영, 비영리. 광고·회원 기능 없음 |
 
 ## 대표 구현과 근거
@@ -41,7 +41,7 @@
 | 확정치·잠정치·전망치가 섞여 보임 | 출처 신뢰도 A~E 등급, 국가채무 막대에 결산·전망 구분, 금액을 확인하지 못한 해는 막대 대신 '미확인' 표시 | [화면 `renderFiscal`](public/index.html) |
 | 기사 수가 많아 모바일에서 길어짐 | 3개를 넘는 목록은 모두 접고 '더보기', 860px 이하 하단 탭바, 오른쪽 전체 메뉴 서랍, 맨 위로 단추, 현재 섹션 표시(`aria-current`) | [화면 `collapse`·`setupNav`·`setupDrawer`](public/index.html) |
 | 20~70대 독자의 글자 크기 차이 | '가 글자 크게' 단추로 기준 글자 크기를 바꾸고 선택을 기기에 저장 | [화면 `setupBig`](public/index.html) |
-| AI가 쓴 숫자가 그대로 나가면 틀린 데이터가 배포될 수 있음 | 자동 작업은 `draft`까지만 쓰고, 사람이 원문과 대조해 `approve.py`로 승인해야 `deploy` 검사(`--deploy`)를 통과 | [일일 발행 절차](docs/DAILY_RUNBOOK.md) · [승인](scripts/approve.py) · [발행 전 검사](scripts/validate.py) |
+| AI가 쓴 숫자를 사람이 확인했는지 독자가 알 수 없음 | 사람이 원문과 대조한 호는 `approve.py --by`로 '편집자 확인', 확인 없이 06시에 나간 호는 `--auto`로 '자동 발행'을 남겨 제호 옆에 구분해 표시. 출처 없는 숫자는 검사가 막음 | [일일 발행 절차](docs/DAILY_RUNBOOK.md) · [승인](scripts/approve.py) · [발행 전 검사](scripts/validate.py) |
 | 틀린 숫자를 고쳐도 독자가 알 수 없음 | 화면마다 GitHub 이슈 양식으로 이어지는 오류 신고, 바닥글의 정정 기록(`corrections.json`) | [정정 기록 형식](docs/DATA.md#correctionsjson) · [오류 신고 양식](.github/ISSUE_TEMPLATE/correction.yml) |
 | 승인이 늦으면 어제 숫자를 오늘 숫자로 읽음 | 최신 호가 한국 시간 오늘이 아니면 맨 위에 미발행 띠, 제호 옆에 수집 시각 | [화면 `renderStale`](public/index.html) |
 | 이 서비스만의 기능(갈린 숫자 비교)이 맨 아래에 묻힘 | 홈 머리기사 아래 '오늘 기준이 갈린 숫자' 카드, 언론 섹션을 두 번째로 | [화면 `renderSplits`](public/index.html) |
@@ -94,7 +94,7 @@ korea-jogan/
 ├── data/raw/                       수집 원본. ecos/(한국은행), rss/(언론사 RSS 기사 목록, 저장소에는 올리지 않음)
 ├── scripts/
 │   ├── validate.py                 발행 전 검사. --deploy면 승인 전 초안도 막습니다
-│   ├── approve.py                  사람이 확인한 초안을 공개(published)로 바꿉니다
+│   ├── approve.py                  초안을 공개(published)로 바꿉니다. --by 이름(편집자 확인) 또는 --auto(자동 발행)
 │   ├── build_feed.py               RSS(feed.xml)·사이트맵(sitemap.xml). 배포할 때 만듭니다
 │   ├── build_tokens.py             design/tokens.json → public/assets/tokens.css. --check로 최신 여부 검사
 │   ├── ecos_nums.py                ECOS 원본을 핵심 숫자(nums) 꼴로 바꿉니다
@@ -109,7 +109,7 @@ korea-jogan/
 │   └── commit-msg                  로컬 커밋 제목 검사 훅
 ├── .github/workflows/
 │   ├── check.yml                   dev·main push와 PR에서 데이터 검사·토큰 CSS 검사·스크립트 시험, PR 커밋 제목 검사
-│   ├── publish.yml                 매일 06시 dev에 승인된 오늘 호가 있으면 main·deploy를 빨리 감기하고 배포 실행
+│   ├── publish.yml                 매일 06시 dev의 오늘 호를 main·deploy로 빨리 감기하고 배포 실행. 승인 전 초안은 자동 발행
 │   ├── deploy-pages.yml            deploy push 시 배포 규칙까지 검사하고 RSS·최신 공식 숫자를 만든 뒤 GitHub Pages 배포. 평일 낮 매시 다시 배포
 │   └── daily.yml                   언론사 RSS·ECOS 원본 수집(수동 실행)
 ├── docs/
@@ -146,9 +146,9 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 
 1. 분야별 하위 에이전트가 공식 발표와 기사를 동시에 조사합니다(핵심 숫자 · 전국 · 지역 두 묶음 · 언론 주제).
 2. 결과를 합쳐 `public/data/issues/YYYY-MM-DD.json`을 쓰고 `index.json`의 `latest`를 바꿉니다.
-3. `status: "draft"`로 두고 `scripts/validate.py`를 통과하면 `data(issue): YYYY-MM-DD호 초안`으로 `dev`에 커밋합니다. 자동 작업은 여기서 멈춥니다.
-4. 사람이 머리기사·핵심 숫자·갈린 숫자를 원문과 대조하고 `scripts/approve.py`로 승인합니다.
-5. 승인 커밋을 `dev`에 올려 두면 06시(한국 시간) `publish.yml`이 `main`과 `deploy`를 같은 커밋으로 빨리 감기합니다. 이어서 `deploy-pages.yml`이 승인 여부까지 검사하고 RSS를 만든 뒤 배포합니다. 06시까지 승인되지 않으면 지난 호를 그대로 둡니다.
+3. `status: "draft"`로 두고 `scripts/validate.py`를 통과하면 `data(issue): YYYY-MM-DD호 초안`으로 `dev`에 커밋합니다.
+4. 06시 전에 사람이 머리기사·핵심 숫자·갈린 숫자를 원문과 대조했으면 `scripts/approve.py --by 이름`으로 승인합니다('편집자 확인').
+5. 06시(한국 시간) `publish.yml`이 승인되지 않은 초안을 `--auto`로 자동 발행하고, `main`과 `deploy`를 같은 커밋으로 빨리 감기합니다. 이어서 `deploy-pages.yml`이 검사하고 RSS를 만든 뒤 배포합니다.
 
 검사에 실패하면 올리지 않습니다. 재정·국민연금·수출입 같은 상설 지표는 새 공식 발표가 있을 때만 바꿉니다.
 
@@ -190,7 +190,7 @@ git config core.hooksPath .githooks
 
 - [x] 화면과 발행 데이터 분리(JSON)
 - [x] 전국·17개 시도 뉴스, 주제·키워드 검색
-- [x] 검사 통과 시 자동 초안(매일 00시), 사람 승인 뒤 배포
+- [x] 매일 00시 자동 초안, 06시 자동 발행(사람이 확인한 호는 '편집자 확인'으로 구분)
 - [x] 정정 기록과 오류 신고
 - [x] 홈 '오늘 기준이 갈린 숫자', 미발행 표시
 - [x] 지난 호 아카이브(`?d=`), RSS(`/feed.xml`), 공유 미리보기

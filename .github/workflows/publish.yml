@@ -1,5 +1,6 @@
-# 매일 06:00(한국 시간) dev에 승인된 오늘 호가 있으면 main·deploy를 같은 커밋으로 빨리 감기하고 배포를 띄운다
-# 승인 전 초안이거나 오늘 호가 없으면 아무것도 올리지 않고 지난 호를 그대로 둔다
+# 매일 06:00(한국 시간) dev의 오늘 호를 main·deploy로 빨리 감기하고 배포를 띄운다
+# 사람이 승인하지 않은 초안은 검사를 통과하면 '자동 발행'으로 공개한다(화면에 편집자 확인 전으로 표시)
+# 오늘 호가 없거나 검사에 실패하면 아무것도 올리지 않고 지난 호를 그대로 둔다
 name: 아침 발행
 
 on:
@@ -27,7 +28,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # 오늘(KST) 호가 승인(published)됐고 목록의 최신 호인지 본다
+      # 오늘(KST) 호가 목록의 최신 호이고 초안 또는 승인 상태인지 본다
       - id: gate
         name: 오늘 호 승인 여부
         run: |
@@ -40,12 +41,23 @@ jobs:
           path = issues / f"{date}.json"
           latest = json.loads((issues / "index.json").read_text(encoding="utf-8")).get("latest")
           status = json.loads(path.read_text(encoding="utf-8")).get("status") if path.exists() else None
-          run = status == "published" and latest == date
+          run = status in ("draft", "published") and latest == date
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write(f"run={str(run).lower()}\n")
+              out.write(f"date={date}\nstatus={status}\n")
           if not run:
               print(f"::notice::{date}호를 올리지 않습니다(상태: {status or '없음'}, 최신 호: {latest})")
           PY
+      # 06시까지 사람이 승인하지 않았으면 검사를 통과한 초안을 자동 발행으로 바꿔 dev에 올린다
+      - name: 자동 발행
+        if: steps.gate.outputs.run == 'true' && steps.gate.outputs.status == 'draft'
+        run: |
+          python scripts/validate.py
+          python scripts/approve.py "${{ steps.gate.outputs.date }}" --auto
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "data(issue): ${{ steps.gate.outputs.date }}호 자동 발행"
+          git push origin HEAD:dev
       - name: 배포 규칙 검사
         if: steps.gate.outputs.run == 'true'
         run: python scripts/validate.py --deploy
