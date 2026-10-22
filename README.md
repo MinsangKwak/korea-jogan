@@ -5,7 +5,7 @@
 
 ### [▶ 대한민국 조간 바로가기](https://korea-jogan.com/)
 
-[서비스](https://korea-jogan.com/) · [서비스 기획](planning/01-product.md) · [구조와 자동화](dev/docs/architecture.md) · [서비스 소개와 디자인 가이드](design/guide.md) · [발행 데이터 형식](planning/data-spec.md)
+[서비스](https://korea-jogan.com/) · [서비스 기획](docs/planning/01-product.md) · [구조와 자동화](docs/dev/architecture.md) · [서비스 소개와 디자인 가이드](design/guide.md) · [발행 데이터 형식](docs/planning/data-spec.md)
 
 > 2026-10-20 기준으로 `main`·`dev`·`deploy`는 같은 커밋입니다. 2026-10-19호(시안)와 사람이 승인한 2026-10-20호가 GitHub Pages에 배포돼 있고, 제호 아래 '최신 공식 숫자' 띠는 평일 낮 1시간마다 한국은행 ECOS에서 다시 받습니다.
 
@@ -13,8 +13,8 @@
 
 | 순서 | 문서 | 확인할 내용 |
 | --- | --- | --- |
-| 01 | [서비스 기획](planning/01-product.md) | 왜 만들었는지, 누구를 위한 화면인지, 무엇을 넣고 뺐는지 |
-| 02 | [구조와 자동화](dev/docs/architecture.md) | 정적 사이트 구조, 검사 → 발행 → 배포 흐름, 기술 선택 이유 |
+| 01 | [서비스 기획](docs/planning/01-product.md) | 왜 만들었는지, 누구를 위한 화면인지, 무엇을 넣고 뺐는지 |
+| 02 | [구조와 자동화](docs/dev/architecture.md) | 정적 사이트 구조, 검사 → 발행 → 배포 흐름, 기술 선택 이유 |
 | 03 | [서비스 소개와 디자인 가이드](design/guide.md) | 이름이 왜 '대한민국 조간'인지, 왜 이런 모양으로 그렸는지, 색·글자·컴포넌트 쓰는 법 |
 
 ## 프로젝트 한눈에 보기
@@ -37,15 +37,15 @@
 | 문제 | 구현한 접근 | 확인할 근거 |
 | --- | --- | --- |
 | 출처 없는 숫자가 화면에 올라갈 수 있음 | 핵심 숫자마다 출처 기관과 `https` 원문 링크를 필수로 두고, 빠지면 배포를 멈춤. 기준일·발표일도 함께 표시 | [발행 전 검사](dev/pipeline/publish/validate.py) · [배포 워크플로](.github/workflows/deploy-pages.yml) |
-| 같은 사실이 기사마다 다른 숫자로 보도됨 | 주제별로 언론사 기사 링크를 모으고, 기준이 갈린 숫자(`diffs`)를 표로 나란히 표시 | [언론 컴포넌트](dev/web/src/components/media/media.js) · [데이터 형식](planning/data-spec.md#themes) |
+| 같은 사실이 기사마다 다른 숫자로 보도됨 | 주제별로 언론사 기사 링크를 모으고, 기준이 갈린 숫자(`diffs`)를 표로 나란히 표시 | [언론 컴포넌트](dev/web/src/components/media/media.js) · [데이터 형식](docs/planning/data-spec.md#themes) |
 | 확정치·잠정치·전망치가 섞여 보임 | 출처 신뢰도 A~E 등급, 국가채무 막대에 결산·전망 구분, 금액을 확인하지 못한 해는 막대 대신 '미확인' 표시 | [재정 컴포넌트 `renderFiscal`](dev/web/src/components/fiscal/fiscal.js) |
 | 기사 수가 많아 모바일에서 길어짐 | 3개를 넘는 목록은 모두 접고 '더보기', 860px 이하 하단 탭바, 오른쪽 전체 메뉴 서랍, 맨 위로 단추, 현재 섹션 표시(`aria-current`) | [`collapse`](dev/web/src/core/ui.js) · [`setupNav`·`setupDrawer`](dev/web/src/components/nav/nav.js) |
 | 20~70대 독자의 글자 크기 차이 | '가 글자 크게' 단추로 기준 글자 크기를 바꾸고 선택을 기기에 저장 | [제호 컴포넌트 `setupBig`](dev/web/src/components/header/header.js) |
-| AI가 쓴 숫자를 사람이 확인했는지 독자가 알 수 없음 | 사람이 원문과 대조한 호는 `approve.py --by`로 '편집자 확인', 확인 없이 06시에 나간 호는 `--auto`로 '자동 발행'을 남겨 제호 옆에 구분해 표시. 출처 없는 숫자는 검사가 막음 | [일일 발행 절차](planning/runbook.md) · [승인](dev/pipeline/publish/approve.py) · [발행 전 검사](dev/pipeline/publish/validate.py) |
-| 틀린 숫자를 고쳐도 독자가 알 수 없음 | 화면마다 GitHub 이슈 양식으로 이어지는 오류 신고, 바닥글의 정정 기록(`corrections.json`) | [정정 기록 형식](planning/data-spec.md#correctionsjson) · [오류 신고 양식](.github/ISSUE_TEMPLATE/correction.yml) |
+| AI가 쓴 숫자를 사람이 확인했는지 독자가 알 수 없음 | 사람이 원문과 대조한 호는 `approve.py --by`로 '편집자 확인', 확인 없이 06시에 나간 호는 `--auto`로 '자동 발행'을 남겨 제호 옆에 구분해 표시. 출처 없는 숫자는 검사가 막음 | [일일 발행 절차](docs/planning/runbook.md) · [승인](dev/pipeline/publish/approve.py) · [발행 전 검사](dev/pipeline/publish/validate.py) |
+| 틀린 숫자를 고쳐도 독자가 알 수 없음 | 화면마다 GitHub 이슈 양식으로 이어지는 오류 신고, 바닥글의 정정 기록(`corrections.json`) | [정정 기록 형식](docs/planning/data-spec.md#correctionsjson) · [오류 신고 양식](.github/ISSUE_TEMPLATE/correction.yml) |
 | 승인이 늦으면 어제 숫자를 오늘 숫자로 읽음 | 최신 호가 한국 시간 오늘이 아니면 맨 위에 미발행 띠, 제호 옆에 수집 시각 | [제호 컴포넌트 `renderStale`](dev/web/src/components/header/header.js) |
 | 이 서비스만의 기능(갈린 숫자 비교)이 맨 아래에 묻힘 | 홈 머리기사 아래 '오늘 기준이 갈린 숫자' 카드, 언론 섹션을 두 번째로 | [갈린 숫자 컴포넌트 `renderSplits`](dev/web/src/components/splits/splits.js) |
-| 커밋 기록만으로 변경 흐름을 읽기 어려움 | `종류(범위): 제목` 규칙과 로컬 훅·PR 검사 | [커밋 규칙](dev/docs/commits.md) · [제목 검사](dev/tools/check_commit_msg.mjs) |
+| 커밋 기록만으로 변경 흐름을 읽기 어려움 | `종류(범위): 제목` 규칙과 로컬 훅·PR 검사 | [커밋 규칙](docs/dev/commits.md) · [제목 검사](dev/tools/check_commit_msg.mjs) |
 
 ## 화면 구성
 
@@ -76,14 +76,15 @@
 
 ## 디렉터리
 
-루트는 **기획 · 디자인 · 개발** 세 폴더로 나눴습니다. 기획을 보는 사람은 `planning/`, 디자인은 `design/`, 코드는 `dev/`만 열면 됩니다. 화면 코드는 공통(`core`)과 섹션별 컴포넌트(`components`)로 나누고, 컴포넌트마다 JS와 CSS를 한 폴더에 둡니다.
+문서는 `docs/` 한곳에 기획(`planning/`)과 개발(`dev/`)로 나눠 두고, 디자인 산출물은 `design/`, 코드는 `dev/`에 둡니다. 화면 코드는 공통(`core`)과 섹션별 컴포넌트(`components`)로 나누고, 컴포넌트마다 JS와 CSS를 한 폴더에 둡니다.
 
 ```text
 korea-jogan/
-├── planning/                         기획
-│   ├── 01-product.md                 문제 정의, 독자, 섹션 구성, 넣고 뺀 것, 성공 지표
-│   ├── data-spec.md                  발행 JSON 규격과 검사 규칙
-│   └── runbook.md                    매일 00시 발행 절차와 데이터 원칙
+├── docs/                             문서
+│   ├── planning/                     기획: 서비스 기획(01-product.md), 발행 데이터 규격(data-spec.md),
+│   │                                 매일 00시 발행 절차(runbook.md)
+│   └── dev/                          개발: 구조와 자동화(architecture.md), 브랜치(branches.md),
+│                                     커밋 규칙(commits.md), Claude 작업 지침(CLAUDE.md)
 ├── design/                           디자인
 │   ├── guide.md                      이름·컨셉, 색·글자·간격·컴포넌트 규칙
 │   ├── tokens.json                   디자인 토큰 원본(밝은·어두운 테마). 화면의 tokens.css는 여기서 만듭니다
@@ -106,9 +107,7 @@ korea-jogan/
 │   │   ├── build/                    배포 때 만드는 파일: RSS·사이트맵, 호별 페이지, 최신 공식 숫자, 토큰 CSS
 │   │   └── publish/                  발행: 검사(validate.py), 승인(approve.py), IndexNow 알림
 │   ├── tests/                        파이프라인 시험(unittest)
-│   ├── tools/                        커밋 제목 검사(check_commit_msg.mjs)와 Git 훅(githooks/)
-│   └── docs/                         구조와 자동화(architecture.md), 브랜치(branches.md), 커밋 규칙(commits.md),
-│                                     Claude 작업 지침(CLAUDE.md)
+│   └── tools/                        커밋 제목 검사(check_commit_msg.mjs)와 Git 훅(githooks/)
 ├── .github/                          워크플로(검사·아침 발행·배포·수집)와 오류 신고 양식
 ├── LICENSE                           MIT
 └── README.md
@@ -126,11 +125,11 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 | `main` | 검사를 통과한 최종본 |
 | `deploy` | 배포 전용. 여기에 올라온 커밋만 GitHub Pages에 나갑니다 |
 
-`main`과 `deploy`에는 직접 커밋하지 않습니다. 자세한 순서와 저장소 설정은 [dev/docs/branches.md](dev/docs/branches.md)에 있습니다. 커밋 제목은 [dev/docs/commits.md](dev/docs/commits.md)의 `종류(범위): 제목` 꼴을 따릅니다.
+`main`과 `deploy`에는 직접 커밋하지 않습니다. 자세한 순서와 저장소 설정은 [docs/dev/branches.md](docs/dev/branches.md)에 있습니다. 커밋 제목은 [docs/dev/commits.md](docs/dev/commits.md)의 `종류(범위): 제목` 꼴을 따릅니다.
 
 ## 매일 발행
 
-매일 00시(한국 시간) Claude 예약 작업이 [planning/runbook.md](planning/runbook.md) 절차대로 그날 호를 만듭니다.
+매일 00시(한국 시간) Claude 예약 작업이 [docs/planning/runbook.md](docs/planning/runbook.md) 절차대로 그날 호를 만듭니다.
 
 1. 분야별 하위 에이전트가 공식 발표와 기사를 동시에 조사합니다(핵심 숫자 · 전국 · 지역 두 묶음 · 언론 주제).
 2. 결과를 합쳐 `dev/web/data/issues/YYYY-MM-DD.json`을 쓰고 `index.json`의 `latest`를 바꿉니다.
@@ -169,7 +168,7 @@ git config core.hooksPath dev/tools/githooks
 
 ## 알려진 한계
 
-- 여러 국내외 매체가 robots.txt나 서버 차단으로 AI의 본문 접근을 막습니다. 기사 목록은 언론사 RSS(26곳)로 넓혔지만, 본문을 읽고 숫자를 비교하는 일은 열린 매체에서만 합니다. 막힌 매체 기사는 '본문 미확인'으로 표시하고, 대체한 사실을 화면 하단 '수집 방법과 한계'에 적습니다. 자세한 내용은 [일일 발행 절차](planning/runbook.md#접속이-막힌-매체)에 있습니다.
+- 여러 국내외 매체가 robots.txt나 서버 차단으로 AI의 본문 접근을 막습니다. 기사 목록은 언론사 RSS(26곳)로 넓혔지만, 본문을 읽고 숫자를 비교하는 일은 열린 매체에서만 합니다. 막힌 매체 기사는 '본문 미확인'으로 표시하고, 대체한 사실을 화면 하단 '수집 방법과 한계'에 적습니다. 자세한 내용은 [일일 발행 절차](docs/planning/runbook.md#접속이-막힌-매체)에 있습니다.
 - 공공 API는 한국은행 ECOS만 붙었습니다. '최신 공식 숫자' 띠는 ECOS에서 받지만, 조간 본문의 숫자는 아직 공식 발표 원문과 기사를 조사해 채웁니다.
 - ECOS 환율은 매매기준율이라, 조간의 주간 종가 환율과 소수점 아래가 다를 수 있습니다.
 - 방문 측정(GoatCounter)은 주소를 넣어야 켜집니다. 지금은 꺼져 있습니다.
@@ -186,7 +185,7 @@ git config core.hooksPath dev/tools/githooks
 - [x] 언론사 RSS 기사 목록 수집(26곳), ECOS 최신 공식 숫자 띠
 - [x] 오른쪽 세로 메뉴·전체 메뉴 서랍, 목록 접기, 권역별 시도 선택
 - [ ] KOSIS·관세청·국회 수집기 추가, 조간 핵심 숫자를 API 값으로 옮기기
-- [ ] GoatCounter 주소 등록, 1차 독자 가설 확정([서비스 기획](planning/01-product.md#1차-독자-가설-확정-필요))
+- [ ] GoatCounter 주소 등록, 1차 독자 가설 확정([서비스 기획](docs/planning/01-product.md#1차-독자-가설-확정-필요))
 
 ## 비밀 관리
 

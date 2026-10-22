@@ -1,6 +1,6 @@
 # 발행 데이터 형식
 
-**하루 한 호를 `dev/web/data/issues/YYYY-MM-DD.json` 파일 하나에 담습니다.** 화면은 `index.json`의 `latest`가 가리키는 호를 읽습니다. 규칙의 원본은 [dev/pipeline/publish/validate.py](../dev/pipeline/publish/validate.py)이고, 이 문서는 그 규칙과 화면이 읽는 형식을 정리합니다. ✔ 표시는 검사 스크립트가 확인하는 항목입니다.
+**하루 한 호를 `dev/web/data/issues/YYYY-MM-DD.json` 파일 하나에 담습니다.** 화면은 `index.json`의 `latest`가 가리키는 호를 읽습니다. 규칙의 원본은 [dev/pipeline/publish/validate.py](../../dev/pipeline/publish/validate.py)이고, 이 문서는 그 규칙과 화면이 읽는 형식을 정리합니다. ✔ 표시는 검사 스크립트가 확인하는 항목입니다.
 
 ## index.json
 

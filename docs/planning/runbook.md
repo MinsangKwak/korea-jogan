@@ -1,6 +1,6 @@
 # 일일 발행 절차
 
-매일 00시(한국 시간) 예약 작업이 이 절차대로 그날 호의 **초안**을 만들어 `dev`에 올리고, 06시 `publish.yml`이 그 호를 `main`과 `deploy`에 같은 커밋으로 올립니다. 그때까지 사람이 승인했으면 '편집자 확인' 호가, 승인이 없으면 검사를 통과한 초안이 '자동 발행' 호로 공개됩니다. `deploy`에 올라간 뒤에는 `deploy-pages.yml`이 승인 여부까지 다시 검사하고 GitHub Pages에 배포합니다. 브랜치 규칙은 [BRANCHES.md](../dev/docs/branches.md), 커밋 규칙은 [COMMITS.md](../dev/docs/commits.md)를 따릅니다.
+매일 00시(한국 시간) 예약 작업이 이 절차대로 그날 호의 **초안**을 만들어 `dev`에 올리고, 06시 `publish.yml`이 그 호를 `main`과 `deploy`에 같은 커밋으로 올립니다. 그때까지 사람이 승인했으면 '편집자 확인' 호가, 승인이 없으면 검사를 통과한 초안이 '자동 발행' 호로 공개됩니다. `deploy`에 올라간 뒤에는 `deploy-pages.yml`이 승인 여부까지 다시 검사하고 GitHub Pages에 배포합니다. 브랜치 규칙은 [BRANCHES.md](../dev/branches.md), 커밋 규칙은 [COMMITS.md](../dev/commits.md)를 따릅니다.
 
 ## 원칙
 
