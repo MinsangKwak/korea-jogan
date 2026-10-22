@@ -22,23 +22,23 @@ flowchart LR
 
 | 구성 | 파일 | 하는 일 |
 | --- | --- | --- |
-| 화면 | [dev/web/index.html](../web/index.html) · [dev/web/src/](../web/src) | `index.html`은 마크업, `src/core`는 공통 코드, `src/components`는 섹션별 JS·CSS, `src/main.js`가 최신 호 JSON을 읽어 섹션을 차례로 그립니다 |
-| 디자인 시스템 | [design/tokens.json](../../design/tokens.json) · [dev/web/src/styles/](../web/src/styles) | 토큰 원본과, 그것으로 만든 `tokens.css`, `kj-` 컴포넌트 `kj.css` |
-| 토큰 CSS 생성 | [dev/pipeline/build/build_tokens.py](../pipeline/build/build_tokens.py) | `tokens.json`을 CSS 변수로 바꿉니다. CI가 `--check`로 어긋남을 막습니다 |
-| 발행 데이터 | [dev/web/data/issues/](../web/data/issues) | `index.json`(최신 호·목록)과 날짜별 호. 형식은 [DATA.md](../../planning/data-spec.md) |
-| 발행 전 검사 | [dev/pipeline/publish/validate.py](../pipeline/publish/validate.py) | 필수 항목, 출처·링크, 값 범위, 날짜, 시도 이름을 검사합니다 |
-| 커밋 제목 검사 | [dev/tools/check_commit_msg.mjs](../tools/check_commit_msg.mjs) | 로컬 훅과 PR에서 `종류(범위): 제목` 규칙을 검사합니다 |
-| 승인 | [dev/pipeline/publish/approve.py](../pipeline/publish/approve.py) | 초안을 `published`로 바꿉니다. `--by`는 확인한 사람·시각, `--auto`는 자동 발행 표시(`review.auto`)를 남깁니다 |
-| 검색용 호별 페이지 | [dev/pipeline/build/build_pages.py](../pipeline/build/build_pages.py) · [indexnow.py](../pipeline/publish/indexnow.py) | 배포 때 호마다 `/YYYY-MM-DD` 페이지를 만들고 제목·설명·`NewsArticle` 구조화 데이터·본문 요약을 미리 넣습니다. 배포 직후 IndexNow로 새 주소를 알립니다 |
-| RSS·사이트맵 | [dev/pipeline/build/build_feed.py](../pipeline/build/build_feed.py) | 승인된 호로 `feed.xml`·`sitemap.xml`을 만듭니다. 배포 때 실행 |
-| 언론사 RSS 수집기 | [dev/pipeline/collect/fetch_rss.py](../pipeline/collect/fetch_rss.py) · [feeds.json](../pipeline/collect/feeds.json) | 26개 언론사 RSS에서 전날 기사의 제목·링크·날짜만 모읍니다. robots.txt를 지키고 본문은 받지 않습니다 |
-| 공공 API 수집기 | [dev/pipeline/collect/fetch_ecos.py](../pipeline/collect/fetch_ecos.py) · [ecos_nums.py](../pipeline/collect/ecos_nums.py) | ECOS 원본(환율·기준금리·코스피·코스닥) 수집과 핵심 숫자 변환 |
+| 화면 | [dev/web/index.html](../../dev/web/index.html) · [dev/web/src/](../../dev/web/src) | `index.html`은 마크업, `src/core`는 공통 코드, `src/components`는 섹션별 JS·CSS, `src/main.js`가 최신 호 JSON을 읽어 섹션을 차례로 그립니다 |
+| 디자인 시스템 | [design/tokens.json](../../design/tokens.json) · [dev/web/src/styles/](../../dev/web/src/styles) | 토큰 원본과, 그것으로 만든 `tokens.css`, `kj-` 컴포넌트 `kj.css` |
+| 토큰 CSS 생성 | [dev/pipeline/build/build_tokens.py](../../dev/pipeline/build/build_tokens.py) | `tokens.json`을 CSS 변수로 바꿉니다. CI가 `--check`로 어긋남을 막습니다 |
+| 발행 데이터 | [dev/web/data/issues/](../../dev/web/data/issues) | `index.json`(최신 호·목록)과 날짜별 호. 형식은 [DATA.md](../planning/data-spec.md) |
+| 발행 전 검사 | [dev/pipeline/publish/validate.py](../../dev/pipeline/publish/validate.py) | 필수 항목, 출처·링크, 값 범위, 날짜, 시도 이름을 검사합니다 |
+| 커밋 제목 검사 | [dev/tools/check_commit_msg.mjs](../../dev/tools/check_commit_msg.mjs) | 로컬 훅과 PR에서 `종류(범위): 제목` 규칙을 검사합니다 |
+| 승인 | [dev/pipeline/publish/approve.py](../../dev/pipeline/publish/approve.py) | 초안을 `published`로 바꿉니다. `--by`는 확인한 사람·시각, `--auto`는 자동 발행 표시(`review.auto`)를 남깁니다 |
+| 검색용 호별 페이지 | [dev/pipeline/build/build_pages.py](../../dev/pipeline/build/build_pages.py) · [indexnow.py](../../dev/pipeline/publish/indexnow.py) | 배포 때 호마다 `/YYYY-MM-DD` 페이지를 만들고 제목·설명·`NewsArticle` 구조화 데이터·본문 요약을 미리 넣습니다. 배포 직후 IndexNow로 새 주소를 알립니다 |
+| RSS·사이트맵 | [dev/pipeline/build/build_feed.py](../../dev/pipeline/build/build_feed.py) | 승인된 호로 `feed.xml`·`sitemap.xml`을 만듭니다. 배포 때 실행 |
+| 언론사 RSS 수집기 | [dev/pipeline/collect/fetch_rss.py](../../dev/pipeline/collect/fetch_rss.py) · [feeds.json](../../dev/pipeline/collect/feeds.json) | 26개 언론사 RSS에서 전날 기사의 제목·링크·날짜만 모읍니다. robots.txt를 지키고 본문은 받지 않습니다 |
+| 공공 API 수집기 | [dev/pipeline/collect/fetch_ecos.py](../../dev/pipeline/collect/fetch_ecos.py) · [ecos_nums.py](../../dev/pipeline/collect/ecos_nums.py) | ECOS 원본(환율·기준금리·코스피·코스닥) 수집과 핵심 숫자 변환 |
 | 워크플로 | [.github/workflows/](../../.github/workflows) | `check.yml` 검사, `deploy-pages.yml` 배포(평일 낮 매시 최신 공식 숫자 갱신 포함), `daily.yml` 수집 |
-| 최신 공식 숫자 | [dev/pipeline/build/build_live.py](../pipeline/build/build_live.py) | ECOS 최신 일별 확정값으로 `live.json`을 만듭니다. 승인된 조간과 별개로 '자동 갱신 · 사람 확인 전'으로 표시합니다. 서버 없이 배포 워크플로가 매시 커밋 없이 다시 배포해 갱신합니다 |
+| 최신 공식 숫자 | [dev/pipeline/build/build_live.py](../../dev/pipeline/build/build_live.py) | ECOS 최신 일별 확정값으로 `live.json`을 만듭니다. 승인된 조간과 별개로 '자동 갱신 · 사람 확인 전'으로 표시합니다. 서버 없이 배포 워크플로가 매시 커밋 없이 다시 배포해 갱신합니다 |
 
 ## 화면 구현
 
-빌드 없이 브라우저가 바로 읽는 정적 파일로 만들었습니다. 1인 운영에서 의존성 업데이트와 빌드 실패를 관리할 일을 없애기 위해서입니다. 화면은 `index.html`에 마크업을 두고, 스크립트와 스타일은 `src/components/<섹션>/`에 컴포넌트별로 나눴습니다. 번들러 없이 `defer` 스크립트를 공통(`core`) → 컴포넌트 → 진입점(`main.js`) 순서로 읽습니다. 색·글자·간격은 디자인 시스템 CSS 두 개(`src/styles/tokens.css`, `src/styles/kj.css`)에서 가져옵니다.
+화면은 빌드 없이 브라우저가 바로 읽는 정적 파일입니다. 혼자 운영하면서 의존성 업데이트와 빌드 실패까지 챙길 수는 없어서 이렇게 정했습니다. 마크업은 `index.html`에, 스크립트와 스타일은 `src/components/<섹션>/`에 컴포넌트별로 둡니다. 번들러 대신 `defer` 스크립트를 공통(`core`) → 컴포넌트 → 진입점(`main.js`) 순서로 읽고, 색·글자·간격은 디자인 시스템 CSS 두 개(`src/styles/tokens.css`, `src/styles/kj.css`)에서 가져옵니다.
 
 | 기능 | 구현 |
 | --- | --- |
@@ -54,7 +54,7 @@ flowchart LR
 | 테마·접근성 | 본문 4.5:1, 막대·테두리 3:1 이상을 두 테마 모두에서 지킵니다. `prefers-color-scheme`으로 어두운 화면, 누르는 요소는 모두 44px 이상, 가장 작은 글자는 0.8rem입니다. 신뢰도·결산/전망·법정일/계산일은 색이 아니라 모양(채움·실선·점선)과 글자로 구분합니다. `prefers-reduced-motion`이면 부드러운 스크롤과 뼈대 깜빡임을 끕니다 |
 | 상태 | 불러오는 중에는 뼈대, 실패하면 '다시 불러오기' 오류 상자, 검색 결과가 없으면 대신 볼 주제를 보여 줍니다 |
 
-스크립트는 `'use strict'`로 실행하고, 화면 문자열은 `textContent`로 넣어 데이터 안의 HTML이 실행되지 않게 했습니다.
+데이터 안의 HTML이 실행되지 않도록 화면 문자열은 `textContent`로 넣습니다. 스크립트는 모두 `'use strict'`로 실행합니다.
 
 ## 검사 규칙
 
@@ -95,7 +95,7 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 | 실패 처리 | 고칠 수 없는 섹션은 지난 호 값으로 되돌린 뒤 다시 검사하고, 그래도 실패하면 발행하지 않습니다 |
 | 사람 확인 | 06시 전에 사람이 머리기사·핵심 숫자·갈린 숫자를 대조하면 '편집자 확인' 호로, 아니면 검사를 통과한 초안을 '자동 발행' 호로 06시에 냅니다. 독자는 제호 옆 표시로 둘을 구분합니다 |
 
-절차 전체는 [DAILY_RUNBOOK.md](../../planning/runbook.md)에 있습니다.
+절차 전체는 [DAILY_RUNBOOK.md](../planning/runbook.md)에 있습니다.
 
 ## 기술 선택
 
@@ -109,5 +109,6 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 
 ## 앞으로 바꿀 부분
 
-- 핵심 숫자는 공공 API(ECOS·KOSIS·관세청) 수집기로 옮겨, 에이전트 조사는 기사·요약에만 쓰게 합니다. ECOS는 '최신 공식 숫자' 띠에서 먼저 쓰고 있습니다.
-- 지난 호는 호별 페이지(`/YYYY-MM-DD`)로 엽니다. 호가 수백 개로 늘면 목록을 달·연 단위로 나눕니다.
+핵심 숫자는 공공 API(ECOS·KOSIS·관세청) 수집기로 옮기고, 에이전트 조사는 기사·요약에만 쓰려고 합니다. ECOS는 '최신 공식 숫자' 띠에서 먼저 쓰고 있습니다.
+
+지난 호는 호별 페이지(`/YYYY-MM-DD`)로 엽니다. 호가 수백 개로 늘면 목록을 달·연 단위로 나눕니다.
