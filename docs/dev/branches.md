@@ -12,12 +12,13 @@
 main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대로 올림)──▶ deploy ──▶ GitHub Pages
 ```
 
-- 한 바퀴는 `main → dev → main → deploy`입니다. 작업을 시작할 때 `dev`를 `main`에 맞추고(빨리 감기), `dev`에서 개발한 뒤 `main`에 병합하고, `main`을 그대로 `deploy`에 올립니다.
-- `dev → main` PR을 병합하면 `main`에 병합 커밋이 하나 생깁니다. 바로 `git push origin main:dev`로 `dev`를 `main`에 맞춰 둡니다. 그래야 다음 일일 발행이 빨리 감기로 `main`·`deploy`까지 올라갑니다.
-- `main`과 `deploy`에는 직접 커밋하지 않습니다. `deploy`는 항상 `main`과 같은 커밋을 가리킵니다.
-- 화면·스크립트 변경: `dev`에서 작업 브랜치를 따서 `dev`로 PR → `dev → main` PR(`sync: dev → main`) → `main`을 `deploy`로 올림.
-- 일일 발행: 00시 예약 작업이 `dev`에 초안을 올립니다. 06시 `publish.yml`이 승인되지 않은 초안은 자동 발행 커밋을 `dev`에 더한 뒤, `main`과 `deploy`를 같은 커밋으로 빨리 감기(fast-forward)합니다.
-- 다 쓴 작업 브랜치는 병합 뒤 원격과 로컬에서 지웁니다.
+한 바퀴는 `main → dev → main → deploy`입니다. 작업을 시작할 때 `dev`를 `main`에 맞추고(빨리 감기), `dev`에서 개발해 `main`에 병합하고 `main`을 그대로 `deploy`에 올립니다. `main`·`deploy`에는 직접 커밋하지 않고, `deploy`는 늘 `main`과 같은 커밋을 가리킵니다.
+
+화면·스크립트 변경은 `dev`에서 작업 브랜치를 따서 `dev`로 PR을 낸 뒤 `dev → main` PR(`sync: dev → main`)을 거쳐 `main`을 `deploy`로 올립니다. 다 쓴 작업 브랜치는 병합 뒤 원격과 로컬에서 지웁니다.
+
+`dev → main` PR을 병합하면 `main`에 병합 커밋이 하나 생기니 바로 `git push origin main:dev`로 `dev`를 `main`에 맞춰 둡니다. 그래야 다음 일일 발행이 빨리 감기로 `main`·`deploy`까지 올라갑니다.
+
+일일 발행에서는 00시 예약 작업이 `dev`에 초안을 올리고, 06시 `publish.yml`이 승인되지 않은 초안의 자동 발행 커밋을 `dev`에 더한 뒤 `main`과 `deploy`를 같은 커밋으로 빨리 감기(fast-forward)합니다.
 
 ## 검사와 배포 워크플로
 

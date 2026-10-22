@@ -1,6 +1,6 @@
 # 발행 데이터 형식
 
-**하루 한 호를 `dev/web/data/issues/YYYY-MM-DD.json` 파일 하나에 담습니다.** 화면은 `index.json`의 `latest`가 가리키는 호를 읽습니다. 검사 규칙은 [dev/pipeline/publish/validate.py](../dev/pipeline/publish/validate.py)가 정하고, 이 문서는 그 규칙과 화면이 쓰는 형식을 설명합니다. ✔ 표시는 검사 스크립트가 확인하는 항목입니다.
+**하루 한 호를 `dev/web/data/issues/YYYY-MM-DD.json` 파일 하나에 담습니다.** 화면은 `index.json`의 `latest`가 가리키는 호를 읽습니다. 규칙의 원본은 [dev/pipeline/publish/validate.py](../../dev/pipeline/publish/validate.py)이고, 이 문서는 그 규칙과 화면이 읽는 형식을 정리합니다. ✔ 표시는 검사 스크립트가 확인하는 항목입니다.
 
 ## index.json
 
@@ -47,7 +47,7 @@
 { "status": "published", "review": { "by": "확인한 사람", "at": "2026-10-20T07:40+09:00", "scope": ["lead", "nums", "themes.diffs"] } }
 ```
 
-06시까지 사람이 확인하지 않으면 아침 발행 워크플로가 `approve.py --auto`로 바꿉니다. 화면은 '편집자 확인' 대신 '자동 발행'으로 표시합니다.
+06시까지 확인이 없으면 아침 발행 워크플로가 `approve.py --auto`로 바꾸고, 화면에는 '편집자 확인' 대신 '자동 발행'이 붙습니다.
 
 ```json
 { "status": "published", "review": { "by": "자동 발행", "at": "2026-10-22T06:03+09:00", "scope": [], "auto": true } }
@@ -61,7 +61,7 @@
 
 ## corrections.json
 
-`dev/web/data/corrections.json`은 모든 호의 정정 기록입니다. 화면 맨 아래 '정정 기록'에 최근 것부터 보여 줍니다.
+`dev/web/data/corrections.json`에는 모든 호의 정정 기록이 모입니다. 화면 맨 아래 '정정 기록'에 최근 것부터 나옵니다.
 
 ```json
 { "items": [{ "date": "2026-10-20", "issue": "2026-10-19", "section": "경제 · 원·달러 환율", "before": "1,470.2원", "after": "1,471.2원", "reason": "기준 시각 오기" }] }
@@ -73,11 +73,11 @@
 | `issue` | 고친 호. ✔ `index.json`의 `issues`에 있어야 합니다 |
 | `section`, `before`, `after`, `reason` | ✔ 모두 필수. 무엇을 무엇으로, 왜 고쳤는지 |
 
-정정할 때는 그 호의 JSON을 고치고, 같은 커밋에서 이 파일에 한 줄을 더합니다. 제목은 `fix(issue): YYYY-MM-DD호 항목 정정`입니다.
+정정할 때는 그 호의 JSON과 이 파일 한 줄을 한 커밋에 담습니다. 커밋 제목은 `fix(issue): YYYY-MM-DD호 항목 정정`입니다.
 
 ## live.json
 
-`dev/web/data/live.json`은 승인된 호와 별개인 자동 갱신 숫자입니다. 배포 워크플로가 `dev/pipeline/build/build_live.py`로 만들며 저장소에는 올리지 않습니다. 화면은 제호 아래 '최신 공식 숫자' 띠에 '자동 갱신 · 사람 확인 전'으로 보여 주고, 파일이 없거나 지난 호를 볼 때는 띠를 숨깁니다.
+`dev/web/data/live.json`은 승인된 호와 별개인 자동 갱신 숫자입니다. 배포 워크플로가 `dev/pipeline/build/build_live.py`로 만들고, 저장소에는 올리지 않습니다. 화면은 제호 아래 '최신 공식 숫자' 띠에 '자동 갱신 · 사람 확인 전'으로 보여 줍니다. 파일이 없거나 지난 호를 볼 때는 띠를 숨깁니다.
 
 ```json
 { "updatedAt": "2026-10-20T16:17+09:00", "source": "한국은행 경제통계시스템(ECOS)", "items": [{ "id": "kospi", "k": "코스피 종가", "v": "5,801.10", "dir": "up", "d": "+33.09 (+0.57%)", "src": { "base": "2026-10-20" } }], "missing": [] }
@@ -152,7 +152,7 @@
 
 ## themes
 
-언론 섹션의 주제 하나입니다. 위에는 요약과 갈린 숫자, 아래에는 기사 링크만 보여 줍니다.
+항목 하나가 언론 섹션의 주제 하나입니다. 위에는 요약과 갈린 숫자, 아래에는 기사 링크만 둡니다.
 
 ```json
 {
@@ -177,7 +177,7 @@
 
 ## debt
 
-국가채무 연도별 값입니다. 한 줄이 `[연도, 금액(조 원), GDP 대비 비율(%), 구분]`입니다.
+국가채무를 연도별로 담습니다. 한 줄이 `[연도, 금액(조 원), GDP 대비 비율(%), 구분]`입니다.
 
 ```json
 [[2015, 591.5, 34, "결산"], [2030, 1734.1, 49, "중기전망"]]
