@@ -2,7 +2,7 @@
 
 **대한민국 조간은 하루 한 번, 아침에 다 읽고 덮을 수 있는 신문입니다.** 무한히 흘러가는 피드가 아니라 '오늘 호'가 있고, 숫자마다 어디서 왔는지가 붙어 있습니다. 화면은 그 두 가지를 지키려고 종이 신문의 문법을 빌렸습니다.
 
-[▶ 서비스 바로가기](https://korea-jogan.com/) · 토큰 원본 [design/tokens.json](../../design/tokens.json) · 컴포넌트 [public/assets/kj.css](../../public/assets/kj.css)
+[▶ 서비스 바로가기](https://korea-jogan.com/) · 토큰 원본 [design/tokens.json](../../design/tokens.json) · 컴포넌트 [public/src/styles/kj.css](../../public/src/styles/kj.css)
 
 ## 서비스 소개
 
@@ -72,7 +72,7 @@
 
 ## 디자인 가이드
 
-여기부터는 화면을 고치거나 새 섹션을 붙일 때 지킬 규칙입니다. 값은 모두 [design/tokens.json](../../design/tokens.json)에 있고, `scripts/build_tokens.py`가 `public/assets/tokens.css` 변수로 바꿉니다. **CSS에 색이나 크기를 직접 쓰지 마세요.** 토큰에 없으면 토큰부터 추가합니다. CI의 `build_tokens.py --check`가 어긋남을 막습니다.
+여기부터는 화면을 고치거나 새 섹션을 붙일 때 지킬 규칙입니다. 값은 모두 [design/tokens.json](../../design/tokens.json)에 있고, `scripts/build/build_tokens.py`가 `public/src/styles/tokens.css` 변수로 바꿉니다. **CSS에 색이나 크기를 직접 쓰지 마세요.** 토큰에 없으면 토큰부터 추가합니다. CI의 `build_tokens.py --check`가 어긋남을 막습니다.
 
 ### 색 토큰
 

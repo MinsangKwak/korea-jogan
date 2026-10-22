@@ -14,15 +14,16 @@
 
 | 문서 | 내용 |
 | --- | --- |
-| [DATA.md](DATA.md) | 발행 JSON(`public/data/issues/*.json`)의 항목별 형식과 검사 규칙 |
+| [DATA.md](guides/DATA.md) | 발행 JSON(`public/data/issues/*.json`)의 항목별 형식과 검사 규칙 |
 
 ## 운영·개발 규칙
 
 | 문서 | 내용 |
 | --- | --- |
-| [DAILY_RUNBOOK.md](DAILY_RUNBOOK.md) | 매일 00시 자동 발행 절차와 데이터 원칙 |
-| [BRANCHES.md](BRANCHES.md) | `dev` → `main` → `deploy` 흐름, 워크플로, 저장소 설정 |
-| [COMMITS.md](COMMITS.md) | `종류(범위): 제목` 커밋 규칙과 검사 방법 |
+| [DAILY_RUNBOOK.md](guides/DAILY_RUNBOOK.md) | 매일 00시 자동 발행 절차와 데이터 원칙 |
+| [BRANCHES.md](guides/BRANCHES.md) | `dev` → `main` → `deploy` 흐름, 워크플로, 저장소 설정 |
+| [COMMITS.md](guides/COMMITS.md) | `종류(범위): 제목` 커밋 규칙과 검사 방법 |
+| [CLAUDE.md](CLAUDE.md) | Claude 작업 지침(언어·커밋). `.claude/CLAUDE.md`가 이 파일을 불러옵니다 |
 
 ## 문서 작성 규칙
 

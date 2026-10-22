@@ -22,23 +22,23 @@ flowchart LR
 
 | 구성 | 파일 | 하는 일 |
 | --- | --- | --- |
-| 화면 | [public/index.html](../../public/index.html) | 배치 CSS·마크업·JS. 최신 호 JSON을 읽어 섹션별로 그립니다 |
-| 디자인 시스템 | [design/tokens.json](../../design/tokens.json) · [public/assets/](../../public/assets) | 토큰 원본과, 그것으로 만든 `tokens.css`, `kj-` 컴포넌트 `kj.css` |
-| 토큰 CSS 생성 | [scripts/build_tokens.py](../../scripts/build_tokens.py) | `tokens.json`을 CSS 변수로 바꿉니다. CI가 `--check`로 어긋남을 막습니다 |
-| 발행 데이터 | [public/data/issues/](../../public/data/issues) | `index.json`(최신 호·목록)과 날짜별 호. 형식은 [DATA.md](../DATA.md) |
-| 발행 전 검사 | [scripts/validate.py](../../scripts/validate.py) | 필수 항목, 출처·링크, 값 범위, 날짜, 시도 이름을 검사합니다 |
-| 커밋 제목 검사 | [scripts/check_commit_msg.mjs](../../scripts/check_commit_msg.mjs) | 로컬 훅과 PR에서 `종류(범위): 제목` 규칙을 검사합니다 |
-| 승인 | [scripts/approve.py](../../scripts/approve.py) | 초안을 `published`로 바꿉니다. `--by`는 확인한 사람·시각, `--auto`는 자동 발행 표시(`review.auto`)를 남깁니다 |
-| 검색용 호별 페이지 | [scripts/build_pages.py](../../scripts/build_pages.py) · [indexnow.py](../../scripts/indexnow.py) | 배포 때 호마다 `/YYYY-MM-DD` 페이지를 만들고 제목·설명·`NewsArticle` 구조화 데이터·본문 요약을 미리 넣습니다. 배포 직후 IndexNow로 새 주소를 알립니다 |
-| RSS·사이트맵 | [scripts/build_feed.py](../../scripts/build_feed.py) | 승인된 호로 `feed.xml`·`sitemap.xml`을 만듭니다. 배포 때 실행 |
-| 언론사 RSS 수집기 | [scripts/fetch_rss.py](../../scripts/fetch_rss.py) · [feeds.json](../../scripts/feeds.json) | 26개 언론사 RSS에서 전날 기사의 제목·링크·날짜만 모읍니다. robots.txt를 지키고 본문은 받지 않습니다 |
-| 공공 API 수집기 | [scripts/fetch_ecos.py](../../scripts/fetch_ecos.py) · [ecos_nums.py](../../scripts/ecos_nums.py) | ECOS 원본(환율·기준금리·코스피·코스닥) 수집과 핵심 숫자 변환 |
+| 화면 | [public/index.html](../../public/index.html) · [public/src/](../../public/src) | `index.html`은 마크업, `src/core`는 공통 코드, `src/components`는 섹션별 JS·CSS, `src/main.js`가 최신 호 JSON을 읽어 섹션을 차례로 그립니다 |
+| 디자인 시스템 | [design/tokens.json](../../design/tokens.json) · [public/src/styles/](../../public/src/styles) | 토큰 원본과, 그것으로 만든 `tokens.css`, `kj-` 컴포넌트 `kj.css` |
+| 토큰 CSS 생성 | [scripts/build/build_tokens.py](../../scripts/build/build_tokens.py) | `tokens.json`을 CSS 변수로 바꿉니다. CI가 `--check`로 어긋남을 막습니다 |
+| 발행 데이터 | [public/data/issues/](../../public/data/issues) | `index.json`(최신 호·목록)과 날짜별 호. 형식은 [DATA.md](../guides/DATA.md) |
+| 발행 전 검사 | [scripts/publish/validate.py](../../scripts/publish/validate.py) | 필수 항목, 출처·링크, 값 범위, 날짜, 시도 이름을 검사합니다 |
+| 커밋 제목 검사 | [scripts/tools/check_commit_msg.mjs](../../scripts/tools/check_commit_msg.mjs) | 로컬 훅과 PR에서 `종류(범위): 제목` 규칙을 검사합니다 |
+| 승인 | [scripts/publish/approve.py](../../scripts/publish/approve.py) | 초안을 `published`로 바꿉니다. `--by`는 확인한 사람·시각, `--auto`는 자동 발행 표시(`review.auto`)를 남깁니다 |
+| 검색용 호별 페이지 | [scripts/build/build_pages.py](../../scripts/build/build_pages.py) · [indexnow.py](../../scripts/publish/indexnow.py) | 배포 때 호마다 `/YYYY-MM-DD` 페이지를 만들고 제목·설명·`NewsArticle` 구조화 데이터·본문 요약을 미리 넣습니다. 배포 직후 IndexNow로 새 주소를 알립니다 |
+| RSS·사이트맵 | [scripts/build/build_feed.py](../../scripts/build/build_feed.py) | 승인된 호로 `feed.xml`·`sitemap.xml`을 만듭니다. 배포 때 실행 |
+| 언론사 RSS 수집기 | [scripts/collect/fetch_rss.py](../../scripts/collect/fetch_rss.py) · [feeds.json](../../scripts/collect/feeds.json) | 26개 언론사 RSS에서 전날 기사의 제목·링크·날짜만 모읍니다. robots.txt를 지키고 본문은 받지 않습니다 |
+| 공공 API 수집기 | [scripts/collect/fetch_ecos.py](../../scripts/collect/fetch_ecos.py) · [ecos_nums.py](../../scripts/collect/ecos_nums.py) | ECOS 원본(환율·기준금리·코스피·코스닥) 수집과 핵심 숫자 변환 |
 | 워크플로 | [.github/workflows/](../../.github/workflows) | `check.yml` 검사, `deploy-pages.yml` 배포(평일 낮 매시 최신 공식 숫자 갱신 포함), `daily.yml` 수집 |
-| 최신 공식 숫자 | [scripts/build_live.py](../../scripts/build_live.py) | ECOS 최신 일별 확정값으로 `live.json`을 만듭니다. 승인된 조간과 별개로 '자동 갱신 · 사람 확인 전'으로 표시합니다. 서버 없이 배포 워크플로가 매시 커밋 없이 다시 배포해 갱신합니다 |
+| 최신 공식 숫자 | [scripts/build/build_live.py](../../scripts/build/build_live.py) | ECOS 최신 일별 확정값으로 `live.json`을 만듭니다. 승인된 조간과 별개로 '자동 갱신 · 사람 확인 전'으로 표시합니다. 서버 없이 배포 워크플로가 매시 커밋 없이 다시 배포해 갱신합니다 |
 
 ## 화면 구현
 
-빌드 없이 브라우저가 바로 읽는 정적 파일로 만들었습니다. 1인 운영에서 의존성 업데이트와 빌드 실패를 관리할 일을 없애기 위해서입니다. 화면은 `index.html` 하나에 배치·마크업·JS를 두고, 색·글자·간격은 디자인 시스템 CSS 두 개(`assets/tokens.css`, `assets/kj.css`)에서 가져옵니다.
+빌드 없이 브라우저가 바로 읽는 정적 파일로 만들었습니다. 1인 운영에서 의존성 업데이트와 빌드 실패를 관리할 일을 없애기 위해서입니다. 화면은 `index.html`에 마크업을 두고, 스크립트와 스타일은 `src/components/<섹션>/`에 컴포넌트별로 나눴습니다. 번들러 없이 `defer` 스크립트를 공통(`core`) → 컴포넌트 → 진입점(`main.js`) 순서로 읽습니다. 색·글자·간격은 디자인 시스템 CSS 두 개(`src/styles/tokens.css`, `src/styles/kj.css`)에서 가져옵니다.
 
 | 기능 | 구현 |
 | --- | --- |
@@ -82,7 +82,7 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 | 빨리 감기만 허용 | 자동 발행이 다른 사람의 변경을 덮어쓰지 않게. 빨리 감기가 안 되면 멈추고 보고합니다 |
 | `github-pages` 환경의 배포 브랜치 제한 | 허용 목록에 `main`·`deploy`만 두어 다른 브랜치에서 배포할 수 없게 |
 
-자세한 순서는 [BRANCHES.md](../BRANCHES.md)에 있습니다.
+자세한 순서는 [BRANCHES.md](../guides/BRANCHES.md)에 있습니다.
 
 ## 자동 발행
 
@@ -95,14 +95,14 @@ main ──(맞춤)──▶ dev ──(PR 병합)──▶ main ──(그대�
 | 실패 처리 | 고칠 수 없는 섹션은 지난 호 값으로 되돌린 뒤 다시 검사하고, 그래도 실패하면 발행하지 않습니다 |
 | 사람 확인 | 06시 전에 사람이 머리기사·핵심 숫자·갈린 숫자를 대조하면 '편집자 확인' 호로, 아니면 검사를 통과한 초안을 '자동 발행' 호로 06시에 냅니다. 독자는 제호 옆 표시로 둘을 구분합니다 |
 
-절차 전체는 [DAILY_RUNBOOK.md](../DAILY_RUNBOOK.md)에 있습니다.
+절차 전체는 [DAILY_RUNBOOK.md](../guides/DAILY_RUNBOOK.md)에 있습니다.
 
 ## 기술 선택
 
 | 선택 | 이유 | 대가 |
 | --- | --- | --- |
 | 정적 사이트 + GitHub Pages | 서버·DB 비용이 없고 1인 운영에서 장애 지점이 적음 | 검색·아카이브 같은 기능을 브라우저 안에서 해결해야 함 |
-| 프레임워크 없는 단일 HTML | 빌드·의존성 관리가 없음. 미리보기 환경에 파일 하나로 그대로 띄울 수 있음 | 파일이 길어짐(약 1,500줄). 함수 단위로 나눠 관리 |
+| 프레임워크·번들러 없는 정적 파일 | 빌드·의존성 관리가 없음. 정적 서버 하나로 그대로 띄울 수 있음 | 모듈 시스템 대신 스크립트 읽는 순서에 기대므로, 새 컴포넌트는 `index.html`의 스크립트 목록에 `main.js`보다 앞에 넣어야 함 |
 | JSON 한 호 = 파일 하나 | 하루 단위로 diff·되돌리기가 쉽고, 검사를 파일 단위로 돌릴 수 있음 | 호가 쌓이면 아카이브 색인이 따로 필요 |
 | 검사는 Python 표준 라이브러리만 | CI에서 설치 없이 바로 실행 | 스키마 검증 도구보다 규칙을 직접 써야 함 |
 | AI 에이전트 조사 + 사람이 정한 규칙 | 공공 API로 못 얻는 기사·지역 소식을 매일 모을 수 있음 | 숫자를 지어낼 위험이 있어 출처 필수 검사와 '미확인' 표기로 막음 |

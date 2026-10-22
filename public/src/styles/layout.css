@@ -1,0 +1,14 @@
+/* 이 페이지만의 배치. 색·간격·모서리는 모두 디자인 토큰을 쓴다 */
+.skip { position: absolute; left: -999px; }
+.skip:focus { left: var(--gutter); top: var(--gutter); z-index: 30; background: var(--bg); color: var(--ink); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); }
+.kj-wrap { padding-right: max(var(--gutter), env(safe-area-inset-right, 0px)); }
+.sub { margin: var(--space-8) 0 var(--space-3); font-size: 1.15rem; font-weight: 700; line-height: 1.4; }
+.src-note { margin: var(--space-3) 0 0; font-size: 0.85rem; color: var(--ink-3); line-height: 1.6; }
+[hidden] { display: none !important; }
+
+/* 정치·재정 다단 */
+.three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8); }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-10); }
+@media (max-width: 960px) { .three { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); gap: var(--space-8); } }
+.kj-panel h4 { margin: var(--space-6) 0 var(--space-2); font-size: 1rem; }

@@ -1,0 +1,6 @@
+/* 국가채무 막대는 연도 옆 배지(중기전망)가 잘리지 않게 이름 칸을 넓힌다 */
+@media (max-width: 520px) {
+  #debtChart .kj-bar { grid-template-columns: 7.4rem minmax(0, 1fr); row-gap: 2px; }
+  #debtChart .kj-bar__m { margin-top: 0; }
+}
+.term .kj-progress { margin: var(--space-3) 0 0; }
