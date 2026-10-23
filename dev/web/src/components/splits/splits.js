@@ -4,7 +4,8 @@
 // 갈린 숫자는 표 첫 열에 모여 있다. pick이 있으면 그 두 줄을, 없으면 처음과 마지막 줄을 크게 보여 준다
 function splitValues(c) {
   const vals = c.rows.map((r) => r[0]);
-  const [i, j] = c.pick || [0, vals.length - 1];
+  const validPick = Array.isArray(c.pick) && c.pick.length === 2 && c.pick.every((i) => Number.isInteger(i) && i >= 0 && i < vals.length);
+  const [i, j] = validPick ? c.pick : [0, vals.length - 1];
   return vals[i] === vals[j] ? [vals[i]] : [vals[i], vals[j]];
 }
 
