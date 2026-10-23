@@ -1,0 +1,196 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { execFileSync } = require('node:child_process');
+const { chromium } = require('playwright');
+const repo = path.resolve(__dirname, '../../..');
+const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'jogan-browser-'));
+const web = path.join(temp, 'web');
+fs.cpSync(path.join(repo, 'dev/web'), web, { recursive: true });
+execFileSync('python3', ['-c', 'import sys;from pathlib import Path;sys.path.insert(0,sys.argv[1]);import build_pages as b;b.PUBLIC=Path(sys.argv[2]);b.ISSUES=b.PUBLIC/"data/issues";b.build()', path.join(repo, 'dev/pipeline/build'), web]);
+const index = JSON.parse(fs.readFileSync(path.join(web, 'data/issues/index.json')));
+const latestPath = '/data/issues/' + index.latest + '.json';
+const latest = JSON.parse(fs.readFileSync(path.join(web, latestPath)));
+const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
+let browser;
+let checks = 0;
+async function pageFor(options = {}) {
+  const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, reducedMotion: 'reduce', colorScheme: options.dark ? 'dark' : 'light' });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.route('**/*', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.hostname !== 'jogan.test') return route.abort();
+    if (options.missingMain && url.pathname === '/src/main.js') return route.abort();
+    if (options.delay && url.pathname === '/data/issues/index.json') await new Promise((resolve) => setTimeout(resolve, options.delay));
+    if (options.hung && url.pathname === latestPath) return;
+    if (options.missing && url.pathname === latestPath) return route.fulfill({ status: 404, body: '' });
+    if (options.bad && url.pathname === latestPath) {
+      const data = structuredClone(latest);
+      options.bad(data);
+      return route.fulfill({ json: data });
+    }
+    if (options.badLive && url.pathname === '/data/live.json') return route.fulfill({ json: { updatedAt: 'bad', items: [{}] } });
+    if (options.slowExtras && url.pathname === '/data/corrections.json') await new Promise((resolve) => setTimeout(resolve, 2500));
+    let file = path.join(web, url.pathname === '/' ? 'index.html' : url.pathname);
+    if (!path.extname(file)) file += '.html';
+    try {
+      let body = fs.readFileSync(file);
+      if (path.extname(file) === '.html') {
+        body = body.toString();
+        if (options.missing || options.delay || options.hung) body = body.replace(/(<script type="application\/json" id="issue-(?:data|index)">).*?(<\/script>)/gs, '$1null$2');
+        if (options.bad) body = body.replace(/(<script type="application\/json" id="issue-data">)(.*?)(<\/script>)/s, (_all, open, json, close) => {
+          const data = JSON.parse(json);
+          options.bad(data);
+          return open + JSON.stringify(data).replace(/</g, '\\u003c') + close;
+        });
+      }
+      return await route.fulfill({ body, contentType: mime[path.extname(file)] || 'application/octet-stream' });
+    }
+    catch { return route.fulfill({ status: 404, body: '' }); }
+  });
+  return { page, context, errors };
+}
+async function ready(page, state = 'ready') {
+  await page.waitForFunction((expected) => document.documentElement.dataset.loadState === expected, state);
+}
+async function check(name, options, run) {
+  const { page, context, errors } = await pageFor(options);
+  try {
+    await run(page);
+    assert.deepEqual(errors, [], '처리되지 않은 브라우저 오류');
+    checks += 1;
+    console.log('통과:', name);
+  } finally { await context.close(); }
+}
+(async () => {
+  browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--no-sandbox'] });
+  for (const width of [320, 360, 390, 430, 768, 900, 1440]) {
+    await check('최신 호·전체 폭 ' + width, { width }, async (page) => {
+      await page.goto('http://jogan.test/');
+      await ready(page);
+      assert.equal(await page.locator('#seoDigest').count(), 0);
+      assert.equal(await page.locator('#pageLoading').isVisible(), false);
+      assert.equal(await page.evaluate(() => window.dataLayer.filter((entry) => entry[0] === 'event' && entry[1] === 'app_ready').length), 1);
+      for (const big of [false, true]) {
+        if (big) await page.locator('#bigBtn').click();
+        const size = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: document.documentElement.clientWidth }));
+        assert.ok(size.scroll <= size.width + 1, JSON.stringify({ width, big, size }));
+      }
+      if (width === 390 && process.env.SCREENSHOT_DIR) {
+        fs.mkdirSync(process.env.SCREENSHOT_DIR, { recursive: true });
+        await page.locator('#bigBtn').click();
+        await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, 'mobile-home.png') });
+        await page.locator('#regions').scrollIntoViewIfNeeded();
+        await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, 'mobile-regions.png') });
+      }
+    });
+  }
+  await check('지난 호 URL·보관 목록', {}, async (page) => {
+    const past = index.issues.at(-1);
+    await page.goto('http://jogan.test/' + past);
+    await ready(page);
+    assert.equal(await page.locator('#issueDate').getAttribute('datetime'), past);
+    assert.equal(await page.locator('#archive a').count(), index.issues.length);
+    assert.equal(await page.locator('#stale').isVisible(), true);
+    assert.equal(await page.locator('#live').isVisible(), false);
+  });
+  for (const date of index.issues.slice(1, -1)) {
+    await check('지난 호 렌더링 ' + date, {}, async (page) => {
+      await page.goto('http://jogan.test/' + date);
+      await ready(page);
+      assert.equal(await page.locator('#issueDate').getAttribute('datetime'), date);
+    });
+  }
+  await check('배포본은 본문 JSON을 다시 요청하지 않음', {}, async (page) => {
+    const requests = [];
+    page.on('request', (request) => requests.push(new URL(request.url()).pathname));
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    assert.equal(requests.some((url) => url.startsWith('/data/issues/')), false);
+  });
+  await check('기존 날짜 쿼리 주소', {}, async (page) => {
+    const past = index.issues.at(-1);
+    await page.goto('http://jogan.test/?d=' + past);
+    await ready(page);
+    assert.equal(await page.locator('#issueDate').getAttribute('datetime'), past);
+  });
+  await check('느린 접속·로딩 표시·보조 요청 분리', { delay: 700, slowExtras: true }, async (page) => {
+    await page.goto('http://jogan.test/', { waitUntil: 'domcontentloaded' });
+    assert.equal(await page.locator('#pageLoading').isVisible(), true);
+    await ready(page);
+    assert.equal(await page.locator('#fixes li').count(), 0);
+    assert.equal(await page.locator('#main').getAttribute('aria-busy'), 'false');
+  });
+  for (const [name, options] of [
+    ['자료 404', { missing: true }],
+    ['빈 주제', { bad: (data) => { data.themes = []; } }],
+    ['렌더링 도중 오류', { bad: (data) => { data.nps.alloc[0].s = '잘못된 비율'; } }]
+  ]) {
+    await check(name + '·요약 보존·재시도', options, async (page) => {
+      await page.goto('http://jogan.test/');
+      await ready(page, 'error');
+      assert.equal(await page.locator('#loadError').isVisible(), true);
+      assert.equal(await page.locator('#seoDigest').isVisible(), true);
+      assert.equal(await page.locator('#heroGrid').isVisible(), false);
+      assert.equal(await page.locator('#pageLoading').isVisible(), false);
+      assert.equal(await page.locator('#loadError button').textContent(), '다시 불러오기');
+    });
+  }
+  await check('모바일 메뉴·Esc·포커스 복귀·지역 선택', { dark: true }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    await page.locator('#tabMenu').click();
+    assert.equal(await page.locator('#drawer').isVisible(), true);
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => document.activeElement.id === 'tabMenu');
+    await page.waitForFunction(() => document.getElementById('drawer').hidden);
+    assert.equal(await page.locator('body').evaluate((node) => node.classList.contains('is-locked')), false);
+    await page.locator('#tmap button').filter({ hasText: '서울' }).click();
+    assert.equal(await page.locator('#rlist > h3').textContent(), '서울');
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+    assert.equal(overflow, false);
+  });
+  await check('비교 표 세로 배치·검색 결과 없음', { bad: (data) => { data.themes[0].diffs[0].pick = '편집 메모'; } }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    assert.ok((await page.locator('#splits .sv').first().innerText()).trim());
+    await page.locator('#tresult details').first().locator('summary').click();
+    const table = page.locator('#tresult table').first();
+    assert.equal(await table.locator('td[data-label]').count() > 0, true);
+    assert.ok(await table.evaluate((node) => node.scrollWidth <= node.clientWidth + 1));
+    await page.locator('#tq').fill('존재하지않는주제XYZ');
+    await page.locator('#tform').evaluate((node) => node.requestSubmit());
+    assert.ok((await page.locator('#tresult').innerText()).includes('맞는 주제가'));
+  });
+  await check('보조 숫자 오류가 본문에 영향 없음', { badLive: true }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    assert.equal(await page.locator('#leadH').isVisible(), true);
+  });
+  await check('응답 무한 대기 시 12초 제한', { hung: true }, async (page) => {
+    await page.clock.install();
+    const pending = page.waitForRequest('**' + latestPath);
+    await page.goto('http://jogan.test/');
+    await pending;
+    await page.clock.runFor(12500);
+    await ready(page, 'error');
+    assert.equal(await page.locator('#pageLoading').isVisible(), false);
+    assert.equal(await page.locator('#seoDigest').isVisible(), true);
+  });
+  await check('스크립트 누락 시 로딩 종료·정적 요약', { missingMain: true }, async (page) => {
+    await page.clock.install();
+    await page.goto('http://jogan.test/');
+    await page.clock.runFor(21000);
+    await ready(page, 'error');
+    assert.equal(await page.locator('#seoDigest').isVisible(), true);
+    assert.equal(await page.locator('#loadingRetry').isVisible(), true);
+  });
+  console.log('브라우저 검사 완료:', checks);
+})().catch((error) => { console.error(error); process.exitCode = 1; }).finally(async () => {
+  if (browser) await browser.close();
+  fs.rmSync(temp, { recursive: true, force: true });
+});
