@@ -35,3 +35,8 @@ function track(name, title) {
   if (GC && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: name, title: title || name, event: true });
   if (GA) window.gtag('event', name.replace(/[^A-Za-z0-9_]/g, '_'), { label: title || '' });
 }
+
+// 원문과 검색어를 보내지 않고 읽기 준비 시간과 성공 여부만 측정한다
+function trackLoad(ok, duration) {
+  if (GA && window.gtag) window.gtag('event', ok ? 'app_ready' : 'app_load_error', { duration_ms: duration });
+}

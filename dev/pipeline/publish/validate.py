@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -25,10 +26,116 @@ CORRECTION_KEYS = ("date", "issue", "section", "before", "after", "reason")
 REQUIRED = ("date", "lead", "briefs", "nums", "themes", "items", "industries", "trade", "debt", "fiscal", "nps", "agenda", "limits")
 
 
+def check_structure(issue: object, name: str) -> list[str]:
+    errors: list[str] = []
+
+    def obj(value, path, fields):
+        if not isinstance(value, dict):
+            errors.append(f"{name}: {path}는 객체여야 함")
+            return
+        for key, rule in fields.items():
+            optional = key.endswith("?")
+            key = key.rstrip("?")
+            if optional and key not in value:
+                continue
+            rule(value.get(key), f"{path}.{key}")
+
+    def text(value, path):
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{name}: {path}는 비어 있지 않은 문자열이어야 함")
+
+    def number(value, path):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            errors.append(f"{name}: {path}는 유한한 숫자여야 함")
+
+    def boolean(value, path):
+        if not isinstance(value, bool):
+            errors.append(f"{name}: {path}는 참/거짓이어야 함")
+
+    def array(rule, minimum=0):
+        def check(value, path):
+            if not isinstance(value, list) or len(value) < minimum:
+                errors.append(f"{name}: {path}는 최소 {minimum}개 항목을 가진 배열이어야 함")
+                return
+            for i, item in enumerate(value):
+                rule(item, f"{path}[{i}]")
+        return check
+
+    def record(fields):
+        return lambda value, path: obj(value, path, fields)
+
+    def row(rules):
+        def check(value, path):
+            if not isinstance(value, list) or len(value) != len(rules):
+                errors.append(f"{name}: {path}는 {len(rules)}개 값을 가진 행이어야 함")
+                return
+            for i, rule in enumerate(rules):
+                rule(value[i], f"{path}[{i}]")
+        return check
+
+    def date(value, path):
+        try:
+            if not isinstance(value, str) or not DATE_RE.fullmatch(value):
+                raise ValueError
+            dt.date.fromisoformat(value)
+        except ValueError:
+            errors.append(f"{name}: {path} 날짜 오류")
+
+    def article_date(value, path):
+        if value != "":
+            date(value, path)
+
+    def summaries(value, path):
+        if not isinstance(value, dict) or any(not isinstance(v, str) for v in value.values()):
+            errors.append(f"{name}: {path}는 시도별 문자열 객체여야 함")
+
+    source = record({"name": text, "url": text})
+    kv = record({"k": text, "v": text})
+    article = record({"title": text, "outlet": text, "url": text, "date": article_date})
+    diff = record({"q": text, "a": text, "cols": array(text, 1), "rows": array(array(text, 1), 1)})
+    theme = record({"id": text, "title": text, "period": text, "summary": array(text, 1), "keywords": array(text, 1), "articles": array(article, 1), "diffs?": array(diff)})
+    news = record({"title": text, "outlet": text, "url": text, "date": date, "summary": text, "cat": text, "figures?": array(text)})
+    obj(issue, "issue", {
+        "date": date,
+        "lead": record({"kicker": text, "headline": text, "standfirst": text, "meta": text, "facts": array(record({"t": text, "v": text, "m": text}), 1)}),
+        "briefs": array(record({"k": text, "m": text, "href": text, "dday?": date}), 1),
+        "nums": array(record({"k": text, "v": text, "dir": text, "d": text, "ref": text, "grade": text, "src": source}), 1),
+        "themes": array(theme, 1),
+        "items": array(record({"k": text, "v": number, "y": text}), 1),
+        "industries": array(record({"name": text, "sum": text, "f": array(row([text, text, text])), "news": row([text, text, text])})),
+        "debt": array(row([number, number, number, text]), 1),
+        "trade": record({"intro": text, "stats": array(record({"k": text, "v": text, "d": text, "dir": text}), 1), "src": text, "oct": record({"q": text, "a": text})}),
+        "fiscal": record({"monthly": array(kv), "summary": array(kv), "outlook": array(kv), "monthlySrc": text, "outlookSrc": text, "debtSrc": text}),
+        "nps": record({"kv": array(kv), "reform": array(kv), "src": text, "reformSrc": text, "alloc": array(record({"a": text, "amt": text, "s": number}), 1)}),
+        "agenda": array(record({"day": text, "cat": text, "t": text})),
+        "agendaSrc": text,
+        "limits": array(text),
+        "review?": record({"by": text, "at": text, "auto?": boolean}),
+        "national?": record({"flow": array(text), "items": array(news)}),
+        "regions?": record({"summary": summaries, "items": array(news)}),
+    })
+    if errors:
+        return errors
+    ids = [t["id"] for t in issue["themes"]]
+    if len(ids) != len(set(ids)):
+        errors.append(f"{name}: themes.id 중복")
+    for i, theme in enumerate(issue["themes"]):
+        for j, diff in enumerate(theme.get("diffs", [])):
+            if any(len(r) != len(diff["cols"]) for r in diff["rows"]):
+                errors.append(f"{name}: themes[{i}].diffs[{j}] 열과 행 길이 불일치")
+    return errors
+
+
 def check_issue(path: Path) -> list[str]:
     errors: list[str] = []
-    issue = json.loads(path.read_text(encoding="utf-8"))
     name = path.name
+    try:
+        issue = json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError) as exc:
+        return [f"{name}: JSON 읽기 실패 ({type(exc).__name__})"]
+    errors.extend(check_structure(issue, name))
+    if errors:
+        return errors
 
     for key in REQUIRED:
         if key not in issue:
@@ -123,8 +230,16 @@ def check_corrections(dates: list[str]) -> list[str]:
     if not path.exists():
         return ["corrections.json 파일 없음"]
     errors: list[str] = []
-    data = json.loads(path.read_text(encoding="utf-8"))
-    for i, c in enumerate(data.get("items", [])):
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+            raise ValueError("items 배열 없음")
+    except (ValueError, OSError):
+        return ["corrections.json 형식 오류"]
+    for i, c in enumerate(data["items"]):
+        if not isinstance(c, dict):
+            errors.append(f"corrections.json: items[{i}] 객체가 아님")
+            continue
         missing = [k for k in CORRECTION_KEYS if not str(c.get(k, "")).strip()]
         if missing:
             errors.append(f"corrections.json: items[{i}] {', '.join(missing)} 없음")
@@ -136,7 +251,19 @@ def check_corrections(dates: list[str]) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     deploy = "--deploy" in (argv if argv is not None else sys.argv[1:])
-    index = json.loads((ISSUES / "index.json").read_text(encoding="utf-8"))
+    try:
+        index = json.loads((ISSUES / "index.json").read_text(encoding="utf-8"))
+        if not isinstance(index, dict) or not isinstance(index.get("issues"), list) or not index["issues"]:
+            raise ValueError("issues 배열 누락")
+        for date in [index.get("latest"), *index["issues"]]:
+            if not isinstance(date, str) or not DATE_RE.fullmatch(date):
+                raise ValueError("호 날짜 형식 오류")
+            dt.date.fromisoformat(date)
+        if len(index["issues"]) != len(set(index["issues"])):
+            raise ValueError("호 날짜 중복")
+    except (ValueError, OSError) as exc:
+        print(f"검사 실패: index.json ({exc})")
+        return 1
     errors: list[str] = []
     if index["latest"] not in index["issues"]:
         errors.append("index.json: latest가 issues 목록에 없음")
@@ -145,8 +272,9 @@ def main(argv: list[str] | None = None) -> int:
         if not path.exists():
             errors.append(f"index.json: {date}.json 파일 없음")
             continue
-        errors.extend(check_issue(path))
-        if deploy and json.loads(path.read_text(encoding="utf-8")).get("status") == "draft":
+        issue_errors = check_issue(path)
+        errors.extend(issue_errors)
+        if deploy and not issue_errors and json.loads(path.read_text(encoding="utf-8")).get("status") == "draft":
             errors.append(f"{date}.json: 승인 전 초안(draft)은 배포하지 않음. dev/pipeline/publish/approve.py로 승인한 뒤 올림")
     errors.extend(check_corrections(index["issues"]))
 

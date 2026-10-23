@@ -120,6 +120,10 @@ python3 -m unittest discover -s dev/tests
 git config core.hooksPath dev/tools/githooks
 ```
 
+화면 검증은 `dev/tests/browser`에서 `npm ci`, `npx playwright install chromium`, `npm test` 순서로 실행합니다. 최신·지난 호와 로딩·오류 화면, 모바일 가로 넘침을 실제 Chromium에서 검사합니다.
+
+[2026-10-23 운영 확인·안정화 기록](docs/dev/operations-2026-10-23.md)
+
 ## 저장소 안내
 
 | 경로 | 역할 |

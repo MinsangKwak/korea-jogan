@@ -101,6 +101,44 @@ class ValidateTest(Site):
         path.write_text(json.dumps({"items": [dict(good, reason="")]}), encoding="utf-8")
         self.assertEqual(self.run_validate()[0], 1)
 
+    def test_rejects_render_breaking_shapes(self):
+        cases = [
+            lambda i: i.update(themes=[]),
+            lambda i: i.update(themes=None),
+            lambda i: i["themes"][0].pop("id"),
+            lambda i: i["themes"][0].update(summary="잘못된 요약"),
+            lambda i: i["themes"][0]["articles"][0].update(date=None),
+            lambda i: i["lead"].update(facts=None),
+            lambda i: i["trade"].update(stats={}),
+            lambda i: i["nps"]["alloc"][0].update(s="37%"),
+            lambda i: i.update(debt=[[2026, 1300]]),
+            lambda i: i.update(items=[None]),
+            lambda i: i.update(national={"items": []}),
+        ]
+        path = self.issues / f"{DATE}.json"
+        original = path.read_text(encoding="utf-8")
+        for mutate in cases:
+            with self.subTest(mutate=mutate):
+                path.write_text(original, encoding="utf-8")
+                self.edit(mutate)
+                code, output = self.run_validate()
+                self.assertEqual(code, 1)
+                self.assertIn("검사 실패", output)
+
+    def test_invalid_json_reports_failure(self):
+        (self.issues / f"{DATE}.json").write_text("{", encoding="utf-8")
+        self.assertEqual(self.run_validate("--deploy")[0], 1)
+
+    def test_invalid_index_reports_failure(self):
+        for value in [{"issues": []}, {"latest": "../bad", "issues": ["../bad"]}, []]:
+            with self.subTest(value=value):
+                (self.issues / "index.json").write_text(json.dumps(value), encoding="utf-8")
+                self.assertEqual(self.run_validate()[0], 1)
+
+    def test_duplicate_theme_ids_fail(self):
+        self.edit(lambda i: i["themes"].append(i["themes"][0].copy()))
+        self.assertEqual(self.run_validate()[0], 1)
+
 
 class ApproveTest(Site):
     def test_draft_becomes_published_and_passes_deploy(self):

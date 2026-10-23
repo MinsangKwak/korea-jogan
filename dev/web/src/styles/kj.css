@@ -269,15 +269,14 @@ body.is-locked { overflow: hidden; }
 
 /* 최신 공식 숫자 띠. 승인된 조간과 별개로 자동 갱신되는 ECOS 숫자. 조간과 구분되게 바탕색을 달리한다 */
 .kj-live { background: var(--surface); border-bottom: var(--border-hairline) solid var(--line); font-size: 0.88rem; }
-/* 제목 한 줄, 숫자 한 줄. 숫자가 넘치면 줄을 늘리지 않고 가로로 밀어 본다 */
+/* 제목과 숫자는 화면 폭에 맞춰 줄바꿈한다 */
 .kj-live__in { display: grid; gap: var(--space-1); padding-block: var(--space-2); }
 .kj-live__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-2); margin: 0; }
 .kj-live__head b { font-weight: 900; }
 .kj-live__head span { font-size: 0.78rem; color: var(--ink-3); }
 .kj-live__tag { display: inline-block; padding: 0 var(--space-2); border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-pill); font-size: 0.72rem; font-weight: 700; color: var(--ink-2) !important; }
-/* 넓은 화면은 숫자를 모두 보이게 줄바꿈하고, 좁은 화면은 한 줄로 두고 가로로 밀어 본다 */
+/* 숫자를 모두 보이게 줄바꿈한다 */
 .kj-live__list { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-6); list-style: none; margin: 0; padding: 0; }
-.kj-live__list::-webkit-scrollbar { display: none; }
 .kj-live__list li { flex: none; display: flex; align-items: baseline; gap: var(--space-2); white-space: nowrap; }
 .kj-live__list .k { color: var(--ink-2); }
 .kj-live__list .v { font-weight: 900; font-variant-numeric: tabular-nums; }
@@ -285,8 +284,9 @@ body.is-locked { overflow: hidden; }
 .kj-live__list small { font-size: 0.75rem; color: var(--ink-3); }
 @media (max-width: 760px) {
   .kj-live { font-size: 0.82rem; }
-  /* 오른쪽 끝을 흐리게 해 더 밀어 볼 수 있다는 것을 알린다 */
-  .kj-live__list { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; gap: var(--space-4); -webkit-mask-image: linear-gradient(to right, #000 88%, transparent); mask-image: linear-gradient(to right, #000 88%, transparent); padding-right: var(--space-6); }
+  .kj-live__list { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+  .kj-live__list li { min-width: 0; flex-wrap: wrap; white-space: normal; }
+
 }
 
 /* 더보기. 목록이 3개를 넘으면 앞의 3개만 보이고 이 단추로 펼친다 */
@@ -488,19 +488,12 @@ body.is-locked { overflow: hidden; }
 .kj-rtile[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 .kj-rtile[aria-pressed="true"] small { color: var(--on-brand); }
 .kj-rtile[aria-disabled="true"] { background: var(--bg); border-style: dashed; color: var(--ink-3); cursor: default; }
-/* 900px 이하: 권역 묶음을 가로로 이어 붙인 한 줄 띠. 권역 이름은 칩 사이 작은 구분자가 된다 */
+/* 좁은 화면에서도 권역과 시도는 전체 폭 안에서 아래로 흐른다 */
 @media (max-width: 900px) {
-  .kj-tmap {
-    display: flex; flex-wrap: nowrap; align-items: center; gap: var(--space-3); max-width: none; overflow-x: auto;
-    scrollbar-width: none; overscroll-behavior-x: contain; padding-block: 2px; position: relative;
-    -webkit-mask-image: linear-gradient(to right, #000 90%, transparent); mask-image: linear-gradient(to right, #000 90%, transparent);
-  }
-  .kj-tmap::-webkit-scrollbar { display: none; }
-  .kj-tmap__row { flex: none; display: flex; align-items: center; gap: 6px; }
-  .kj-tmap__row + .kj-tmap__row { padding-top: 0; border-top: 0; padding-left: var(--space-3); border-left: var(--border-hairline) solid var(--line); }
+  .kj-tmap { width: 100%; max-width: none; }
+  .kj-tmap__row { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+  .kj-tmap__chips { flex-wrap: wrap; }
   .kj-tmap__label { padding-top: 0; }
-  .kj-tmap__chips { flex-wrap: nowrap; }
-  .kj-tmap__row:last-child { padding-right: var(--space-8); }
 }
 
 /* 상자 */
@@ -556,3 +549,40 @@ body.is-locked { overflow: hidden; }
 .kj-digest li + li { margin-top: var(--space-1); }
 .kj-digest__date { color: var(--ink-3); font-size: 0.85rem; margin: 0; }
 .kj-foot__dev { color: var(--ink); }
+
+/* 읽기 준비 상태는 본문과 같은 토큰을 사용한다 */
+.no-js .kj-loading, .no-js #heroGrid, .no-js main .kj-sec { display: none; }
+.kj-loading { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); padding-block: var(--space-8); }
+.kj-loading p { margin: 0; }
+.kj-loading__spinner { flex: none; width: 1.5rem; height: 1.5rem; border: 3px solid var(--line); border-top-color: var(--brand); border-radius: var(--radius-pill); }
+.is-loading #main { display: none; }
+.load-timeout #heroGrid, .load-timeout #splitBox, .load-timeout main .kj-sec { display: none; }
+.load-timeout .kj-loading__spinner { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .kj-loading__spinner { animation: kj-spin 0.8s linear infinite; }
+  @keyframes kj-spin { to { transform: rotate(360deg); } }
+}
+
+/* 모바일은 가로 스크롤 없이 내용 길이에 따라 높이를 늘린다 */
+@media (max-width: 860px) {
+  .kj-wrap { width: 100%; min-width: 0; }
+  .hero-grid > *, .two > *, .three > *, .reg > *, .links > *, .kj-panel { min-width: 0; }
+  .kj-chips--scroll { flex-wrap: wrap; overflow: visible; }
+  .kj-chip, .kj-rtile, .kj-badge { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+  .kj-chip, .kj-rtile { padding-block: var(--space-2); }
+  .kj-stat__foot, .kj-ai__h, .kj-newscard__cat, .kj-progress__meta, .kj-alloc-list li { flex-wrap: wrap; }
+  .kj-briefs a { grid-template-columns: 2rem minmax(0, 1fr); }
+  .kj-briefs .kj-badge { grid-column: 2; grid-row: auto; justify-self: start; }
+  .kj-kv li { grid-template-columns: minmax(0, 1fr); }
+  .kj-kv .v { grid-column: 1; grid-row: auto; text-align: left; white-space: normal; max-width: 100%; }
+  .kj-kv .m { order: 2; }
+  .kj-bar__lab, .kj-bar__v { white-space: normal; overflow: visible; }
+  .kj-acc > summary { grid-template-columns: minmax(0, 1fr); }
+  .kj-acc > summary::after { grid-column: 1; grid-row: auto; }
+  .kj-tbl { overflow: visible; }
+  .kj-tbl table, .kj-tbl tbody, .kj-tbl tr, .kj-tbl td { display: block; width: 100%; }
+  .kj-tbl thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .kj-tbl tr { padding-block: var(--space-2); border-bottom: var(--border-rule) solid var(--line); }
+  .kj-tbl td, .kj-tbl td.n { white-space: normal; text-align: left; }
+  .kj-tbl td::before { content: attr(data-label); display: block; font-size: 0.8rem; font-weight: 500; color: var(--ink-3); }
+}

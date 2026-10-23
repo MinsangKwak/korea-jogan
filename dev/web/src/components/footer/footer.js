@@ -38,10 +38,10 @@ function renderCorrections(list) {
 // 정정 기록을 못 읽어도 오늘 호는 그대로 보여 준다
 async function loadCorrections() {
   try {
-    const res = await fetch('data/corrections.json', { cache: 'no-cache' });
-    if (!res.ok) return [];
-    return (await res.json()).items || [];
+    const data = await fetchJSON('data/corrections.json');
+    if (!Array.isArray(data.items)) throw new Error('정정 기록 형식 오류');
+    return data.items;
   } catch (e) {
-    return [];
+    throw new Error('정정 기록 불러오기 실패');
   }
 }
