@@ -38,3 +38,23 @@ jobs:
       # 어긋나면 실패로 표시하되 병합을 막는 필수 검사로 두지는 않는다
       - name: PR 커밋 제목
         run: node dev/tools/check_commit_msg.mjs --range "origin/${{ github.base_ref }}..HEAD"
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 브라우저 검사 도구 설치
+        working-directory: dev/tests/browser
+        run: npm ci
+      - name: Chromium 설치
+        working-directory: dev/tests/browser
+        run: npx playwright install --with-deps chromium
+      - name: 최신·지난 호와 모바일·오류 화면 검사
+        working-directory: dev/tests/browser
+        run: npm test
