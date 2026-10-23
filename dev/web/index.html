@@ -35,7 +35,22 @@
 <link rel="icon" href="assets/images/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<script>'use strict'; document.documentElement.classList.replace('no-js', 'js');</script>
+<script>
+'use strict';
+document.documentElement.classList.replace('no-js', 'js');
+document.documentElement.classList.add('is-loading');
+window.kjLoadTimer = setTimeout(() => {
+  document.documentElement.classList.remove('js', 'is-loading');
+  document.documentElement.classList.add('load-timeout');
+  document.documentElement.dataset.loadState = 'error';
+  const message = document.getElementById('loadingMessage');
+  if (message) message.textContent = '연결이 지연되고 있습니다. 다시 불러오거나 아래 요약을 읽어 주세요.';
+  const retry = document.getElementById('loadingRetry');
+  if (retry) retry.hidden = false;
+  const main = document.getElementById('main');
+  if (main) main.setAttribute('aria-busy', 'false');
+}, 20000);
+</script>
 <!-- 검색엔진 소유 확인(선택). Search Console·네이버 서치어드바이저에서 받은 값을 content에 넣는다 -->
 <meta name="google-site-verification" content="QC_N9kgbNKdt5f0L4vzA4TvW_r1dt1tnb3Oyl6mFMzQ">
 <meta name="naver-site-verification" content="12e012c980bff0c1f1162ea2cea82687b21970a2">
@@ -71,7 +86,7 @@
 <meta name="jg-ga4" content="G-RNLCEWH9M6">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" media="print" onload="this.media='all'">
 <!-- 디자인 시스템: 토큰(design/tokens.json에서 생성)과 kj- 컴포넌트 -->
 <link rel="stylesheet" href="src/styles/tokens.css">
 <link rel="stylesheet" href="src/styles/kj.css">
@@ -136,6 +151,11 @@
   </div>
 </nav>
 
+<div class="kj-wrap kj-loading" id="pageLoading" role="status" aria-live="polite">
+  <span class="kj-loading__spinner" aria-hidden="true"></span>
+  <p id="loadingMessage">조간을 불러오고 있습니다.</p>
+  <a class="kj-btn kj-btn--secondary" id="loadingRetry" href="" hidden>다시 불러오기</a>
+</div>
 <main id="main">
   <!-- kj:digest -->
   <!-- /kj:digest -->
@@ -178,7 +198,7 @@
         <p>주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
         <p class="kj-sechead__meta" id="mediaMeta"></p>
       </header>
-      <form class="kj-search" id="tform" role="search">
+      <form class="kj-search" id="tform" novalidate role="search">
         <label class="kj-sr" for="tq">주제·키워드 검색</label>
         <div class="kj-search__field">
           <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락, 호우 피해" autocomplete="off">
@@ -370,6 +390,8 @@
 </div>
 
 <!-- 화면 스크립트. 공통(core) → 컴포넌트 → 진입점(main) 순서로 읽는다 -->
+<script type="application/json" id="issue-data">null</script>
+<script type="application/json" id="issue-index">null</script>
 <script src="src/core/config.js" defer></script>
 <script src="src/core/format.js" defer></script>
 <script src="src/core/metrics.js" defer></script>
