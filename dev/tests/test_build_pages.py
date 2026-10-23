@@ -56,6 +56,21 @@ class PagesTest(unittest.TestCase):
         self.assertEqual(article[0]["url"], url)
         self.assertLessEqual(len(re.search(r'<meta name="description" content="([^"]*)">', page).group(1)), build_pages.DESC_MAX + 20)
 
+    def test_embeds_issue_and_archive_index(self):
+        build_pages.build()
+        page = (build_pages.PUBLIC / "index.html").read_text(encoding="utf-8")
+        for element_id, expected in [("issue-data", self.issue), ("issue-index", {"latest": DATE, "issues": [DATE]})]:
+            match = re.search(r'<script type="application/json" id="' + element_id + r'">(.*?)</script>', page, re.S)
+            self.assertEqual(json.loads(match.group(1)), expected)
+
+    def test_embedded_data_cannot_close_script(self):
+        self.issue["lead"]["headline"] = "</script><script>bad()</script>"
+        template = (build_pages.PUBLIC / "index.html").read_text(encoding="utf-8")
+        page = build_pages.embed_data(template, self.issue)
+        body = re.search(r'<script type="application/json" id="issue-data">(.*?)</script>', page, re.S).group(1)
+        self.assertNotIn("<", body)
+        self.assertEqual(json.loads(body)["lead"]["headline"], self.issue["lead"]["headline"])
+
     def test_home_keeps_search_title_and_is_idempotent(self):
         before = (self.tmp / "dev" / "web" / "index.html").read_text(encoding="utf-8")
         title = re.search(r"<title>.*?</title>", before).group(0)
