@@ -20,8 +20,7 @@ async function renderLive() {
   if (VIEWING_PAST) return;
   let L = null;
   try {
-    const res = await fetch('data/live.json', { cache: 'no-cache' });
-    if (res.ok) L = await res.json();
+    L = await fetchJSON('data/live.json');
   } catch (e) {
     return;
   }
