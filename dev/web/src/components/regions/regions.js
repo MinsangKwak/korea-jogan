@@ -29,9 +29,6 @@ function renderRegions() {
   };
   row('전국', [chip('전체', R.items.length, region === '', () => selectRegion(''))]);
   REGION_GROUPS.forEach(([label, names]) => row(label, names.map((name) => chip(name, count(name), region === name, () => selectRegion(name)))));
-  // 한 줄 띠(좁은 화면)에서는 고른 시도가 띠 가운데 오도록 띠만 가로로 민다
-  const picked = map.querySelector('[aria-pressed="true"]');
-  if (picked && map.scrollWidth > map.clientWidth) map.scrollLeft = picked.offsetLeft - map.offsetLeft - (map.clientWidth - picked.offsetWidth) / 2;
 
   const box = $('rlist');
   box.textContent = '';

@@ -66,6 +66,7 @@ function renderDrawerSubs() {
 }
 
 let drawerOpener = null;
+let drawerFrame = 0;
 
 function openDrawer(opener) {
   const dr = $('drawer');
@@ -74,7 +75,8 @@ function openDrawer(opener) {
   document.body.classList.add('is-locked');
   ['menuBtn', 'tabMenu', 'railMenu'].forEach((id) => $(id).setAttribute('aria-expanded', 'true'));
   // 숨김을 푼 다음 프레임에 열림 상태를 줘야 미끄러지는 전환이 보인다
-  window.requestAnimationFrame(() => dr.classList.add('is-open'));
+  cancelAnimationFrame(drawerFrame);
+  drawerFrame = window.requestAnimationFrame(() => dr.classList.add('is-open'));
   dr.querySelector('.kj-drawer__close').focus();
   track('menu-open', opener ? opener.id : '');
 }
@@ -83,6 +85,7 @@ function openDrawer(opener) {
 function closeDrawer(restoreFocus = true) {
   const dr = $('drawer');
   if (dr.hidden) return;
+  cancelAnimationFrame(drawerFrame);
   dr.classList.remove('is-open');
   document.body.classList.remove('is-locked');
   ['menuBtn', 'tabMenu', 'railMenu'].forEach((id) => $(id).setAttribute('aria-expanded', 'false'));

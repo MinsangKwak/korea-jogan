@@ -9,3 +9,6 @@ dev/web/sitemap.xml
 dev/web/20[0-9][0-9]-[0-9][0-9]-[0-9][0-9].html
 dev/pipeline/collect/raw/rss/*.json
 dev/web/data/live.json
+
+node_modules/
+premium-audit.json

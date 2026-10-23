@@ -150,10 +150,19 @@ def with_article(page: str, issue: dict, url: str, desc: str) -> str:
     return page[: m.start()] + block + page[m.end():]
 
 
+def embed_data(page: str, issue: dict) -> str:
+    index = json.loads((ISSUES / "index.json").read_text(encoding="utf-8"))
+    for element_id, data in (("issue-data", issue), ("issue-index", index)):
+        body = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
+        pattern = re.compile(r'(<script type="application/json" id="' + element_id + r'">).*?(</script>)', re.S)
+        page = pattern.sub(lambda match: match[1] + body + match[2], page, count=1)
+    return page
+
+
 def home_page(template: str, issue: dict) -> str:
     desc = clip(re.search(r'<meta name="description" content="([^"]*)">', template).group(1))
     page = DIGEST.sub(lambda _: digest(issue), template, count=1)
-    return with_article(page, issue, SITE, desc)
+    return embed_data(with_article(page, issue, SITE, desc), issue)
 
 
 def issue_page(template: str, issue: dict) -> str:
@@ -176,7 +185,7 @@ def issue_page(template: str, issue: dict) -> str:
     extra = f'<meta name="kj-date" content="{esc(date)}">\n<meta property="article:published_time" content="{esc(published_at(issue))}">\n'
     page = page.replace('<link rel="canonical"', extra + '<link rel="canonical"', 1)
     page = DIGEST.sub(lambda _: digest(issue), page, count=1)
-    return with_article(page, issue, url, desc)
+    return embed_data(with_article(page, issue, url, desc), issue)
 
 
 def published() -> list[dict]:
