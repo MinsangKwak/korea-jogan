@@ -1,6 +1,6 @@
 {
   "name": "korea-jogan-browser-checks",
   "private": true,
-  "scripts": { "test": "node smoke.cjs" },
+  "scripts": { "test": "node smoke.cjs && node admin.cjs", "test:admin": "node admin.cjs" },
   "devDependencies": { "playwright": "1.62.1" }
 }
