@@ -124,6 +124,8 @@ git config core.hooksPath dev/tools/githooks
 
 [2026-10-23 운영 확인·안정화 기록](docs/dev/operations-2026-10-23.md)
 
+운영 화면은 [`/admin/`](https://korea-jogan.com/admin/)에서 제공합니다. Google OAuth 연결 후 최근 30분의 방문과 기간별 이용 흐름을 조회하며, 공개 발행 현황도 함께 확인합니다. 최초 사용에는 웹 앱용 OAuth 클라이언트 ID 설정이 필요합니다. [연결 절차와 검증 범위](docs/dev/ga4-admin.md)
+
 ## 저장소 안내
 
 | 경로 | 역할 |
