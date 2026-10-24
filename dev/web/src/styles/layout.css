@@ -12,3 +12,8 @@
 @media (max-width: 960px) { .three { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); gap: var(--space-8); } }
 .kj-panel h4 { margin: var(--space-6) 0 var(--space-2); font-size: 1rem; }
+
+/* 모바일에서 화면이 옆으로 흔들리지 않게 한다. 요소는 모두 100% 폭 안에서 줄을 바꾸고, 혹시 넘치는 것이 있어도 잘라 둔다.
+   clip은 hidden과 달리 스크롤 상자를 만들지 않아 위에 붙는 메뉴(sticky)를 깨지 않는다 */
+html, body { max-width: 100%; overflow-x: clip; }
+img, svg, table { max-width: 100%; }

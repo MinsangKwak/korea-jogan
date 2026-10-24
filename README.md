@@ -120,13 +120,20 @@ python3 -m unittest discover -s dev/tests
 git config core.hooksPath dev/tools/githooks
 ```
 
+실제 브라우저에서 화면이 끝까지 그려지는지 확인하려면 호별 페이지를 만든 뒤 브라우저 검사를 실행합니다. Playwright가 필요하며 CI에서도 같은 검사를 돌립니다.
+
+```bash
+python3 dev/pipeline/build/build_pages.py
+node dev/tests/browser/smoke.mjs
+```
+
 ## 저장소 안내
 
 | 경로 | 역할 |
 | --- | --- |
 | [dev/web/](dev/web/) | 실제 배포하는 화면, 섹션별 JS·CSS, 발행 JSON |
 | [dev/pipeline/](dev/pipeline/) | 자료 수집, 데이터 검사, 배포 파일 생성 |
-| [dev/tests/](dev/tests/) | 파이프라인 회귀 검사 |
+| [dev/tests/](dev/tests/) | 파이프라인 회귀 검사와 [브라우저 검사](dev/tests/browser/smoke.mjs) |
 | [design/](design/) | 디자인 가이드, 토큰 원본, 공유 이미지 원본 |
 | [docs/planning/](docs/planning/) | 서비스 기획, 데이터 규격, 발행 절차 |
 | [docs/dev/](docs/dev/) | 기술 설계, 브랜치·커밋 규칙, AI 작업 지침 |

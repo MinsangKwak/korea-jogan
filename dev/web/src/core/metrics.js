@@ -22,7 +22,10 @@ function setupMetrics() {
     window.gtag('js', new Date());
     // 첫 page_view는 호를 읽은 뒤 issue_date를 붙여 직접 보낸다
     window.gtag('config', GA, { send_page_view: false });
-    addScript('https://www.googletagmanager.com/gtag/js?id=' + GA);
+    // gtag.js(약 180KB)는 화면을 다 그린 뒤에 받는다. 그 전 이벤트는 dataLayer에 쌓였다가 함께 보낸다
+    const load = () => addScript('https://www.googletagmanager.com/gtag/js?id=' + GA);
+    if (document.readyState === 'complete') setTimeout(load, 0);
+    else window.addEventListener('load', () => setTimeout(load, 0), { once: true });
   }
 }
 // GA4 page_view. 어느 호를 열었는지(issue_date)와 지난 호인지(past)를 함께 남긴다

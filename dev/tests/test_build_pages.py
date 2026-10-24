@@ -30,6 +30,9 @@ class PagesTest(unittest.TestCase):
         shutil.copytree(REPO / "dev" / "web", self.tmp / "dev" / "web")
         self.issues = self.tmp / "dev" / "web" / "data" / "issues"
         (self.issues / "index.json").write_text(json.dumps({"latest": DATE, "issues": [DATE]}), encoding="utf-8")
+        # 앞서 손으로 돌려 둔 호별 페이지가 남아 있어도 시험 결과가 달라지지 않게 지운다
+        for old in (self.tmp / "dev" / "web").glob("20??-??-??.html"):
+            old.unlink()
         self.saved = (build_pages.PUBLIC, build_pages.ISSUES)
         build_pages.PUBLIC, build_pages.ISSUES = self.tmp / "dev" / "web", self.issues
         self.issue = json.loads((self.issues / f"{DATE}.json").read_text(encoding="utf-8"))

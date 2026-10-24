@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>대한민국 조간 · 관리</title>
+</head>
+<body>
+<h1>대한민국 조간 · 관리</h1>
+<p id="state">관리자 확인 중…</p>
+<div id="app" hidden></div>
+
+<script>
+'use strict';
+// 운영자 전용 화면. 스타일 없이 브라우저 기본 요소와 기본 팝업(prompt·confirm·alert)만 쓴다
+// 정적 사이트라 서버가 없으므로, GitHub 토큰으로 이 저장소의 관리자(admin) 권한을 확인한 사람에게만 내용을 그린다
+// 토큰은 이 탭의 sessionStorage에만 두고 api.github.com 말고는 보내지 않는다. 탭을 닫으면 지워진다
+// 화면의 발행 데이터는 공개 자료라 권한 확인은 운영 조작(워크플로 실행)을 막는 장치에 가깝다
+const REPO = 'MinsangKwak/korea-jogan';
+const API = 'https://api.github.com/repos/' + REPO;
+const KEY = 'kj_admin_token';
+const app = document.getElementById('app');
+const state = document.getElementById('state');
+
+function el(tag, text, attrs) {
+  const n = document.createElement(tag);
+  if (text !== undefined && text !== null) n.textContent = String(text);
+  Object.entries(attrs || {}).forEach(([k, v]) => n.setAttribute(k, v));
+  return n;
+}
+function link(text, href) {
+  return el('a', text, { href, target: '_blank', rel: 'noopener' });
+}
+function kst(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+}
+function todayKst() {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+}
+function table(head, rows) {
+  const t = el('table', null, { border: '1', cellpadding: '4' });
+  const tr = el('tr');
+  head.forEach((h) => tr.append(el('th', h)));
+  t.append(tr);
+  rows.forEach((r) => {
+    const row = el('tr');
+    r.forEach((c) => { const td = el('td'); if (c instanceof Node) td.append(c); else td.textContent = c === undefined || c === null ? '—' : String(c); row.append(td); });
+    t.append(row);
+  });
+  return t;
+}
+function section(title) {
+  const s = el('section');
+  s.append(el('h2', title));
+  app.append(s);
+  return s;
+}
+
+async function gh(path, token, opts) {
+  const res = await fetch(API + path, Object.assign({ headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + token } }, opts || {}));
+  return res;
+}
+async function getJson(path) {
+  const res = await fetch(path, { cache: 'no-cache' });
+  if (!res.ok) throw new Error(path + ' ' + res.status);
+  return res.json();
+}
+
+// 저장소 관리자인지 확인한다. 아니면 토큰을 지우고 멈춘다
+async function login() {
+  let token = '';
+  try { token = sessionStorage.getItem(KEY) || ''; } catch (e) { /* 저장이 막힌 환경 */ }
+  if (!token) {
+    token = (prompt('관리자 확인\nGitHub 토큰을 입력하세요.\n(이 저장소 권한이 있는 토큰. 이 탭을 닫으면 지워집니다)') || '').trim();
+  }
+  if (!token) {
+    state.textContent = '토큰을 입력하지 않아 내용을 보여 주지 않습니다. 새로고침하면 다시 묻습니다.';
+    return '';
+  }
+  const res = await gh('', token).catch(() => null);
+  const repo = res && res.ok ? await res.json() : null;
+  if (!repo || !repo.permissions || !repo.permissions.admin) {
+    try { sessionStorage.removeItem(KEY); } catch (e) { /* 무시 */ }
+    alert('이 저장소의 관리자 권한을 확인하지 못했습니다.');
+    state.textContent = '관리자만 볼 수 있습니다.';
+    return '';
+  }
+  try { sessionStorage.setItem(KEY, token); } catch (e) { /* 저장이 막혀도 이번 화면은 쓴다 */ }
+  return token;
+}
+
+async function renderIssues() {
+  const s = section('발행 상태');
+  const index = await getJson('data/issues/index.json');
+  const today = todayKst();
+  const issues = await Promise.all(index.issues.map((d) => getJson('data/issues/' + d + '.json').catch(() => ({ date: d, status: '읽기 실패' }))));
+  const latest = issues.find((i) => i.date === index.latest) || {};
+  const r = latest.review || {};
+  const dl = el('dl');
+  const add = (k, v) => { dl.append(el('dt', k), el('dd', v)); };
+  add('오늘(한국 시간)', today);
+  add('최신 호', index.latest + (index.latest === today ? ' (오늘 호)' : ' (오늘 호 아님 · 확인 필요)'));
+  add('상태', latest.status + (r.auto ? ' · 자동 발행' : r.by ? ' · 편집자 확인(' + r.by + ')' : ''));
+  add('공개 시각', kst(r.at));
+  add('수집 시각', kst(latest.collectedAt));
+  s.append(dl);
+  if (index.latest !== today) s.append(el('p', '⚠ 오늘 호가 아직 올라가지 않았습니다. 아래 워크플로 기록을 확인하세요.'));
+  s.append(el('h3', '호 목록'));
+  s.append(table(['날짜', '상태', '확인', '공개 시각', '수집 시각', '전국', '지역', '주제', '페이지'], issues.map((i) => [
+    i.date, i.status, i.review ? (i.review.auto ? '자동' : i.review.by) : '', kst(i.review && i.review.at), kst(i.collectedAt),
+    i.national ? i.national.items.length : '', i.regions ? i.regions.items.length : '', i.themes ? i.themes.length : '',
+    link('열기', i.date === index.latest ? './' : i.date)
+  ])));
+}
+
+async function renderLive() {
+  const s = section('최신 공식 숫자(ECOS 자동 갱신)');
+  try {
+    const live = await getJson('data/live.json');
+    s.append(el('p', '마지막 갱신: ' + kst(live.updatedAt) + ' · 항목 ' + live.items.length + '개' + (live.missing && live.missing.length ? ' · 받지 못함: ' + live.missing.join(', ') : '')));
+    s.append(table(['항목', '값', '변화', '기준일'], live.items.map((m) => [m.k, m.v, m.d, m.src && m.src.base])));
+  } catch (e) {
+    s.append(el('p', 'live.json을 읽지 못했습니다(키가 없거나 아직 만들지 않음).'));
+  }
+}
+
+async function renderRuns(token) {
+  const s = section('워크플로 최근 실행');
+  const flows = [['publish.yml', '아침 발행'], ['deploy-pages.yml', '사이트 배포'], ['check.yml', '검사']];
+  for (const [file, name] of flows) {
+    s.append(el('h3', name));
+    const res = await gh('/actions/workflows/' + file + '/runs?per_page=6', token);
+    if (!res.ok) { s.append(el('p', '불러오지 못함: ' + res.status)); continue; }
+    const runs = (await res.json()).workflow_runs || [];
+    s.append(table(['시작(한국 시간)', '계기', '브랜치', '결과', '기록'], runs.map((r) => [
+      kst(r.run_started_at || r.created_at), r.event, r.head_branch, r.status === 'completed' ? r.conclusion : r.status, link('보기', r.html_url)
+    ])));
+  }
+}
+
+function renderActions(token) {
+  const s = section('운영 조작');
+  const dispatch = async (file, ref, label) => {
+    if (!confirm(label + '을(를) 지금 실행할까요?')) return;
+    const res = await gh('/actions/workflows/' + file + '/dispatches', token, { method: 'POST', body: JSON.stringify({ ref }) });
+    alert(res.status === 204 ? label + ' 실행을 요청했습니다. 1~2분 뒤 새로고침해 결과를 보세요.' : label + ' 실행 요청 실패: ' + res.status + '\n토큰에 Actions 쓰기 권한이 있는지 확인하세요.');
+  };
+  const b1 = el('button', '아침 발행 다시 실행', { type: 'button' });
+  b1.addEventListener('click', () => dispatch('publish.yml', 'main', '아침 발행'));
+  const b2 = el('button', '사이트 다시 배포', { type: 'button' });
+  b2.addEventListener('click', () => dispatch('deploy-pages.yml', 'deploy', '사이트 배포'));
+  const b3 = el('button', '로그아웃', { type: 'button' });
+  b3.addEventListener('click', () => {
+    if (!confirm('이 탭에 저장한 토큰을 지울까요?')) return;
+    try { sessionStorage.removeItem(KEY); } catch (e) { /* 무시 */ }
+    location.reload();
+  });
+  const p = el('p');
+  p.append(b1, ' ', b2, ' ', b3);
+  s.append(p);
+}
+
+function renderLinks() {
+  const s = section('바로가기');
+  const ul = el('ul');
+  [
+    ['서비스', './'],
+    ['GitHub Actions', 'https://github.com/' + REPO + '/actions'],
+    ['Google Search Console', 'https://search.google.com/search-console?resource_id=sc-domain:korea-jogan.com'],
+    ['네이버 서치어드바이저', 'https://searchadvisor.naver.com/console/board'],
+    ['Bing 웹마스터 도구', 'https://www.bing.com/webmasters'],
+    ['Google 애널리틱스', 'https://analytics.google.com/'],
+    ['카카오 공유 디버거', 'https://developers.kakao.com/tool/debugger/sharing'],
+    ['사이트맵', 'sitemap.xml'],
+    ['RSS', 'feed.xml']
+  ].forEach(([t, h]) => { const li = el('li'); li.append(link(t, h)); ul.append(li); });
+  s.append(ul);
+}
+
+async function main() {
+  const token = await login();
+  if (!token) return;
+  state.textContent = '관리자 확인 완료 · ' + kst(new Date().toISOString()) + ' 기준';
+  app.hidden = false;
+  for (const step of [renderIssues, renderLive, () => renderRuns(token)]) {
+    try { await step(); } catch (e) { app.append(el('p', '일부를 불러오지 못했습니다: ' + e.message)); }
+  }
+  renderActions(token);
+  renderLinks();
+}
+
+main();
+</script>
+</body>
+</html>

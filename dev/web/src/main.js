@@ -1,7 +1,15 @@
 'use strict';
 // 진입점. 데이터를 읽고 컴포넌트를 차례로 그린다. 다른 스크립트를 모두 읽은 뒤 마지막에 실행한다
 
-// 불러오기 실패: 원인 추정과 다시 불러오기 단추. 나머지 섹션은 숨긴다
+// 로딩 화면을 걷는다. 투명하게 사라진 뒤 지운다
+function hideLoader() {
+  const l = $('loader');
+  if (!l) return;
+  l.classList.add('is-done');
+  setTimeout(() => l.remove(), 300);
+}
+
+// 불러오기·그리기 실패: 원인 추정과 다시 불러오기 단추. 나머지 섹션은 숨긴다
 function renderLoadError() {
   // 데이터를 못 읽어도 배포 때 넣어 둔 요약은 보이게 한다
   document.documentElement.classList.remove('js');
@@ -30,13 +38,31 @@ async function boot() {
     renderLoadError();
     setupNav();
     trackView('', false);
+    hideLoader();
     return;
   }
-  ISSUE = parseDate(D.date);
-  // 검색엔진용으로 미리 넣어 둔 요약은 화면이 그려지면 지운다
+  // 그리는 도중 오류가 나도 반쯤 그린 화면에 멈추지 않고 오류 화면과 배포 때 넣은 요약을 보여 준다
+  try {
+    renderAll();
+  } catch (e) {
+    console.error(e);
+    renderLoadError();
+    setupNav();
+    hideLoader();
+    return;
+  }
+  // 모든 섹션을 그린 뒤에야 검색엔진용 요약을 지운다
   if ($('seoDigest')) $('seoDigest').remove();
-  renderHead();
+  hideLoader();
   trackView(D.date, VIEWING_PAST);
+  // 정정 기록과 최신 숫자 띠는 실패해도 본문에 영향이 없어 화면을 연 뒤 따로 읽는다
+  renderCorrections(await loadCorrections());
+  renderLive();
+}
+
+function renderAll() {
+  ISSUE = parseDate(D.date);
+  renderHead();
   renderStale();
   renderNotice();
   renderAsOf();
@@ -52,11 +78,9 @@ async function boot() {
   showTheme(D.themes[0].id);
   renderLimits();
   renderArchive();
-  renderCorrections(await loadCorrections());
   setupControls();
   renderDrawerSubs();
   setupNav();
-  renderLive();
 }
 
 boot();

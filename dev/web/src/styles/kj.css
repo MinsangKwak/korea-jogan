@@ -41,13 +41,18 @@ h1, h2, h3, h4 { text-wrap: balance; }
 
 /* 칩 */
 .kj-chips { display: flex; gap: var(--space-2); flex-wrap: wrap; }
-.kj-chips--scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+/* 예전 가로 밀기 칩 줄. 이제는 다른 칩 줄처럼 넘치면 아래 줄로 흐른다 */
+.kj-chips--scroll { flex-wrap: wrap; }
 .kj-chip {
   display: inline-flex; align-items: center; gap: var(--space-1); min-height: var(--tap-min); padding: 0 var(--space-4);
   border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-pill); background: var(--bg);
-  font-size: 0.88rem; font-weight: 500; white-space: nowrap; cursor: pointer;
+  font-size: 0.88rem; font-weight: 500; cursor: pointer;
+  /* 긴 주제 이름은 칩 안에서 줄을 바꿔 화면 폭을 넘지 않게 한다 */
+  max-width: 100%; text-align: left; line-height: 1.35; padding-block: var(--space-2); overflow-wrap: anywhere;
 }
 .kj-chip:hover { border-color: var(--ink); }
+/* 칩 안 개수는 줄바꿈 때 쪼개지지 않게 한 덩어리로 둔다 */
+.kj-chip .kj-count { flex: none; white-space: nowrap; overflow-wrap: normal; }
 .kj-chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 700; }
 .kj-chip .kj-count { font-size: 0.8rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .kj-chip[aria-pressed="true"] .kj-count { color: inherit; opacity: 0.8; }
@@ -269,13 +274,13 @@ body.is-locked { overflow: hidden; }
 
 /* 최신 공식 숫자 띠. 승인된 조간과 별개로 자동 갱신되는 ECOS 숫자. 조간과 구분되게 바탕색을 달리한다 */
 .kj-live { background: var(--surface); border-bottom: var(--border-hairline) solid var(--line); font-size: 0.88rem; }
-/* 제목 한 줄, 숫자 한 줄. 숫자가 넘치면 줄을 늘리지 않고 가로로 밀어 본다 */
+/* 제목 한 줄, 숫자 줄. 숫자가 넘치면 아래 줄로 흐른다 */
 .kj-live__in { display: grid; gap: var(--space-1); padding-block: var(--space-2); }
 .kj-live__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-2); margin: 0; }
 .kj-live__head b { font-weight: 900; }
 .kj-live__head span { font-size: 0.78rem; color: var(--ink-3); }
 .kj-live__tag { display: inline-block; padding: 0 var(--space-2); border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-pill); font-size: 0.72rem; font-weight: 700; color: var(--ink-2) !important; }
-/* 넓은 화면은 숫자를 모두 보이게 줄바꿈하고, 좁은 화면은 한 줄로 두고 가로로 밀어 본다 */
+/* 숫자는 화면 폭 안에서 모두 보이게 줄을 바꾼다 */
 .kj-live__list { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-6); list-style: none; margin: 0; padding: 0; }
 .kj-live__list::-webkit-scrollbar { display: none; }
 .kj-live__list li { flex: none; display: flex; align-items: baseline; gap: var(--space-2); white-space: nowrap; }
@@ -285,8 +290,9 @@ body.is-locked { overflow: hidden; }
 .kj-live__list small { font-size: 0.75rem; color: var(--ink-3); }
 @media (max-width: 760px) {
   .kj-live { font-size: 0.82rem; }
-  /* 오른쪽 끝을 흐리게 해 더 밀어 볼 수 있다는 것을 알린다 */
-  .kj-live__list { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; gap: var(--space-4); -webkit-mask-image: linear-gradient(to right, #000 88%, transparent); mask-image: linear-gradient(to right, #000 88%, transparent); padding-right: var(--space-6); }
+  /* 좁은 화면은 두 칸 격자로 두고 넘치면 아래로 흐른다 */
+  .kj-live__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-1) var(--space-3); }
+  .kj-live__list li { flex-wrap: wrap; gap: 0 var(--space-2); white-space: normal; }
 }
 
 /* 더보기. 목록이 3개를 넘으면 앞의 3개만 보이고 이 단추로 펼친다 */
@@ -387,6 +393,11 @@ body.is-locked { overflow: hidden; }
 .kj-tbl th, .kj-tbl td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: var(--border-hairline) solid var(--line); vertical-align: top; }
 .kj-tbl th { color: var(--ink-3); font-weight: 700; font-size: 0.8rem; white-space: nowrap; }
 .kj-tbl td.n { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; text-align: right; }
+/* 좁은 화면은 표를 옆으로 밀지 않고 칸 안에서 줄을 바꾼다 */
+@media (max-width: 760px) {
+  .kj-tbl { overflow-x: visible; }
+  .kj-tbl th, .kj-tbl td, .kj-tbl td.n { white-space: normal; overflow-wrap: anywhere; }
+}
 
 /* AI 요약 */
 .kj-ai { background: var(--brand-soft); border-radius: var(--radius-md); padding: var(--space-4) var(--space-6); }
@@ -488,19 +499,9 @@ body.is-locked { overflow: hidden; }
 .kj-rtile[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 .kj-rtile[aria-pressed="true"] small { color: var(--on-brand); }
 .kj-rtile[aria-disabled="true"] { background: var(--bg); border-style: dashed; color: var(--ink-3); cursor: default; }
-/* 900px 이하: 권역 묶음을 가로로 이어 붙인 한 줄 띠. 권역 이름은 칩 사이 작은 구분자가 된다 */
+/* 900px 이하: 화면 폭을 다 쓰고, 권역마다 한 줄씩 두되 시도가 넘치면 아래 줄로 흐른다 */
 @media (max-width: 900px) {
-  .kj-tmap {
-    display: flex; flex-wrap: nowrap; align-items: center; gap: var(--space-3); max-width: none; overflow-x: auto;
-    scrollbar-width: none; overscroll-behavior-x: contain; padding-block: 2px; position: relative;
-    -webkit-mask-image: linear-gradient(to right, #000 90%, transparent); mask-image: linear-gradient(to right, #000 90%, transparent);
-  }
-  .kj-tmap::-webkit-scrollbar { display: none; }
-  .kj-tmap__row { flex: none; display: flex; align-items: center; gap: 6px; }
-  .kj-tmap__row + .kj-tmap__row { padding-top: 0; border-top: 0; padding-left: var(--space-3); border-left: var(--border-hairline) solid var(--line); }
-  .kj-tmap__label { padding-top: 0; }
-  .kj-tmap__chips { flex-wrap: nowrap; }
-  .kj-tmap__row:last-child { padding-right: var(--space-8); }
+  .kj-tmap { max-width: none; }
 }
 
 /* 상자 */

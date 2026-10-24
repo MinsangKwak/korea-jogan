@@ -87,6 +87,24 @@ class ValidateTest(Site):
         self.assertEqual(code, 1)
         self.assertIn("collectedAt", out)
 
+    def test_empty_or_broken_themes_fail(self):
+        # 화면이 첫 주제를 바로 열기 때문에 비어 있는 주제 목록은 발행되면 안 된다
+        self.edit(lambda i: i.update(themes=[]))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("'themes'가 비어 있음", out)
+
+    def test_theme_needs_id_and_lists(self):
+        self.edit(lambda i: i["themes"][0].update(id="", articles="링크"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("id·title 없음", out)
+        self.assertIn("'articles'는 1개 이상인 목록", out)
+
+    def test_lead_needs_headline(self):
+        self.edit(lambda i: i["lead"].update(headline=" "))
+        self.assertEqual(self.run_validate()[0], 1)
+
     def test_unknown_status(self):
         self.edit(lambda i: i.update(status="final"))
         self.assertEqual(self.run_validate()[0], 1)

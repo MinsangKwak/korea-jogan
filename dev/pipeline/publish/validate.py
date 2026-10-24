@@ -41,6 +41,10 @@ def check_issue(path: Path) -> list[str]:
         return errors
 
     errors.extend(check_status(name, issue))
+    # 화면이 바로 꺼내 쓰는 구조가 어긋나면 값 검사보다 먼저 멈춘다
+    shape = check_shape(name, issue)
+    if shape:
+        return errors + shape
 
     # 핵심 숫자는 모두 출처 기관과 원문 링크가 있어야 한다
     for i, m in enumerate(issue["nums"]):
@@ -81,6 +85,53 @@ def check_issue(path: Path) -> list[str]:
         if not str(it.get("url", "")).startswith("https://") or not it.get("summary"):
             errors.append(f"{name}: regions[{i}] 링크·요약 누락")
 
+    return errors
+
+
+def nonblank(v) -> bool:
+    return isinstance(v, str) and bool(v.strip())
+
+
+def check_shape(name: str, issue: dict) -> list[str]:
+    """화면이 그리기 전에 기대하는 자료형과 최소 개수를 본다. 통과하면 화면 초기화가 깨지지 않아야 한다."""
+    errors: list[str] = []
+    for key in ("briefs", "nums", "themes", "items", "industries", "debt", "agenda", "limits"):
+        if not isinstance(issue[key], list):
+            errors.append(f"{name}: '{key}'는 목록이어야 함")
+    for key in ("lead", "trade", "fiscal", "nps"):
+        if not isinstance(issue[key], dict):
+            errors.append(f"{name}: '{key}'는 객체여야 함")
+    if errors:
+        return errors
+    # 첫 화면은 첫 번째 주제와 핵심 숫자를 바로 연다. 비어 있으면 화면이 멈춘다
+    for key in ("nums", "themes", "debt"):
+        if not issue[key]:
+            errors.append(f"{name}: '{key}'가 비어 있음. 최소 1개 필요")
+    lead = issue["lead"]
+    for key in ("headline", "standfirst"):
+        if not nonblank(lead.get(key)):
+            errors.append(f"{name}: lead.{key} 없음")
+    if not isinstance(lead.get("facts", []), list):
+        errors.append(f"{name}: lead.facts는 목록이어야 함")
+    ids = set()
+    for i, t in enumerate(issue["themes"]):
+        if not isinstance(t, dict):
+            errors.append(f"{name}: themes[{i}]는 객체여야 함")
+            continue
+        if not nonblank(t.get("id")) or not nonblank(t.get("title")):
+            errors.append(f"{name}: themes[{i}] id·title 없음")
+        elif t["id"] in ids:
+            errors.append(f"{name}: themes[{i}] id '{t['id']}' 중복")
+        ids.add(t.get("id"))
+        for key in ("summary", "articles", "keywords"):
+            if not isinstance(t.get(key), list) or not t.get(key):
+                errors.append(f"{name}: themes[{i}] '{key}'는 1개 이상인 목록이어야 함")
+        if not isinstance(t.get("diffs", []), list):
+            errors.append(f"{name}: themes[{i}] diffs는 목록이어야 함")
+    for key in ("national", "regions"):
+        part = issue.get(key)
+        if part is not None and (not isinstance(part, dict) or not isinstance(part.get("items"), list)):
+            errors.append(f"{name}: '{key}'는 items 목록을 가진 객체여야 함")
     return errors
 
 

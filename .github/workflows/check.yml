@@ -25,6 +25,24 @@ jobs:
       - name: 스크립트 시험
         run: python -m unittest discover -s dev/tests
 
+  # 검사를 통과한 데이터가 실제 브라우저에서도 끝까지 그려지는지 본다(최신 호·지난 호·자료 누락·모바일 메뉴·가로 넘침)
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 호별 페이지 만들기
+        run: python dev/pipeline/build/build_pages.py
+      - name: Playwright 설치
+        run: npm install --no-save --no-package-lock playwright@1.56.1 && npx playwright install --with-deps chromium
+      - name: 브라우저 검사
+        run: node dev/tests/browser/smoke.mjs
+
   commit-msg:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
