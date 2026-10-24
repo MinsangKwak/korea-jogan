@@ -111,6 +111,7 @@ def check_structure(issue: object, name: str) -> list[str]:
         "agendaSrc": text,
         "limits": array(text),
         "review?": record({"by": text, "at": text, "auto?": boolean}),
+        "late?": record({"reason": text, "cutoff": text}),
         "national?": record({"flow": array(text), "items": array(news)}),
         "regions?": record({"summary": summaries, "items": array(news)}),
     })
@@ -218,9 +219,30 @@ def check_status(name: str, issue: dict) -> list[str]:
     if collected.tzinfo is None:
         errors.append(f"{name}: collectedAt에 시간대(+09:00)가 없음")
         return errors
-    deadline = dt.datetime.combine(dt.date.fromisoformat(issue["date"]), COLLECT_DEADLINE, KST)
+    day = dt.date.fromisoformat(issue["date"])
+    deadline = dt.datetime.combine(day, COLLECT_DEADLINE, KST)
     if collected > deadline:
-        errors.append(f"{name}: collectedAt이 발행일 {COLLECT_DEADLINE:%H:%M}(한국 시간)보다 늦음. 조간에는 그날 장중 자료를 넣지 않음")
+        errors.extend(check_late(name, issue, day, collected))
+    return errors
+
+
+def check_late(name: str, issue: dict, day: dt.date, collected: dt.datetime) -> list[str]:
+    """06시를 넘겨 모은 호는 늦은 이유와 자료 기준 시각(전날 23:59 이전)을 남긴 경우에만 공개한다."""
+    late = issue.get("late") or {}
+    if not str(late.get("reason", "")).strip():
+        return [f"{name}: collectedAt이 발행일 {COLLECT_DEADLINE:%H:%M}(한국 시간)보다 늦음. 늦게 모았다면 late.reason과 late.cutoff를 남김"]
+    try:
+        cutoff = dt.datetime.fromisoformat(str(late.get("cutoff")))
+    except ValueError:
+        return [f"{name}: late.cutoff가 ISO 8601 시각이 아님"]
+    if cutoff.tzinfo is None:
+        return [f"{name}: late.cutoff에 시간대(+09:00)가 없음"]
+    errors: list[str] = []
+    # 늦게 모아도 조간 기준은 그대로 전날 자정 전 자료다
+    if cutoff >= dt.datetime.combine(day, dt.time(0, 0), KST):
+        errors.append(f"{name}: late.cutoff가 발행일 0시 이후. 조간에는 그날 자료를 넣지 않음")
+    if collected >= dt.datetime.combine(day + dt.timedelta(days=1), dt.time(0, 0), KST):
+        errors.append(f"{name}: collectedAt이 발행일을 넘김. 늦은 수집도 발행일 안에서만 공개함")
     return errors
 
 
