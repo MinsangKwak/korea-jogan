@@ -28,6 +28,9 @@ class PagesTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         shutil.copytree(REPO / "dev" / "web", self.tmp / "dev" / "web")
+        # 손으로 build_pages를 돌려 둔 호별 페이지가 남아 있어도 시험 결과가 달라지지 않게 지운다
+        for stale in (self.tmp / "dev" / "web").glob("20??-??-??.html"):
+            stale.unlink()
         self.issues = self.tmp / "dev" / "web" / "data" / "issues"
         (self.issues / "index.json").write_text(json.dumps({"latest": DATE, "issues": [DATE]}), encoding="utf-8")
         self.saved = (build_pages.PUBLIC, build_pages.ISSUES)
@@ -66,7 +69,7 @@ class PagesTest(unittest.TestCase):
     def test_embedded_data_cannot_close_script(self):
         self.issue["lead"]["headline"] = "</script><script>bad()</script>"
         template = (build_pages.PUBLIC / "index.html").read_text(encoding="utf-8")
-        page = build_pages.embed_data(template, self.issue)
+        page = build_pages.embed_data(template, self.issue, {"latest": DATE, "issues": [DATE]})
         body = re.search(r'<script type="application/json" id="issue-data">(.*?)</script>', page, re.S).group(1)
         self.assertNotIn("<", body)
         self.assertEqual(json.loads(body)["lead"]["headline"], self.issue["lead"]["headline"])
@@ -90,6 +93,24 @@ class PagesTest(unittest.TestCase):
         page = (self.tmp / "dev" / "web" / f"{DATE}.html").read_text(encoding="utf-8")
         self.assertNotIn("<script>alert(1)</script>", page)
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", page)
+
+    def test_embedded_index_skips_unapproved_draft(self):
+        # 오늘 호가 초안인 아침에도 화면이 공개 전 초안을 내려받지 않아야 한다
+        draft = "2026-10-20"
+        issue = json.loads(json.dumps(self.issue))
+        issue.update(date=draft, status="draft")
+        issue.pop("review", None)
+        (self.issues / f"{draft}.json").write_text(json.dumps(issue, ensure_ascii=False), encoding="utf-8")
+        (self.issues / "index.json").write_text(json.dumps({"latest": draft, "issues": [DATE, draft]}), encoding="utf-8")
+        build_pages.build()
+        page = (build_pages.PUBLIC / "index.html").read_text(encoding="utf-8")
+        embedded = {}
+        for element_id in ("issue-data", "issue-index"):
+            match = re.search(r'<script type="application/json" id="' + element_id + r'">(.*?)</script>', page, re.S)
+            embedded[element_id] = json.loads(match.group(1))
+        self.assertEqual(embedded["issue-index"], {"latest": DATE, "issues": [DATE]})
+        self.assertEqual(embedded["issue-data"]["date"], DATE)
+        self.assertFalse((build_pages.PUBLIC / f"{draft}.html").exists())
 
     def test_drafts_are_skipped(self):
         self.issue["status"] = "draft"

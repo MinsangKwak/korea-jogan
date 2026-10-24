@@ -10,7 +10,11 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'jogan-browser-'));
 const web = path.join(temp, 'web');
 fs.cpSync(path.join(repo, 'dev/web'), web, { recursive: true });
 execFileSync('python3', ['-c', 'import sys;from pathlib import Path;sys.path.insert(0,sys.argv[1]);import build_pages as b;b.PUBLIC=Path(sys.argv[2]);b.ISSUES=b.PUBLIC/"data/issues";b.build()', path.join(repo, 'dev/pipeline/build'), web]);
-const index = JSON.parse(fs.readFileSync(path.join(web, 'data/issues/index.json')));
+// 화면이 실제로 쓰는 목록은 생성한 index.html에 실린 것이다.
+// data/issues/index.json에는 공개 전 초안도 들어 있어 그대로 쓰면 아침마다 결과가 달라진다
+const embedded = (id) => JSON.parse(fs.readFileSync(path.join(web, 'index.html'), 'utf8')
+  .match(new RegExp('<script type="application/json" id="' + id + '">(.*?)</script>', 's'))[1].replace(/\\u003c/g, '<'));
+const index = embedded('issue-index');
 const latestPath = '/data/issues/' + index.latest + '.json';
 const latest = JSON.parse(fs.readFileSync(path.join(web, latestPath)));
 const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
@@ -26,6 +30,8 @@ async function pageFor(options = {}) {
     if (url.hostname !== 'jogan.test') return route.abort();
     if (options.missingMain && url.pathname === '/src/main.js') return route.abort();
     if (options.delay && url.pathname === '/data/issues/index.json') await new Promise((resolve) => setTimeout(resolve, options.delay));
+    // 배포본에는 공개 전 초안이 올라가지 않는다. 페이지에 실린 목록과 같은 것을 돌려줘 아침에도 같은 경로를 시험한다
+    if (url.pathname === '/data/issues/index.json') return route.fulfill({ json: index });
     if (options.hung && url.pathname === latestPath) return;
     if (options.missing && url.pathname === latestPath) return route.fulfill({ status: 404, body: '' });
     if (options.bad && url.pathname === latestPath) {

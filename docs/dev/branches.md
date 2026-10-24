@@ -18,7 +18,7 @@
 
 ## 일일 발행
 
-00시 외부 예약 작업이 오늘 호의 초안을 `dev`에 저장합니다. 06시 `publish.yml`은 오늘 호가 최신 호이며 상태가 `draft` 또는 `published`인지 확인합니다. 초안이면 검사 후 자동 발행 기록을 남깁니다.
+00시 외부 예약 작업이 오늘 호의 초안을 `dev`에 저장합니다. 06시 `publish.yml`은 오늘 호가 최신 호이며 상태가 `draft` 또는 `published`인지 확인합니다. 초안이면 검사 후 자동 발행 기록을 남깁니다. GitHub 예약은 정각에 몰려 밀리므로 06:07에 실행하고 06:37·07:17·08:17에 다시 확인합니다. 이미 올라간 호는 빨리 감기 단계에서 건너뛰므로 중복 발행되지 않습니다.
 
 배포 규칙 검사에 통과하면 `main`과 `deploy`를 현재 `dev` 커밋으로 빨리 감기합니다. 어느 한 브랜치라도 `dev`의 조상이 아니면 중단합니다. 이후 배포 워크플로를 명시적으로 실행합니다. 오늘 호가 없거나 최신 호가 다르면 브랜치를 올리지 않습니다.
 
@@ -29,7 +29,7 @@
 | 파일 | 실행 조건 | 수행 내용 |
 | --- | --- | --- |
 | [check.yml](../../.github/workflows/check.yml) | `dev`·`main` push, 대상 브랜치 PR | 데이터·토큰 생성 결과·Python 테스트 검사. PR은 커밋 제목도 검사 |
-| [publish.yml](../../.github/workflows/publish.yml) | 한국 시간 매일 06시 예약, 수동 | 오늘 호 상태 확인, 자동 발행 전환, 배포 검사, 브랜치 빨리 감기, 배포 호출 |
+| [publish.yml](../../.github/workflows/publish.yml) | 한국 시간 매일 06:07 예약과 06:37·07:17·08:17 재시도, 수동 | 오늘 호 상태 확인, 자동 발행 전환, 배포 검사, 브랜치 빨리 감기, 배포 호출 |
 | [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `deploy` push, 수동, 평일 매시 예약 | `deploy` 체크아웃, 검사·파일 생성·Pages 배포 |
 | [daily.yml](../../.github/workflows/daily.yml) | 수동 | RSS 목록·ECOS 원자료 수집 |
 
