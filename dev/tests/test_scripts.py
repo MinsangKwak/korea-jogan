@@ -87,6 +87,25 @@ class ValidateTest(Site):
         self.assertEqual(code, 1)
         self.assertIn("collectedAt", out)
 
+    def test_late_collection_needs_reason_and_prior_cutoff(self):
+        def late(cutoff, collected="2026-10-19T10:20:00+09:00"):
+            def fn(i):
+                i.update(status="published", collectedAt=collected, review={"by": "자동 발행", "at": "2026-10-19T10:40+09:00", "auto": True},
+                         late={"reason": "예약 실행 지연", "cutoff": cutoff})
+            return fn
+        self.edit(late("2026-10-18T23:59:00+09:00"))
+        self.assertEqual(self.run_validate("--deploy")[0], 0)
+        self.edit(late("2026-10-19T09:00:00+09:00"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("late.cutoff", out)
+        self.edit(late("2026-10-18T23:59:00+09:00", collected="2026-10-20T01:00:00+09:00"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("발행일을 넘김", out)
+        self.edit(lambda i: i.update(late={"reason": "", "cutoff": "2026-10-18T23:59:00+09:00"}))
+        self.assertEqual(self.run_validate()[0], 1)
+
     def test_unknown_status(self):
         self.edit(lambda i: i.update(status="final"))
         self.assertEqual(self.run_validate()[0], 1)
