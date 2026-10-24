@@ -150,8 +150,7 @@ def with_article(page: str, issue: dict, url: str, desc: str) -> str:
     return page[: m.start()] + block + page[m.end():]
 
 
-def embed_data(page: str, issue: dict) -> str:
-    index = json.loads((ISSUES / "index.json").read_text(encoding="utf-8"))
+def embed_data(page: str, issue: dict, index: dict) -> str:
     for element_id, data in (("issue-data", issue), ("issue-index", index)):
         body = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
         pattern = re.compile(r'(<script type="application/json" id="' + element_id + r'">).*?(</script>)', re.S)
@@ -159,13 +158,13 @@ def embed_data(page: str, issue: dict) -> str:
     return page
 
 
-def home_page(template: str, issue: dict) -> str:
+def home_page(template: str, issue: dict, index: dict) -> str:
     desc = clip(re.search(r'<meta name="description" content="([^"]*)">', template).group(1))
     page = DIGEST.sub(lambda _: digest(issue), template, count=1)
-    return embed_data(with_article(page, issue, SITE, desc), issue)
+    return embed_data(with_article(page, issue, SITE, desc), issue, index)
 
 
-def issue_page(template: str, issue: dict) -> str:
+def issue_page(template: str, issue: dict, index: dict) -> str:
     date = issue["date"]
     url = SITE + date
     headline = (issue.get("lead") or {}).get("headline") or issue.get("headline", "")
@@ -185,7 +184,7 @@ def issue_page(template: str, issue: dict) -> str:
     extra = f'<meta name="kj-date" content="{esc(date)}">\n<meta property="article:published_time" content="{esc(published_at(issue))}">\n'
     page = page.replace('<link rel="canonical"', extra + '<link rel="canonical"', 1)
     page = DIGEST.sub(lambda _: digest(issue), page, count=1)
-    return embed_data(with_article(page, issue, url, desc), issue)
+    return embed_data(with_article(page, issue, url, desc), issue, index)
 
 
 def published() -> list[dict]:
@@ -198,19 +197,31 @@ def published() -> list[dict]:
     return sorted(out, key=lambda x: x["date"], reverse=True)
 
 
+def published_index(issues: list[dict]) -> dict:
+    """화면에 싣는 발행 목록. 아직 공개하지 않은 초안을 가리키지 않게 공개된 호만 담는다.
+
+    index.json에는 오늘 초안이 먼저 올라오므로, 그대로 실으면 화면이 공개 전 초안을 내려받는다.
+    배포 검사가 초안을 막지만, 생성한 페이지 자체도 초안을 가리키지 않도록 여기서 한 번 더 거른다.
+    """
+    dates = [i["date"] for i in issues]
+    return {"latest": dates[0], "issues": dates}
+
+
 def build() -> list[Path]:
     home = PUBLIC / "index.html"
     # 이미 한 번 돌린 index.html이어도 요약·기사 정보만 바뀌므로 그대로 틀로 쓴다
     template = home.read_text(encoding="utf-8")
     issues = published()
     written = []
+    if not issues:
+        return written
+    index = published_index(issues)
     for issue in issues:
         out = PUBLIC / f"{issue['date']}.html"
-        out.write_text(issue_page(template, issue), encoding="utf-8")
+        out.write_text(issue_page(template, issue, index), encoding="utf-8")
         written.append(out)
-    if issues:
-        home.write_text(home_page(template, issues[0]), encoding="utf-8")
-        written.append(home)
+    home.write_text(home_page(template, issues[0], index), encoding="utf-8")
+    written.append(home)
     return written
 
 
