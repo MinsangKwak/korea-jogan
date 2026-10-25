@@ -29,7 +29,7 @@ GA4 웹사이트에서 보고서를 읽을 수 있는 권한과 자체 웹 앱�
 
 클라이언트 ID는 이 브라우저의 `localStorage`에만 저장됩니다. 모든 기기에서 같은 ID를 쓰려면 공개 식별자를 `dev/web/admin/config.js`의 `clientId`에 설정해 다시 배포할 수 있습니다. 공개 ID는 비밀 값이 아니며, Google이 승인된 원본과 사용자 권한을 검사합니다. 웹 클라이언트 보안 비밀은 브라우저 코드에 넣지 않습니다.
 
-현재 저장소의 기본 클라이언트 ID는 비어 있습니다. 화면·API 연결 코드는 구현했고, 실제 OAuth 인증과 운영 API의 종단 간 검증은 위 설정 후 수행해야 합니다. Google Analytics에 로그인한 브라우저의 세션을 추출하거나 재사용하지 않습니다.
+기본 클라이언트 ID는 Google Cloud 프로젝트 `korea-jogan-admin`의 웹 클라이언트 `korea-jogan admin`입니다(2026-10-25 설정, 동의 화면은 테스트 모드·외부). 승인된 원본은 `https://korea-jogan.com`과 `http://localhost:8000`이며, 테스트 사용자로 등록된 계정만 연결할 수 있습니다. 실제 OAuth 인증과 운영 API의 종단 간 검증은 아직 남아 있습니다. Google Analytics에 로그인한 브라우저의 세션을 추출하거나 재사용하지 않습니다.
 
 ## 인증과 오류 처리
 

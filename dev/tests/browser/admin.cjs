@@ -51,6 +51,8 @@ async function fixture(options = {}) {
     }
     if (url.hostname !== 'jogan.test') return route.abort();
     if (options.publishFailed && url.pathname === '/data/issues/index.json') return route.fulfill({ status: 404, body: '' });
+    // 배포용 기본 클라이언트 ID와 상관없이 미설정 상태부터 검사한다
+    if (url.pathname === '/admin/config.js') return route.fulfill({ body: fs.readFileSync(path.join(web, 'admin/config.js'), 'utf8').replace(/clientId: '[^']*'/, "clientId: ''"), contentType: mime['.js'] });
     let file = path.join(web, url.pathname.endsWith('/') ? url.pathname + 'index.html' : url.pathname);
     try { return await route.fulfill({ body: fs.readFileSync(file), contentType: mime[path.extname(file)] || 'application/octet-stream' }); }
     catch { return route.fulfill({ status: 404, body: '' }); }
@@ -80,6 +82,9 @@ async function check(name, options, fn) {
 }
 
 (async () => {
+  // 배포 설정의 클라이언트 ID는 비어 있거나 공개 웹 클라이언트 ID 꼴이어야 한다(보안 비밀번호 금지)
+  const deployed = /clientId: '([^']*)'/.exec(fs.readFileSync(path.join(web, 'admin/config.js'), 'utf8'))[1];
+  assert.ok(deployed === '' || /^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(deployed), deployed);
   browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--no-sandbox'] });
   await check('미설정 안내와 공개 발행 현황, 로그인 전 비공개 통계 없음', { noConfig: true }, async ({ page, requests }) => {
     assert.equal(await page.locator('#setup').getAttribute('open'), '');
