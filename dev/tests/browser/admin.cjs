@@ -43,10 +43,11 @@ async function fixture(options = {}) {
         return route.fulfill({ status, json: { error: { status: status === 403 ? 'PERMISSION_DENIED' : 'ERROR', ...(options.disabledApi ? { details: [{ reason: 'SERVICE_DISABLED' }] } : {}) } } });
       }
       const body = route.request().postDataJSON();
-      if (url.pathname.endsWith(':batchRunReports')) return route.fulfill({ json: { reports: state.empty ? [{}, {}, {}] : [report([12, 39, 15]), report([22], ['/2026-10-23']), report([10], ['Organic Search'])] } });
+      const trend = { rows: ['20261019', '20261020', '20261021'].map((date, index) => ({ dimensionValues: [{ value: date }], metricValues: [{ value: String(index + 2) }, { value: String(index * 3) }] })) };
+      if (url.pathname.endsWith(':batchRunReports')) return route.fulfill({ json: { reports: state.empty ? [{}, {}, {}, {}, {}] : [report([12, 39, 15]), report([22], ['/2026-10-23']), report([10], ['Organic Search']), trend, report([7], ['section_media'])] } });
       if (state.empty) return route.fulfill({ json: {} });
       const dimension = body.dimensions[0]?.name;
-      const json = !dimension ? report([4, 8, 18]) : dimension === 'minutesAgo' ? report([18], ['0']) : dimension === 'deviceCategory' ? report([4], ['mobile']) : report([4], ['<img src=x onerror=alert(1)> 조간']);
+      const json = !dimension ? report([4, 8, 18]) : dimension === 'minutesAgo' ? report([18], ['0']) : dimension === 'deviceCategory' ? report([4], ['mobile']) : dimension === 'eventName' ? report([3], ['section_regions']) : dimension === 'city' ? report([2], ['Seoul']) : dimension === 'region' ? report([5], ['Busan']) : report([4], ['<img src=x onerror=alert(1)> 조간']);
       return route.fulfill({ json });
     }
     if (url.hostname !== 'jogan.test') return route.abort();
@@ -115,7 +116,15 @@ async function check(name, options, fn) {
       assert.deepEqual(data.local, { [storageKey]: clientId });
       assert.deepEqual(data.session, {});
       assert.ok(data.scroll <= data.width, JSON.stringify(data));
-      assert.equal(requests.length, 5);
+      assert.equal(requests.length, 8);
+      assert.equal(await page.locator('#trendChart .admin-bar').count(), 3);
+      assert.ok((await page.locator('#trendAxis').innerText()).includes('최고 10/21'));
+      assert.ok((await page.locator('#sections').innerText()).includes('언론'));
+      assert.ok((await page.locator('#liveSections').innerText()).includes('지역'));
+      assert.ok((await page.locator('#regions').innerText()).includes('부산'));
+      assert.ok((await page.locator('#cities').innerText()).includes('서울'));
+      const sectionRequest = requests.find((item) => item.postDataJSON()?.requests?.[4]).postDataJSON().requests[4];
+      assert.equal(sectionRequest.dimensionFilter.andGroup.expressions[1].filter.stringFilter.value, 'section_');
       const batch = requests.find((item) => item.url().endsWith(':batchRunReports')).postDataJSON();
       assert.equal(batch.requests[0].dateRanges[0].startDate, '6daysAgo');
       assert.equal(batch.requests[0].dimensionFilter.filter.stringFilter.value, 'korea-jogan.com');
@@ -204,13 +213,13 @@ async function check(name, options, fn) {
     await connect(page); await settled(page);
     const firstCount = requests.length;
     await page.clock.runFor(60010); await settled(page);
-    assert.equal(requests.length, firstCount + 4);
+    assert.equal(requests.length, firstCount + 6);
     await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
     await page.clock.runFor(60010);
-    assert.equal(requests.length, firstCount + 4);
+    assert.equal(requests.length, firstCount + 6);
     await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
     await settled(page);
-    assert.equal(requests.length, firstCount + 8);
+    assert.equal(requests.length, firstCount + 12);
   });
   await check('12초 요청 중단 후 재시도', {}, async ({ page, state, requests }) => {
     await page.clock.install();
@@ -218,7 +227,7 @@ async function check(name, options, fn) {
     state.hang = true;
     await page.locator('#refresh').click();
     await page.waitForFunction(() => document.getElementById('refresh').disabled);
-    while (requests.length < 10) await page.waitForTimeout(10);
+    while (requests.length < 14) await page.waitForTimeout(10);
     await page.clock.runFor(12010); await settled(page);
     assert.ok((await page.locator('#realtimeError').innerText()).includes('초과'));
     assert.equal(await page.locator('#liveUsers').innerText(), '4');

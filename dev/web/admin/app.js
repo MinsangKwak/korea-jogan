@@ -20,13 +20,29 @@ let lastReport = 0;
 let googleLoading;
 let authPending = false;
 
+// 신문 화면의 섹션 id → 메뉴 이름. 이벤트 이름은 section_<id>로 들어온다
+const SECTION_NAMES = { home: '홈', media: '언론', national: '전국', regions: '지역', politics: '정치', economy: '경제', industry: '산업', fiscal: '재정' };
+const LIST_IDS = ['livePages', 'devices', 'liveSections', 'cities', 'topPages', 'channels', 'sections', 'regions'];
+// GA4는 지역·도시 이름을 영어로 준다. 국내 시·도와 그 도시 이름만 한국어로 바꾸고 나머지는 그대로 둔다
+const PLACE_NAMES = {
+  Seoul: '서울', Busan: '부산', Incheon: '인천', Daegu: '대구', Daejeon: '대전', Gwangju: '광주', Ulsan: '울산',
+  'Sejong-si': '세종', Sejong: '세종', 'Gyeonggi-do': '경기', 'Gangwon-do': '강원', 'Gangwon State': '강원',
+  'Chungcheongbuk-do': '충북', 'North Chungcheong': '충북', 'Chungcheongnam-do': '충남', 'South Chungcheong': '충남',
+  'Jeollabuk-do': '전북', 'North Jeolla': '전북', 'Jeonbuk State': '전북', 'Jeollanam-do': '전남', 'South Jeolla': '전남',
+  'Gyeongsangbuk-do': '경북', 'North Gyeongsang': '경북', 'Gyeongsangnam-do': '경남', 'South Gyeongsang': '경남',
+  'Jeju-do': '제주', Jeju: '제주', 'Jeju-si': '제주'
+};
+const placeRows = (data) => data.map((item) => ({ ...item, label: PLACE_NAMES[item.label] || item.label }));
+const sectionRows = (data) => data.map((item) => ({ ...item, label: SECTION_NAMES[item.label.replace(/^section_/, '')] || item.label.replace(/^section_/, '') }));
+
 function validClient(value) { return /^[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com$/.test(value); }
 function message(text) { $('authMessage').textContent = text; }
 function connection(text) { $('connection').textContent = text; }
 
 function emptyPanels() {
   for (const id of ['liveUsers', 'liveViews', 'reportUsers', 'reportViews', 'reportSessions']) $(id).textContent = '—';
-  for (const id of ['livePages', 'devices', 'topPages', 'channels', 'minuteChart']) $(id).replaceChildren();
+  for (const id of [...LIST_IDS, 'minuteChart', 'trendChart']) $(id).replaceChildren();
+  $('trendAxis').replaceChildren();
   $('eventTotal').textContent = '—';
   $('minuteChart').setAttribute('aria-label', '연결 전');
   $('realtimeTime').textContent = '불러오기 전';
@@ -99,12 +115,58 @@ function table(target, data, heading, metric) {
     th.scope = 'col'; th.textContent = label; head.append(th);
   }
   const body = element.createTBody();
+  // 막대 길이는 목록의 가장 큰 값 대비 비율. 값은 오른쪽 숫자 열이 그대로 읽힌다
+  const max = Math.max(1, ...data.map((entry) => entry.value));
   for (const entry of data) {
     const row = body.insertRow();
-    row.insertCell().textContent = entry.label === '(not set)' ? '분류되지 않음' : entry.label;
+    const name = row.insertCell();
+    const label = document.createElement('span');
+    label.textContent = entry.label === '(not set)' ? '분류되지 않음' : entry.label;
+    const meter = document.createElement('span');
+    meter.className = 'admin-meter';
+    meter.setAttribute('aria-hidden', 'true');
+    meter.style.setProperty('--w', Math.max(2, entry.value / max * 100) + '%');
+    name.append(label, meter);
     row.insertCell().textContent = number(entry.value);
   }
   target.append(element);
+}
+
+// 기간 추이: 날짜(오늘은 시간)별 활성 사용자 막대. 조회수는 막대에 올리면 함께 보인다
+function trend(data, hourly) {
+  const points = data.map((item) => {
+    const key = item.label;
+    const text = hourly ? Number(key.slice(8, 10)) + '시' : Number(key.slice(4, 6)) + '/' + Number(key.slice(6, 8));
+    return { key, text, users: item.value, views: item.second };
+  }).sort((a, b) => a.key.localeCompare(b.key));
+  const box = $('trendChart');
+  box.replaceChildren();
+  $('trendAxis').replaceChildren();
+  if (!points.length) {
+    const empty = document.createElement('p');
+    empty.className = 'admin-empty';
+    empty.textContent = '이 기간에 집계된 데이터가 없습니다.';
+    box.append(empty);
+    box.setAttribute('aria-label', '이 기간에 집계된 데이터가 없습니다');
+    return;
+  }
+  const max = Math.max(1, ...points.map((point) => point.users));
+  box.style.setProperty('--n', points.length);
+  for (const point of points) {
+    const bar = document.createElement('div');
+    bar.className = 'admin-bar';
+    bar.style.height = Math.max(2, point.users / max * 100) + '%';
+    bar.title = `${point.text} · 활성 사용자 ${number(point.users)}명 · 조회수 ${number(point.views)}`;
+    if (!point.users) bar.dataset.zero = '';
+    box.append(bar);
+  }
+  box.setAttribute('aria-label', '활성 사용자 추이: ' + points.map((point) => `${point.text} ${point.users}명`).join(', '));
+  const peak = points.reduce((a, b) => (b.users > a.users ? b : a));
+  for (const text of [points[0].text, '최고 ' + peak.text + ' · ' + number(peak.users) + '명', points.at(-1).text]) {
+    const span = document.createElement('span');
+    span.textContent = text;
+    $('trendAxis').append(span);
+  }
 }
 
 function chart(data) {
@@ -135,6 +197,8 @@ function renderRealtime(reports) {
   table($('livePages'), rows(reports[2]), '페이지 제목', '활성 사용자');
   const labels = { desktop: '데스크톱', mobile: '모바일', tablet: '태블릿' };
   table($('devices'), rows(reports[3]).map((item) => ({ ...item, label: labels[item.label] || item.label })), '기기', '활성 사용자');
+  table($('liveSections'), sectionRows(rows(reports[4])), '섹션', '활성 사용자');
+  table($('cities'), placeRows(rows(reports[5])), '도시', '활성 사용자');
   $('realtimeTime').textContent = clock() + ' 갱신';
 }
 
@@ -143,6 +207,9 @@ function renderReports(reports, periodLabel) {
   for (const [index, id] of ['reportUsers', 'reportViews', 'reportSessions'].entries()) $(id).textContent = number(totals[index] || 0);
   table($('topPages'), rows(reports[1]), '페이지 경로', '조회수');
   table($('channels'), rows(reports[2]), '채널', '세션');
+  trend(rows(reports[3]), $('period').value === 'today');
+  table($('sections'), sectionRows(rows(reports[4])), '섹션', '읽은 사용자');
+  table($('regions'), placeRows(rows(reports[5])), '지역', '활성 사용자');
   $('reportTime').textContent = `${periodLabel} · ${reports[0].metadata?.timeZone || 'GA4 속성 시간대'} 기준 · ${clock()} 조회 · 오늘의 수치는 집계가 늦을 수 있습니다.`;
 }
 
@@ -261,7 +328,7 @@ $('period').addEventListener('change', () => {
   busy = false;
   lastReport = 0;
   for (const id of ['reportUsers', 'reportViews', 'reportSessions']) $(id).textContent = '—';
-  for (const id of ['topPages', 'channels']) $(id).replaceChildren();
+  for (const id of ['topPages', 'channels', 'sections', 'regions', 'trendChart', 'trendAxis']) $(id).replaceChildren();
   $('reportTime').textContent = '선택한 기간의 통계를 불러오고 있습니다.';
   paused = false;
   refresh(true);

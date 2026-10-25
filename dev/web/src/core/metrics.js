@@ -40,3 +40,20 @@ function track(name, title) {
 function trackLoad(ok, duration) {
   if (GA && window.gtag) window.gtag('event', ok ? 'app_ready' : 'app_load_error', { duration_ms: duration });
 }
+
+// 섹션을 실제로 읽었는지 GA4에 section_<id>로 한 번씩 남긴다. 화면 가운데 띠를 지나야 읽은 것으로 본다
+// 이벤트 이름에 섹션을 담아 GA4 맞춤 측정기준을 따로 등록하지 않아도 관리자 화면에서 섹션별로 센다
+function trackSections() {
+  if (!GA || !('IntersectionObserver' in window)) return;
+  const seen = new Set();
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      const id = entry.target.id;
+      if (!entry.isIntersecting || seen.has(id)) continue;
+      seen.add(id);
+      observer.unobserve(entry.target);
+      window.gtag('event', 'section_' + id, { issue_date: D ? D.date : '' });
+    }
+  }, { rootMargin: '-45% 0px -45% 0px' });
+  SECTIONS.forEach(([id]) => { const el = document.getElementById(id); if (el) observer.observe(el); });
+}
