@@ -1,6 +1,6 @@
 export const CONFIG = Object.freeze({
   propertyId: '559927668',
-  clientId: '',
+  clientId: '316888727606-b1ba3d4e2627tr7jgf6vbldelrc5a9bv.apps.googleusercontent.com',
   hostname: 'korea-jogan.com',
   refreshMs: 60000,
   reportRefreshMs: 300000,
