@@ -51,6 +51,13 @@
 .admin-table th { color: var(--ink-3); font-size: 0.8rem; font-weight: 500; }
 .admin-table th, .admin-table td { text-align: left; padding: var(--space-3) var(--space-2); border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
 .admin-table th:last-child, .admin-table td:last-child { text-align: right; width: 5rem; font-variant-numeric: tabular-nums; }
+.admin-grid--even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.admin-trend { margin-top: var(--space-8); }
+.admin-bars--trend { grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr)); height: 140px; }
+.admin-bars--trend .admin-empty { grid-column: 1 / -1; align-self: center; }
+#trendAxis span:nth-child(2) { color: var(--ink-2); font-weight: 700; }
+/* 목록 막대: 표의 이름 아래에 가장 큰 값 대비 길이로 그린다. 숫자는 오른쪽 열 */
+.admin-meter { display: block; height: 6px; margin-top: var(--space-1); width: var(--w); background: var(--brand); border-radius: 0 var(--radius-xs) var(--radius-xs) 0; }
 .admin-empty { padding: var(--space-6) var(--space-4); background: var(--surface); color: var(--ink-3); font-size: 0.9rem; }
 .admin-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid var(--line); }
 .admin-summary > * + * { border-left: 1px solid var(--line); }
@@ -66,7 +73,7 @@
   .admin-realtime { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-timeline { grid-column: 1 / -1; grid-row: 2; border-inline: 0; border-top: 1px solid var(--line); padding-inline: var(--space-4); }
   .admin-stat--lead strong { font-size: 3.5rem; }
-  .admin-grid { grid-template-columns: minmax(0, 1fr); }
+  .admin-grid, .admin-grid--even { grid-template-columns: minmax(0, 1fr); }
   .admin-publish { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-summary .admin-stat { padding-inline: var(--space-2); }
   .admin-summary strong { font-size: 1.8rem; }
