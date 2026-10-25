@@ -35,13 +35,17 @@ export async function request(url, { token, body, signal } = {}) {
   }
 }
 
-function realtime(dimensions, metrics) {
+// 신문 화면이 섹션을 읽을 때 보내는 이벤트(section_<id>)만 고른다
+const sectionFilter = { filter: { fieldName: 'eventName', stringFilter: { matchType: 'BEGINS_WITH', value: 'section_' } } };
+
+function realtime(dimensions, metrics, extra = {}) {
   return {
     dimensions: dimensions.map((name) => ({ name })),
     metrics: metrics.map((name) => ({ name })),
     minuteRanges: [{ startMinutesAgo: 29, endMinutesAgo: 0 }],
     limit: '30', returnPropertyQuota: true,
-    ...(dimensions.length && dimensions[0] !== 'minutesAgo' ? { orderBys: [{ metric: { metricName: metrics[0] }, desc: true }] } : {})
+    ...(dimensions.length && dimensions[0] !== 'minutesAgo' ? { orderBys: [{ metric: { metricName: metrics[0] }, desc: true }] } : {}),
+    ...extra
   };
 }
 
@@ -52,7 +56,9 @@ export async function loadRealtime(token, signal) {
     realtime([], ['activeUsers', 'screenPageViews', 'eventCount']),
     realtime(['minutesAgo'], ['eventCount']),
     realtime(['unifiedScreenName'], ['activeUsers']),
-    realtime(['deviceCategory'], ['activeUsers'])
+    realtime(['deviceCategory'], ['activeUsers']),
+    realtime(['eventName'], ['activeUsers'], { dimensionFilter: sectionFilter }),
+    realtime(['city'], ['activeUsers'])
   ];
   const results = await Promise.allSettled(bodies.map((body) => request(endpoint, { token, signal, body })));
   const failed = results.find((result) => result.status === 'rejected' && [401, 403].includes(result.reason.status)) || results.find((result) => result.status === 'rejected');
@@ -68,15 +74,23 @@ export async function loadReports(token, period, signal) {
     dimensionFilter: { filter: { fieldName: 'hostName', stringFilter: { matchType: 'EXACT', value: CONFIG.hostname } } },
     returnPropertyQuota: true
   };
-  const data = await request(`https://analyticsdata.googleapis.com/v1beta/properties/${CONFIG.propertyId}:batchRunReports`, {
-    token, signal, body: { requests: [
+  const base = `https://analyticsdata.googleapis.com/v1beta/properties/${CONFIG.propertyId}`;
+  // 오늘은 시간대별, 그 밖의 기간은 날짜별로 추이를 그린다
+  const step = period === 'today' ? 'dateHour' : 'date';
+  const both = { andGroup: { expressions: [common.dimensionFilter, sectionFilter] } };
+  // batchRunReports는 한 번에 보고서 5개까지 받으므로 지역 보고서는 따로 요청한다
+  const [data, region] = await Promise.all([
+    request(`${base}:batchRunReports`, { token, signal, body: { requests: [
       { ...common, metrics: ['activeUsers', 'screenPageViews', 'sessions'].map((name) => ({ name })) },
       { ...common, dimensions: [{ name: 'pagePath' }], metrics: [{ name: 'screenPageViews' }], orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }], limit: '10' },
-      { ...common, dimensions: [{ name: 'sessionDefaultChannelGroup' }], metrics: [{ name: 'sessions' }], orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: '10' }
-    ] }
-  });
-  if (!Array.isArray(data.reports) || data.reports.length !== 3) throw new ApiError(502, 'INVALID_RESPONSE');
-  return data.reports;
+      { ...common, dimensions: [{ name: 'sessionDefaultChannelGroup' }], metrics: [{ name: 'sessions' }], orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: '10' },
+      { ...common, dimensions: [{ name: step }], metrics: [{ name: 'activeUsers' }, { name: 'screenPageViews' }], orderBys: [{ dimension: { dimensionName: step } }], limit: '200' },
+      { ...common, dimensionFilter: both, dimensions: [{ name: 'eventName' }], metrics: [{ name: 'totalUsers' }, { name: 'eventCount' }], orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }], limit: '20' }
+    ] } }),
+    request(`${base}:runReport`, { token, signal, body: { ...common, dimensions: [{ name: 'region' }], metrics: [{ name: 'activeUsers' }], orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }], limit: '10' } })
+  ]);
+  if (!Array.isArray(data.reports) || data.reports.length !== 5) throw new ApiError(502, 'INVALID_RESPONSE');
+  return [...data.reports, region];
 }
 
 export function values(report) {
@@ -84,7 +98,7 @@ export function values(report) {
 }
 
 export function rows(report) {
-  return (report.rows || []).map((row) => ({ label: row.dimensionValues?.[0]?.value || '(not set)', value: Number(row.metricValues?.[0]?.value) || 0 }));
+  return (report.rows || []).map((row) => ({ label: row.dimensionValues?.[0]?.value || '(not set)', value: Number(row.metricValues?.[0]?.value) || 0, second: Number(row.metricValues?.[1]?.value) || 0 }));
 }
 
 export function explain(error) {
