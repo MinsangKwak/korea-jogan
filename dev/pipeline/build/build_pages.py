@@ -47,22 +47,64 @@ def published_at(issue: dict) -> str:
     return review.get("at") or f"{issue['date']}T06:00+09:00"
 
 
+# 첫 화면에 늘 싣는 검색어. 사람들이 실제로 치는 꼴(오늘 ~, ~ 요약)로 적는다
+BASE_KEYWORDS = [
+    "대한민국 조간", "오늘의 뉴스", "오늘 뉴스 요약", "아침 뉴스", "경제 뉴스 요약",
+    "오늘 코스피", "코스피 종가", "원달러 환율", "오늘 환율", "기준금리", "국가채무", "국민연금",
+    "수출입 동향", "지역 뉴스", "17개 시도 뉴스", "언론 보도 비교", "숫자 팩트체크",
+]
+KEYWORD_MAX = 60
+THEME_KEYWORDS = 5
+
+
 def keywords(issue: dict) -> list[str]:
-    words = ["대한민국 조간", f"{long_date(issue['date'])} 뉴스", "오늘의 경제 숫자"]
-    words += [n["k"] for n in issue.get("nums", [])]
+    """그 호의 검색어. 날짜 변형 → 숫자 → 분야·지역 → 언론 주제 순으로, 겹치는 말은 한 번만."""
+    y, m, d = (int(x) for x in issue["date"].split("-"))
+    words = [
+        "대한민국 조간", f"{long_date(issue['date'])} 뉴스", f"{m}월 {d}일 뉴스", f"{m}월 {d}일 뉴스 요약",
+        f"{m}월 {d}일 경제 뉴스", f"{m}월 {d}일 코스피", f"{m}월 {d}일 환율", "오늘의 경제 숫자",
+    ]
+    # 핵심 숫자는 '오늘 ○○'과 '○○ 종가'처럼 검색하는 꼴을 함께 둔다
+    for n in issue.get("nums", []):
+        name = (n.get("k") or "").strip()
+        if name:
+            words += [name, f"오늘 {name}"]
+    cats = {item.get("cat") for item in (issue.get("national") or {}).get("items", []) if item.get("cat")}
+    words += [f"{c} 뉴스" for c in sorted(cats)]
+    regions = []
+    for item in (issue.get("regions") or {}).get("items", []):
+        if item.get("region") and item["region"] not in regions:
+            regions.append(item["region"])
+    words += [f"{r} 뉴스" for r in regions]
+    # 언론 주제 키워드는 주제마다 앞의 몇 개만 둬 한 주제가 자리를 다 차지하지 않게 한다
     for t in issue.get("themes", []):
-        words += t.get("keywords", [])
+        words += t.get("keywords", [])[:THEME_KEYWORDS]
     seen, out = set(), []
     for w in words:
+        w = " ".join(str(w or "").split())
         if w and w not in seen:
             seen.add(w)
             out.append(w)
-    return out[:20]
+    return out[:KEYWORD_MAX]
+
+
+def sections(issue: dict) -> list[str]:
+    """구조화 데이터의 articleSection. 그 호에 실제로 내용이 있는 섹션만 적는다."""
+    has = [
+        ("머리기사", issue.get("lead")), ("언론 보도 비교", issue.get("themes")),
+        ("전국 뉴스", (issue.get("national") or {}).get("items")), ("지역 뉴스", (issue.get("regions") or {}).get("items")),
+        ("경제 숫자", issue.get("nums")), ("산업·수출입", issue.get("trade") or issue.get("industries")),
+        ("국가 재정", issue.get("fiscal") or issue.get("debt")),
+    ]
+    return [name for name, value in has if value]
 
 
 def digest(issue: dict) -> str:
     """JavaScript 없이도 읽히는 그 호의 요약 HTML."""
     lead = issue.get("lead", {})
+    # 소제목 앞에 '10월 26일'을 붙여 날짜로 찾는 검색어와 맞춘다
+    _, m, d = (int(x) for x in issue["date"].split("-"))
+    md = f"{m}월 {d}일"
     parts = [
         '<section class="kj-wrap kj-digest" id="seoDigest" aria-label="이 호 요약">',
         f'  <p class="kj-digest__date"><time datetime="{esc(issue["date"])}">{esc(long_date(issue["date"]))}</time> 대한민국 조간</p>',
@@ -74,15 +116,15 @@ def digest(issue: dict) -> str:
         parts.append("  <ul>" + "".join(f"<li>{esc(f['t'])}: {esc(f['v'])}</li>" for f in facts) + "</ul>")
     briefs = issue.get("briefs", [])
     if briefs:
-        parts.append("  <h3>오늘 꼭 볼 숫자</h3>")
+        parts.append(f"  <h3>{esc(md)} 오늘 꼭 볼 숫자</h3>")
         parts.append("  <ul>" + "".join(f"<li><b>{esc(b['k'])}</b> {esc(b['m'])}</li>" for b in briefs) + "</ul>")
     nums = issue.get("nums", [])
     if nums:
-        parts.append("  <h3>핵심 숫자</h3>")
+        parts.append(f"  <h3>{esc(md)} 코스피·환율·기준금리 핵심 숫자</h3>")
         parts.append("  <ul>" + "".join(f"<li>{esc(n['k'])} {esc(n['v'])} ({esc(n['d'])}) · {esc(n.get('ref'))}</li>" for n in nums) + "</ul>")
     themes = issue.get("themes", [])
     if themes:
-        parts.append("  <h3>언론 보도 비교</h3>")
+        parts.append(f"  <h3>{esc(md)} 언론 보도 비교</h3>")
         rows = []
         for t in themes:
             summary = " ".join(t.get("summary", []))
@@ -91,13 +133,13 @@ def digest(issue: dict) -> str:
         parts.append("  <ul>" + "".join(rows) + "</ul>")
     news = (issue.get("national") or {}).get("items", [])
     if news:
-        parts.append("  <h3>전국 뉴스</h3>")
+        parts.append(f"  <h3>{esc(md)} 전국 주요 뉴스</h3>")
         parts.append("  <ul>" + "".join(
             f"<li>[{esc(n.get('cat'))}] <a href=\"{esc(n['url'])}\" rel=\"noopener\">{esc(n['title'])}</a> · {esc(n.get('outlet'))} — {esc(n.get('summary'))}</li>"
             for n in news[:NEWS_MAX]) + "</ul>")
     regions = (issue.get("regions") or {}).get("items", [])
     if regions:
-        parts.append("  <h3>17개 시도 소식</h3>")
+        parts.append(f"  <h3>{esc(md)} 17개 시도 지역 뉴스</h3>")
         # 시도마다 첫 기사 하나씩
         seen, rows = set(), []
         for r in regions:
@@ -124,6 +166,7 @@ def article_ld(issue: dict, url: str, desc: str) -> dict:
         "inLanguage": "ko-KR",
         "image": [SITE + "assets/images/og.png"],
         "keywords": keywords(issue),
+        "articleSection": sections(issue),
         "isAccessibleForFree": True,
         "author": {"@id": SITE + "#org"},
         "publisher": {"@id": SITE + "#org"},
@@ -161,6 +204,8 @@ def embed_data(page: str, issue: dict, index: dict) -> str:
 def home_page(template: str, issue: dict, index: dict) -> str:
     desc = clip(re.search(r'<meta name="description" content="([^"]*)">', template).group(1))
     page = DIGEST.sub(lambda _: digest(issue), template, count=1)
+    merged = list(dict.fromkeys(BASE_KEYWORDS + keywords(issue)))[:KEYWORD_MAX]
+    page = set_attr(page, r'(<meta name="keywords" content=")[^"]*(">)', ", ".join(merged))
     return embed_data(with_article(page, issue, SITE, desc), issue, index)
 
 

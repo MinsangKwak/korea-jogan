@@ -86,6 +86,18 @@ class PagesTest(unittest.TestCase):
         self.assertEqual(once.count('id="seoDigest"'), 1)
         self.assertEqual(sum(g["@type"] == "NewsArticle" for g in self.ld(once)["@graph"]), 1)
 
+    def test_keywords_cover_date_regions_and_stay_bounded(self):
+        build_pages.build()
+        page = (self.tmp / "dev" / "web" / f"{DATE}.html").read_text(encoding="utf-8")
+        words = re.search(r'<meta name="keywords" content="([^"]*)">', page).group(1).split(", ")
+        self.assertIn("10월 19일 뉴스", words)
+        self.assertLessEqual(len(words), build_pages.KEYWORD_MAX)
+        self.assertEqual(len(words), len(set(words)))
+        article = next(g for g in self.ld(page)["@graph"] if g["@type"] == "NewsArticle")
+        self.assertIn("머리기사", article["articleSection"])
+        home = (self.tmp / "dev" / "web" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("오늘 뉴스 요약", re.search(r'<meta name="keywords" content="([^"]*)">', home).group(1))
+
     def test_text_is_escaped(self):
         self.issue["lead"]["headline"] = '<script>alert(1)</script> "따옴표"'
         (self.issues / f"{DATE}.json").write_text(json.dumps(self.issue, ensure_ascii=False), encoding="utf-8")
