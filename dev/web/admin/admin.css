@@ -42,7 +42,7 @@
 .admin-bar[data-zero] { background: var(--line-strong); }
 .admin-axis { display: flex; justify-content: space-between; color: var(--ink-3); font-size: 0.8rem; margin-top: var(--space-2); }
 .admin-timeline p { margin-bottom: 0; }
-.admin-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-8); margin-top: var(--space-8); }
+.admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-8); margin-top: var(--space-8); }
 .admin-panel { min-width: 0; }
 .admin-panel h3 { margin: 0; font-size: 1.1rem; }
 .admin-panel > p { margin-top: var(--space-1); }
@@ -50,8 +50,8 @@
 .admin-table caption { text-align: left; }
 .admin-table th { color: var(--ink-3); font-size: 0.8rem; font-weight: 500; }
 .admin-table th, .admin-table td { text-align: left; padding: var(--space-3) var(--space-2); border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
-.admin-table th:last-child, .admin-table td:last-child { text-align: right; width: 5rem; font-variant-numeric: tabular-nums; }
-.admin-grid--even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.admin-table th { white-space: nowrap; vertical-align: bottom; }
+.admin-table th:last-child, .admin-table td:last-child { text-align: right; width: 6.5rem; font-variant-numeric: tabular-nums; }
 .admin-trend { margin-top: var(--space-8); }
 .admin-bars--trend { grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr)); height: 140px; }
 .admin-bars--trend .admin-empty { grid-column: 1 / -1; align-self: center; }
@@ -73,10 +73,11 @@
   .admin-realtime { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-timeline { grid-column: 1 / -1; grid-row: 2; border-inline: 0; border-top: 1px solid var(--line); padding-inline: var(--space-4); }
   .admin-stat--lead strong { font-size: 3.5rem; }
-  .admin-grid, .admin-grid--even { grid-template-columns: minmax(0, 1fr); }
+  .admin-grid { grid-template-columns: minmax(0, 1fr); }
   .admin-publish { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-summary .admin-stat { padding-inline: var(--space-2); }
   .admin-summary strong { font-size: 1.8rem; }
+  .admin-summary .admin-stat > span { font-size: 0.8rem; white-space: nowrap; }
   .admin-auth { padding: var(--space-4); }
 }
 @media (prefers-reduced-motion: reduce) { .kj-btn { transition: none; } }
