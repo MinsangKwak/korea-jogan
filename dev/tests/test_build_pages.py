@@ -91,12 +91,16 @@ class PagesTest(unittest.TestCase):
         page = (self.tmp / "dev" / "web" / f"{DATE}.html").read_text(encoding="utf-8")
         words = re.search(r'<meta name="keywords" content="([^"]*)">', page).group(1).split(", ")
         self.assertIn("10월 19일 뉴스", words)
+        self.assertIn("10월 19일 월요일 뉴스", words)
         self.assertLessEqual(len(words), build_pages.KEYWORD_MAX)
         self.assertEqual(len(words), len(set(words)))
         article = next(g for g in self.ld(page)["@graph"] if g["@type"] == "NewsArticle")
         self.assertIn("머리기사", article["articleSection"])
         home = (self.tmp / "dev" / "web" / "index.html").read_text(encoding="utf-8")
-        self.assertIn("오늘 뉴스 요약", re.search(r'<meta name="keywords" content="([^"]*)">', home).group(1))
+        home_words = re.search(r'<meta name="keywords" content="([^"]*)">', home).group(1).split(", ")
+        for word in ("오늘 뉴스 요약", "오늘 뉴스", "광고 없는 뉴스", "데이터 기반 뉴스", "10월 19일 뉴스"):
+            self.assertIn(word, home_words)
+        self.assertLessEqual(len(home_words), build_pages.KEYWORD_MAX)
 
     def test_text_is_escaped(self):
         self.issue["lead"]["headline"] = '<script>alert(1)</script> "따옴표"'

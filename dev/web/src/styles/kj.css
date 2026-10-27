@@ -47,6 +47,8 @@ h1, h2, h3, h4 { text-wrap: balance; }
   border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-pill); background: var(--bg);
   font-size: 0.88rem; font-weight: 500; white-space: nowrap; cursor: pointer;
 }
+/* 줄바꿈되는 칩 줄에서는 긴 주제 제목이 화면 밖으로 나가지 않게 칩 안에서 줄을 바꾼다 */
+.kj-chips:not(.kj-chips--scroll) .kj-chip { max-width: 100%; white-space: normal; overflow-wrap: anywhere; padding-block: var(--space-2); }
 .kj-chip:hover { border-color: var(--ink); }
 .kj-chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 700; }
 .kj-chip .kj-count { font-size: 0.8rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
