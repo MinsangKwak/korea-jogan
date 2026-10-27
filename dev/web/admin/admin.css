@@ -8,6 +8,8 @@
 .admin-mast nav a { min-height: var(--tap-min); display: inline-flex; align-items: center; }
 .admin-logo { font-weight: 900; font-size: 1.25rem; }
 .admin-logo span { margin-left: var(--space-3); font-size: 0.8rem; font-weight: 400; }
+/* 관리자 화면은 넓은 모니터에서 보는 일이 많아 신문 본문 폭보다 넓게 쓴다 */
+.admin-mast, .admin-main { max-width: 1440px; }
 .admin-main { padding-block: var(--space-10); }
 .admin-title, .admin-section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .admin-title { align-items: flex-start; margin-bottom: var(--space-8); }
@@ -29,20 +31,22 @@
 .admin-section { margin-top: var(--space-10); border-top: var(--border-rule) solid var(--ink); padding-top: var(--space-6); }
 .admin-section-head { margin-bottom: var(--space-6); }
 .admin-section-head h2 { margin: var(--space-1) 0 0; font-size: 1.5rem; }
-.admin-realtime { display: grid; grid-template-columns: 1fr 2fr 1fr; border-block: 1px solid var(--line); }
 .admin-stat { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-6) var(--space-4); font-variant-numeric: tabular-nums; }
 .admin-stat > span { font-size: 0.9rem; color: var(--ink-2); font-weight: 700; }
 .admin-stat strong { font-size: 2.5rem; font-weight: 900; line-height: 1.2; }
-.admin-stat--lead strong { color: var(--brand); font-size: 4.5rem; letter-spacing: -0.05em; }
-.admin-timeline { padding: var(--space-6); border-inline: 1px solid var(--line); }
-.admin-timeline-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
-.admin-timeline-head h3 { margin: 0; font-size: 0.9rem; }
-.admin-bars { display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); align-items: end; gap: 3px; height: 94px; border-bottom: 1px solid var(--line-strong); margin-top: var(--space-4); }
+.admin-stat--lead strong { color: var(--brand); }
+/* 오늘·이번 주 핵심 숫자 4칸. 좁으면 2칸씩 */
+.admin-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid var(--line); }
+.admin-kpis > * + *, .admin-summary > * + * { border-left: 1px solid var(--line); }
+.admin-kpis strong { font-size: 3rem; letter-spacing: -0.04em; }
+.admin-bars { display: grid; align-items: end; gap: 3px; height: 94px; border-bottom: 1px solid var(--line-strong); margin-top: var(--space-4); }
 .admin-bar { background: var(--brand); min-height: 2px; border-radius: var(--radius-xs) var(--radius-xs) 0 0; }
 .admin-bar[data-zero] { background: var(--line-strong); }
 .admin-axis { display: flex; justify-content: space-between; color: var(--ink-3); font-size: 0.8rem; margin-top: var(--space-2); }
-.admin-timeline p { margin-bottom: 0; }
 .admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-8); margin-top: var(--space-8); }
+/* 넓은 목록(추이·섹션·페이지)과 짧은 목록(기기·지역·채널)을 2:1로 나란히 둔다 */
+.admin-grid--wide { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.admin-panel { padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); }
 .admin-panel { min-width: 0; }
 .admin-panel h3 { margin: 0; font-size: 1.1rem; }
 .admin-panel > p { margin-top: var(--space-1); }
@@ -51,16 +55,14 @@
 .admin-table th { color: var(--ink-3); font-size: 0.8rem; font-weight: 500; }
 .admin-table th, .admin-table td { text-align: left; padding: var(--space-3) var(--space-2); border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
 .admin-table th { white-space: nowrap; vertical-align: bottom; }
-.admin-table th:last-child, .admin-table td:last-child { text-align: right; width: 6.5rem; font-variant-numeric: tabular-nums; }
-.admin-trend { margin-top: var(--space-8); }
-.admin-bars--trend { grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr)); height: 140px; }
+.admin-table :is(th, td):not(:first-child) { text-align: right; width: 6.5rem; font-variant-numeric: tabular-nums; }
+.admin-bars--trend { grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr)); height: 200px; }
 .admin-bars--trend .admin-empty { grid-column: 1 / -1; align-self: center; }
 #trendAxis span:nth-child(2) { color: var(--ink-2); font-weight: 700; }
 /* 목록 막대: 표의 이름 아래에 가장 큰 값 대비 길이로 그린다. 숫자는 오른쪽 열 */
 .admin-meter { display: block; height: 6px; margin-top: var(--space-1); width: var(--w); background: var(--brand); border-radius: 0 var(--radius-xs) var(--radius-xs) 0; }
 .admin-empty { padding: var(--space-6) var(--space-4); background: var(--surface); color: var(--ink-3); font-size: 0.9rem; }
-.admin-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid var(--line); }
-.admin-summary > * + * { border-left: 1px solid var(--line); }
+.admin-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid var(--line); }
 .admin-period { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); font-size: 0.9rem; }
 .admin-period select { font: inherit; min-height: var(--tap-min); padding: var(--space-2) var(--space-4); background: var(--bg); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); }
 .admin-publish { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-6); margin: var(--space-6) 0; }
@@ -68,11 +70,20 @@
 .admin-publish dd { margin: var(--space-2) 0 0; font-weight: 700; font-variant-numeric: tabular-nums; }
 .admin-footer { border-top: 1px solid var(--line); margin-top: var(--space-10); padding-top: var(--space-6); color: var(--ink-3); font-size: 0.8rem; }
 .admin-footer p { margin-block: var(--space-1); }
+@media (max-width: 1100px) {
+  .admin-grid--wide { grid-template-columns: minmax(0, 1fr); }
+  .admin-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-kpis > :nth-child(3) { border-left: 0; }
+  .admin-kpis > :nth-child(n + 3) { border-top: 1px solid var(--line); }
+}
 @media (max-width: 760px) {
   .admin-main { padding-top: var(--space-6); }
-  .admin-realtime { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .admin-timeline { grid-column: 1 / -1; grid-row: 2; border-inline: 0; border-top: 1px solid var(--line); padding-inline: var(--space-4); }
-  .admin-stat--lead strong { font-size: 3.5rem; }
+  .admin-kpis strong { font-size: 2rem; }
+  .admin-panel { padding: var(--space-4); }
+  .admin-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-summary > :nth-child(3) { border-left: 0; }
+  .admin-summary > :nth-child(n + 3) { border-top: 1px solid var(--line); }
+  .admin-table :is(th, td):not(:first-child) { width: 4.75rem; }
   .admin-grid { grid-template-columns: minmax(0, 1fr); }
   .admin-publish { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-summary .admin-stat { padding-inline: var(--space-2); }

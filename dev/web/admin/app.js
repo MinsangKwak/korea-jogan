@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { request, loadRealtime, loadReports, values, rows, explain } from './api.js';
+import { request, loadReports, values, rows, explain } from './api.js';
 
 const $ = (id) => document.getElementById(id);
 const number = (value) => new Intl.NumberFormat('ko-KR').format(value);
@@ -16,13 +16,15 @@ let timer;
 let expiryTimer;
 let busy = false;
 let paused = false;
-let lastReport = 0;
 let googleLoading;
 let authPending = false;
 
 // 신문 화면의 섹션 id → 메뉴 이름. 이벤트 이름은 section_<id>로 들어온다
 const SECTION_NAMES = { home: '홈', media: '언론', national: '전국', regions: '지역', politics: '정치', economy: '경제', industry: '산업', fiscal: '재정' };
-const LIST_IDS = ['livePages', 'devices', 'liveSections', 'cities', 'topPages', 'channels', 'sections', 'regions'];
+const LIST_IDS = ['devices', 'topPages', 'channels', 'sections', 'regions'];
+// 오늘·최근 7일 칸의 기본 설명. 조회 뒤에는 '고유 사용자' 자리에 조회수가 들어간다
+const NOTES = { today: '오늘 0시부터 · 고유 사용자', week: '오늘 포함 7일 · 고유 사용자' };
+const STAT_IDS = ['todayUsers', 'todayTime', 'weekUsers', 'weekTime', 'reportUsers', 'reportViews', 'reportSessions', 'reportTimeAvg'];
 // GA4는 지역·도시 이름을 영어로 준다. 국내 시·도와 그 도시 이름만 한국어로 바꾸고 나머지는 그대로 둔다
 const PLACE_NAMES = {
   Seoul: '서울', Busan: '부산', Incheon: '인천', Daegu: '대구', Daejeon: '대전', Gwangju: '광주', Ulsan: '울산',
@@ -33,21 +35,28 @@ const PLACE_NAMES = {
   'Jeju-do': '제주', Jeju: '제주', 'Jeju-si': '제주'
 };
 const placeRows = (data) => data.map((item) => ({ ...item, label: PLACE_NAMES[item.label] || item.label }));
-const sectionRows = (data) => data.map((item) => ({ ...item, label: SECTION_NAMES[item.label.replace(/^section_/, '')] || item.label.replace(/^section_/, '') }));
+// 초 → '1분 12초'처럼 읽기 쉬운 길이. 값이 없으면 '—'
+function duration(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '—';
+  const s = Math.round(seconds);
+  if (s < 60) return s + '초';
+  if (s < 3600) return Math.floor(s / 60) + '분' + (s % 60 ? ' ' + (s % 60) + '초' : '');
+  return Math.floor(s / 3600) + '시간' + (Math.floor(s % 3600 / 60) ? ' ' + Math.floor(s % 3600 / 60) + '분' : '');
+}
+const perUser = (total, users) => (users ? total / users : 0);
 
 function validClient(value) { return /^[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com$/.test(value); }
 function message(text) { $('authMessage').textContent = text; }
 function connection(text) { $('connection').textContent = text; }
 
 function emptyPanels() {
-  for (const id of ['liveUsers', 'liveViews', 'reportUsers', 'reportViews', 'reportSessions']) $(id).textContent = '—';
-  for (const id of [...LIST_IDS, 'minuteChart', 'trendChart']) $(id).replaceChildren();
-  $('trendAxis').replaceChildren();
-  $('eventTotal').textContent = '—';
-  $('minuteChart').setAttribute('aria-label', '연결 전');
-  $('realtimeTime').textContent = '불러오기 전';
+  for (const id of STAT_IDS) $(id).textContent = '—';
+  $('todayNote').textContent = NOTES.today;
+  $('weekNote').textContent = NOTES.week;
+  for (const id of [...LIST_IDS, 'trendChart', 'trendAxis']) $(id).replaceChildren();
+  $('trendChart').setAttribute('aria-label', '연결 전');
+  $('reportClock').textContent = '불러오기 전';
   $('reportTime').textContent = '기간별 보고서는 GA4 속성 시간대를 따르며, 오늘의 수치는 집계가 늦을 수 있습니다.';
-  $('realtimeError').textContent = '';
   $('reportError').textContent = '';
 }
 
@@ -60,14 +69,13 @@ function disconnect(text = '연결을 해제했습니다. 다시 연결하면 �
   clearTimeout(timer);
   clearTimeout(expiryTimer);
   busy = false;
-  lastReport = 0;
   $('privateData').hidden = true;
   $('disconnect').hidden = true;
   $('connect').hidden = false;
   $('connect').disabled = false;
   $('refresh').disabled = false;
   $('refresh').textContent = '새로고침';
-  $('realtimeSection').removeAttribute('aria-busy');
+  $('reportSection').removeAttribute('aria-busy');
   emptyPanels();
   $('authTitle').textContent = 'Google 계정으로 통계 연결';
   connection('연결 전');
@@ -94,7 +102,8 @@ function googleLibrary() {
   return googleLoading;
 }
 
-function table(target, data, heading, metric) {
+// 목록 표. columns는 숫자 열 이름들, 각 항목의 cells가 그 열에 들어갈 글자다(없으면 value)
+function table(target, data, heading, columns) {
   target.replaceChildren();
   if (!data.length) {
     const empty = document.createElement('p');
@@ -103,19 +112,20 @@ function table(target, data, heading, metric) {
     target.append(empty);
     return;
   }
+  const labels = [].concat(columns);
   const element = document.createElement('table');
   element.className = 'admin-table';
   const caption = document.createElement('caption');
   caption.className = 'kj-sr';
-  caption.textContent = heading + ' · ' + metric;
+  caption.textContent = [heading, ...labels].join(' · ');
   element.append(caption);
   const head = element.createTHead().insertRow();
-  for (const label of [heading, metric]) {
+  for (const label of [heading, ...labels]) {
     const th = document.createElement('th');
     th.scope = 'col'; th.textContent = label; head.append(th);
   }
   const body = element.createTBody();
-  // 막대 길이는 목록의 가장 큰 값 대비 비율. 값은 오른쪽 숫자 열이 그대로 읽힌다
+  // 막대 길이는 목록의 가장 큰 value 대비 비율. 값은 오른쪽 숫자 열이 그대로 읽힌다
   const max = Math.max(1, ...data.map((entry) => entry.value));
   for (const entry of data) {
     const row = body.insertRow();
@@ -127,9 +137,24 @@ function table(target, data, heading, metric) {
     meter.setAttribute('aria-hidden', 'true');
     meter.style.setProperty('--w', Math.max(2, entry.value / max * 100) + '%');
     name.append(label, meter);
-    row.insertCell().textContent = number(entry.value);
+    for (const cell of entry.cells || [number(entry.value)]) row.insertCell().textContent = cell;
   }
   target.append(element);
+}
+
+// 섹션 이벤트를 섹션마다 읽은 사람·평균 체류·총 체류로 묶는다. 막대와 순서는 총 체류 시간 기준
+function sectionStats(data) {
+  const by = {};
+  for (const item of data) {
+    const match = /^(section|dwell)_(.+)$/.exec(item.label);
+    if (!match) continue;
+    const entry = by[match[2]] ||= { readers: 0, seconds: 0, dwellers: 0 };
+    if (match[1] === 'section') entry.readers = item.metrics[0];
+    else { entry.dwellers = item.metrics[0]; entry.seconds = item.metrics[2]; }
+  }
+  return Object.entries(by)
+    .map(([id, entry]) => ({ label: SECTION_NAMES[id] || id, value: entry.seconds, readers: entry.readers, cells: [number(entry.readers), duration(perUser(entry.seconds, entry.dwellers)), duration(entry.seconds)] }))
+    .sort((a, b) => b.value - a.value || b.readers - a.readers);
 }
 
 // 기간 추이: 날짜(오늘은 시간)별 활성 사용자 막대. 조회수는 막대에 올리면 함께 보인다
@@ -156,11 +181,11 @@ function trend(data, hourly) {
     const bar = document.createElement('div');
     bar.className = 'admin-bar';
     bar.style.height = Math.max(2, point.users / max * 100) + '%';
-    bar.title = `${point.text} · 활성 사용자 ${number(point.users)}명 · 조회수 ${number(point.views)}`;
+    bar.title = `${point.text} · 방문자 ${number(point.users)}명 · 조회수 ${number(point.views)}`;
     if (!point.users) bar.dataset.zero = '';
     box.append(bar);
   }
-  box.setAttribute('aria-label', '활성 사용자 추이: ' + points.map((point) => `${point.text} ${point.users}명`).join(', '));
+  box.setAttribute('aria-label', '방문자 추이: ' + points.map((point) => `${point.text} ${point.users}명`).join(', '));
   const peak = points.reduce((a, b) => (b.users > a.users ? b : a));
   for (const text of [points[0].text, '최고 ' + peak.text + ' · ' + number(peak.users) + '명', points.at(-1).text]) {
     const span = document.createElement('span');
@@ -169,57 +194,37 @@ function trend(data, hourly) {
   }
 }
 
-function chart(data) {
-  const counts = Array(30).fill(0);
-  for (const item of data) {
-    const minute = Number(item.label);
-    if (Number.isInteger(minute) && minute >= 0 && minute < 30) counts[29 - minute] = item.value;
-  }
-  const max = Math.max(1, ...counts);
-  $('minuteChart').replaceChildren();
-  counts.forEach((value, index) => {
-    const bar = document.createElement('div');
-    bar.className = 'admin-bar';
-    bar.style.height = Math.max(2, value / max * 100) + '%';
-    bar.title = `${29 - index}분 전 · 이벤트 ${number(value)}건`;
-    if (!value) bar.dataset.zero = '';
-    $('minuteChart').append(bar);
-  });
-  $('minuteChart').setAttribute('aria-label', '분당 이벤트: ' + counts.map((count, index) => `${29 - index}분 전 ${count}건`).join(', '));
-}
-
-function renderRealtime(reports) {
-  const totals = values(reports[0]);
-  $('liveUsers').textContent = number(totals[0] || 0);
-  $('liveViews').textContent = number(totals[1] || 0);
-  $('eventTotal').textContent = '총 ' + number(totals[2] || 0) + '건';
-  chart(rows(reports[1]));
-  table($('livePages'), rows(reports[2]), '페이지 제목', '활성 사용자');
-  const labels = { desktop: '데스크톱', mobile: '모바일', tablet: '태블릿' };
-  table($('devices'), rows(reports[3]).map((item) => ({ ...item, label: labels[item.label] || item.label })), '기기', '활성 사용자');
-  table($('liveSections'), sectionRows(rows(reports[4])), '섹션', '활성 사용자');
-  table($('cities'), placeRows(rows(reports[5])), '도시', '활성 사용자');
-  $('realtimeTime').textContent = clock() + ' 갱신';
-}
-
 function renderReports(reports, periodLabel) {
-  const totals = values(reports[0]);
-  for (const [index, id] of ['reportUsers', 'reportViews', 'reportSessions'].entries()) $(id).textContent = number(totals[index] || 0);
-  table($('topPages'), rows(reports[1]), '페이지 경로', '조회수');
-  table($('channels'), rows(reports[2]), '채널', '세션');
-  trend(rows(reports[3]), $('period').value === 'today');
-  table($('sections'), sectionRows(rows(reports[4])), '섹션', '읽은 사용자');
-  table($('regions'), placeRows(rows(reports[5])), '지역', '활성 사용자');
-  $('reportTime').textContent = `${periodLabel} · ${reports[0].metadata?.timeZone || 'GA4 속성 시간대'} 기준 · ${clock()} 조회 · 오늘의 수치는 집계가 늦을 수 있습니다.`;
+  const [summary, today, week, trendReport, sections, pages, channels, regions, devices] = reports;
+  const totals = values(summary);
+  $('reportUsers').textContent = number(totals[0] || 0);
+  $('reportViews').textContent = number(totals[1] || 0);
+  $('reportSessions').textContent = number(totals[2] || 0);
+  $('reportTimeAvg').textContent = duration(perUser(totals[3], totals[0]));
+  for (const [key, report] of [['today', today], ['week', week]]) {
+    const [users = 0, seconds = 0, views = 0] = values(report);
+    $(key + 'Users').textContent = number(users);
+    $(key + 'Time').textContent = duration(perUser(seconds, users));
+    $(key + 'Note').textContent = NOTES[key].replace('고유 사용자', '조회수 ' + number(views));
+  }
+  trend(rows(trendReport), $('period').value === 'today');
+  table($('sections'), sectionStats(rows(sections)), '섹션', ['읽은 사람', '1인 평균', '총 체류']);
+  table($('topPages'), rows(pages).map((item) => ({ ...item, cells: [number(item.value), duration(perUser(item.metrics[2], item.metrics[1]))] })), '페이지 경로', ['조회수', '1인 평균']);
+  table($('channels'), rows(channels), '채널', '세션');
+  table($('regions'), placeRows(rows(regions)), '지역', '방문자');
+  const deviceNames = { desktop: '데스크톱', mobile: '모바일', tablet: '태블릿' };
+  table($('devices'), rows(devices).map((item) => ({ ...item, label: deviceNames[item.label] || item.label })), '기기', '방문자');
+  $('reportClock').textContent = clock() + ' 갱신';
+  $('reportTime').textContent = `${periodLabel} · ${summary.metadata?.timeZone || 'GA4 속성 시간대'} 기준 · 오늘의 수치는 집계가 늦을 수 있습니다.`;
 }
 
 function schedule() {
   clearTimeout(timer);
   if (!token || paused || document.hidden) return;
-  timer = setTimeout(() => refresh(), CONFIG.refreshMs);
+  timer = setTimeout(() => refresh(), CONFIG.reportRefreshMs);
 }
 
-async function refresh(forceReports = false) {
+async function refresh() {
   if (!token || busy || document.hidden) return;
   if (Date.now() >= expiry) return disconnect('인증이 만료되었습니다. Google 계정으로 다시 연결해 주세요.');
   const currentEpoch = epoch;
@@ -228,37 +233,26 @@ async function refresh(forceReports = false) {
   busy = true;
   $('refresh').disabled = true;
   $('refresh').textContent = '불러오는 중…';
-  $('realtimeSection').setAttribute('aria-busy', 'true');
+  $('reportSection').setAttribute('aria-busy', 'true');
   connection('갱신 중');
   const period = $('period').value;
   const label = $('period').selectedOptions[0].textContent;
-  const needsReport = forceReports || Date.now() - lastReport >= CONFIG.reportRefreshMs;
-  const apply = async (load, render, errorId) => {
-    try {
-      const data = await load();
-      if (currentEpoch !== epoch) return;
-      render(data);
-      $(errorId).textContent = '';
-    } catch (error) {
-      if (currentEpoch !== epoch) return;
-      if (error.status === 401 || error.status === 403) return disconnect(explain(error));
-      if (error.status === 429) paused = true;
-      $(errorId).textContent = explain(error) + ' 표시된 기존 수치는 마지막 조회 결과입니다.';
-    }
-  };
-  const jobs = [apply(() => loadRealtime(token, signal), renderRealtime, 'realtimeError')];
-  if (needsReport) jobs.push(apply(() => loadReports(token, period, signal), (data) => {
+  try {
+    const data = await loadReports(token, period, signal);
+    if (currentEpoch !== epoch) return;
     renderReports(data, label);
-    lastReport = Date.now();
-  }, 'reportError'));
-  await Promise.all(jobs);
-  if (currentEpoch !== epoch) return;
+    $('reportError').textContent = '';
+  } catch (error) {
+    if (currentEpoch !== epoch) return;
+    if (error.status === 401 || error.status === 403) return disconnect(explain(error));
+    if (error.status === 429) paused = true;
+    $('reportError').textContent = explain(error) + ' 표시된 기존 수치는 마지막 조회 결과입니다.';
+  }
   busy = false;
   $('refresh').disabled = false;
   $('refresh').textContent = '새로고침';
-  $('realtimeSection').removeAttribute('aria-busy');
-  const degraded = $('realtimeError').textContent || $('reportError').textContent;
-  connection(degraded ? '일부 조회 실패' : '연결됨 · 자동 갱신');
+  $('reportSection').removeAttribute('aria-busy');
+  connection($('reportError').textContent ? '조회 실패' : '연결됨 · 자동 갱신');
   schedule();
 }
 
@@ -308,7 +302,7 @@ function authorize() {
       paused = false;
       $('authTitle').textContent = 'Google 통계 연결됨';
       message('대한민국 조간의 통계를 조회합니다. 연결 해제 시 이 화면의 통계를 지웁니다.');
-      refresh(true);
+      refresh();
     }, error_callback: fail
   });
   try { client.requestAccessToken({ prompt: 'select_account' }); } catch { fail(); }
@@ -321,17 +315,16 @@ $('disconnect').addEventListener('click', () => {
   if (previousToken) window.google?.accounts?.oauth2.revoke(previousToken, () => {});
   $('connect').focus();
 });
-$('refresh').addEventListener('click', () => { paused = false; refresh(true); });
+$('refresh').addEventListener('click', () => { paused = false; refresh(); });
 $('period').addEventListener('change', () => {
   epoch += 1;
   controller?.abort();
   busy = false;
-  lastReport = 0;
-  for (const id of ['reportUsers', 'reportViews', 'reportSessions']) $(id).textContent = '—';
-  for (const id of ['topPages', 'channels', 'sections', 'regions', 'trendChart', 'trendAxis']) $(id).replaceChildren();
+  for (const id of ['reportUsers', 'reportViews', 'reportSessions', 'reportTimeAvg']) $(id).textContent = '—';
+  for (const id of ['topPages', 'channels', 'sections', 'regions', 'devices', 'trendChart', 'trendAxis']) $(id).replaceChildren();
   $('reportTime').textContent = '선택한 기간의 통계를 불러오고 있습니다.';
   paused = false;
-  refresh(true);
+  refresh();
 });
 $('configForm').addEventListener('submit', (event) => {
   event.preventDefault();
