@@ -41,19 +41,69 @@ function trackLoad(ok, duration) {
   if (GA && window.gtag) window.gtag('event', ok ? 'app_ready' : 'app_load_error', { duration_ms: duration });
 }
 
-// 섹션을 실제로 읽었는지 GA4에 section_<id>로 한 번씩 남긴다. 화면 가운데 띠를 지나야 읽은 것으로 본다
-// 이벤트 이름에 섹션을 담아 GA4 맞춤 측정기준을 따로 등록하지 않아도 관리자 화면에서 섹션별로 센다
+// 섹션 읽기 측정. 이벤트 이름에 섹션을 담아 GA4 맞춤 측정기준 없이도 관리자 화면에서 섹션별로 센다
+// - section_<id>: 섹션을 읽은 사람. 메뉴로 들어오거나 화면 가운데에 3초 넘게 머물면 방문마다 한 번 보낸다
+// - dwell_<id>: 섹션에 머문 시간(초)을 value로 보낸다. 탭을 숨기거나 떠날 때 모아서 보낸다
+// 스크롤로 스쳐 지나간 섹션은 3초 문턱에서 걸러지고, 2분 넘게 아무 조작이 없으면 시간을 더하지 않는다
+const READ_MS = 3000;
+const IDLE_MS = 120000;
+const sectionsRead = new Set();
+function noteSection(id) {
+  if (!GA || !window.gtag || !id || sectionsRead.has(id)) return;
+  sectionsRead.add(id);
+  window.gtag('event', 'section_' + id, { issue_date: D ? D.date : '' });
+}
 function trackSections() {
   if (!GA || !('IntersectionObserver' in window)) return;
-  const seen = new Set();
-  const observer = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      const id = entry.target.id;
-      if (!entry.isIntersecting || seen.has(id)) continue;
-      seen.add(id);
-      observer.unobserve(entry.target);
-      window.gtag('event', 'section_' + id, { issue_date: D ? D.date : '' });
+  // spent는 아직 보내지 않은 시간, total은 이번 방문 전체 시간(3초 문턱 판단용). 단위는 ms
+  const spent = {};
+  const total = {};
+  let current = '';
+  let visible = !document.hidden;
+  let since = performance.now();
+  let active = since;
+  let timer = 0;
+  const settle = () => {
+    const now = performance.now();
+    const end = Math.min(now, active + IDLE_MS);
+    if (current && visible && end > since) {
+      spent[current] = (spent[current] || 0) + end - since;
+      total[current] = (total[current] || 0) + end - since;
+      if (total[current] >= READ_MS) noteSection(current);
     }
+    since = now;
+  };
+  const enter = (id) => {
+    settle();
+    current = id;
+    clearTimeout(timer);
+    // 조작 없이 머물러도 3초가 지나면 읽은 것으로 센다
+    if (id && !sectionsRead.has(id)) timer = setTimeout(settle, READ_MS + 50);
+  };
+  const flush = () => {
+    for (const [id, ms] of Object.entries(spent)) {
+      const seconds = Math.round(ms / 1000);
+      if (!seconds) continue;
+      spent[id] = 0;
+      window.gtag('event', 'dwell_' + id, { value: seconds, issue_date: D ? D.date : '', transport_type: 'beacon' });
+    }
+  };
+  // 화면 가운데 띠에 걸친 섹션을 지금 읽는 섹션으로 본다. 나간 섹션을 먼저 처리해 순서가 섞여도 맞게 바꾼다
+  const observer = new IntersectionObserver((entries) => {
+    entries.sort((a, b) => a.isIntersecting - b.isIntersecting).forEach((entry) => {
+      if (entry.isIntersecting) enter(entry.target.id);
+      else if (entry.target.id === current) enter('');
+    });
   }, { rootMargin: '-45% 0px -45% 0px' });
   SECTIONS.forEach(([id]) => { const el = document.getElementById(id); if (el) observer.observe(el); });
+  ['scroll', 'wheel', 'pointerdown', 'keydown', 'touchstart'].forEach((type) => window.addEventListener(type, () => {
+    settle();
+    active = performance.now();
+  }, { passive: true }));
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { settle(); visible = false; flush(); return; }
+    visible = true;
+    since = active = performance.now();
+  });
+  window.addEventListener('pagehide', () => { settle(); flush(); });
 }

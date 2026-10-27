@@ -144,6 +144,8 @@ function setupNav() {
     e.preventDefault();
     closeDrawer(false);
     $(a.dataset.sec).scrollIntoView({ block: 'start' });
+    // 메뉴로 고른 섹션은 머문 시간과 상관없이 읽은 섹션으로 센다
+    noteSection(a.dataset.sec);
   }));
   let current = '';
   let ticking = false;
