@@ -17,12 +17,12 @@
   <header class="kj-mast">
     <div class="kj-wrap admin-mast">
       <a href="/" class="admin-logo">대한민국 조간 <span>관리자</span></a>
-      <nav aria-label="관련 페이지"><a href="/">신문 보기 ↗</a><a href="https://analytics.google.com/analytics/web/#/a412742288p559927668/reports/realtime">GA4 열기 ↗</a></nav>
+      <nav aria-label="관련 페이지"><a href="/">신문 보기 ↗</a><a href="https://analytics.google.com/analytics/web/#/a412742288p559927668/reports/intelligenthome">GA4 열기 ↗</a></nav>
     </div>
   </header>
   <main id="main" class="kj-wrap admin-main">
     <div class="admin-title">
-      <div><p class="admin-eyebrow">운영 현황 / GOOGLE ANALYTICS 4</p><h1>지금, 조간을 읽는 사람들</h1><p class="admin-muted">최근 30분의 방문과 기간별 이용 흐름을 확인합니다.</p></div>
+      <div><p class="admin-eyebrow">운영 현황 / GOOGLE ANALYTICS 4</p><h1>조간을 읽는 사람들</h1><p class="admin-muted">오늘과 최근 7일의 방문자, 섹션마다 머문 시간을 확인합니다.</p></div>
       <p class="kj-badge kj-badge--muted" id="connection">연결 전</p>
     </div>
 
@@ -44,32 +44,34 @@
     <noscript><p class="admin-error">통계를 보려면 JavaScript를 사용 설정해 주세요. 위의 GA4 열기로도 확인할 수 있습니다.</p></noscript>
 
     <div id="privateData" hidden>
-      <section aria-labelledby="realtimeTitle" class="admin-section" id="realtimeSection">
-        <div class="admin-section-head"><div><p class="admin-eyebrow">01 / REALTIME</p><h2 id="realtimeTitle">최근 30분</h2></div><div class="admin-actions"><span class="admin-muted" id="realtimeTime">불러오기 전</span><button class="kj-btn kj-btn--secondary" type="button" id="refresh">새로고침</button></div></div>
-        <p class="admin-error" id="realtimeError" role="status"></p>
-        <div class="admin-realtime">
-          <div class="admin-stat admin-stat--lead"><span>활성 사용자</span><strong id="liveUsers">—</strong><small>30분 동안 방문한 고유 사용자</small></div>
-          <div class="admin-timeline"><div class="admin-timeline-head"><h3>분당 이벤트</h3><span class="admin-muted" id="eventTotal">—</span></div><div class="admin-bars" id="minuteChart" role="img" aria-label="통계를 불러오는 중"></div><div class="admin-axis"><span>29분 전</span><span>지금</span></div><p class="admin-muted">이벤트는 페이지 조회·스크롤 등 수집된 행동의 횟수입니다.</p></div>
-          <div class="admin-stat"><span>조회수</span><strong id="liveViews">—</strong><small>최근 30분 · 반복 조회 포함</small></div>
+      <section aria-labelledby="glanceTitle" class="admin-section" id="reportSection">
+        <div class="admin-section-head"><div><p class="admin-eyebrow">01 / OVERVIEW</p><h2 id="glanceTitle">오늘과 이번 주</h2></div><div class="admin-actions"><span class="admin-muted" id="reportClock">불러오기 전</span><button class="kj-btn kj-btn--secondary" type="button" id="refresh">새로고침</button></div></div>
+        <p id="reportError" class="admin-error" role="status"></p>
+        <div class="admin-kpis">
+          <div class="admin-stat admin-stat--lead"><span>오늘 방문자</span><strong id="todayUsers">—</strong><small id="todayNote">오늘 0시부터 · 고유 사용자</small></div>
+          <div class="admin-stat"><span>오늘 1인 평균 체류</span><strong id="todayTime">—</strong><small>화면을 실제로 보고 있던 시간</small></div>
+          <div class="admin-stat"><span>최근 7일 방문자</span><strong id="weekUsers">—</strong><small id="weekNote">오늘 포함 7일 · 고유 사용자</small></div>
+          <div class="admin-stat"><span>최근 7일 1인 평균 체류</span><strong id="weekTime">—</strong><small>화면을 실제로 보고 있던 시간</small></div>
         </div>
-        <div class="admin-grid">
-          <article class="admin-panel"><h3>지금 읽는 페이지</h3><p class="admin-muted">페이지 제목별 활성 사용자 · 최근 30분</p><div id="livePages"></div></article>
-          <article class="admin-panel"><h3>접속 기기</h3><p class="admin-muted">기기별 활성 사용자 · 최근 30분</p><div id="devices"></div></article>
-        </div>
-        <div class="admin-grid">
-          <article class="admin-panel"><h3>지금 보는 섹션</h3><p class="admin-muted">섹션을 읽은 활성 사용자 · 최근 30분</p><div id="liveSections"></div></article>
-          <article class="admin-panel"><h3>어디에서 보고 있나요</h3><p class="admin-muted">도시별 활성 사용자 · 최근 30분 · IP 기반 추정</p><div id="cities"></div></article>
-        </div>
-        <p class="admin-muted">화면이 열려 있을 때 60초마다 갱신합니다. GA4 실시간 집계에는 수집 지연이 있을 수 있습니다.</p>
       </section>
 
-      <section aria-labelledby="reportTitle" class="admin-section" id="reportSection">
+      <section aria-labelledby="reportTitle" class="admin-section">
         <div class="admin-section-head"><div><p class="admin-eyebrow">02 / REPORT</p><h2 id="reportTitle">이용 흐름</h2></div><label class="admin-period" for="period">기간 <select id="period"><option value="today">오늘</option><option value="7daysAgo" selected>최근 7일</option><option value="28daysAgo">최근 28일</option></select></label></div>
-        <p class="admin-muted" id="reportTime">기간별 보고서는 GA4 속성 시간대를 따르며, 오늘의 수치는 집계가 늦을 수 있습니다.</p><p id="reportError" class="admin-error" role="status"></p>
-        <div class="admin-summary"><div class="admin-stat"><span>활성 사용자</span><strong id="reportUsers">—</strong></div><div class="admin-stat"><span>조회수</span><strong id="reportViews">—</strong></div><div class="admin-stat"><span>세션</span><strong id="reportSessions">—</strong></div></div>
-        <article class="admin-panel admin-trend"><h3>활성 사용자 추이</h3><p class="admin-muted">선택한 기간 · 오늘은 시간별, 그 밖은 날짜별 · 막대에 올리면 조회수도 보입니다</p><div class="admin-bars admin-bars--trend" id="trendChart" role="img" aria-label="통계를 불러오는 중"></div><div class="admin-axis" id="trendAxis"></div></article>
-        <div class="admin-grid"><article class="admin-panel"><h3>많이 읽은 섹션</h3><p class="admin-muted">섹션을 읽은 사용자 · 선택한 기간 · 화면 가운데를 지난 섹션만 셉니다</p><div id="sections"></div></article><article class="admin-panel"><h3>어느 지역에서 읽나요</h3><p class="admin-muted">시·도별 활성 사용자 · 선택한 기간 · IP 기반 추정</p><div id="regions"></div></article></div>
-        <div class="admin-grid"><article class="admin-panel"><h3>많이 읽은 페이지</h3><p class="admin-muted">페이지 경로별 조회수 · 선택한 기간</p><div id="topPages"></div></article><article class="admin-panel"><h3>어디에서 왔나요</h3><p class="admin-muted">기본 채널 그룹별 세션 · 선택한 기간</p><div id="channels"></div></article></div>
+        <p class="admin-muted" id="reportTime">기간별 보고서는 GA4 속성 시간대를 따르며, 오늘의 수치는 집계가 늦을 수 있습니다.</p>
+        <div class="admin-summary"><div class="admin-stat"><span>방문자</span><strong id="reportUsers">—</strong></div><div class="admin-stat"><span>조회수</span><strong id="reportViews">—</strong></div><div class="admin-stat"><span>세션</span><strong id="reportSessions">—</strong></div><div class="admin-stat"><span>1인 평균 체류</span><strong id="reportTimeAvg">—</strong></div></div>
+        <div class="admin-grid admin-grid--wide">
+          <article class="admin-panel"><h3>방문자 추이</h3><p class="admin-muted">오늘은 시간별, 그 밖은 날짜별 · 막대에 올리면 조회수도 보입니다</p><div class="admin-bars admin-bars--trend" id="trendChart" role="img" aria-label="통계를 불러오는 중"></div><div class="admin-axis" id="trendAxis"></div></article>
+          <article class="admin-panel"><h3>접속 기기</h3><p class="admin-muted">기기별 방문자</p><div id="devices"></div></article>
+        </div>
+        <div class="admin-grid admin-grid--wide">
+          <article class="admin-panel"><h3>섹션별 체류</h3><p class="admin-muted">메뉴로 들어오거나 3초 넘게 머문 섹션을 셉니다 · 2분 넘게 조작이 없으면 시간을 더하지 않습니다</p><div id="sections"></div></article>
+          <article class="admin-panel"><h3>어느 지역에서 읽나요</h3><p class="admin-muted">시·도별 방문자 · IP 기반 추정</p><div id="regions"></div></article>
+        </div>
+        <div class="admin-grid admin-grid--wide">
+          <article class="admin-panel"><h3>많이 읽은 페이지</h3><p class="admin-muted">페이지 경로별 조회수와 1인 평균 체류</p><div id="topPages"></div></article>
+          <article class="admin-panel"><h3>어디에서 왔나요</h3><p class="admin-muted">기본 채널 그룹별 세션</p><div id="channels"></div></article>
+        </div>
+        <p class="admin-muted">화면이 열려 있을 때 5분마다 갱신합니다. 체류 시간은 GA4 참여 시간(화면이 앞에 있던 시간) 기준입니다.</p>
       </section>
     </div>
 

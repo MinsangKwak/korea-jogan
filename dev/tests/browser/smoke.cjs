@@ -172,6 +172,25 @@ async function check(name, options, run) {
     await page.locator('#tform').evaluate((node) => node.requestSubmit());
     assert.ok((await page.locator('#tresult').innerText()).includes('맞는 주제가'));
   });
+  await check('섹션 읽기·체류 시간 측정', { width: 1280 }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    const events = (prefix) => page.evaluate((p) => window.dataLayer.filter((entry) => entry[0] === 'event' && String(entry[1]).startsWith(p)).map((entry) => [entry[1], entry[2] && entry[2].value]), prefix);
+    // 메뉴로 고른 섹션은 바로 한 번 세고, 지나쳐 간 섹션은 3초를 넘기지 않아 세지 않는다
+    await page.locator('a[data-sec="fiscal"]:visible').first().click();
+    await page.locator('a[data-sec="fiscal"]:visible').first().click();
+    assert.deepEqual(await events('section_'), [['section_fiscal', undefined]]);
+    await page.waitForTimeout(1600);
+    await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
+    const dwell = await events('dwell_');
+    assert.equal(dwell.length, 1, JSON.stringify(dwell));
+    assert.equal(dwell[0][0], 'dwell_fiscal');
+    assert.ok(dwell[0][1] >= 1 && dwell[0][1] <= 3, JSON.stringify(dwell));
+    // 숨긴 동안은 시간을 더하지 않아 다시 숨겨도 보낼 것이 없다
+    await page.waitForTimeout(1200);
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    assert.equal((await events('dwell_')).length, 1);
+  });
   await check('보조 숫자 오류가 본문에 영향 없음', { badLive: true }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
