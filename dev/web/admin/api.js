@@ -35,70 +35,53 @@ export async function request(url, { token, body, signal } = {}) {
   }
 }
 
-// 신문 화면이 섹션을 읽을 때 보내는 이벤트(section_<id>)만 고른다
-const sectionFilter = { filter: { fieldName: 'eventName', stringFilter: { matchType: 'BEGINS_WITH', value: 'section_' } } };
+// 신문 화면이 보내는 섹션 이벤트만 고른다. section_<id>는 읽은 사람, dwell_<id>는 머문 시간(초, value)
+const prefix = (value) => ({ filter: { fieldName: 'eventName', stringFilter: { matchType: 'BEGINS_WITH', value } } });
+const sectionFilter = { orGroup: { expressions: [prefix('section_'), prefix('dwell_')] } };
+const metric = (...names) => names.map((name) => ({ name }));
+const byFirst = (name) => ({ orderBys: [{ metric: { metricName: name }, desc: true }] });
 
-function realtime(dimensions, metrics, extra = {}) {
-  return {
-    dimensions: dimensions.map((name) => ({ name })),
-    metrics: metrics.map((name) => ({ name })),
-    minuteRanges: [{ startMinutesAgo: 29, endMinutesAgo: 0 }],
-    limit: '30', returnPropertyQuota: true,
-    ...(dimensions.length && dimensions[0] !== 'minutesAgo' ? { orderBys: [{ metric: { metricName: metrics[0] }, desc: true }] } : {}),
-    ...extra
-  };
-}
-
-export async function loadRealtime(token, signal) {
-  const endpoint = `https://analyticsdata.googleapis.com/v1beta/properties/${CONFIG.propertyId}:runRealtimeReport`;
-  // 전체 이용자 수는 내역을 더하지 않고 차원 없는 중복 제거 집계를 쓴다
-  const bodies = [
-    realtime([], ['activeUsers', 'screenPageViews', 'eventCount']),
-    realtime(['minutesAgo'], ['eventCount']),
-    realtime(['unifiedScreenName'], ['activeUsers']),
-    realtime(['deviceCategory'], ['activeUsers']),
-    realtime(['eventName'], ['activeUsers'], { dimensionFilter: sectionFilter }),
-    realtime(['city'], ['activeUsers'])
-  ];
-  const results = await Promise.allSettled(bodies.map((body) => request(endpoint, { token, signal, body })));
-  const failed = results.find((result) => result.status === 'rejected' && [401, 403].includes(result.reason.status)) || results.find((result) => result.status === 'rejected');
-  if (failed) throw failed.reason;
-  return results.map((result) => result.value);
-}
-
+// 기간 보고서와 '오늘·최근 7일' 고정 지표를 batchRunReports 두 번으로 받는다(한 번에 5개까지)
 export async function loadReports(token, period, signal) {
   const startDate = { today: 'today', '7daysAgo': '6daysAgo', '28daysAgo': '27daysAgo' }[period];
   if (!startDate) throw new ApiError(400, 'INVALID_PERIOD');
-  const common = {
-    dateRanges: [{ startDate, endDate: 'today' }],
-    dimensionFilter: { filter: { fieldName: 'hostName', stringFilter: { matchType: 'EXACT', value: CONFIG.hostname } } },
-    returnPropertyQuota: true
-  };
-  const base = `https://analyticsdata.googleapis.com/v1beta/properties/${CONFIG.propertyId}`;
+  const host = { filter: { fieldName: 'hostName', stringFilter: { matchType: 'EXACT', value: CONFIG.hostname } } };
+  const range = (from) => ({ dateRanges: [{ startDate: from, endDate: 'today' }], dimensionFilter: host, returnPropertyQuota: true });
+  const common = range(startDate);
   // 오늘은 시간대별, 그 밖의 기간은 날짜별로 추이를 그린다
   const step = period === 'today' ? 'dateHour' : 'date';
-  const both = { andGroup: { expressions: [common.dimensionFilter, sectionFilter] } };
-  // batchRunReports는 한 번에 보고서 5개까지 받으므로 지역 보고서는 따로 요청한다
-  const [data, region] = await Promise.all([
-    request(`${base}:batchRunReports`, { token, signal, body: { requests: [
-      { ...common, metrics: ['activeUsers', 'screenPageViews', 'sessions'].map((name) => ({ name })) },
-      { ...common, dimensions: [{ name: 'pagePath' }], metrics: [{ name: 'screenPageViews' }], orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }], limit: '10' },
-      { ...common, dimensions: [{ name: 'sessionDefaultChannelGroup' }], metrics: [{ name: 'sessions' }], orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: '10' },
-      { ...common, dimensions: [{ name: step }], metrics: [{ name: 'activeUsers' }, { name: 'screenPageViews' }], orderBys: [{ dimension: { dimensionName: step } }], limit: '200' },
-      { ...common, dimensionFilter: both, dimensions: [{ name: 'eventName' }], metrics: [{ name: 'totalUsers' }, { name: 'eventCount' }], orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }], limit: '20' }
-    ] } }),
-    request(`${base}:runReport`, { token, signal, body: { ...common, dimensions: [{ name: 'region' }], metrics: [{ name: 'activeUsers' }], orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }], limit: '10' } })
+  const glance = metric('activeUsers', 'userEngagementDuration', 'screenPageViews');
+  const url = `https://analyticsdata.googleapis.com/v1beta/properties/${CONFIG.propertyId}:batchRunReports`;
+  const batch = (requests) => request(url, { token, signal, body: { requests } });
+  const [main, more] = await Promise.all([
+    batch([
+      { ...common, metrics: metric('activeUsers', 'screenPageViews', 'sessions', 'userEngagementDuration') },
+      { ...range('today'), metrics: glance },
+      { ...range('6daysAgo'), metrics: glance },
+      { ...common, dimensions: [{ name: step }], metrics: metric('activeUsers', 'screenPageViews'), orderBys: [{ dimension: { dimensionName: step } }], limit: '200' },
+      { ...common, dimensionFilter: { andGroup: { expressions: [host, sectionFilter] } }, dimensions: [{ name: 'eventName' }], metrics: metric('totalUsers', 'eventCount', 'eventValue'), ...byFirst('totalUsers'), limit: '40' }
+    ]),
+    batch([
+      { ...common, dimensions: [{ name: 'pagePath' }], metrics: metric('screenPageViews', 'activeUsers', 'userEngagementDuration'), ...byFirst('screenPageViews'), limit: '10' },
+      { ...common, dimensions: [{ name: 'sessionDefaultChannelGroup' }], metrics: metric('sessions'), ...byFirst('sessions'), limit: '10' },
+      { ...common, dimensions: [{ name: 'region' }], metrics: metric('activeUsers'), ...byFirst('activeUsers'), limit: '10' },
+      { ...common, dimensions: [{ name: 'deviceCategory' }], metrics: metric('activeUsers'), ...byFirst('activeUsers'), limit: '10' }
+    ])
   ]);
-  if (!Array.isArray(data.reports) || data.reports.length !== 5) throw new ApiError(502, 'INVALID_RESPONSE');
-  return [...data.reports, region];
+  if (main.reports?.length !== 5 || more.reports?.length !== 4) throw new ApiError(502, 'INVALID_RESPONSE');
+  return [...main.reports, ...more.reports];
 }
 
 export function values(report) {
   return (report.rows?.[0]?.metricValues || []).map((value) => Number(value.value) || 0);
 }
 
+// 첫 지표는 value, 둘째는 second, 전체는 metrics로 돌려준다
 export function rows(report) {
-  return (report.rows || []).map((row) => ({ label: row.dimensionValues?.[0]?.value || '(not set)', value: Number(row.metricValues?.[0]?.value) || 0, second: Number(row.metricValues?.[1]?.value) || 0 }));
+  return (report.rows || []).map((row) => {
+    const metrics = (row.metricValues || []).map((item) => Number(item.value) || 0);
+    return { label: row.dimensionValues?.[0]?.value || '(not set)', value: metrics[0] || 0, second: metrics[1] || 0, metrics };
+  });
 }
 
 export function explain(error) {

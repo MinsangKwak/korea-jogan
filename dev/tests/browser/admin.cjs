@@ -22,7 +22,20 @@ const gis = `window.google={accounts:{oauth2:{initTokenClient(options){return {r
 const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json' };
 let browser;
 let count = 0;
-const report = (metrics, dimensions = []) => ({ rows: [{ metricValues: metrics.map((value) => ({ value: String(value) })), dimensionValues: dimensions.map((value) => ({ value })) }], metadata: { timeZone: 'Asia/Seoul' } });
+const row = (metrics, dimension) => ({ metricValues: metrics.map((value) => ({ value: String(value) })), dimensionValues: dimension === undefined ? [] : [{ value: dimension }] });
+const report = (metrics, dimension) => ({ rows: [row(metrics, dimension)], metadata: { timeZone: 'Asia/Seoul' } });
+// 요청한 차원·기간에 맞춰 GA4 응답을 흉내 낸다
+function fake(item) {
+  const dimension = item.dimensions?.[0]?.name;
+  if (!dimension) return item.dateRanges[0].startDate === 'today' ? report([4, 480, 8]) : item.metrics.length === 4 ? report([12, 39, 15, 1800]) : report([12, 2160, 39]);
+  if (dimension === 'date') return { rows: ['20261019', '20261020', '20261021'].map((date, index) => row([index + 2, index * 3], date)) };
+  if (dimension === 'eventName') return { rows: [row([7, 7, 0], 'section_media'), row([5, 9, 600], 'dwell_media'), row([2, 2, 0], 'section_fiscal'), row([2, 2, 90], 'dwell_fiscal')] };
+  if (dimension === 'pagePath') return report([22, 10, 1200], '<img src=x onerror=alert(1)> 조간');
+  if (dimension === 'sessionDefaultChannelGroup') return report([10], 'Organic Search');
+  if (dimension === 'region') return report([5], 'Busan');
+  if (dimension === 'deviceCategory') return report([4], 'mobile');
+  throw new Error('예상하지 못한 보고서: ' + dimension);
+}
 
 async function fixture(options = {}) {
   const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, colorScheme: options.dark ? 'dark' : 'light', reducedMotion: 'reduce' });
@@ -50,12 +63,8 @@ async function fixture(options = {}) {
         return route.fulfill({ status, json: { error: { status: status === 403 ? 'PERMISSION_DENIED' : 'ERROR', ...(options.disabledApi ? { details: [{ reason: 'SERVICE_DISABLED' }] } : {}) } } });
       }
       const body = route.request().postDataJSON();
-      const trend = { rows: ['20261019', '20261020', '20261021'].map((date, index) => ({ dimensionValues: [{ value: date }], metricValues: [{ value: String(index + 2) }, { value: String(index * 3) }] })) };
-      if (url.pathname.endsWith(':batchRunReports')) return route.fulfill({ json: { reports: state.empty ? [{}, {}, {}, {}, {}] : [report([12, 39, 15]), report([22], ['/2026-10-23']), report([10], ['Organic Search']), trend, report([7], ['section_media'])] } });
-      if (state.empty) return route.fulfill({ json: {} });
-      const dimension = body.dimensions[0]?.name;
-      const json = !dimension ? report([4, 8, 18]) : dimension === 'minutesAgo' ? report([18], ['0']) : dimension === 'deviceCategory' ? report([4], ['mobile']) : dimension === 'eventName' ? report([3], ['section_regions']) : dimension === 'city' ? report([2], ['Seoul']) : dimension === 'region' ? report([5], ['Busan']) : report([4], ['<img src=x onerror=alert(1)> 조간']);
-      return route.fulfill({ json });
+      assert.ok(url.pathname.endsWith(':batchRunReports'));
+      return route.fulfill({ json: { reports: body.requests.map((item) => (state.empty ? {} : fake(item))) } });
     }
     if (url.hostname !== 'jogan.test') return route.abort();
     if (options.publishFailed && url.pathname === '/data/issues/index.json') return route.fulfill({ status: 404, body: '' });
@@ -110,49 +119,56 @@ async function check(name, options, fn) {
     await page.locator('#configForm button').click();
     await connect(page);
     await settled(page);
-    assert.equal(await page.locator('#liveUsers').innerText(), '4');
+    assert.equal(await page.locator('#todayUsers').innerText(), '4');
   });
   for (const width of [320, 390, 768, 1440]) {
     await check('통계·토큰 비저장·전체 폭 ' + width, { width, dark: width === 768 }, async ({ page, requests }) => {
       await connect(page); await settled(page);
-      assert.equal(await page.locator('#liveUsers').innerText(), '4');
-      assert.equal(await page.locator('#liveViews').innerText(), '8');
+      assert.equal(await page.locator('#todayUsers').innerText(), '4');
+      assert.equal(await page.locator('#todayTime').innerText(), '2분');
+      assert.equal(await page.locator('#weekUsers').innerText(), '12');
+      assert.equal(await page.locator('#weekTime').innerText(), '3분');
       assert.equal(await page.locator('#reportUsers').innerText(), '12');
-      assert.equal(await page.locator('#minuteChart .admin-bar').count(), 30);
-      assert.ok((await page.locator('#livePages').innerText()).includes('<img src=x onerror=alert(1)>'));
-      assert.equal(await page.locator('#livePages img').count(), 0);
+      assert.equal(await page.locator('#reportTimeAvg').innerText(), '2분 30초');
+      assert.ok((await page.locator('#topPages').innerText()).includes('<img src=x onerror=alert(1)>'));
+      assert.equal(await page.locator('#topPages img').count(), 0);
       const data = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage }, width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
       assert.deepEqual(data.local, { [storageKey]: clientId });
       assert.deepEqual(data.session, {});
       assert.ok(data.scroll <= data.width, JSON.stringify(data));
-      assert.equal(requests.length, 8);
+      assert.equal(requests.length, 2);
       assert.equal(await page.locator('#trendChart .admin-bar').count(), 3);
       assert.ok((await page.locator('#trendAxis').innerText()).includes('최고 10/21'));
-      assert.ok((await page.locator('#sections').innerText()).includes('언론'));
-      assert.ok((await page.locator('#liveSections').innerText()).includes('지역'));
+      // 섹션은 총 체류 시간 순서로, 읽은 사람·1인 평균·총 체류를 함께 보인다
+      const sectionRows = await page.locator('#sections tbody tr').allInnerTexts();
+      assert.equal(sectionRows.length, 2);
+      assert.match(sectionRows[0], /언론\s+7\s+2분\s+10분/);
+      assert.match(sectionRows[1], /재정\s+2\s+45초\s+1분 30초/);
       assert.ok((await page.locator('#regions').innerText()).includes('부산'));
-      assert.ok((await page.locator('#cities').innerText()).includes('서울'));
-      const sectionRequest = requests.find((item) => item.postDataJSON()?.requests?.[4]).postDataJSON().requests[4];
-      assert.equal(sectionRequest.dimensionFilter.andGroup.expressions[1].filter.stringFilter.value, 'section_');
-      const batch = requests.find((item) => item.url().endsWith(':batchRunReports')).postDataJSON();
-      assert.equal(batch.requests[0].dateRanges[0].startDate, '6daysAgo');
-      assert.equal(batch.requests[0].dimensionFilter.filter.stringFilter.value, 'korea-jogan.com');
+      assert.ok((await page.locator('#devices').innerText()).includes('모바일'));
+      const batches = requests.map((item) => item.postDataJSON());
+      const main = batches.find((item) => item.requests.length === 5).requests;
+      assert.deepEqual(main[4].dimensionFilter.andGroup.expressions[1].orGroup.expressions.map((item) => item.filter.stringFilter.value), ['section_', 'dwell_']);
+      assert.deepEqual(main.slice(0, 3).map((item) => item.dateRanges[0].startDate), ['6daysAgo', 'today', '6daysAgo']);
+      assert.equal(main[0].dimensionFilter.filter.stringFilter.value, 'korea-jogan.com');
       if (process.env.SCREENSHOT_DIR && [390, 1440].includes(width)) {
         fs.mkdirSync(process.env.SCREENSHOT_DIR, { recursive: true });
         await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, 'admin-' + width + '.png'), fullPage: true });
       }
       await page.locator('#disconnect').click();
       assert.equal(await page.locator('#privateData').isVisible(), false);
-      assert.equal(await page.locator('#liveUsers').innerText(), '—');
-      assert.equal(await page.locator('#livePages').innerText(), '');
+      assert.equal(await page.locator('#todayUsers').innerText(), '—');
+      assert.equal(await page.locator('#topPages').innerText(), '');
       assert.equal(await page.evaluate(() => window.testRevoked), true);
       assert.equal(await page.locator('#connect').evaluate((element) => element === document.activeElement), true);
     });
   }
   await check('0명과 빈 목록을 정상 데이터로 표시', { empty: true }, async ({ page }) => {
     await connect(page); await settled(page);
-    assert.equal(await page.locator('#liveUsers').innerText(), '0');
-    assert.ok((await page.locator('#livePages').innerText()).includes('데이터가 없습니다'));
+    assert.equal(await page.locator('#todayUsers').innerText(), '0');
+    assert.equal(await page.locator('#todayTime').innerText(), '—');
+    assert.ok((await page.locator('#topPages').innerText()).includes('데이터가 없습니다'));
+    assert.ok((await page.locator('#sections').innerText()).includes('데이터가 없습니다'));
   });
   for (const status of [401, 403, 429, 500]) {
     await check('Google API ' + status + ' 처리', { error: status }, async ({ page }) => {
@@ -161,8 +177,8 @@ async function check(name, options, fn) {
         assert.equal(await page.locator('#privateData').isVisible(), false);
         assert.ok((await page.locator('#authMessage').innerText()).includes(status === 401 ? '만료' : '권한'));
       } else {
-        assert.ok((await page.locator('#realtimeError').innerText()).includes(status === 429 ? '한도' : '불러오지 못했습니다'));
-        assert.equal(await page.locator('#liveUsers').innerText(), '—');
+        assert.ok((await page.locator('#reportError').innerText()).includes(status === 429 ? '한도' : '불러오지 못했습니다'));
+        assert.equal(await page.locator('#todayUsers').innerText(), '—');
       }
     });
   }
@@ -172,11 +188,11 @@ async function check(name, options, fn) {
   });
   await check('조회 도중 권한 회수 시 이전 통계 제거', {}, async ({ page, state }) => {
     await connect(page); await settled(page);
-    assert.equal(await page.locator('#liveUsers').innerText(), '4');
+    assert.equal(await page.locator('#todayUsers').innerText(), '4');
     state.error = 403;
     await page.locator('#refresh').click(); await settled(page);
     assert.equal(await page.locator('#privateData').isVisible(), false);
-    assert.equal(await page.locator('#liveUsers').innerText(), '—');
+    assert.equal(await page.locator('#todayUsers').innerText(), '—');
     assert.equal(await page.locator('#topPages').innerText(), '');
   });
   await check('팝업 종료·동의 거절 후 재시도', {}, async ({ page }) => {
@@ -188,9 +204,9 @@ async function check(name, options, fn) {
       assert.equal(await page.locator('#privateData').isVisible(), false);
     }
     await connect(page); await settled(page);
-    assert.equal(await page.locator('#liveUsers').innerText(), '4');
+    assert.equal(await page.locator('#todayUsers').innerText(), '4');
   });
-  await check('기간 변경·중복 클릭 방지·부분 실패와 재시도', {}, async ({ page, requests, state }) => {
+  await check('기간 변경·중복 클릭 방지·조회 실패와 재시도', {}, async ({ page, requests, state }) => {
     await connect(page); await settled(page);
     state.delay = true;
     await page.locator('#period').selectOption('28daysAgo');
@@ -201,7 +217,7 @@ async function check(name, options, fn) {
     assert.equal(batches.at(-1).postDataJSON().requests[0].dateRanges[0].startDate, '27daysAgo');
     state.batchError = true;
     await page.locator('#refresh').click(); await settled(page);
-    assert.equal(await page.locator('#liveUsers').innerText(), '4');
+    assert.equal(await page.locator('#reportUsers').innerText(), '12');
     assert.ok((await page.locator('#reportError').innerText()).includes('마지막 조회 결과'));
     state.batchError = false;
     await page.locator('#refresh').click(); await settled(page);
@@ -214,21 +230,23 @@ async function check(name, options, fn) {
     await page.locator('#disconnect').click();
     await page.waitForTimeout(400);
     assert.equal(await page.locator('#privateData').isVisible(), false);
-    assert.equal(await page.locator('#liveUsers').innerText(), '—');
+    assert.equal(await page.locator('#todayUsers').innerText(), '—');
     assert.equal(await page.locator('#connection').innerText(), '연결 전');
   });
-  await check('60초 갱신·숨긴 탭 중지·5분 보고서 캐시', {}, async ({ page, requests }) => {
+  await check('5분 갱신·숨긴 탭 중지', {}, async ({ page, requests }) => {
     await page.clock.install();
     await connect(page); await settled(page);
     const firstCount = requests.length;
-    await page.clock.runFor(60010); await settled(page);
-    assert.equal(requests.length, firstCount + 6);
-    await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
     await page.clock.runFor(60010);
-    assert.equal(requests.length, firstCount + 6);
+    assert.equal(requests.length, firstCount);
+    await page.clock.runFor(240010); await settled(page);
+    assert.equal(requests.length, firstCount + 2);
+    await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
+    await page.clock.runFor(300010);
+    assert.equal(requests.length, firstCount + 2);
     await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
     await settled(page);
-    assert.equal(requests.length, firstCount + 12);
+    assert.equal(requests.length, firstCount + 4);
   });
   await check('12초 요청 중단 후 재시도', {}, async ({ page, state, requests }) => {
     await page.clock.install();
@@ -236,13 +254,13 @@ async function check(name, options, fn) {
     state.hang = true;
     await page.locator('#refresh').click();
     await page.waitForFunction(() => document.getElementById('refresh').disabled);
-    while (requests.length < 14) await page.waitForTimeout(10);
+    while (requests.length < 4) await page.waitForTimeout(10);
     await page.clock.runFor(12010); await settled(page);
-    assert.ok((await page.locator('#realtimeError').innerText()).includes('초과'));
-    assert.equal(await page.locator('#liveUsers').innerText(), '4');
+    assert.ok((await page.locator('#reportError').innerText()).includes('초과'));
+    assert.equal(await page.locator('#todayUsers').innerText(), '4');
     state.hang = false;
     await page.locator('#refresh').click(); await settled(page);
-    assert.equal(await page.locator('#realtimeError').innerText(), '');
+    assert.equal(await page.locator('#reportError').innerText(), '');
   });
   await check('인증 만료 시 수치 제거', {}, async ({ page }) => {
     await page.clock.install();
