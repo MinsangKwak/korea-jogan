@@ -22,6 +22,8 @@ let authPending = false;
 // 신문 화면의 섹션 id → 메뉴 이름. 이벤트 이름은 section_<id>로 들어온다
 const SECTION_NAMES = { home: '홈', media: '언론', national: '전국', regions: '지역', politics: '정치', economy: '경제', industry: '산업', fiscal: '재정' };
 const LIST_IDS = ['devices', 'topPages', 'channels', 'sections', 'regions'];
+// 오늘·최근 7일 칸의 기본 설명. 조회 뒤에는 '고유 사용자' 자리에 조회수가 들어간다
+const NOTES = { today: '오늘 0시부터 · 고유 사용자', week: '오늘 포함 7일 · 고유 사용자' };
 const STAT_IDS = ['todayUsers', 'todayTime', 'weekUsers', 'weekTime', 'reportUsers', 'reportViews', 'reportSessions', 'reportTimeAvg'];
 // GA4는 지역·도시 이름을 영어로 준다. 국내 시·도와 그 도시 이름만 한국어로 바꾸고 나머지는 그대로 둔다
 const PLACE_NAMES = {
@@ -49,6 +51,8 @@ function connection(text) { $('connection').textContent = text; }
 
 function emptyPanels() {
   for (const id of STAT_IDS) $(id).textContent = '—';
+  $('todayNote').textContent = NOTES.today;
+  $('weekNote').textContent = NOTES.week;
   for (const id of [...LIST_IDS, 'trendChart', 'trendAxis']) $(id).replaceChildren();
   $('trendChart').setAttribute('aria-label', '연결 전');
   $('reportClock').textContent = '불러오기 전';
@@ -201,7 +205,7 @@ function renderReports(reports, periodLabel) {
     const [users = 0, seconds = 0, views = 0] = values(report);
     $(key + 'Users').textContent = number(users);
     $(key + 'Time').textContent = duration(perUser(seconds, users));
-    $(key + 'Note').textContent = (key === 'today' ? '오늘 0시부터' : '오늘 포함 7일') + ' · 조회수 ' + number(views);
+    $(key + 'Note').textContent = NOTES[key].replace('고유 사용자', '조회수 ' + number(views));
   }
   trend(rows(trendReport), $('period').value === 'today');
   table($('sections'), sectionStats(rows(sections)), '섹션', ['읽은 사람', '1인 평균', '총 체류']);

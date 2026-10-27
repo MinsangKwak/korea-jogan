@@ -126,6 +126,7 @@ async function check(name, options, fn) {
       await connect(page); await settled(page);
       assert.equal(await page.locator('#todayUsers').innerText(), '4');
       assert.equal(await page.locator('#todayTime').innerText(), '2분');
+      assert.equal(await page.locator('#todayNote').innerText(), '오늘 0시부터 · 조회수 8');
       assert.equal(await page.locator('#weekUsers').innerText(), '12');
       assert.equal(await page.locator('#weekTime').innerText(), '3분');
       assert.equal(await page.locator('#reportUsers').innerText(), '12');
@@ -159,6 +160,8 @@ async function check(name, options, fn) {
       assert.equal(await page.locator('#privateData').isVisible(), false);
       assert.equal(await page.locator('#todayUsers').innerText(), '—');
       assert.equal(await page.locator('#topPages').innerText(), '');
+      assert.equal(await page.locator('#todayNote').innerText(), '오늘 0시부터 · 고유 사용자');
+      assert.equal(await page.locator('#weekNote').innerText(), '오늘 포함 7일 · 고유 사용자');
       assert.equal(await page.evaluate(() => window.testRevoked), true);
       assert.equal(await page.locator('#connect').evaluate((element) => element === document.activeElement), true);
     });
