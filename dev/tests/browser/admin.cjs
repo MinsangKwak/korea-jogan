@@ -4,6 +4,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const web = path.resolve(__dirname, '../../web');
+
+function publishedIndex() {
+  const issues = path.join(web, 'data/issues');
+  const index = JSON.parse(fs.readFileSync(path.join(issues, 'index.json'), 'utf8'));
+  const published = index.issues.filter((date) => JSON.parse(fs.readFileSync(path.join(issues, date + '.json'), 'utf8')).status === 'published');
+  return { ...index, latest: published[0], issues: published };
+}
 const clientId = '123456789-test.apps.googleusercontent.com';
 const storageKey = 'jogan.admin.oauth-client-id';
 const scope = 'https://www.googleapis.com/auth/analytics.readonly';
@@ -53,6 +60,8 @@ async function fixture(options = {}) {
     if (url.hostname !== 'jogan.test') return route.abort();
     if (options.publishFailed && url.pathname === '/data/issues/index.json') return route.fulfill({ status: 404, body: '' });
     // 배포용 기본 클라이언트 ID와 상관없이 미설정 상태부터 검사한다
+    // 배포본에는 공개된 호만 올라가므로, 아침 발행 전 dev의 초안은 색인에서 뺀다
+    if (url.pathname === '/data/issues/index.json') return route.fulfill({ json: publishedIndex() });
     if (url.pathname === '/admin/config.js') return route.fulfill({ body: fs.readFileSync(path.join(web, 'admin/config.js'), 'utf8').replace(/clientId: '[^']*'/, "clientId: ''"), contentType: mime['.js'] });
     let file = path.join(web, url.pathname.endsWith('/') ? url.pathname + 'index.html' : url.pathname);
     try { return await route.fulfill({ body: fs.readFileSync(file), contentType: mime[path.extname(file)] || 'application/octet-stream' }); }
