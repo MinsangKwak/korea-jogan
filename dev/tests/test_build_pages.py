@@ -91,6 +91,7 @@ class PagesTest(unittest.TestCase):
         page = (self.tmp / "dev" / "web" / f"{DATE}.html").read_text(encoding="utf-8")
         words = re.search(r'<meta name="keywords" content="([^"]*)">', page).group(1).split(", ")
         self.assertIn("10월 19일 뉴스", words)
+        self.assertIn("10월 19일 월요일 뉴스", words)
         self.assertLessEqual(len(words), build_pages.KEYWORD_MAX)
         self.assertEqual(len(words), len(set(words)))
         article = next(g for g in self.ld(page)["@graph"] if g["@type"] == "NewsArticle")
