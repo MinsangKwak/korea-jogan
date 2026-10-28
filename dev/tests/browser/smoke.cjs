@@ -100,7 +100,13 @@ async function check(name, options, run) {
     await page.goto('http://jogan.test/' + past);
     await ready(page);
     assert.equal(await page.locator('#issueDate').getAttribute('datetime'), past);
-    assert.equal(await page.locator('#archive a').count(), index.issues.length);
+    // 지난 호는 선택 상자로 고르고, 지금 보는 호가 미리 골라져 있다
+    assert.equal(await page.locator('#archSel option').count(), index.issues.length);
+    assert.equal(await page.locator('#archSel').inputValue(), past);
+    assert.match(await page.locator('#archSel option').first().innerText(), /^\d{4}\.\d{2}\.\d{2} \([일월화수목금토]\) · 최신$/);
+    await page.locator('#archSel').selectOption(index.issues[1]);
+    assert.equal(page.url(), 'http://jogan.test/' + past);
+    await Promise.all([page.waitForURL('http://jogan.test/' + index.issues[1]), page.locator('#archive button').click()]);
     assert.equal(await page.locator('#stale').isVisible(), true);
     assert.equal(await page.locator('#live').isVisible(), false);
   });
