@@ -6,16 +6,23 @@ function renderLimits() {
   collapse($('limits'), { noun: '개', name: '수집 한계', start: true });
 }
 
+// 지난 호는 선택 상자로 고르고 '이 호 보기'로 옮겨 간다
+// 고르기만 해도 바로 옮기면 키보드 화살표로 훑는 사이에 페이지가 바뀌어 버튼을 따로 둔다
 function renderArchive() {
-  const ul = $('archive');
+  const select = $('archSel');
+  const latest = INDEX ? INDEX.latest : D.date;
   const list = INDEX ? INDEX.issues : [D.date];
   list.forEach((d) => {
-    const li = el('li');
-    const a = el('a', { href: d === (INDEX && INDEX.latest) ? './' : d }, d.replace(/-/g, '.'));
-    if (d === D.date) a.setAttribute('aria-current', 'page');
-    a.addEventListener('click', () => track('archive', d));
-    li.append(a);
-    ul.append(li);
+    const day = '일월화수목금토'[parseDate(d).getUTCDay()];
+    const option = el('option', { value: d }, d.replace(/-/g, '.') + ' (' + day + ')' + (d === latest ? ' · 최신' : ''));
+    if (d === D.date) option.selected = true;
+    select.append(option);
+  });
+  $('archive').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const d = select.value;
+    track('archive', d);
+    location.href = d === latest ? './' : d;
   });
 }
 
