@@ -397,6 +397,13 @@ body.is-locked { overflow: hidden; }
 .kj-ai li + li { margin-top: var(--space-2); }
 .kj-ai__note { margin: var(--space-3) 0 0; font-size: 0.8rem; color: var(--ink-2); }
 
+/* 지난 호 선택 */
+.kj-archive { display: flex; flex-wrap: wrap; gap: var(--space-2); max-width: 28rem; margin-block: var(--space-3); }
+.kj-archive select {
+  flex: 1 1 9rem; min-width: 0; min-height: var(--tap-min); padding: 0 var(--space-4);
+  border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink);
+  font: inherit; font-variant-numeric: tabular-nums;
+}
 /* 검색 */
 .kj-search { display: flex; gap: var(--space-2); max-width: var(--measure); }
 .kj-search__field { position: relative; flex: 1; min-width: 0; }
