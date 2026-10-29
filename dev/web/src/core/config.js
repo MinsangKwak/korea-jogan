@@ -5,8 +5,8 @@ const DAY = 86400000;
 const REPO = 'https://github.com/MinsangKwak/korea-jogan';
 // [id, 이름, 전체 메뉴에 보일 한 줄 설명]
 const SECTIONS = [
-  ['home', '홈', '머리기사, 오늘 꼭 볼 숫자, 기준이 갈린 숫자'],
   ['media', '언론', '주제별 언론 보도와 매체마다 다른 숫자'],
+  ['home', '홈', '머리기사, 오늘 꼭 볼 숫자, 기준이 갈린 숫자'],
   ['national', '전국', '분야별 전국 뉴스와 오늘의 흐름'],
   ['regions', '지역', '17개 시도 소식'],
   ['politics', '정치', '임기, 선거·예산 D-Day, 이번 주 일정'],
@@ -17,8 +17,8 @@ const SECTIONS = [
 const MENU_ICON = 'M4 7h16M4 12h16M4 17h16';
 // 하단 탭바는 8개 분야를 5칸으로 묶는다. [이름, 묶은 섹션, 아이콘 경로]
 const TABS = [
-  ['홈', ['home'], 'M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z'],
   ['언론', ['media'], 'M5 5h14v14H5zM8 9h8M8 12h8M8 15h5'],
+  ['홈', ['home'], 'M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z'],
   ['전국·지역', ['national', 'regions'], 'M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM12 12.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'],
   ['정치', ['politics'], 'M4 20h16M6 17V10M10 17V10M14 17V10M18 17V10M3 10l9-6 9 6z'],
   ['경제·재정', ['economy', 'industry', 'fiscal'], 'M4 19h16M6 16V9M11 16V5M16 16v-5']

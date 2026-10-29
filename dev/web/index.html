@@ -159,6 +159,28 @@ window.kjLoadTimer = setTimeout(() => {
 <main id="main">
   <!-- kj:digest -->
   <!-- /kj:digest -->
+  <section class="kj-sec" id="media" aria-labelledby="mediaH">
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">언론</p>
+        <h2 id="mediaH">주제별 언론 보도</h2>
+        <p>주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
+        <p class="kj-sechead__meta" id="mediaMeta"></p>
+      </header>
+      <form class="kj-search" id="tform" novalidate role="search">
+        <label class="kj-sr" for="tq">주제·키워드 검색</label>
+        <div class="kj-search__field">
+          <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락, 호우 피해" autocomplete="off">
+          <button class="kj-search__clear" id="tclear" type="button" aria-label="검색어 지우기" hidden>×</button>
+        </div>
+        <button class="kj-btn" type="submit">찾기</button>
+      </form>
+      <p class="kj-search__hint">이 호에서 볼 수 있는 주제</p>
+      <div class="kj-chips tchips" id="tchips" role="group" aria-label="주제 선택"></div>
+      <div class="tresult" id="tresult" aria-live="polite"></div>
+    </div>
+  </section>
+
   <section class="hero" id="home" aria-labelledby="leadH">
     <div class="kj-wrap" id="loadError" hidden></div>
     <div class="kj-wrap hero-grid" id="heroGrid">
@@ -187,28 +209,6 @@ window.kjLoadTimer = setTimeout(() => {
         <p id="splitMeta"></p>
       </div>
       <div class="splits" id="splits"></div>
-    </div>
-  </section>
-
-  <section class="kj-sec" id="media" aria-labelledby="mediaH">
-    <div class="kj-wrap">
-      <header class="kj-sechead">
-        <p class="kj-label">언론</p>
-        <h2 id="mediaH">주제별 언론 보도</h2>
-        <p>주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
-        <p class="kj-sechead__meta" id="mediaMeta"></p>
-      </header>
-      <form class="kj-search" id="tform" novalidate role="search">
-        <label class="kj-sr" for="tq">주제·키워드 검색</label>
-        <div class="kj-search__field">
-          <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락, 호우 피해" autocomplete="off">
-          <button class="kj-search__clear" id="tclear" type="button" aria-label="검색어 지우기" hidden>×</button>
-        </div>
-        <button class="kj-btn" type="submit">찾기</button>
-      </form>
-      <p class="kj-search__hint">이 호에서 볼 수 있는 주제</p>
-      <div class="kj-chips tchips" id="tchips" role="group" aria-label="주제 선택"></div>
-      <div class="tresult" id="tresult" aria-live="polite"></div>
     </div>
   </section>
 

@@ -102,7 +102,7 @@ def keywords(issue: dict) -> list[str]:
 def sections(issue: dict) -> list[str]:
     """구조화 데이터의 articleSection. 그 호에 실제로 내용이 있는 섹션만 적는다."""
     has = [
-        ("머리기사", issue.get("lead")), ("언론 보도 비교", issue.get("themes")),
+        ("언론 보도 비교", issue.get("themes")), ("머리기사", issue.get("lead")),
         ("전국 뉴스", (issue.get("national") or {}).get("items")), ("지역 뉴스", (issue.get("regions") or {}).get("items")),
         ("경제 숫자", issue.get("nums")), ("산업·수출입", issue.get("trade") or issue.get("industries")),
         ("국가 재정", issue.get("fiscal") or issue.get("debt")),
