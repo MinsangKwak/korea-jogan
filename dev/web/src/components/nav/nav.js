@@ -160,7 +160,7 @@ function setupNav() {
     cats.classList.toggle('is-stuck', cats.getBoundingClientRect().top <= 0 && window.scrollY > 0);
     // 화면 위쪽 기준선을 지난 섹션 중 마지막 것을 지금 읽는 분야로 본다
     const line = window.matchMedia('(max-width: 860px)').matches ? 80 : 140;
-    let cur = 'home';
+    let cur = 'media';
     targets.forEach((t) => { if (!t.hidden && t.getBoundingClientRect().top <= line) cur = t.id; });
     if (cur === current) return;
     current = cur;
