@@ -39,6 +39,8 @@ class Site(unittest.TestCase):
         self.issues = self.tmp / "dev" / "web" / "data" / "issues"
         # 매일 새 호(초안 포함)가 쌓여도 시험 결과가 바뀌지 않게, 목록을 기준 호 하나로 고정한다
         (self.issues / "index.json").write_text(json.dumps({"latest": DATE, "issues": [DATE]}), encoding="utf-8")
+        # 정정 기록도 같은 이유로 비워 둔다. 실제 정정이 쌓여도 기준 호 하나만 보는 검사가 깨지지 않는다
+        (self.tmp / "dev" / "web" / "data" / "corrections.json").write_text(json.dumps({"items": []}), encoding="utf-8")
         self.saved = (validate.ROOT, validate.ISSUES, approve.ISSUES, build_feed.PUBLIC, build_feed.ISSUES)
         validate.ROOT, validate.ISSUES = self.tmp, self.issues
         approve.ISSUES = self.issues
