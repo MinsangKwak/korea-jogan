@@ -81,7 +81,7 @@ function renderNotice() {
     // 06시를 넘겨 모은 호는 띠를 남겨 늦게 수집한 이유와 자료 기준 시각을 알린다
     if (D.late && D.late.reason) {
       const cut = new Date(D.late.cutoff);
-      const cutText = Number.isNaN(cut.getTime()) ? '' : ' 자료는 ' + cut.toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' }) + '까지 보도된 것만 담았습니다. ';
+      const cutText = Number.isNaN(cut.getTime()) ? '' : ' 기본 자료 기준은 ' + cut.toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' }) + '입니다. ';
       box.append(el('strong', {}, '늦게 수집한 호입니다.'), document.createTextNode(' ' + D.late.reason + '.' + cutText), more);
       $('noticeBox').hidden = false;
       return;
