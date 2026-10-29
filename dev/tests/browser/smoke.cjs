@@ -189,10 +189,14 @@ async function check(name, options, run) {
       await page.locator('#tchips button', { hasText: withProgress.title.slice(0, 12) }).first().click();
       const bar = page.locator('.kj-prog__bar');
       assert.equal(await bar.getAttribute('role'), 'progressbar');
-      const now = Number(await bar.getAttribute('aria-valuenow'));
-      const max = Number(await bar.getAttribute('aria-valuemax'));
-      assert.ok(now > 0 && now <= max, now + '/' + max);
-      assert.equal(await page.locator('.kj-prog__steps li').count(), withProgress.progress.steps.length);
+      // 오늘이 아니라 그 호의 날짜로 세야 지난 호를 나중에 열어도 숫자가 그대로다
+      const day = 86400000;
+      const between = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / day);
+      const p = withProgress.progress;
+      assert.equal(Number(await bar.getAttribute('aria-valuemax')), between(p.start, p.end) + 1);
+      assert.equal(Number(await bar.getAttribute('aria-valuenow')), between(p.start, latest.date) + 1);
+      assert.equal(await page.locator('.kj-prog__big strong').innerText(), String(between(p.since, latest.date)));
+      assert.equal(await page.locator('.kj-prog__steps li').count(), p.steps.length);
       const width = await page.locator('.kj-prog__bar > span').evaluate((e) => e.style.width);
       assert.match(width, /^\d+%$/);
     }

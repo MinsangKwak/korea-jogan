@@ -29,14 +29,13 @@ function renderThemeChips() {
 // 오래 끄는 사안은 진행 막대로 어디까지 왔는지 보인다. progress를 적은 주제에만 그린다
 // 날짜 계산은 한국 시간 기준이고, 끝난 기한을 넘겨도 막대는 100%에서 멈춘다
 function renderProgress(p) {
-  const days = (a, b) => Math.round((b - a) / DAY);
-  const today = parseDate(todayKST());
+  // 그 호를 낸 날로 센다. 오늘 날짜로 세면 지난 호를 나중에 열 때 본문과 숫자가 어긋난다
   // 기간은 시작일과 마지막 날을 모두 센다. '수사 90일'과 같은 말과 수를 맞춘다
-  const span = Math.max(1, days(parseDate(p.start), parseDate(p.end)) + 1);
-  const gone = Math.min(span, Math.max(0, days(parseDate(p.start), today) + 1));
+  const span = Math.max(1, daysBetween(parseDate(p.start), parseDate(p.end)) + 1);
+  const gone = Math.min(span, Math.max(0, daysBetween(parseDate(p.start), ISSUE) + 1));
   const left = span - gone;
   const pct = Math.round(gone / span * 100);
-  const since = days(parseDate(p.since), today);
+  const since = daysBetween(parseDate(p.since), ISSUE);
 
   const box = el('aside', { class: 'kj-prog', 'aria-labelledby': 'progH' });
   box.append(el('h4', { id: 'progH' }, p.label));
