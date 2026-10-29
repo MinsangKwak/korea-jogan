@@ -51,7 +51,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .kj-chips:not(.kj-chips--scroll) .kj-chip { max-width: 100%; white-space: normal; overflow-wrap: anywhere; padding-block: var(--space-2); }
 .kj-chip:hover { border-color: var(--ink); }
 .kj-chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 700; }
-.kj-chip .kj-count { font-size: 0.8rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.kj-chip .kj-count { font-size: 0.8rem; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; overflow-wrap: normal; }
 .kj-chip[aria-pressed="true"] .kj-count { color: inherit; opacity: 0.8; }
 
 /* 배지 */
@@ -397,6 +397,22 @@ body.is-locked { overflow: hidden; }
 .kj-ai li + li { margin-top: var(--space-2); }
 .kj-ai__note { margin: var(--space-3) 0 0; font-size: 0.8rem; color: var(--ink-2); }
 
+/* 오래 끄는 사안의 진행 막대. 넓은 화면에서는 AI 요약 오른쪽에 선다 */
+.kj-themetop { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+.kj-prog { min-width: 0; border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-sm); padding: var(--space-5); background: var(--surface); }
+.kj-prog h4 { margin: 0; font-size: 0.95rem; }
+.kj-prog__big { margin: var(--space-2) 0 0; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kj-prog__big strong { font-size: 2.6rem; font-weight: 900; letter-spacing: -0.04em; color: var(--brand); }
+.kj-prog__since { margin: var(--space-1) 0 var(--space-4); color: var(--ink-2); font-size: 0.85rem; }
+.kj-prog__bar { height: 10px; border-radius: var(--radius-pill); background: var(--line); overflow: hidden; }
+.kj-prog__bar > span { display: block; height: 100%; background: var(--brand); border-radius: var(--radius-pill); }
+.kj-prog__meta { margin: var(--space-2) 0 0; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.kj-prog__steps { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-2); }
+.kj-prog__steps li { display: grid; grid-template-columns: 4.6rem minmax(0, 1fr); gap: var(--space-2); font-size: 0.85rem; }
+.kj-prog__steps b { color: var(--ink-3); font-weight: 500; font-variant-numeric: tabular-nums; }
+.kj-prog__next { margin: var(--space-4) 0 0; font-size: 0.85rem; font-weight: 700; }
+.kj-prog__note { margin: var(--space-2) 0 0; color: var(--ink-3); font-size: 0.8rem; }
+
 /* 지난 호 선택 */
 .kj-archive { display: flex; flex-wrap: wrap; gap: var(--space-2); max-width: 28rem; margin-block: var(--space-3); }
 .kj-archive select {
@@ -576,6 +592,7 @@ body.is-locked { overflow: hidden; }
 @media (max-width: 860px) {
   .kj-wrap { width: 100%; min-width: 0; }
   .hero-grid > *, .two > *, .three > *, .reg > *, .links > *, .kj-panel { min-width: 0; }
+  .kj-themetop { grid-template-columns: minmax(0, 1fr); }
   .kj-chips--scroll { flex-wrap: wrap; overflow: visible; }
   .kj-chip, .kj-rtile, .kj-badge { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
   .kj-chip, .kj-rtile { padding-block: var(--space-2); }

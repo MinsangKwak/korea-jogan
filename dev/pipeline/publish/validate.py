@@ -93,7 +93,9 @@ def check_structure(issue: object, name: str) -> list[str]:
     kv = record({"k": text, "v": text})
     article = record({"title": text, "outlet": text, "url": text, "date": article_date})
     diff = record({"q": text, "a": text, "cols": array(text, 1), "rows": array(array(text, 1), 1)})
-    theme = record({"id": text, "title": text, "period": text, "summary": array(text, 1), "keywords": array(text, 1), "articles": array(article, 1), "diffs?": array(diff)})
+    step = record({"d": date, "t": text})
+    progress = record({"label": text, "since": date, "sinceLabel": text, "start": date, "end": date, "steps": array(step, 1), "next": text, "note": text})
+    theme = record({"id": text, "title": text, "period": text, "summary": array(text, 1), "keywords": array(text, 1), "articles": array(article, 1), "diffs?": array(diff), "progress?": progress})
     news = record({"title": text, "outlet": text, "url": text, "date": date, "summary": text, "cat": text, "figures?": array(text)})
     obj(issue, "issue", {
         "date": date,

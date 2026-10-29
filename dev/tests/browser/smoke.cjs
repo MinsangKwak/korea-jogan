@@ -178,6 +178,30 @@ async function check(name, options, run) {
     await page.locator('#tform').evaluate((node) => node.requestSubmit());
     assert.ok((await page.locator('#tresult').innerText()).includes('맞는 주제가'));
   });
+  await check('언론 섹션이 맨 위·진행 막대', { width: 1280 }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    const order = await page.evaluate(() => [...document.querySelectorAll('main > section')].map((s) => s.id));
+    assert.deepEqual(order.slice(0, 3), ['media', 'home', 'national']);
+    // 진행 막대는 progress를 적은 주제에만 그린다
+    const withProgress = latest.themes.find((t) => t.progress);
+    if (withProgress) {
+      await page.locator('#tchips button', { hasText: withProgress.title.slice(0, 12) }).first().click();
+      const bar = page.locator('.kj-prog__bar');
+      assert.equal(await bar.getAttribute('role'), 'progressbar');
+      const now = Number(await bar.getAttribute('aria-valuenow'));
+      const max = Number(await bar.getAttribute('aria-valuemax'));
+      assert.ok(now > 0 && now <= max, now + '/' + max);
+      assert.equal(await page.locator('.kj-prog__steps li').count(), withProgress.progress.steps.length);
+      const width = await page.locator('.kj-prog__bar > span').evaluate((e) => e.style.width);
+      assert.match(width, /^\d+%$/);
+    }
+    const plain = latest.themes.find((t) => !t.progress);
+    if (plain) {
+      await page.locator('#tchips button', { hasText: plain.title.slice(0, 12) }).first().click();
+      assert.equal(await page.locator('.kj-prog').count(), 0);
+    }
+  });
   await check('섹션 읽기·체류 시간 측정', { width: 1280 }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
