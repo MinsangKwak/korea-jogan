@@ -5,11 +5,11 @@ const DAY = 86400000;
 const REPO = 'https://github.com/MinsangKwak/korea-jogan';
 // [id, 이름, 전체 메뉴에 보일 한 줄 설명]
 const SECTIONS = [
-  ['media', '언론', '주제별 언론 보도와 매체마다 다른 숫자'],
   ['home', '홈', '머리기사, 오늘 꼭 볼 숫자, 기준이 갈린 숫자'],
   ['track', '추적', '결론이 날 때까지 보는 사안의 타임라인'],
   ['national', '전국', '분야별 전국 뉴스와 오늘의 흐름'],
   ['regions', '지역', '17개 시도 소식'],
+  ['media', '언론', '주제별 언론 보도와 매체마다 다른 숫자'],
   ['politics', '정치', '임기, 선거·예산 D-Day, 이번 주 일정'],
   ['economy', '경제', '증시·환율·유가 핵심 숫자'],
   ['industry', '산업', '주력산업과 수출입'],

@@ -19,6 +19,20 @@ function renderLead() {
     li.append(el('span', { class: 't' }, f.t), el('span', { class: 'v' }, f.v), el('span', { class: 'm' }, f.m));
     $('leadFacts').append(li);
   });
+  const related = el('div', { class: 'news-related' });
+  related.append(el('h2', {}, '함께 읽을 주제'));
+  D.themes.slice(0, 2).forEach((theme) => {
+    const a = el('a', { href: '#media' });
+    a.append(el('small', {}, '주제별 보도'), el('h3', {}, theme.title));
+    a.addEventListener('click', (event) => {
+      event.preventDefault();
+      setQuery('');
+      showTheme(theme.id);
+      $('media').scrollIntoView({ block: 'start' });
+    });
+    related.append(a);
+  });
+  document.querySelector('.briefs-box').prepend(related);
   D.briefs.forEach((b) => {
     const li = el('li');
     const a = el('a', { href: b.href });

@@ -86,7 +86,7 @@ window.kjLoadTimer = setTimeout(() => {
 <meta name="jg-ga4" content="G-RNLCEWH9M6">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&display=swap" media="print" onload="this.media='all'">
 <!-- 디자인 시스템: 토큰(design/tokens.json에서 생성)과 kj- 컴포넌트 -->
 <link rel="stylesheet" href="src/styles/tokens.css">
 <link rel="stylesheet" href="src/styles/kj.css">
@@ -101,8 +101,9 @@ window.kjLoadTimer = setTimeout(() => {
 <link rel="stylesheet" href="src/components/industry/industry.css">
 <link rel="stylesheet" href="src/components/footer/footer.css">
 <link rel="stylesheet" href="src/components/nav/nav.css">
+<link rel="stylesheet" href="src/styles/editorial.css">
 </head>
-<body class="has-tabbar">
+<body class="has-tabbar news-edition">
 <a class="skip" href="#main">본문으로 건너뛰기</a>
 
 <header id="top">
@@ -117,7 +118,9 @@ window.kjLoadTimer = setTimeout(() => {
       <span class="kj-mast__actions">
         <button class="kj-sizebtn kj-iconbtn" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="kj-iconbtn__lbl" id="shareLbl">공유</span></button>
         <button class="kj-sizebtn kj-iconbtn" id="bigBtn" type="button" aria-pressed="false"><b aria-hidden="true">가</b><span class="kj-iconbtn__lbl">글자 크게</span></button>
+
       </span>
+    <button class="kj-menubtn" id="menuBtn" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>전체 메뉴</button>
     </div>
   </div>
   <div class="kj-notice kj-notice--stale" id="stale" role="status" hidden>
@@ -134,14 +137,18 @@ window.kjLoadTimer = setTimeout(() => {
   </section>
 </header>
 
+<div class="news-sticky">
 <nav class="kj-cats" id="cats" aria-label="분야">
   <div class="kj-wrap kj-cats__in">
     <a class="kj-cats__logo" href="#top">대한민국 조간</a>
-    <ul id="catNav"></ul>
-    <button class="kj-menubtn" id="menuBtn" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>전체 메뉴</button>
+    <ul id="catNav"></ul><button id="trackingReopen" type="button" hidden aria-haspopup="dialog" aria-controls="trackingDialog">추적</button>
+
   </div>
 </nav>
 
+<div class="tracking-bar" id="trackingBar" hidden><div class="kj-wrap"><button id="trackingExpand" type="button" aria-haspopup="dialog" aria-controls="trackingDialog">이슈 추적</button><span>끝까지 확인합니다</span><button id="trackingHide" type="button" aria-label="이슈 추적 막대 숨기기">×</button></div></div>
+</div>
+<dialog id="trackingDialog" aria-labelledby="trackingTitle"><header><h2 id="trackingTitle">끝까지 확인할 이슈</h2><button type="button" id="trackingClose" aria-label="이슈 추적 닫기">×</button></header><div id="trackingContent"></div></dialog>
 <nav class="kj-rail" id="rail" aria-labelledby="railH">
   <p class="kj-rail__title" id="railH">바로가기</p>
   <ol id="railNav"></ol>
@@ -159,28 +166,6 @@ window.kjLoadTimer = setTimeout(() => {
 <main id="main">
   <!-- kj:digest -->
   <!-- /kj:digest -->
-  <section class="kj-sec" id="media" aria-labelledby="mediaH">
-    <div class="kj-wrap">
-      <header class="kj-sechead">
-        <p class="kj-label">언론</p>
-        <h2 id="mediaH">주제별 언론 보도</h2>
-        <p>주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
-        <p class="kj-sechead__meta" id="mediaMeta"></p>
-      </header>
-      <form class="kj-search" id="tform" novalidate role="search">
-        <label class="kj-sr" for="tq">주제·키워드 검색</label>
-        <div class="kj-search__field">
-          <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락, 호우 피해" autocomplete="off">
-          <button class="kj-search__clear" id="tclear" type="button" aria-label="검색어 지우기" hidden>×</button>
-        </div>
-        <button class="kj-btn" type="submit">찾기</button>
-      </form>
-      <p class="kj-search__hint">이 호에서 볼 수 있는 주제</p>
-      <div class="kj-chips tchips" id="tchips" role="group" aria-label="주제 선택"></div>
-      <div class="tresult" id="tresult" aria-live="polite"></div>
-    </div>
-  </section>
-
   <section class="hero" id="home" aria-labelledby="leadH">
     <div class="kj-wrap" id="loadError" hidden></div>
     <div class="kj-wrap hero-grid" id="heroGrid">
@@ -203,24 +188,13 @@ window.kjLoadTimer = setTimeout(() => {
         <ol class="kj-briefs" id="briefs"></ol>
       </aside>
     </div>
+    <div class="kj-wrap"><div id="quickNums" class="news-quick" aria-label="오늘의 주요 경제 지표"></div></div>
     <div class="kj-wrap split" id="splitBox" hidden>
       <div class="split-head">
         <h2 id="splitH">오늘 기준이 갈린 숫자</h2>
         <p id="splitMeta"></p>
       </div>
       <div class="splits" id="splits"></div>
-    </div>
-  </section>
-
-  <section class="kj-sec" id="track" aria-labelledby="trackH" hidden>
-    <div class="kj-wrap">
-      <header class="kj-sechead">
-        <p class="kj-label">추적</p>
-        <h2 id="trackH">끝까지 보는 사안</h2>
-        <p>한 번 싣고 끝내지 않고, 결론이 날 때까지 같은 자리에서 진행 상황을 남깁니다.</p>
-        <p class="kj-sechead__meta" id="trackMeta"></p>
-      </header>
-      <div id="trackList"></div>
     </div>
   </section>
 
@@ -250,6 +224,28 @@ window.kjLoadTimer = setTimeout(() => {
         <div class="kj-tmap" id="tmap" role="group" aria-label="시도 선택"></div>
         <div class="rlist" id="rlist" aria-live="polite"></div>
       </div>
+    </div>
+  </section>
+
+  <section class="kj-sec" id="media" aria-labelledby="mediaH">
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">언론</p>
+        <h2 id="mediaH">주제별 언론 보도</h2>
+        <p>주제나 키워드로 찾으면 위에는 AI 요약을, 아래에는 언론사별 기사 링크를 보여 줍니다.</p>
+        <p class="kj-sechead__meta" id="mediaMeta"></p>
+      </header>
+      <form class="kj-search" id="tform" novalidate role="search">
+        <label class="kj-sr" for="tq">주제·키워드 검색</label>
+        <div class="kj-search__field">
+          <input id="tq" type="search" placeholder="예: 우리나라 재정 현황, 코스피 급락, 호우 피해" autocomplete="off">
+          <button class="kj-search__clear" id="tclear" type="button" aria-label="검색어 지우기" hidden>×</button>
+        </div>
+        <button class="kj-btn" type="submit">찾기</button>
+      </form>
+      <p class="kj-search__hint">이 호에서 볼 수 있는 주제</p>
+      <div class="kj-chips tchips" id="tchips" role="group" aria-label="주제 선택"></div>
+      <div class="tresult" id="tresult" aria-live="polite"></div>
     </div>
   </section>
 
@@ -347,6 +343,18 @@ window.kjLoadTimer = setTimeout(() => {
       </div>
     </div>
   </section>
+  <section class="kj-sec" id="track" aria-labelledby="trackH" hidden>
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">추적</p>
+        <h2 id="trackH">끝까지 보는 사안</h2>
+        <p>한 번 싣고 끝내지 않고, 결론이 날 때까지 같은 자리에서 진행 상황을 남깁니다.</p>
+        <p class="kj-sechead__meta" id="trackMeta"></p>
+      </header>
+      <div id="trackList"></div>
+    </div>
+  </section>
+
 </main>
 
 <footer class="kj-foot" id="foot">

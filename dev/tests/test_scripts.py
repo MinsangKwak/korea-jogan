@@ -56,6 +56,19 @@ class Site(unittest.TestCase):
         fn(issue)
         path.write_text(json.dumps(issue, ensure_ascii=False), encoding="utf-8")
 
+    def test_tracker_unknown_period_and_phase_validation(self):
+        path = self.tmp / "dev/web/data/trackers.json"
+        data = json.loads(path.read_text())
+        item = data["items"][-1]
+        self.assertTrue(item["periodUnknown"])
+        self.assertEqual(validate.check_trackers(), [])
+        item["end"] = "2027-03-22"
+        item["phaseIndex"] = len(item["phases"])
+        path.write_text(json.dumps(data), encoding="utf-8")
+        errors = validate.check_trackers()
+        self.assertTrue(any("미확정 기간" in x for x in errors))
+        self.assertTrue(any("phaseIndex" in x for x in errors))
+
     def run_validate(self, *args):
         buf = io.StringIO()
         with redirect_stdout(buf):
