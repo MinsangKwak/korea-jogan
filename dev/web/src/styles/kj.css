@@ -397,6 +397,27 @@ body.is-locked { overflow: hidden; }
 .kj-ai li + li { margin-top: var(--space-2); }
 .kj-ai__note { margin: var(--space-3) 0 0; font-size: 0.8rem; color: var(--ink-2); }
 
+/* 추적: 타임라인과 진행 상황을 나란히 둔다 */
+.kj-track + .kj-track { margin-top: var(--space-8); border-top: 1px solid var(--line); padding-top: var(--space-6); }
+.kj-track__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); }
+.kj-track__head h3 { margin: 0; font-size: 1.15rem; }
+.kj-track__sum { margin: var(--space-2) 0 var(--space-6); max-width: var(--measure); }
+.kj-track__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 20rem); gap: var(--space-8); align-items: start; }
+.kj-timeline { list-style: none; margin: 0; padding: 0 0 0 var(--space-6); position: relative; }
+.kj-timeline::before { content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: var(--line); }
+.kj-timeline li { position: relative; padding-bottom: var(--space-5); }
+.kj-timeline li:last-child { padding-bottom: 0; }
+.kj-timeline li::before { content: ''; position: absolute; left: calc(-1 * var(--space-6) + 1px); top: 6px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--line-strong); background: var(--bg); }
+.kj-timeline li.is-done::before { background: var(--brand); border-color: var(--brand); }
+.kj-timeline b { display: block; color: var(--ink-3); font-size: 0.8rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.kj-timeline li.is-done b { color: var(--ink-2); }
+.kj-timeline span { display: block; font-size: 0.92rem; }
+.kj-track__side { min-width: 0; }
+.kj-track__linkh { margin: var(--space-5) 0 var(--space-2); font-size: 0.9rem; }
+.kj-track__links { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.kj-track__links b { display: flex; gap: var(--space-2); color: var(--ink-3); font-size: 0.8rem; font-weight: 500; }
+.kj-track__links a { display: block; font-size: 0.9rem; }
+
 /* 오래 끄는 사안의 진행 막대. 넓은 화면에서는 AI 요약 오른쪽에 선다 */
 .kj-themetop { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
 .kj-prog { min-width: 0; border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-sm); padding: var(--space-5); background: var(--surface); }
@@ -593,6 +614,7 @@ body.is-locked { overflow: hidden; }
   .kj-wrap { width: 100%; min-width: 0; }
   .hero-grid > *, .two > *, .three > *, .reg > *, .links > *, .kj-panel { min-width: 0; }
   .kj-themetop { grid-template-columns: minmax(0, 1fr); }
+  .kj-track__grid { grid-template-columns: minmax(0, 1fr); }
   .kj-chips--scroll { flex-wrap: wrap; overflow: visible; }
   .kj-chip, .kj-rtile, .kj-badge { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
   .kj-chip, .kj-rtile { padding-block: var(--space-2); }

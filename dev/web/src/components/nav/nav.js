@@ -36,6 +36,14 @@ function renderNav() {
   });
 }
 
+// 비어 있거나 지난 호라 감춘 섹션은 메뉴에서도 뺀다. 눌러도 아무 데도 가지 않는 링크를 남기지 않는다
+function toggleSectionNav(sid, shown) {
+  document.querySelectorAll('[data-sec="' + sid + '"]').forEach((a) => {
+    const li = a.closest('li');
+    if (li) li.hidden = !shown;
+  });
+}
+
 // 전체 메뉴에서 섹션 안의 항목(언론 주제, 전국 분야, 시도)으로 바로 간다
 function renderDrawerSubs() {
   const add = (sid, items) => {

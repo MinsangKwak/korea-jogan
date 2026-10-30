@@ -178,16 +178,40 @@ async function check(name, options, run) {
     await page.locator('#tform').evaluate((node) => node.requestSubmit());
     assert.ok((await page.locator('#tresult').innerText()).includes('맞는 주제가'));
   });
+  await check('추적 섹션 타임라인·지난 호에서는 숨김', { width: 1280 }, async (page) => {
+    const trackers = JSON.parse(fs.readFileSync(path.join(web, 'data/trackers.json'), 'utf8'));
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    await page.locator('#track:not([hidden])').waitFor();
+    assert.ok(await page.locator('[data-sec="track"]:visible').count() > 0);
+    const item = trackers.items[0];
+    assert.equal(await page.locator('#track .kj-timeline li').count(), item.steps.length);
+    assert.equal(await page.locator('#track .kj-timeline li.is-done').count(), item.steps.filter((s) => s.done).length);
+    // 날짜가 아직 없는 단계는 '예정'으로 적는다
+    assert.equal(await page.locator('#track .kj-timeline li:not(.is-done) b').first().innerText(), '예정');
+    assert.equal(await page.locator('.kj-track__links li a').count(), item.links.length);
+    const bar = page.locator('#track .kj-prog__bar');
+    assert.equal(await bar.getAttribute('role'), 'progressbar');
+    assert.ok(Number(await bar.getAttribute('aria-valuenow')) > 0);
+    // 지난 호는 그날의 기록이라 지금 상황을 덧붙이지 않는다
+    await page.goto('http://jogan.test/' + index.issues.at(-1));
+    await ready(page);
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator('#track').isHidden(), true);
+    // 감춘 섹션으로 가는 메뉴는 남기지 않는다
+    assert.equal(await page.locator('[data-sec="track"]:visible').count(), 0);
+  });
   await check('언론 섹션이 맨 위·진행 막대', { width: 1280 }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
     const order = await page.evaluate(() => [...document.querySelectorAll('main > section')].map((s) => s.id));
-    assert.deepEqual(order.slice(0, 3), ['media', 'home', 'national']);
+    assert.deepEqual(order.slice(0, 4), ['media', 'home', 'track', 'national']);
     // 진행 막대는 progress를 적은 주제에만 그린다
     const withProgress = latest.themes.find((t) => t.progress);
     if (withProgress) {
       await page.locator('#tchips button', { hasText: withProgress.title.slice(0, 12) }).first().click();
-      const bar = page.locator('.kj-prog__bar');
+      // 추적 섹션에도 같은 막대가 있어 언론 섹션 안으로 좁혀서 본다
+      const bar = page.locator('#tresult .kj-prog__bar');
       assert.equal(await bar.getAttribute('role'), 'progressbar');
       // 오늘이 아니라 그 호의 날짜로 세야 지난 호를 나중에 열어도 숫자가 그대로다
       const day = 86400000;
@@ -195,15 +219,15 @@ async function check(name, options, run) {
       const p = withProgress.progress;
       assert.equal(Number(await bar.getAttribute('aria-valuemax')), between(p.start, p.end) + 1);
       assert.equal(Number(await bar.getAttribute('aria-valuenow')), between(p.start, latest.date) + 1);
-      assert.equal(await page.locator('.kj-prog__big strong').innerText(), String(between(p.since, latest.date)));
-      assert.equal(await page.locator('.kj-prog__steps li').count(), p.steps.length);
-      const width = await page.locator('.kj-prog__bar > span').evaluate((e) => e.style.width);
+      assert.equal(await page.locator('#tresult .kj-prog__big strong').innerText(), String(between(p.since, latest.date)));
+      assert.equal(await page.locator('#tresult .kj-prog__steps li').count(), p.steps.length);
+      const width = await bar.locator('> span').evaluate((e) => e.style.width);
       assert.match(width, /^\d+%$/);
     }
     const plain = latest.themes.find((t) => !t.progress);
     if (plain) {
       await page.locator('#tchips button', { hasText: plain.title.slice(0, 12) }).first().click();
-      assert.equal(await page.locator('.kj-prog').count(), 0);
+      assert.equal(await page.locator('#tresult .kj-prog').count(), 0);
     }
   });
   await check('섹션 읽기·체류 시간 측정', { width: 1280 }, async (page) => {
