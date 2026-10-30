@@ -145,7 +145,7 @@ function setupToTop() {
 
 function setupNav() {
   const links = Array.from(document.querySelectorAll('[data-sec]'));
-  const targets = Array.from(document.querySelectorAll('main > section'));
+  const targets = Array.from(document.querySelectorAll('main > section')).filter((section) => SECTIONS.some(([id]) => id === section.id));
   const cats = $('cats');
   links.forEach((a) => a.addEventListener('click', (e) => {
     // 해시 이동 대신 직접 스크롤해 미리보기 틀 안에서도 확실히 움직이게 한다
