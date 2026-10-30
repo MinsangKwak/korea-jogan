@@ -4,8 +4,21 @@
 // 방문·행동 측정. jg-goatcounter·jg-ga4가 비어 있으면 그 도구로는 아무것도 보내지 않는다
 // GoatCounter는 쿠키를 쓰지 않고 개인을 식별하지 않는다. GA4는 쿠키(_ga)를 쓴다
 const metaContent = (name) => (document.querySelector('meta[name="' + name + '"]') || {}).content || '';
-const GC = metaContent('jg-goatcounter');
-const GA = /^G-[A-Z0-9]+$/.test(metaContent('jg-ga4')) ? metaContent('jg-ga4') : '';
+// 자동화 브라우저(배포 검증·CI)와 운영자 브라우저는 방문으로 세지 않는다
+// ?kj-internal=1 로 열면 그 브라우저를 내부로 표시하고, =0 이면 푼다. 관리자 화면을 연 브라우저도 내부로 표시한다
+const INTERNAL_KEY = 'kj-internal';
+function isInternal() {
+  if (navigator.webdriver) return true;
+  try {
+    const flag = new URLSearchParams(location.search).get(INTERNAL_KEY);
+    if (flag === '1') localStorage.setItem(INTERNAL_KEY, '1');
+    if (flag === '0') localStorage.removeItem(INTERNAL_KEY);
+    return localStorage.getItem(INTERNAL_KEY) === '1';
+  } catch { return false; }
+}
+const INTERNAL = isInternal();
+const GC = INTERNAL ? '' : metaContent('jg-goatcounter');
+const GA = !INTERNAL && /^G-[A-Z0-9]+$/.test(metaContent('jg-ga4')) ? metaContent('jg-ga4') : '';
 function addScript(src, data) {
   const sc = document.createElement('script');
   sc.async = true;

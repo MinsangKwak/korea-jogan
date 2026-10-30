@@ -22,6 +22,8 @@ let browser;
 let checks = 0;
 async function pageFor(options = {}) {
   const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, reducedMotion: 'reduce', colorScheme: options.dark ? 'dark' : 'light' });
+  // 측정은 자동화 브라우저에서 꺼지므로, 사람 브라우저처럼 보이게 한 뒤 시험한다. automation 옵션이면 그대로 둔다
+  if (!options.automation) await context.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -304,6 +306,23 @@ async function check(name, options, run) {
       await page.locator('#tchips button', { hasText: plain.title.slice(0, 12) }).first().click();
       assert.equal(await page.locator('#tresult .kj-prog').count(), 0);
     }
+  });
+  await check('자동화·내부 브라우저는 측정하지 않음', { automation: true }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    assert.equal(await page.evaluate(() => typeof window.dataLayer), 'undefined');
+    assert.equal(await page.evaluate(() => document.querySelector('script[src*="googletagmanager"]')), null);
+  });
+  await check('내부 표시 켜고 끄기', {}, async (page) => {
+    await page.goto('http://jogan.test/?kj-internal=1');
+    await ready(page);
+    assert.equal(await page.evaluate(() => typeof window.dataLayer), 'undefined');
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    assert.equal(await page.evaluate(() => typeof window.dataLayer), 'undefined');
+    await page.goto('http://jogan.test/?kj-internal=0');
+    await ready(page);
+    assert.equal(await page.evaluate(() => Array.isArray(window.dataLayer)), true);
   });
   await check('섹션 읽기·체류 시간 측정', { width: 1280 }, async (page) => {
     await page.goto('http://jogan.test/');

@@ -6,6 +6,8 @@ const number = (value) => new Intl.NumberFormat('ko-KR').format(value);
 const clock = (value = new Date()) => new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(value) + ' KST';
 const scope = 'https://www.googleapis.com/auth/analytics.readonly';
 const storageKey = 'jogan.admin.oauth-client-id';
+// 이 브라우저로 신문을 열어도 방문자로 세지 않게 표시한다. 운영자 접속이 통계에 섞이지 않는다
+try { localStorage.setItem('kj-internal', '1'); } catch {}
 let clientId = CONFIG.clientId;
 try { clientId ||= localStorage.getItem(storageKey) || ''; } catch {}
 let token = '';

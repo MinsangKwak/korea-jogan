@@ -134,7 +134,7 @@ async function check(name, options, fn) {
       assert.ok((await page.locator('#topPages').innerText()).includes('<img src=x onerror=alert(1)>'));
       assert.equal(await page.locator('#topPages img').count(), 0);
       const data = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage }, width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
-      assert.deepEqual(data.local, { [storageKey]: clientId });
+      assert.deepEqual(data.local, { [storageKey]: clientId, 'kj-internal': '1' });
       assert.deepEqual(data.session, {});
       assert.ok(data.scroll <= data.width, JSON.stringify(data));
       assert.equal(requests.length, 2);
