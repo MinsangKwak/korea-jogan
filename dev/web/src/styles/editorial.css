@@ -122,3 +122,13 @@
 .news-related a:hover h3 { text-decoration: underline; }
 .news-related small { font-size: 12px; color: var(--brand); }
 .news-related h3 { font-size: 21px; line-height: 1.6; margin: 6px 0 0; }
+/* 기존 세로 메뉴의 여백·높이 규칙을 신문 지면에서 해제한다 */
+.news-edition { --nav-h: 52px; }
+.news-edition .kj-wrap { padding-inline: max(var(--gutter), env(safe-area-inset-left, 0px)) max(var(--gutter), env(safe-area-inset-right, 0px)); }
+@media(max-width:900px) {
+  .news-edition #catNav li:has(a[data-sec='track']) { display: none; }
+  .news-edition #catNav li:has(a[data-sec='home']) { order: 0; }
+  .news-edition #catNav li:has(a[data-sec='media']) { order: 1; }
+  .news-edition #catNav li:has(a[data-sec='national']) { order: 2; }
+  .news-edition #catNav li:has(a[data-sec='economy']) { order: 3; }
+}
