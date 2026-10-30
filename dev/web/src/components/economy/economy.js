@@ -2,6 +2,11 @@
 // 경제: 핵심 숫자 카드와 최신 공식 숫자 띠
 
 function renderNums() {
+  D.nums.slice(0, 4).forEach((m) => {
+    const a = el('a', { href: '#economy' });
+    a.append(el('span', {}, m.k), el('b', {}, m.v), el('small', {}, m.d + ' · ' + m.ref));
+    $('quickNums').append(a);
+  });
   D.nums.forEach((m) => {
     const t = el('div', { class: 'kj-stat' });
     t.append(el('span', { class: 'kj-stat__k' }, m.k), el('span', { class: 'kj-stat__v' }, m.v));

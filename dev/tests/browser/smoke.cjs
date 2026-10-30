@@ -185,14 +185,31 @@ async function check(name, options, run) {
     await page.locator('#track:not([hidden])').waitFor();
     assert.ok(await page.locator('[data-sec="track"]:visible').count() > 0);
     const item = trackers.items[0];
-    assert.equal(await page.locator('#track .kj-timeline li').count(), item.steps.length);
-    assert.equal(await page.locator('#track .kj-timeline li.is-done').count(), item.steps.filter((s) => s.done).length);
+    assert.equal(await page.locator('#track .kj-track:first-child .kj-timeline li').count(), item.steps.length);
+    assert.equal(await page.locator('#track .kj-track:first-child .kj-timeline li.is-done').count(), item.steps.filter((s) => s.done).length);
     // 날짜가 아직 없는 단계는 '예정'으로 적는다
-    assert.equal(await page.locator('#track .kj-timeline li:not(.is-done) b').first().innerText(), '예정');
-    assert.equal(await page.locator('.kj-track__links li a').count(), item.links.length);
+    assert.equal(await page.locator('#track .kj-track:first-child .kj-timeline li:not(.is-done) b').first().innerText(), '예정');
+    assert.equal(await page.locator('#track .kj-track:first-child .kj-track__links li a').count(), item.links.length);
     const bar = page.locator('#track .kj-prog__bar');
     assert.equal(await bar.getAttribute('role'), 'progressbar');
     assert.ok(Number(await bar.getAttribute('aria-valuenow')) > 0);
+    const muan = page.locator('#issue-muan-airport');
+    assert.equal(await muan.locator('.tracking-articles tbody tr').count(), 4);
+    assert.equal(await muan.locator('[aria-current="step"]').innerText(), '전문 분석\n현재 확인');
+    assert.equal(await muan.locator('[role="progressbar"]').count(), 0);
+    await page.locator('#trackingExpand').click();
+    assert.equal(await page.locator('#trackingDialog').evaluate((d) => d.open), true);
+    await page.locator('#trackingContent details').last().locator('summary').click();
+    assert.equal(await page.locator('#trackingDialog .tracking-articles tbody tr').count(), 4);
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => document.activeElement.id === 'trackingExpand');
+    await page.locator('#trackingHide').click();
+    await page.reload();
+    await ready(page);
+    await page.locator('#trackingReopen:not([hidden])').waitFor();
+    assert.equal(await page.locator('#trackingBar').isHidden(), true);
+    await page.locator('#trackingReopen').click();
+    await page.locator('#trackingClose').click();
     // 지난 호는 그날의 기록이라 지금 상황을 덧붙이지 않는다
     await page.goto('http://jogan.test/' + index.issues.at(-1));
     await ready(page);
@@ -201,11 +218,31 @@ async function check(name, options, run) {
     // 감춘 섹션으로 가는 메뉴는 남기지 않는다
     assert.equal(await page.locator('[data-sec="track"]:visible').count(), 0);
   });
-  await check('언론 섹션이 맨 위·진행 막대', { width: 1280 }, async (page) => {
+  await check('모바일 추적 기사·큰 글자·스크롤 복귀', { width: 320 }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
+    await page.locator('#trackingExpand').waitFor();
+    await page.locator('#bigBtn').click();
+    await page.evaluate(() => window.scrollTo(0, 900));
+    const before = await page.evaluate(() => window.scrollY);
+    await page.locator('#trackingExpand').click();
+    await page.locator('#trackingContent details').last().locator('summary').click();
+    assert.equal(await page.locator('#trackingDialog').evaluate((d) => d.scrollWidth <= d.clientWidth + 1), true);
+    assert.equal(await page.locator('#trackingDialog table').count(), 1);
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.getElementById('trackingDialog').open);
+    assert.ok(Math.abs(await page.evaluate(() => window.scrollY) - before) < 2);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+  });
+  await check('머리기사 우선 배치·진행 막대', { width: 1280 }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    assert.ok(await page.locator('#catNav a').first().evaluate((a) => a.getBoundingClientRect().height >= 44));
+    const padding = await page.locator('#heroGrid').evaluate((e) => parseFloat(getComputedStyle(e).paddingRight));
+    assert.ok(padding <= 24);
+    await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="home"]').getAttribute('aria-current') === 'true');
     const order = await page.evaluate(() => [...document.querySelectorAll('main > section')].map((s) => s.id));
-    assert.deepEqual(order.slice(0, 4), ['media', 'home', 'track', 'national']);
+    assert.deepEqual(order.slice(0, 4), ['home', 'national', 'regions', 'media']);
     // 진행 막대는 progress를 적은 주제에만 그린다
     const withProgress = latest.themes.find((t) => t.progress);
     if (withProgress) {

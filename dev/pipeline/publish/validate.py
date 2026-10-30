@@ -271,9 +271,18 @@ def check_trackers() -> list[str]:
         missing = [k for k in TRACKER_KEYS if not str(item.get(k, "")).strip()]
         if missing:
             errors.append(f"{where} {', '.join(missing)} 없음")
-        for key in ("since", "start", "end"):
+        for key in (("since",) if item.get("periodUnknown") is True else ("since", "start", "end")):
             if not DATE_RE.match(str(item.get(key, ""))):
                 errors.append(f"{where}.{key} 날짜 형식 오류")
+        if item.get("periodUnknown") is True and (item.get("start") or item.get("end")):
+            errors.append(f"{where}: 미확정 기간에 시작·종료일을 넣을 수 없음")
+        phases = item.get("phases")
+        if phases is not None:
+            phase = item.get("phaseIndex")
+            if not isinstance(phases, list) or len(phases) < 2 or any(not isinstance(x, str) or not x.strip() for x in phases):
+                errors.append(f"{where}.phases 형식 오류")
+            elif type(phase) is not int or not 0 <= phase < len(phases):
+                errors.append(f"{where}.phaseIndex 범위 오류")
         steps = item.get("steps")
         if not isinstance(steps, list) or not steps:
             errors.append(f"{where}.steps 비어 있음")
