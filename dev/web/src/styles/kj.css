@@ -176,7 +176,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .kj-rail__tools button:hover, .kj-rail__tools a:hover { color: var(--brand); border-color: var(--brand); }
 .kj-rail__tools svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-/* 맨 위로 단추. 1199px 이하에서 한 화면 넘게 내려가면 오른쪽 아래에 뜬다(넓은 화면은 세로 메뉴에 있음) */
+/* 맨 위로 단추. 한 화면 넘게 내려가면 모든 화면 폭에서 오른쪽 아래에 뜬다 */
 .kj-totop {
   position: fixed; z-index: 24; right: max(var(--gutter), env(safe-area-inset-right, 0px));
   bottom: calc(var(--gutter) + env(safe-area-inset-bottom, 0px));
@@ -189,7 +189,6 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .kj-totop:hover { color: var(--brand); border-color: var(--brand); }
 .kj-totop svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 @media (max-width: 860px) { body.has-tabbar .kj-totop { bottom: calc(var(--tabbar-h) + var(--space-3) + env(safe-area-inset-bottom, 0px)); } }
-@media (min-width: 1200px) { .kj-totop { display: none; } }
 @media (prefers-reduced-motion: reduce) { .kj-totop { transition: none; } }
 
 /* 전체 메뉴 단추(햄버거) */
@@ -420,7 +419,7 @@ body.is-locked { overflow: hidden; }
 
 /* 오래 끄는 사안의 진행 막대. 넓은 화면에서는 AI 요약 오른쪽에 선다 */
 .kj-themetop { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
-.kj-prog { min-width: 0; border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-sm); padding: var(--space-5); background: var(--surface); }
+.kj-prog { min-width: 0; border: var(--border-hairline) solid var(--line-strong); border-radius: var(--radius-sm); padding: var(--space-6); background: var(--surface); }
 .kj-prog h4 { margin: 0; font-size: 0.95rem; }
 .kj-prog__big { margin: var(--space-2) 0 0; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .kj-prog__big strong { font-size: 2.6rem; font-weight: 900; letter-spacing: -0.04em; color: var(--brand); }
