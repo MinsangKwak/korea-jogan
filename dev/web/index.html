@@ -120,7 +120,7 @@ window.kjLoadTimer = setTimeout(() => {
         <button class="kj-sizebtn kj-iconbtn" id="bigBtn" type="button" aria-pressed="false"><b aria-hidden="true">가</b><span class="kj-iconbtn__lbl">글자 크게</span></button>
 
       </span>
-    <button class="kj-menubtn" id="menuBtn" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>전체 메뉴</button>
+    <button class="kj-menubtn" id="menuBtn" type="button" aria-label="전체 메뉴" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>전체 메뉴</button>
     </div>
   </div>
   <div class="kj-notice kj-notice--stale" id="stale" role="status" hidden>
@@ -166,6 +166,32 @@ window.kjLoadTimer = setTimeout(() => {
 <main id="main">
   <!-- kj:digest -->
   <!-- /kj:digest -->
+  <section class="kj-sec" id="national" aria-labelledby="natH">
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">전국</p>
+        <h2 id="natH">오늘의 전국 뉴스</h2>
+        <p>증시와 재정을 뺀 분야의 주요 뉴스입니다. 요약은 기사 원문을 바탕으로 새로 쓴 문장이고, 수치는 기사에 나온 그대로 옮겼습니다.</p>
+        <p class="kj-sechead__meta" id="natMeta"></p>
+      </header>
+      <div class="kj-callout nat-flow" id="natFlow"></div>
+      <div class="kj-chips kj-chips--scroll nat-chips" id="natCtrl" role="group" aria-label="분야 선택"></div>
+      <div class="kj-news" id="natList"></div>
+    </div>
+  </section>
+
+  <section class="kj-sec" id="track" aria-labelledby="trackH" hidden>
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">추적</p>
+        <h2 id="trackH">끝까지 보는 사안</h2>
+        <p>한 번 싣고 끝내지 않고, 결론이 날 때까지 같은 자리에서 진행 상황을 남깁니다.</p>
+        <p class="kj-sechead__meta" id="trackMeta"></p>
+      </header>
+      <div id="trackList"></div>
+    </div>
+  </section>
+
   <section class="hero" id="home" aria-labelledby="leadH">
     <div class="kj-wrap" id="loadError" hidden></div>
     <div class="kj-wrap hero-grid" id="heroGrid">
@@ -198,19 +224,6 @@ window.kjLoadTimer = setTimeout(() => {
     </div>
   </section>
 
-  <section class="kj-sec" id="national" aria-labelledby="natH">
-    <div class="kj-wrap">
-      <header class="kj-sechead">
-        <p class="kj-label">전국</p>
-        <h2 id="natH">오늘의 전국 뉴스</h2>
-        <p>증시와 재정을 뺀 분야의 주요 뉴스입니다. 요약은 기사 원문을 바탕으로 새로 쓴 문장이고, 수치는 기사에 나온 그대로 옮겼습니다.</p>
-        <p class="kj-sechead__meta" id="natMeta"></p>
-      </header>
-      <div class="kj-callout nat-flow" id="natFlow"></div>
-      <div class="kj-chips kj-chips--scroll nat-chips" id="natCtrl" role="group" aria-label="분야 선택"></div>
-      <div class="kj-news" id="natList"></div>
-    </div>
-  </section>
 
   <section class="kj-sec" id="regions" aria-labelledby="regH">
     <div class="kj-wrap">
@@ -341,17 +354,6 @@ window.kjLoadTimer = setTimeout(() => {
           <p class="src-note" id="npsReformSrc"></p>
         </div>
       </div>
-    </div>
-  </section>
-  <section class="kj-sec" id="track" aria-labelledby="trackH" hidden>
-    <div class="kj-wrap">
-      <header class="kj-sechead">
-        <p class="kj-label">추적</p>
-        <h2 id="trackH">끝까지 보는 사안</h2>
-        <p>한 번 싣고 끝내지 않고, 결론이 날 때까지 같은 자리에서 진행 상황을 남깁니다.</p>
-        <p class="kj-sechead__meta" id="trackMeta"></p>
-      </header>
-      <div id="trackList"></div>
     </div>
   </section>
 
