@@ -181,5 +181,6 @@ function setupNav() {
   window.addEventListener('scroll', () => {
     if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
   }, { passive: true });
+  new ResizeObserver(update).observe($('main'));
   update();
 }
