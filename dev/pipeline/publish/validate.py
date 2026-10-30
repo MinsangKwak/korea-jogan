@@ -23,6 +23,7 @@ STATUSES = ("prototype", "draft", "published")
 # 00시 발행 호는 이 시각(발행일 한국 시간) 뒤에 모은 자료를 담지 않는다
 COLLECT_DEADLINE = dt.time(6, 0)
 CORRECTION_KEYS = ("date", "issue", "section", "before", "after", "reason")
+TRACKER_KEYS = ("id", "title", "status", "summary", "label", "sinceLabel", "next", "note")
 REQUIRED = ("date", "lead", "briefs", "nums", "themes", "items", "industries", "trade", "debt", "fiscal", "nps", "agenda", "limits")
 
 
@@ -248,6 +249,48 @@ def check_late(name: str, issue: dict, day: dt.date, collected: dt.datetime) -> 
     return errors
 
 
+def check_trackers() -> list[str]:
+    """추적 사안은 제목·상태·기간·단계가 있어야 하고, 날짜와 링크 꼴이 맞아야 한다."""
+    path = ROOT / "dev" / "web" / "data" / "trackers.json"
+    if not path.exists():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+            raise ValueError("items 배열 없음")
+    except (ValueError, OSError):
+        return ["trackers.json 형식 오류"]
+    errors: list[str] = []
+    if not DATE_RE.match(str(data.get("updated", ""))):
+        errors.append("trackers.json: updated 날짜 형식 오류")
+    for i, item in enumerate(data["items"]):
+        where = f"trackers.json: items[{i}]"
+        if not isinstance(item, dict):
+            errors.append(f"{where} 객체가 아님")
+            continue
+        missing = [k for k in TRACKER_KEYS if not str(item.get(k, "")).strip()]
+        if missing:
+            errors.append(f"{where} {', '.join(missing)} 없음")
+        for key in ("since", "start", "end"):
+            if not DATE_RE.match(str(item.get(key, ""))):
+                errors.append(f"{where}.{key} 날짜 형식 오류")
+        steps = item.get("steps")
+        if not isinstance(steps, list) or not steps:
+            errors.append(f"{where}.steps 비어 있음")
+            continue
+        for j, st in enumerate(steps):
+            if not isinstance(st, dict) or not str(st.get("t", "")).strip():
+                errors.append(f"{where}.steps[{j}] 내용 없음")
+                continue
+            # 아직 날짜가 없는 단계는 빈 값으로 두고 화면에 '예정'으로 적는다
+            if str(st.get("d", "")) and not DATE_RE.match(str(st["d"])):
+                errors.append(f"{where}.steps[{j}].d 날짜 형식 오류")
+        for j, link in enumerate(item.get("links") or []):
+            if not isinstance(link, dict) or not str(link.get("url", "")).startswith("https://") or not DATE_RE.match(str(link.get("date", ""))):
+                errors.append(f"{where}.links[{j}] 주소나 날짜 오류")
+    return errors
+
+
 def check_corrections(dates: list[str]) -> list[str]:
     """정정 기록은 항목마다 무엇을 왜 고쳤는지가 있고, 있는 호를 가리켜야 한다."""
     path = ROOT / "dev" / "web" / "data" / "corrections.json"
@@ -301,6 +344,7 @@ def main(argv: list[str] | None = None) -> int:
         if deploy and not issue_errors and json.loads(path.read_text(encoding="utf-8")).get("status") == "draft":
             errors.append(f"{date}.json: 승인 전 초안(draft)은 배포하지 않음. dev/pipeline/publish/approve.py로 승인한 뒤 올림")
     errors.extend(check_corrections(index["issues"]))
+    errors.extend(check_trackers())
 
     if errors:
         print("검사 실패")

@@ -212,6 +212,18 @@ window.kjLoadTimer = setTimeout(() => {
     </div>
   </section>
 
+  <section class="kj-sec" id="track" aria-labelledby="trackH" hidden>
+    <div class="kj-wrap">
+      <header class="kj-sechead">
+        <p class="kj-label">추적</p>
+        <h2 id="trackH">끝까지 보는 사안</h2>
+        <p>한 번 싣고 끝내지 않고, 결론이 날 때까지 같은 자리에서 진행 상황을 남깁니다.</p>
+        <p class="kj-sechead__meta" id="trackMeta"></p>
+      </header>
+      <div id="trackList"></div>
+    </div>
+  </section>
+
   <section class="kj-sec" id="national" aria-labelledby="natH">
     <div class="kj-wrap">
       <header class="kj-sechead">
@@ -398,6 +410,7 @@ window.kjLoadTimer = setTimeout(() => {
 <script type="application/json" id="issue-index">null</script>
 <script src="src/core/config.js" defer></script>
 <script src="src/core/format.js" defer></script>
+<script src="src/core/progress.js" defer></script>
 <script src="src/core/metrics.js" defer></script>
 <script src="src/core/seo.js" defer></script>
 <script src="src/core/ui.js" defer></script>
@@ -406,6 +419,7 @@ window.kjLoadTimer = setTimeout(() => {
 <script src="src/components/lead/lead.js" defer></script>
 <script src="src/components/economy/economy.js" defer></script>
 <script src="src/components/media/media.js" defer></script>
+<script src="src/components/track/track.js" defer></script>
 <script src="src/components/splits/splits.js" defer></script>
 <script src="src/components/industry/industry.js" defer></script>
 <script src="src/components/fiscal/fiscal.js" defer></script>
