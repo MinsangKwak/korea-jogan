@@ -4,7 +4,7 @@
 // 지난 호는 그날의 기록이라 지금 상황을 덧붙이지 않는다. 최신 호에서만 보인다
 function renderTrack(data) {
   const list = (data && data.items) || [];
-  if (!list.length || VIEWING_PAST) { $('track').hidden = true; return; }
+  if (!list.length || VIEWING_PAST) { $('track').hidden = true; toggleSectionNav('track', false); return; }
   const today = parseDate(todayKST());
   const box = $('trackList');
   box.replaceChildren();
@@ -47,6 +47,7 @@ function renderTrack(data) {
   });
   $('trackMeta').textContent = '사안 ' + list.length + '건 · 오늘 기준 · ' + longDate(data.updated) + ' 갱신';
   $('track').hidden = false;
+  toggleSectionNav('track', true);
 }
 
 async function loadTrackers() {

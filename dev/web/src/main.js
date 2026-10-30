@@ -35,6 +35,7 @@ async function boot() {
   try {
     setupMetrics();
     renderNav();
+    toggleSectionNav('track', false);
     setupBig();
     setupShare();
     setupDrawer();
@@ -71,7 +72,7 @@ async function boot() {
   trackView(ok ? D.date : '', ok && VIEWING_PAST);
   if (ok) trackSections();
   if (ok) {
-    loadTrackers().then(renderTrack).catch(() => { $('track').hidden = true; });
+    loadTrackers().then(renderTrack).catch(() => renderTrack(null));
     loadCorrections().then(renderCorrections).catch(() => { $('fixes').textContent = '정정 기록을 불러오지 못했습니다. 잠시 뒤 다시 확인해 주세요.'; });
     renderLive().catch(() => { $('live').hidden = true; });
   }

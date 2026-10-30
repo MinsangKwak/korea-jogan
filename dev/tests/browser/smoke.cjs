@@ -183,6 +183,7 @@ async function check(name, options, run) {
     await page.goto('http://jogan.test/');
     await ready(page);
     await page.locator('#track:not([hidden])').waitFor();
+    assert.ok(await page.locator('[data-sec="track"]:visible').count() > 0);
     const item = trackers.items[0];
     assert.equal(await page.locator('#track .kj-timeline li').count(), item.steps.length);
     assert.equal(await page.locator('#track .kj-timeline li.is-done').count(), item.steps.filter((s) => s.done).length);
@@ -197,6 +198,8 @@ async function check(name, options, run) {
     await ready(page);
     await page.waitForTimeout(300);
     assert.equal(await page.locator('#track').isHidden(), true);
+    // 감춘 섹션으로 가는 메뉴는 남기지 않는다
+    assert.equal(await page.locator('[data-sec="track"]:visible').count(), 0);
   });
   await check('언론 섹션이 맨 위·진행 막대', { width: 1280 }, async (page) => {
     await page.goto('http://jogan.test/');
