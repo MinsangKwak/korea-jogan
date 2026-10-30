@@ -234,15 +234,53 @@ async function check(name, options, run) {
     assert.ok(Math.abs(await page.evaluate(() => window.scrollY) - before) < 2);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
   });
-  await check('머리기사 우선 배치·진행 막대', { width: 1280 }, async (page) => {
+  for (const dark of [false, true]) {
+    for (const width of [320, 390, 1440]) {
+      await check('도구 상태 대비·기간 여백·맨 위로 ' + width + (dark ? ' 다크' : ' 라이트'), { width, dark }, async (page) => {
+        await page.goto('http://jogan.test/');
+        await ready(page);
+        const big = page.getByRole('button', { name: '글자 크게', exact: true }).first();
+        const contrast = () => big.evaluate((button) => {
+          const rgb = (value) => value.match(/[\d.]+/g).slice(0, 3).map(Number).map((c) => { c /= 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; });
+          const lum = (v) => { const [r, g, b] = rgb(v); return .2126 * r + .7152 * g + .0722 * b; };
+          const css = getComputedStyle(button);
+          const a = lum(css.color), b = lum(css.backgroundColor);
+          return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+        });
+        await big.click();
+        assert.equal(await big.getAttribute('aria-pressed'), 'true');
+        assert.ok(await contrast() >= 4.5);
+        await page.mouse.move(0, 0);
+        assert.ok(await contrast() >= 4.5);
+        await page.getByRole('button', { name: '공유', exact: true }).first().waitFor();
+        const meta = await page.locator('.kj-mast__meta').boundingBox();
+        const actions = await page.locator('.kj-mast__actions').boundingBox();
+        if (width <= 900) assert.ok(actions.y >= meta.y + meta.height - 1);
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+        await page.locator('#track:not([hidden])').waitFor();
+        const panel = page.locator('#track .kj-prog').first();
+        assert.ok(await panel.evaluate((p) => parseFloat(getComputedStyle(p).paddingLeft)) >= 20);
+        const order = await page.evaluate(() => [...document.querySelectorAll('main > section')].map((s) => s.id));
+        assert.deepEqual(order, ['national', 'track', 'home', 'regions', 'media', 'politics', 'economy', 'industry', 'fiscal']);
+        await page.evaluate(() => window.scrollTo(0, 1200));
+        await page.waitForFunction(() => getComputedStyle(document.getElementById('toTop')).opacity === '1');
+        const top = page.getByRole('button', { name: '맨 위로', exact: true });
+        assert.equal(await top.isVisible(), true);
+        await top.click();
+        await page.waitForFunction(() => scrollY === 0);
+        assert.equal(await page.locator('.kj-mast__logo').evaluate((e) => e === document.activeElement), true);
+      });
+    }
+  }
+  await check('전국 1면·추적 2면·진행 막대', { width: 1280 }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
     assert.ok(await page.locator('#catNav a').first().evaluate((a) => a.getBoundingClientRect().height >= 44));
     const padding = await page.locator('#heroGrid').evaluate((e) => parseFloat(getComputedStyle(e).paddingRight));
     assert.ok(padding <= 24);
-    await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="home"]').getAttribute('aria-current') === 'true');
+    await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="national"]').getAttribute('aria-current') === 'true');
     const order = await page.evaluate(() => [...document.querySelectorAll('main > section')].map((s) => s.id));
-    assert.deepEqual(order.slice(0, 4), ['home', 'national', 'regions', 'media']);
+    assert.deepEqual(order.slice(0, 4), ['national', 'track', 'home', 'regions']);
     // 진행 막대는 progress를 적은 주제에만 그린다
     const withProgress = latest.themes.find((t) => t.progress);
     if (withProgress) {
