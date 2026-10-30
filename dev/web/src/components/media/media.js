@@ -26,46 +26,6 @@ function renderThemeChips() {
   });
 }
 
-// 오래 끄는 사안은 진행 막대로 어디까지 왔는지 보인다. progress를 적은 주제에만 그린다
-// 날짜 계산은 한국 시간 기준이고, 끝난 기한을 넘겨도 막대는 100%에서 멈춘다
-function renderProgress(p) {
-  // 그 호를 낸 날로 센다. 오늘 날짜로 세면 지난 호를 나중에 열 때 본문과 숫자가 어긋난다
-  // 기간은 시작일과 마지막 날을 모두 센다. '수사 90일'과 같은 말과 수를 맞춘다
-  const span = Math.max(1, daysBetween(parseDate(p.start), parseDate(p.end)) + 1);
-  const gone = Math.min(span, Math.max(0, daysBetween(parseDate(p.start), ISSUE) + 1));
-  const left = span - gone;
-  const pct = Math.round(gone / span * 100);
-  const since = daysBetween(parseDate(p.since), ISSUE);
-
-  const box = el('aside', { class: 'kj-prog', 'aria-labelledby': 'progH' });
-  box.append(el('h4', { id: 'progH' }, p.label));
-  const big = el('p', { class: 'kj-prog__big' });
-  big.append(el('strong', {}, String(since)), document.createTextNode('일'));
-  box.append(big, el('p', { class: 'kj-prog__since' }, p.sinceLabel));
-
-  const bar = el('div', {
-    class: 'kj-prog__bar', role: 'progressbar',
-    'aria-valuemin': '0', 'aria-valuemax': String(span), 'aria-valuenow': String(gone),
-    'aria-valuetext': p.label + ' ' + span + '일 중 ' + gone + '일 지남'
-  });
-  const fill = el('span');
-  fill.style.width = pct + '%';
-  bar.append(fill);
-  box.append(bar);
-  box.append(el('p', { class: 'kj-prog__meta' }, span + '일 중 ' + gone + '일 지남 · ' + (left > 0 ? '남은 ' + left + '일(' + longDate(p.end) + '까지)' : '기한 지남')));
-
-  const ol = el('ol', { class: 'kj-prog__steps' });
-  p.steps.forEach((st) => {
-    const li = el('li');
-    li.append(el('b', {}, longDate(st.d)), el('span', {}, st.t));
-    ol.append(li);
-  });
-  box.append(ol);
-  box.append(el('p', { class: 'kj-prog__next' }, p.next));
-  box.append(el('p', { class: 'kj-prog__note' }, p.note));
-  return box;
-}
-
 function showTheme(id) {
   themeId = id;
   renderThemeChips();
@@ -85,7 +45,15 @@ function showTheme(id) {
   // 진행 막대가 있는 주제는 요약 오른쪽에 둔다. 좁은 화면에서는 요약 아래로 내려간다
   if (t.progress) {
     const top = el('div', { class: 'kj-themetop' });
-    top.append(ai, renderProgress(t.progress));
+    const prog = progressBox(t.progress, ISSUE);
+    prog.append(el('ol', { class: 'kj-prog__steps' }));
+    t.progress.steps.forEach((st) => {
+      const li = el('li');
+      li.append(el('b', {}, longDate(st.d)), el('span', {}, st.t));
+      prog.querySelector('.kj-prog__steps').append(li);
+    });
+    prog.append(el('p', { class: 'kj-prog__next' }, t.progress.next), el('p', { class: 'kj-prog__note' }, t.progress.note));
+    top.append(ai, prog);
     box.append(top);
   } else box.append(ai);
 
