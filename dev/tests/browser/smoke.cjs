@@ -240,6 +240,7 @@ async function check(name, options, run) {
     assert.ok(await page.locator('#catNav a').first().evaluate((a) => a.getBoundingClientRect().height >= 44));
     const padding = await page.locator('#heroGrid').evaluate((e) => parseFloat(getComputedStyle(e).paddingRight));
     assert.ok(padding <= 24);
+    await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="home"]').getAttribute('aria-current') === 'true');
     const order = await page.evaluate(() => [...document.querySelectorAll('main > section')].map((s) => s.id));
     assert.deepEqual(order.slice(0, 4), ['home', 'national', 'regions', 'media']);
     // 진행 막대는 progress를 적은 주제에만 그린다
