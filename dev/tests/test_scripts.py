@@ -8,6 +8,7 @@ import datetime as dt
 import io
 import json
 import shutil
+import struct
 import sys
 import tempfile
 import unittest
@@ -124,6 +125,22 @@ class ValidateTest(Site):
     def test_unknown_status(self):
         self.edit(lambda i: i.update(status="final"))
         self.assertEqual(self.run_validate()[0], 1)
+
+    def test_root_favicon_is_a_real_ico(self):
+        # /favicon.ico가 없으면 네이버 진단이 '접근 불가'로 잡고 검색 결과에 아이콘이 비어 보인다
+        path = self.tmp / "dev" / "web" / "favicon.ico"
+        self.assertTrue(path.exists(), "dev/web/favicon.ico 없음")
+        data = path.read_bytes()
+        reserved, kind, count = struct.unpack("<HHH", data[:6])
+        self.assertEqual((reserved, kind), (0, 1))
+        self.assertGreaterEqual(count, 1)
+        sizes = []
+        for i in range(count):
+            entry = struct.unpack("<BBBBHHII", data[6 + 16 * i:22 + 16 * i])
+            size, length, offset = entry[0] or 256, entry[6], entry[7]
+            self.assertLessEqual(offset + length, len(data), "그림 자료가 파일 밖을 가리킴")
+            sizes.append(size)
+        self.assertIn(32, sizes, f"32픽셀 그림이 없음: {sizes}")
 
     def test_corrections(self):
         path = self.tmp / "dev" / "web" / "data" / "corrections.json"
