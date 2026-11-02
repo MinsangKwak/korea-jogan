@@ -127,11 +127,18 @@ async function check(name, options, run) {
     await ready(page);
     assert.equal(requests.some((url) => url.startsWith('/data/issues/')), false);
   });
-  await check('기존 날짜 쿼리 주소', {}, async (page) => {
+  await check('기존 날짜 쿼리 주소는 호별 주소로 옮김', {}, async (page) => {
     const past = index.issues.at(-1);
     await page.goto('http://jogan.test/?d=' + past);
+    await page.waitForURL('http://jogan.test/' + past);
     await ready(page);
     assert.equal(await page.locator('#issueDate').getAttribute('datetime'), past);
+    assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://korea-jogan.com/' + past);
+    // 발행하지 않은 날짜는 옮기지 않는다. 없는 주소로 보내면 404가 된다
+    await page.goto('http://jogan.test/?d=1999-01-01');
+    await ready(page);
+    assert.match(page.url(), /\?d=1999-01-01$/);
+    assert.equal(await page.locator('#issueDate').getAttribute('datetime'), index.latest);
   });
   await check('느린 접속·로딩 표시·보조 요청 분리', { delay: 700, slowExtras: true }, async (page) => {
     await page.goto('http://jogan.test/', { waitUntil: 'domcontentloaded' });
