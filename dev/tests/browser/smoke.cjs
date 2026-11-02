@@ -17,6 +17,7 @@ const embedded = (id) => JSON.parse(fs.readFileSync(path.join(web, 'index.html')
 const index = embedded('issue-index');
 const latestPath = '/data/issues/' + index.latest + '.json';
 const latest = JSON.parse(fs.readFileSync(path.join(web, latestPath)));
+const trackers = JSON.parse(fs.readFileSync(path.join(web, 'data/trackers.json'), 'utf8'));
 const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
 let browser;
 let checks = 0;
@@ -181,7 +182,6 @@ async function check(name, options, run) {
     assert.ok((await page.locator('#tresult').innerText()).includes('맞는 주제가'));
   });
   await check('추적 섹션 타임라인·지난 호에서는 숨김', { width: 1280 }, async (page) => {
-    const trackers = JSON.parse(fs.readFileSync(path.join(web, 'data/trackers.json'), 'utf8'));
     await page.goto('http://jogan.test/');
     await ready(page);
     await page.locator('#track:not([hidden])').waitFor();
@@ -195,14 +195,17 @@ async function check(name, options, run) {
     const bar = page.locator('#track .kj-prog__bar');
     assert.equal(await bar.getAttribute('role'), 'progressbar');
     assert.ok(Number(await bar.getAttribute('aria-valuenow')) > 0);
+    // 기사와 단계는 날마다 늘어나므로 자료에서 읽어 맞춘다
+    const muanData = trackers.items.find((t) => t.id === 'muan-airport');
     const muan = page.locator('#issue-muan-airport');
-    assert.equal(await muan.locator('.tracking-articles tbody tr').count(), 4);
-    assert.equal(await muan.locator('[aria-current="step"]').innerText(), '전문 분석\n현재 확인');
+    assert.equal(await muan.locator('.tracking-articles tbody tr').count(), muanData.links.length);
+    assert.equal(await muan.locator('[aria-current="step"]').innerText(), muanData.phases[muanData.phaseIndex] + '\n현재 확인');
     assert.equal(await muan.locator('[role="progressbar"]').count(), 0);
     await page.locator('#trackingExpand').click();
     assert.equal(await page.locator('#trackingDialog').evaluate((d) => d.open), true);
     await page.locator('#trackingContent details').last().locator('summary').click();
-    assert.equal(await page.locator('#trackingDialog .tracking-articles tbody tr').count(), 4);
+    const allLinks = trackers.items.reduce((n, t) => n + t.links.length, 0);
+    assert.equal(await page.locator('#trackingDialog .tracking-articles tbody tr').count(), allLinks);
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => document.activeElement.id === 'trackingExpand');
     await page.locator('#trackingHide').click();
@@ -230,7 +233,7 @@ async function check(name, options, run) {
     await page.locator('#trackingExpand').click();
     await page.locator('#trackingContent details').last().locator('summary').click();
     assert.equal(await page.locator('#trackingDialog').evaluate((d) => d.scrollWidth <= d.clientWidth + 1), true);
-    assert.equal(await page.locator('#trackingDialog table').count(), 1);
+    assert.equal(await page.locator('#trackingDialog table').count(), trackers.items.filter((t) => t.links && t.links.length).length);
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('trackingDialog').open);
     assert.ok(Math.abs(await page.evaluate(() => window.scrollY) - before) < 2);
