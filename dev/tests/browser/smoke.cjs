@@ -139,6 +139,9 @@ async function check(name, options, run) {
     await ready(page);
     assert.match(page.url(), /\?d=1999-01-01$/);
     assert.equal(await page.locator('#issueDate').getAttribute('datetime'), index.latest);
+    // d만 빼고 나머지 값은 들고 간다. kj-internal 같은 표시가 사라지면 안 된다
+    await page.goto('http://jogan.test/?d=' + past + '&kj-internal=1#media');
+    await page.waitForURL('http://jogan.test/' + past + '?kj-internal=1#media');
   });
   await check('느린 접속·로딩 표시·보조 요청 분리', { delay: 700, slowExtras: true }, async (page) => {
     await page.goto('http://jogan.test/', { waitUntil: 'domcontentloaded' });
