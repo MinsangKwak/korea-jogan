@@ -12,7 +12,7 @@ function renderLead() {
   $('leadBox').removeAttribute('aria-busy');
   $('leadKicker').textContent = L.kicker;
   $('leadH').textContent = L.headline;
-  $('leadStand').textContent = L.standfirst;
+  $('leadStand').replaceChildren(...readingText(L.standfirst).childNodes);
   $('leadMeta').textContent = L.meta;
   L.facts.forEach((f) => {
     const li = el('li');
