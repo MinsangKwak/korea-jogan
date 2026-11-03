@@ -491,6 +491,16 @@ async function check(name, options, run) {
       assert.ok(await page.locator('#archSel option').count() > 0);
       assert.equal(await page.locator('#foot #limitsH').count(), 1);
       assert.equal(await page.locator('#foot #fixH').count(), 1);
+      if (width === 390) {
+        for (const id of ['limitsH', 'archH', 'fixH']) {
+          await page.locator('#menuBtn').click();
+          await page.locator('[data-jump="' + id + '"]').click();
+          await page.locator('#drawer').waitFor({ state: 'hidden' });
+          const target = await page.locator('#' + id).boundingBox();
+          const sticky = await page.locator('.news-sticky').boundingBox();
+          assert.ok(target.y >= sticky.y + sticky.height, id + ' 제목이 고정 메뉴에 가려짐');
+        }
+      }
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
     });
   }
