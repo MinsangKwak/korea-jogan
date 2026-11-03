@@ -100,6 +100,7 @@ function setupBig() {
   const apply = (on) => {
     document.documentElement.classList.toggle('big', on);
     btn.setAttribute('aria-pressed', String(on));
+    document.querySelectorAll('[data-big-state]').forEach((state) => { state.textContent = on ? '켬' : '끔'; });
   };
   // 글자 크기 선택은 이 기기에만 저장한다. 저장소가 막혀도 화면은 그대로 동작
   try { apply(localStorage.getItem('jg_big') === '1'); } catch (e) { apply(false); }

@@ -25,7 +25,7 @@ function renderTrack(data) {
     });
     grid.append(ol);
 
-    const side = el('div', { class: 'kj-track__side' });
+    const side = el('div', { class: 'kj-track__side', role: 'region', tabindex: '0', 'aria-label': item.title + ' 진행 상황' });
     if (!item.periodUnknown) side.append(progressBox(item, today));
     else side.append(el('p', { class: 'kj-prog__label' }, item.label));
     side.append(el('p', { class: 'kj-prog__next' }, item.next));

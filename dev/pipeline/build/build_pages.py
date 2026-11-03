@@ -17,6 +17,8 @@ import re
 import sys
 from pathlib import Path
 
+from build_security import secure_page
+
 ROOT = Path(__file__).resolve().parents[3]
 PUBLIC = ROOT / "dev" / "web"
 ISSUES = PUBLIC / "data" / "issues"
@@ -175,7 +177,7 @@ def article_ld(issue: dict, url: str, desc: str) -> dict:
         "datePublished": published_at(issue),
         "dateModified": published_at(issue),
         "inLanguage": "ko-KR",
-        "image": [SITE + "assets/images/og.png"],
+        "image": [SITE + "assets/images/og-pixel.png"],
         "keywords": keywords(issue),
         "articleSection": sections(issue),
         "isAccessibleForFree": True,
@@ -217,7 +219,7 @@ def home_page(template: str, issue: dict, index: dict) -> str:
     page = DIGEST.sub(lambda _: digest(issue), template, count=1)
     merged = list(dict.fromkeys(BASE_KEYWORDS + keywords(issue)))[:KEYWORD_MAX]
     page = set_attr(page, r'(<meta name="keywords" content=")[^"]*(">)', ", ".join(merged))
-    return embed_data(with_article(page, issue, SITE, desc), issue, index)
+    return secure_page(embed_data(with_article(page, issue, SITE, desc), issue, index))
 
 
 def issue_page(template: str, issue: dict, index: dict) -> str:
@@ -240,7 +242,7 @@ def issue_page(template: str, issue: dict, index: dict) -> str:
     extra = f'<meta name="kj-date" content="{esc(date)}">\n<meta property="article:published_time" content="{esc(published_at(issue))}">\n'
     page = page.replace('<link rel="canonical"', extra + '<link rel="canonical"', 1)
     page = DIGEST.sub(lambda _: digest(issue), page, count=1)
-    return embed_data(with_article(page, issue, url, desc), issue, index)
+    return secure_page(embed_data(with_article(page, issue, url, desc), issue, index))
 
 
 def published() -> list[dict]:
@@ -278,6 +280,9 @@ def build() -> list[Path]:
         written.append(out)
     home.write_text(home_page(template, issues[0], index), encoding="utf-8")
     written.append(home)
+    admin = PUBLIC / "admin" / "index.html"
+    if admin.exists():
+        admin.write_text(secure_page(admin.read_text(encoding="utf-8"), admin=True), encoding="utf-8")
     return written
 
 
