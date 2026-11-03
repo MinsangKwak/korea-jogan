@@ -16,6 +16,7 @@ function renderTrack(data) {
     card.append(head, readingText(item.summary, 'kj-track__sum'));
     if (item.phases) card.append(trackingPhases(item));
 
+    const body = el('div', { class: 'kj-track__body', role: 'region', tabindex: '0', 'aria-label': item.title + ' 진행 상황과 확인 기록' });
     const grid = el('div', { class: 'kj-track__grid' });
     const ol = el('ol', { class: 'kj-timeline' });
     item.steps.forEach((st) => {
@@ -23,13 +24,17 @@ function renderTrack(data) {
       li.append(el('b', {}, st.d ? longDate(st.d) : '예정'), el('span', {}, st.t));
       ol.append(li);
     });
-    grid.append(ol);
+    const timeline = el('details', { class: 'kj-track__timeline' });
+    timeline.append(el('summary', {}, '진행 일정 ' + item.steps.length + '건'), ol);
+    responsiveDisclosure(timeline);
+    grid.append(timeline);
 
-    const side = el('div', { class: 'kj-track__side', role: 'region', tabindex: '0', 'aria-label': item.title + ' 진행 상황' });
+    const side = el('div', { class: 'kj-track__side' });
     if (!item.periodUnknown) side.append(progressBox(item, today));
     else side.append(el('p', { class: 'kj-prog__label' }, item.label));
     side.append(el('p', { class: 'kj-prog__next' }, item.next));
-    if (item.links && item.links.length) {
+    const hasArticleTable = item.links.some((link) => link.summary);
+    if (item.links && item.links.length && !hasArticleTable) {
       side.append(el('h4', { class: 'kj-track__linkh' }, '최근 기사'));
       const ul = el('ul', { class: 'kj-track__links' });
       item.links.forEach((a) => {
@@ -44,9 +49,15 @@ function renderTrack(data) {
       side.append(ul);
     }
     side.append(el('p', { class: 'kj-prog__note' }, item.note));
-    grid.append(side);
-    card.append(grid);
-    if (item.links.some((a) => a.summary)) card.append(trackingArticles(item));
+    grid.prepend(side);
+    body.append(grid);
+    if (hasArticleTable) {
+      const sources = el('details', { class: 'kj-track__sources' });
+      sources.append(el('summary', {}, '관련 기사 ' + item.links.length + '건과 확인 기록'), trackingArticles(item));
+      responsiveDisclosure(sources, { wideOpen: item.links.length <= 3 });
+      body.append(sources);
+    }
+    card.append(body);
     box.append(card);
   });
   $('trackMeta').textContent = '사안 ' + list.length + '건 · 오늘 기준 · ' + longDate(data.updated) + ' 갱신';
@@ -121,6 +132,8 @@ function setupTrackingPanel(data) {
       details.append(el('summary', {}, '기사·타임라인 자세히 보기'));
       const card = $('issue-' + item.id).cloneNode(true);
       card.removeAttribute('id');
+      card.querySelectorAll('.kj-track__sources').forEach((sources) => sources.replaceWith(sources.querySelector('.tracking-articles')));
+      card.querySelectorAll('.kj-track__timeline').forEach((timeline) => timeline.replaceWith(timeline.querySelector('.kj-timeline')));
       card.querySelectorAll('.kj-track__head, .kj-track__sum, .tracking-phases, .kj-prog__next').forEach((node) => node.remove());
       if (item.links.some((link) => link.summary)) card.querySelectorAll('.kj-track__linkh, .kj-track__links').forEach((node) => node.remove());
       details.append(card);

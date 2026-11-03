@@ -11,6 +11,7 @@ function renderNational() {
   const ol = el('ol');
   N.flow.forEach((t) => ol.append(el('li', {}, t)));
   flow.append(ol);
+  responsiveDisclosure(flow);
 
   const cats = ['전체'].concat(NAT_CATS.filter((c) => N.items.some((i) => i.cat === c)));
   const ctrl = $('natCtrl');

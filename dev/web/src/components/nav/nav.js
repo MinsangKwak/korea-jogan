@@ -58,7 +58,13 @@ function renderDrawerSubs() {
     });
     $('dn-' + sid).append(ul);
   };
-  const jump = (id) => () => $(id).scrollIntoView({ block: 'start' });
+  const jump = (id) => () => {
+    const target = $(id);
+    for (let parent = target.parentElement; parent; parent = parent.parentElement) {
+      if (parent.tagName === 'DETAILS') parent.open = true;
+    }
+    target.scrollIntoView({ block: 'start' });
+  };
   add('home', [['오늘 꼭 볼 숫자', jump('briefH')]].concat($('splitBox').hidden ? [] : [['기준이 갈린 숫자', jump('splitBox')]]));
   add('media', D.themes.map((t) => [t.title, () => { setQuery(''); showTheme(t.id); $('tresult').scrollIntoView({ block: 'start' }); }]));
   if (D.national) {

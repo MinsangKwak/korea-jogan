@@ -3,6 +3,7 @@
 
 function renderIndustry() {
   const T = D.trade;
+  responsiveDisclosure($('industryChart'));
   $('tradeIntro').textContent = T.intro;
   T.stats.forEach((s) => {
     const d = el('div');
@@ -22,7 +23,7 @@ function renderIndustry() {
     b.style.width = (it.v / max * 100) + '%';
     tr.append(b);
     const v = el('span', { class: 'kj-bar__v' });
-    v.append(el('b', {}, (it.approx ? '약 ' : '') + it.v + '억$'), document.createTextNode(' ' + it.y));
+    v.append(el('b', {}, (it.approx ? '약 ' : '') + it.v + '억$'), el('span', { class: 'kj-bar__change' }, ' ' + it.y));
     r.append(el('span', { class: 'kj-bar__lab' }, it.k), tr, v);
     $('bars').append(r);
   });
