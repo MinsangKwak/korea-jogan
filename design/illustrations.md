@@ -1,46 +1,62 @@
-# 픽셀 삽화와 공유 이미지
+# 현재 삽화·공유 이미지·아이콘
 
-**2026년 11월 3일 공개 지면에 아침 풍경의 픽셀 삽화를 추가했습니다.** 신문을 펼치기 전 가볍게 볼 수 있는 장식이며, 특정 사건을 재현한 보도 자료가 아닙니다. 새벽 도시·강·자전거·신문을 조합한 가상의 풍경이고 화면에 `AI 생성 삽화 · 실제 보도 사진이 아닙니다`를 표시합니다.
+**상단 픽셀 삽화와 공유 미리보기는 같은 가상 풍경을 사용하고, 파비콘은 작은 크기에 맞는 픽셀 신문으로 구분합니다.** 2026.11.03 적용한 자산이며, 지면에는 `AI 생성 삽화 · 실제 보도 사진이 아닙니다`를 표시합니다.
 
-## 파일과 표시 기준
+[현재 지면 기준](guide.md) · [공개 메타태그](../dev/web/index.html) · [이미지 생성 도구](og/build.mjs)
+
+## 현재 사용하는 파일
 
 | 파일 | 크기 | 용도 |
 | --- | --- | --- |
 | [`news-dawn-pixel.webp`](../dev/web/assets/images/news-dawn-pixel.webp) | 1,536×512px · 206,470바이트 | PC용 상단 삽화 |
 | [`news-dawn-pixel-720.webp`](../dev/web/assets/images/news-dawn-pixel-720.webp) | 720×240px · 62,004바이트 | 작은 화면용 상단 삽화 |
 | [`og-pixel.png`](../dev/web/assets/images/og-pixel.png) | 1,200×630px | OG·Twitter 공유 미리보기 |
-| [`favicon.svg`](../dev/web/assets/images/favicon.svg) | 64×64 viewBox | 픽셀 신문 파비콘 원본 |
+| [`favicon.svg`](../dev/web/assets/images/favicon.svg) | 64×64 viewBox | 픽셀 신문 아이콘 원본 |
 | [`icon-512.png`](../dev/web/assets/images/icon-512.png) | 512×512px | 웹 앱 아이콘 |
 | [`icon-192.png`](../dev/web/assets/images/icon-192.png) | 192×192px | 웹 앱 아이콘 |
 | [`apple-touch-icon.png`](../dev/web/assets/images/apple-touch-icon.png) | 180×180px | Apple 홈 화면 아이콘 |
 | [`favicon.ico`](../dev/web/favicon.ico) | 16·32·48px | 작은 브라우저 파비콘 |
 
-생성 원본은 2,048×683px이며 웹에는 압축한 WebP 두 크기를 사용합니다. `picture`의 `srcset`으로 화면에 맞는 파일을 고르고, 원본 크기를 명시해 로딩 중 지면이 밀리는 것을 줄입니다. PC에서는 4:1, 900px 이하에서는 5:2 비율로 일부를 잘라 보여 줍니다. 삽화의 문구는 이미지 안에 넣지 않고 HTML 설명으로 제공합니다.
+`picture`·`srcset`으로 화면에 맞는 WebP를 선택합니다. 크기를 미리 지정하고 비동기로 디코딩하며, PC 4:1·900px 이하 5:2 영역에 맞춰 일부를 잘라 보여 줍니다. 안내 문구는 그림 안에 넣지 않고 HTML로 제공합니다.
 
-OG 이미지는 [공유 카드 원본](og/card.html)에서 제호·읽기 안내·삽화를 함께 배치합니다. 일반 지면의 삽화를 사용한 이미지임을 표시하며 특정 호의 숫자를 그림에 고정하지 않습니다. 파비콘은 생성형 삽화를 잘라 쓰지 않고 작은 크기에 맞는 SVG 픽셀 신문으로 만들었습니다. [아이콘 렌더링 원본](og/icon.html)은 같은 SVG를 참조합니다.
+[공유 카드](og/card.html)는 제호·읽기 안내·삽화를 배치하고 특정 호의 숫자를 고정하지 않습니다. [아이콘 렌더링 원본](og/icon.html)은 같은 SVG를 참조합니다. 파비콘은 생성형 삽화를 잘라 만든 이미지가 아닙니다.
 
-## 생성 기록
+## OG·아이콘을 갱신할 때
 
-삽화는 내장 `image_gen` 도구로 새로 생성했습니다. 편집할 입력 이미지는 사용하지 않았습니다. 다음 프롬프트로 가상 풍경과 픽셀 표현을 지정했습니다.
+렌더링에는 Playwright와 Chromium이 필요합니다. 저장소 루트에서 아래 순서로 브라우저 검사 의존성을 준비합니다.
+
+```bash
+cd dev/tests/browser
+npm ci
+npx playwright install chromium
+cd ../../..
+```
+
+공유 카드와 아이콘을 모두 다시 만들거나, 아이콘만 선택해 만들 수 있습니다.
+
+```bash
+node design/og/build.mjs
+node design/og/build.mjs --icons-only
+```
+
+도구는 `dev/tests/browser`의 Playwright를 사용합니다. 기존 브라우저를 쓸 때는 `CHROMIUM_PATH`, 다른 Playwright 모듈을 쓸 때는 `PLAYWRIGHT_MODULE`을 지정할 수 있습니다. 공유 카드의 지정 서체는 Noto Sans KR입니다. 로컬에 없으면 대체 글꼴을 사용하므로 같은 한글 모양으로 재현하려면 해당 서체를 설치해야 합니다. 픽셀 아이콘은 글꼴에 의존하지 않습니다.
+
+이미지 주소를 바꾸면 다음 참조도 함께 확인합니다.
+
+| 변경 대상 | 확인할 참조 |
+| --- | --- |
+| 상단 WebP | 공개 HTML의 `picture`·`srcset`, 표시 크기와 대체 텍스트 |
+| OG 파일명 | 공개 OG·Twitter 메타태그, [호별 생성기](../dev/pipeline/build/build_pages.py)의 NewsArticle 이미지 |
+| 아이콘·버전 | 공개 페이지·[관리자](../dev/web/admin/index.html)·[manifest](../dev/web/manifest.webmanifest) |
+
+현재 공유 카드는 `og-pixel.png`, 아이콘 링크 버전은 `pixel-20261103`입니다. 이전 공유 이미지와 다른 주소를 사용하며, 실제 출력 크기와 참조가 맞는지 확인합니다.
+
+## 생성 기록과 원본 프롬프트
+
+삽화는 내장 `image_gen`으로 새로 생성했습니다. 입력 이미지 편집은 사용하지 않았습니다. 저장된 생성 PNG 원본은 **2,172×724px**이며 공개 지면에는 압축한 WebP 두 크기를 사용합니다. 새벽 도시·강·자전거·신문의 가상 풍경으로, 특정 사건을 재현한 보도 자료가 아닙니다.
 
 ```text
 Use case: illustration-story. Asset: wide panoramic masthead illustration for a Korean data-driven morning newspaper website, Korea Jogan. Create a warm, witty, meticulously crafted 16-bit pixel-art scene of a South Korean city waking up at dawn: small newspaper delivery bicycle and folded morning newspaper in the foreground, layered contemporary city rooftops, a gentle river and distant low mountains. Calm blue, ivory, muted peach morning light with crisp square pixels and a restrained editorial feel. Wide landscape composition, approximately 3:1 ratio, all important detail within the central band so it can crop responsively. It will sit underneath the newspaper masthead and above real news. This is a playful decorative illustration, never an illustration of an actual incident: no politicians, no disaster, no aircraft, no protest, no victim, no charts or numeric claims. No lettering, no text, no logo, no watermark. Designed to look appealing on both an ivory light newsprint layout and a charcoal dark layout.
 ```
 
-이미지 생성은 같은 프롬프트를 사용해도 동일한 결과를 보장하지 않습니다. 공개된 WebP가 현재 지면의 기준 파일입니다.
-
-## OG·아이콘 다시 만들기
-
-삽화나 공유 카드·아이콘 원본을 바꾼 뒤 저장소 루트에서 실행합니다. Playwright와 Chromium이 필요합니다.
-
-```bash
-node design/og/build.mjs
-```
-
-아이콘만 다시 만들 때는 `--icons-only`를 붙입니다. 빌드 파일은 SVG를 기준으로 PNG 아이콘과 여러 크기를 담은 ICO를 생성합니다.
-
-```bash
-node design/og/build.mjs --icons-only
-```
-
-공유 카드 파일명은 `og-pixel.png`로 구분해 이전 공유 이미지와 다른 주소를 사용합니다. 파일명을 다시 바꾸면 공개 메타태그와 호별 페이지의 구조화 데이터 경로도 함께 수정합니다. 아이콘은 공개 페이지·관리자 페이지·manifest에서 같은 버전의 파일을 참조해야 합니다.
+같은 프롬프트도 동일한 결과를 보장하지 않습니다. 현재 공개된 WebP를 지면의 기준 파일로 유지합니다.
