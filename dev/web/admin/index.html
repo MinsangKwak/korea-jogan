@@ -8,6 +8,20 @@
   <title>운영 현황 · 대한민국 조간</title>
   <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon.ico" sizes="any">
+  <script>
+'use strict';
+// 모드 값만 먼저 적용하고 조작 스크립트는 본문을 차단하지 않는다
+(function () {
+  const root = document.documentElement;
+  let mode = 'system';
+  try { const saved = localStorage.getItem('jogan-theme'); if (saved === 'light' || saved === 'dark') mode = saved; } catch {}
+  if (mode !== 'system') root.dataset.theme = mode;
+  const resolved = mode === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode;
+  root.dataset.colorMode = resolved;
+  root.style.colorScheme = resolved;
+})();
+</script>
+<script src="/src/core/theme.js" async></script>
   <link rel="stylesheet" href="/src/styles/tokens.css">
   <link rel="stylesheet" href="/src/styles/kj.css">
   <link rel="stylesheet" href="./admin.css">
