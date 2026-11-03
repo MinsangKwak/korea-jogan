@@ -8,6 +8,24 @@ function el(tag, attrs, text) {
   return n;
 }
 
+// 화면 크기별 기본 펼침과 사용자가 고른 상태를 따로 기억한다
+const responsiveDisclosures = new WeakSet();
+function responsiveDisclosure(details, options = {}) {
+  if (!details || responsiveDisclosures.has(details)) return details;
+  responsiveDisclosures.add(details);
+  const media = window.matchMedia('(min-width: ' + ((options.breakpoint ?? 900) + 1) + 'px)');
+  const states = { wide: options.wideOpen !== false, narrow: options.narrowOpen === true };
+  let mode = media.matches ? 'wide' : 'narrow';
+  details.open = states[mode];
+  details.addEventListener('toggle', () => { states[mode] = details.open; });
+  media.addEventListener('change', () => {
+    states[mode] = details.open;
+    mode = media.matches ? 'wide' : 'narrow';
+    details.open = states[mode];
+  });
+  return details;
+}
+
 // 긴 요약은 첫 결론과 나머지 설명을 나눠 읽는다. 원문 문자열의 순서와 내용은 유지한다
 function readingText(text, className = '') {
   const p = el('p', { class: ('kj-reading ' + className).trim() });

@@ -1,4 +1,10 @@
 /* 언론 */
+.news-edition .media-heading { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); margin-bottom: var(--space-4); }
+.news-edition .media-heading > .kj-sechead { min-width: 0; max-width: none; margin-bottom: 0; }
+.news-edition .media-heading > .kj-search { width: 100%; min-width: 0; max-width: none; margin: 0; }
+@media (min-width: 1100px) {
+  .news-edition .media-heading { grid-template-columns: minmax(0, 1fr) minmax(20rem, 28rem); align-items: end; gap: var(--space-8); }
+}
 .tchips { margin: var(--space-2) 0 var(--space-6); }
 .tresult > h3 { margin: 0 0 var(--space-1); font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 900; line-height: 1.35; }
 .tmeta { margin: 0 0 var(--space-4); font-size: 0.85rem; color: var(--ink-3); }

@@ -20,7 +20,7 @@ function renderLead() {
     $('leadFacts').append(li);
   });
   const related = el('div', { class: 'news-related' });
-  related.append(el('h2', {}, '함께 읽을 주제'));
+  related.append(el('h2', { id: 'relatedH' }, '함께 읽을 주제'));
   D.themes.slice(0, 2).forEach((theme) => {
     const a = el('a', { href: '#media' });
     a.append(el('small', {}, '주제별 보도'), el('h3', {}, theme.title));
@@ -32,7 +32,11 @@ function renderLead() {
     });
     related.append(a);
   });
-  document.querySelector('.briefs-box').prepend(related);
+  const briefsBox = document.querySelector('.briefs-box');
+  briefsBox.setAttribute('role', 'region');
+  briefsBox.setAttribute('tabindex', '0');
+  briefsBox.setAttribute('aria-labelledby', 'relatedH briefH');
+  briefsBox.prepend(related);
   D.briefs.forEach((b) => {
     const li = el('li');
     const a = el('a', { href: b.href });
@@ -43,4 +47,11 @@ function renderLead() {
     $('briefs').append(li);
   });
   collapse($('briefs'), { noun: '개', name: '오늘 꼭 볼 숫자' });
+  const extras = el('details', { class: 'lead-extras' });
+  extras.append(el('summary', {}, '함께 읽을 주제·핵심 숫자'));
+  const extrasBody = el('div', { class: 'lead-extras__body' });
+  while (briefsBox.firstChild) extrasBody.append(briefsBox.firstChild);
+  extras.append(extrasBody);
+  briefsBox.append(extras);
+  responsiveDisclosure(extras);
 }

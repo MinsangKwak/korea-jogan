@@ -14,3 +14,38 @@
 .inds .kj-kv .v { grid-column: 1; grid-row: auto; order: 1; font-size: 0.95rem; font-weight: 700; white-space: normal; text-align: left; }
 .inds .kj-kv .m { order: 2; }
 .inds .news { margin: var(--space-3) 0 0; font-size: 0.85rem; color: var(--ink-3); }
+
+/* 산업 개요와 품목 비교를 나란히 읽고 좁은 화면에서는 순서대로 잇는다 */
+.news-edition .industry-overview { display: grid; gap: var(--space-8); align-items: start; }
+.news-edition .industry-summary, .news-edition .industry-chart { min-width: 0; }
+.news-edition .industry-summary .kj-sechead { margin-bottom: var(--space-6); }
+.news-edition .industry-summary .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-4); }
+.news-edition .industry-summary .strip .v { margin-block: var(--space-1); overflow-wrap: anywhere; }
+.news-edition .industry-summary .src-note { margin-top: var(--space-5); line-height: 1.85; }
+.news-edition .industry-chart { padding: var(--space-6); border: var(--border-hairline) solid var(--line); background: var(--surface); }
+.news-edition .industry-chart .sub { margin: 0 0 var(--space-2); }
+.news-edition .industry-chart > summary.sub { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: var(--tap-min); margin: 0; cursor: pointer; list-style: none; }
+.news-edition .industry-chart > summary::-webkit-details-marker { display: none; }
+.news-edition .industry-chart[open] > summary.sub { margin-bottom: var(--space-3); }
+.news-edition .industry-chart > summary:hover { color: var(--brand); }
+.news-edition .industry-chart > summary:focus-visible { outline: var(--border-focus) solid var(--focus); outline-offset: 4px; }
+.news-edition .industry-chart__toggle { flex: none; color: var(--brand); font-size: .8rem; font-weight: 500; white-space: nowrap; }
+.news-edition .industry-chart__toggle::before { content: '펼치기'; }
+.news-edition .industry-chart__toggle::after { content: ' +'; }
+.news-edition .industry-chart[open] .industry-chart__toggle::before { content: '접기'; }
+.news-edition .industry-chart[open] .industry-chart__toggle::after { content: ' −'; }
+.news-edition .industry-chart__note { margin: 0 0 var(--space-5); color: var(--ink-3); font-size: .8rem; line-height: 1.75; }
+.news-edition .industry-chart .kj-bars { gap: var(--space-2); }
+.news-edition .industry-chart .kj-bar { min-width: 0; grid-template-columns: 7rem minmax(0, 1fr) 7.5rem; }
+.news-edition .industry-chart .kj-bar__lab { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.6; }
+.news-edition .industry-chart .kj-bar__v { display: flex; flex-direction: column; align-items: flex-end; min-width: 0; white-space: normal; line-height: 1.4; overflow-wrap: anywhere; }
+.news-edition .industry-chart .kj-bar__change { color: var(--ink-3); font-size: .8rem; }
+.news-edition .industry-chart .kj-legend { margin-top: var(--space-5); padding-top: var(--space-4); border-top: var(--border-hairline) solid var(--line); line-height: 1.8; }
+@media (min-width: 1100px) {
+  .news-edition .industry-overview { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--space-10); }
+}
+@media (max-width: 600px) {
+  .news-edition .industry-chart { padding: var(--space-4); }
+  .news-edition .industry-chart .kj-bar { grid-template-columns: 5.6rem minmax(0, 1fr); gap: var(--space-1) var(--space-3); }
+  .news-edition .industry-chart .kj-bar__v { grid-column: 2; align-items: flex-start; }
+}

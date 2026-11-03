@@ -277,7 +277,9 @@ async function check(name, options, run) {
     assert.equal(await page.locator('#track .kj-track:first-child .kj-timeline li.is-done').count(), item.steps.filter((s) => s.done).length);
     // 날짜가 아직 없는 단계는 '예정'으로 적는다
     assert.equal(await page.locator('#track .kj-track:first-child .kj-timeline li:not(.is-done) b').first().innerText(), '예정');
-    assert.equal(await page.locator('#track .kj-track:first-child .kj-track__links li a').count(), item.links.length);
+    const hasArticleTable = item.links.some((link) => link.summary);
+    assert.equal(await page.locator('#track .kj-track:first-child .kj-track__links li a').count(), hasArticleTable ? 0 : item.links.length);
+    if (hasArticleTable) assert.equal(await page.locator('#track .kj-track:first-child .tracking-articles tbody tr').count(), item.links.length);
     const bar = page.locator('#track .kj-prog__bar');
     assert.equal(await bar.getAttribute('role'), 'progressbar');
     assert.ok(Number(await bar.getAttribute('aria-valuenow')) > 0);
@@ -287,6 +289,11 @@ async function check(name, options, run) {
     assert.equal(await muan.locator('.tracking-articles tbody tr').count(), muanData.links.length);
     assert.equal(await muan.locator('[aria-current="step"]').innerText(), muanData.phases[muanData.phaseIndex] + '\n현재 확인');
     assert.equal(await muan.locator('[role="progressbar"]').count(), 0);
+    const sources = muan.locator('.kj-track__sources');
+    assert.equal(await sources.getAttribute('open'), null);
+    await sources.locator('> summary').click();
+    assert.equal(await muan.locator('.tracking-articles').isVisible(), true);
+    await sources.locator('> summary').click();
     await page.locator('#trackingExpand').click();
     assert.equal(await page.locator('#trackingDialog').evaluate((d) => d.open), true);
     await page.locator('#trackingContent details').last().locator('summary').click();
@@ -370,8 +377,10 @@ async function check(name, options, run) {
     const padding = await page.locator('#heroGrid').evaluate((e) => parseFloat(getComputedStyle(e).paddingRight));
     assert.ok(padding <= 40);
     await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="national"]').getAttribute('aria-current') === 'true');
-    await page.locator('#natFlow > summary').click();
     assert.equal(await page.locator('#natFlow').getAttribute('open'), '');
+    await page.locator('#natFlow > summary').click();
+    assert.equal(await page.locator('#natFlow').getAttribute('open'), null);
+    await page.locator('#natFlow > summary').click();
     assert.equal(await page.locator('#natFlow > ol > li').count(), latest.national.flow.length);
     const order = await page.evaluate(() => [...document.querySelectorAll('main > section')].map((s) => s.id));
     assert.deepEqual(order.slice(0, 4), ['national', 'track', 'home', 'regions']);
@@ -527,18 +536,145 @@ async function check(name, options, run) {
       if (width > 1100) assert.equal(await page.locator('#trackList .kj-track__side').first().evaluate((node) => getComputedStyle(node).position), 'static');
     });
   }
-  await check('PC 진행 상황 내부 스크롤·키보드 접근', { width: 1920 }, async (page) => {
+  await check('PC 이슈 카드 두 열·내부 스크롤·키보드 접근', { width: 1920 }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
-    const side = page.locator('#trackList > .kj-track > .kj-track__grid > .kj-track__side').first();
+    const cards = page.locator('#trackList > .kj-track');
+    const first = await cards.nth(0).boundingBox();
+    const second = await cards.nth(1).boundingBox();
+    assert.ok(Math.abs(first.y - second.y) < 2 && second.x > first.x + first.width, '두 이슈가 같은 행에 나란히 배치');
+    const side = page.locator('#trackList > .kj-track > .kj-track__body').first();
     await side.waitFor();
     const size = await side.evaluate((node) => ({ height: node.clientHeight, scroll: node.scrollHeight, overflow: getComputedStyle(node).overflowY, position: getComputedStyle(node).position }));
-    assert.equal(size.position, 'sticky');
+    assert.equal(size.position, 'static');
     assert.equal(size.overflow, 'auto');
-    assert.ok(size.height <= 844 - 152);
+    assert.ok(size.height <= 844 * .72 + 1);
     assert.equal(await side.getAttribute('tabindex'), '0');
-    await side.evaluate((node) => { node.scrollTop = node.scrollHeight; });
-    assert.equal(await side.evaluate((node) => node.scrollTop + node.clientHeight >= node.scrollHeight - 1), true);
+    await side.focus();
+    await page.keyboard.press('End');
+    await page.waitForFunction(() => { const node = document.querySelector('#trackList .kj-track__body'); return node.scrollTop + node.clientHeight >= node.scrollHeight - 1; });
+  });
+  for (const width of [390, 900, 1100, 1440, 1920]) {
+    await check('섹션 좌우 배치·주요 기사 높이 기준 ' + width, { width }, async (page) => {
+      await page.goto('http://jogan.test/');
+      await ready(page);
+      for (const big of [false, true]) {
+        if (big) await page.locator('#bigBtn').click();
+        const lead = await page.locator('#leadBox').boundingBox();
+        const aside = await page.locator('.briefs-box').boundingBox();
+        if (width > 900) {
+          assert.ok(Math.abs(lead.height - aside.height) < 2, JSON.stringify({ lead, aside }));
+          assert.equal(await page.locator('.briefs-box').evaluate((node) => getComputedStyle(node).overflowY), 'auto');
+          await page.locator('.briefs-box').focus();
+          await page.keyboard.press('End');
+          await page.waitForFunction(() => { const node = document.querySelector('.briefs-box'); return node.scrollTop + node.clientHeight >= node.scrollHeight - 1; });
+        } else {
+          assert.ok(aside.y >= lead.y + lead.height);
+          assert.equal(await page.locator('.briefs-box').evaluate((node) => getComputedStyle(node).overflowY), 'visible');
+        }
+        const title = await page.locator('#media .kj-sechead').boundingBox();
+        const search = await page.locator('#tform').boundingBox();
+        const summary = await page.locator('.industry-summary').boundingBox();
+        const chart = await page.locator('.industry-chart').boundingBox();
+        if (width >= 1100) {
+          assert.ok(search.x >= title.x + title.width && search.y < title.y + title.height);
+          assert.ok(chart.x >= summary.x + summary.width && Math.abs(chart.y - summary.y) < 2);
+        } else {
+          assert.ok(search.y >= title.y + title.height);
+          assert.ok(chart.y >= summary.y + summary.height);
+        }
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+      }
+    });
+  }
+  for (const width of [390, 1440, 1920]) {
+    await check('경제 지표 순환·키보드·출처 읽기 ' + width, { width }, async (page) => {
+      let vendorRequests = 0;
+      page.on('request', (request) => { if (request.url().includes('/assets/vendor/swiper/')) vendorRequests += 1; });
+      await page.goto('http://jogan.test/');
+      await ready(page);
+      assert.equal(vendorRequests, 0, '첫 지면은 슬라이더 다운로드 없이 준비');
+      await page.locator('#economy').evaluate((node) => node.scrollIntoView({ block: 'start' }));
+      await page.locator('#nums[data-carousel-state="ready"]').waitFor();
+      assert.ok(vendorRequests >= 2);
+      assert.equal(await page.locator('#econPlayback').getAttribute('aria-pressed'), 'false');
+      const count = latest.nums.length;
+      assert.equal(await page.locator('#nums > .swiper-slide').count(), count);
+      const numbers = await page.locator('#nums > .swiper-slide').evaluateAll((cards) => cards.map((card) => ({ index: Number(card.dataset.econIndex), value: card.querySelector('.kj-stat__v').textContent, ref: card.querySelector('.kj-stat__ref').textContent })).sort((a, b) => a.index - b.index));
+      assert.deepEqual(numbers.map((card) => [card.value, card.ref]), latest.nums.map((item) => [item.v, item.ref]));
+      await page.locator('#econPrev').click();
+      await page.waitForFunction((expected) => document.getElementById('econViewport').swiper.realIndex === expected, count - 1);
+      await page.locator('#econNext').click();
+      await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex === 0);
+      await page.locator('#econViewport').focus();
+      await page.keyboard.press('ArrowRight');
+      await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex === 1);
+      await page.locator('#econPlayback').click();
+      assert.equal(await page.locator('#econPlayback').getAttribute('aria-pressed'), 'true');
+      const source = page.locator('#nums .swiper-slide-active .kj-src > summary');
+      await source.click();
+      await page.waitForFunction(() => document.getElementById('econPlayback').getAttribute('aria-pressed') === 'false');
+      assert.equal(await page.locator('#nums .swiper-slide-active .kj-src[open] a').first().isVisible(), true);
+      await source.click();
+      assert.equal(await page.locator('#econPlayback').getAttribute('aria-pressed'), 'false');
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+    });
+  }
+  await check('경제 라이브러리 실패 시 전체 지표 목록 유지', { width: 390 }, async (page) => {
+    await page.route('**/assets/vendor/swiper/**', (route) => route.abort());
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    await page.locator('#economy').evaluate((node) => node.scrollIntoView({ block: 'start' }));
+    await page.waitForFunction(() => document.querySelector('script[src*="swiper-14"]') && document.getElementById('nums').dataset.carouselState === 'static');
+    assert.equal(await page.locator('#nums.kj-stats > .kj-stat:visible').count(), latest.nums.length);
+    assert.equal(await page.locator('#econPlayback').count(), 0);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+  });
+  await check('경제 자동 넘김·가리기·포커스·동작 줄이기', { width: 1440 }, async (page) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    await page.locator('#economy').evaluate((node) => node.scrollIntoView({ block: 'start' }));
+    await page.locator('#nums[data-carousel-state="ready"]').waitFor();
+    await page.waitForFunction(() => document.getElementById('econCarousel').dataset.autoplay === 'running');
+    await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex !== 0, null, { timeout: 12000 });
+    await page.locator('#econViewport').focus();
+    await page.waitForFunction(() => document.getElementById('econCarousel').dataset.autoplay === 'paused');
+    await page.evaluate(() => document.activeElement.blur());
+    await page.mouse.move(0, 0);
+    await page.waitForFunction(() => document.getElementById('econCarousel').dataset.autoplay === 'running');
+    await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
+    assert.equal(await page.locator('#econCarousel').getAttribute('data-autoplay'), 'paused');
+    await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.waitForFunction(() => document.getElementById('econPlayback').getAttribute('aria-pressed') === 'false');
+    assert.equal(await page.locator('#econCarousel').getAttribute('data-autoplay'), 'paused');
+  });
+  await check('PC 기본 펼침·모바일 핵심 우선·선택 기억', { width: 1440 }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    const selectors = ['#natFlow', '.lead-extras', '#trackList .kj-track__timeline', '#industryChart', '#nums .econ-reference'];
+    for (const selector of selectors) assert.equal(await page.locator(selector).first().evaluate((node) => node.open), true, selector);
+    const extras = page.locator('.lead-extras');
+    await extras.locator('> summary').click();
+    assert.equal(await extras.evaluate((node) => node.open), false);
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const selector of selectors) await page.waitForFunction((selector) => !document.querySelector(selector).open, selector);
+    assert.equal(await page.locator('#leadH').isVisible(), true);
+    assert.equal(await page.locator('#nums .kj-stat__v').first().isVisible(), true);
+    assert.ok((await page.locator('#nums .econ-base').first().innerText()).includes(latest.nums[0].src.base));
+    await page.locator('#natFlow > summary').click();
+    await extras.locator('> summary').click();
+    await page.setViewportSize({ width: 1440, height: 844 });
+    await page.waitForFunction(() => !document.querySelector('.lead-extras').open);
+    assert.equal(await page.locator('#natFlow').evaluate((node) => node.open), true);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForFunction(() => document.querySelector('.lead-extras').open && document.getElementById('natFlow').open);
+    await extras.locator('> summary').click();
+    await page.locator('#menuBtn').click();
+    await page.locator('#dn-home .kj-drawer__subs button').filter({ hasText: '오늘 꼭 볼 숫자' }).click();
+    await page.locator('#drawer').waitFor({ state: 'hidden' });
+    assert.equal(await extras.evaluate((node) => node.open), true, '메뉴로 숨긴 내용에 바로 이동하면 먼저 펼침');
   });
   console.log('브라우저 검사 완료:', checks);
 })().catch((error) => { console.error(error); process.exitCode = 1; }).finally(async () => {

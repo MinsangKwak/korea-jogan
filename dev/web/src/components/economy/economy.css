@@ -1,0 +1,35 @@
+/* 경제 지표는 라이브러리 준비 전까지 원래의 격자 목록을 유지한다 */
+.econ-carousel { min-width: 0; }
+.econ-carousel__viewport { min-width: 0; }
+.econ-base { color: var(--ink-3); font-size: .8rem; line-height: 1.8; }
+.econ-reference { min-width: 0; }
+.econ-reference > summary { min-height: 44px; padding-block: 8px; color: var(--brand); font-size: .85rem; font-weight: 700; line-height: 1.8; cursor: pointer; }
+.econ-reference > summary:hover { color: var(--brand-strong); }
+.econ-reference > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.econ-reference > .kj-stat__ref { display: block; padding-top: 8px; }
+.econ-carousel.is-ready { --swiper-theme-color: var(--brand); }
+.econ-carousel__toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; margin-bottom: 20px; }
+.econ-carousel__hint { margin: 0; color: var(--ink-3); font-size: .85rem; }
+.econ-carousel__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.econ-carousel__counter { min-width: 4rem; text-align: center; color: var(--ink-2); font-size: .85rem; font-variant-numeric: tabular-nums; }
+.econ-carousel__actions button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--line-strong); background: var(--surface-raised); color: var(--ink); font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.econ-carousel__actions button:hover { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
+.econ-carousel__actions button[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+.econ-carousel__actions button:disabled { cursor: default; opacity: .5; }
+.econ-carousel :is(button, .econ-carousel__viewport, .kj-stat__ref):focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.econ-carousel.is-ready .econ-carousel__viewport { overflow: hidden; padding: 4px; margin: -4px; }
+.econ-carousel.is-ready .swiper-wrapper { align-items: stretch; }
+.econ-carousel.is-ready .kj-stat { display: flex; flex-direction: column; box-sizing: border-box; height: auto; padding: 24px; gap: 10px; border: 1px solid var(--line); }
+.econ-carousel.is-ready .kj-stat__k { line-height: 1.7; }
+.econ-carousel.is-ready .kj-stat__v { font-size: 1.8rem; line-height: 1.4; }
+.econ-carousel.is-ready .kj-stat__ref { display: block; max-height: 13.5rem; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; padding-right: 6px; line-height: 1.8; }
+.econ-carousel.is-ready .kj-stat__foot { flex-wrap: wrap; align-items: flex-start; gap: 8px 12px; padding-top: 16px; }
+.econ-carousel.is-ready .kj-src[open] { flex: 1 0 100%; }
+.econ-carousel.is-ready .kj-src__panel { max-height: 18rem; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; }
+@media (max-width: 600px) {
+  .econ-carousel__toolbar { align-items: flex-start; }
+  .econ-carousel__actions { width: 100%; }
+  .econ-carousel__actions button { padding-inline: 12px; }
+  .econ-carousel__counter { min-width: 3rem; text-align: left; }
+  .econ-carousel.is-ready .kj-stat { padding: 20px; }
+}

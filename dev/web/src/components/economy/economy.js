@@ -14,9 +14,228 @@ function renderNums() {
     row.append(el('span', { class: 'kj-dir kj-dir--' + m.dir, 'aria-label': DIR_LABEL[m.dir] + ' ' + m.d }, m.d));
     const foot = el('div', { class: 'kj-stat__foot' });
     foot.append(gradeBadge(m.grade), srcDisclosure(m.src, '경제 · ' + m.k));
-    t.append(row, el('span', { class: 'kj-stat__ref' }, m.ref), foot);
+    const reference = el('details', { class: 'econ-reference' });
+    reference.append(el('summary', {}, '기준·집계 설명'), el('span', { class: 'kj-stat__ref' }, m.ref));
+    responsiveDisclosure(reference, { wideOpen: true, narrowOpen: false, breakpoint: 900 });
+    t.append(row, el('span', { class: 'econ-base' }, '기준일 · ' + m.src.base), reference, foot);
     $('nums').append(t);
   });
+  setupEconomyCarousel($('nums'));
+}
+
+let economySwiperRequest = null;
+
+// 경제 지표에 가까워졌을 때만 같은 출처의 라이브러리를 읽는다
+function loadEconomySwiper() {
+  if (economySwiperRequest) return economySwiperRequest;
+  const load = (kind, url) => new Promise((resolve) => {
+    const node = kind === 'script' ? document.createElement('script') : document.createElement('link');
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve(ok);
+    };
+    const timer = setTimeout(() => finish(false), 8000);
+    if (kind === 'script') { node.src = url; node.async = true; }
+    else { node.rel = 'stylesheet'; node.href = url; }
+    node.onload = () => finish(true);
+    node.onerror = () => finish(false);
+    document.head.append(node);
+  });
+  economySwiperRequest = Promise.all([
+    load('style', 'assets/vendor/swiper/swiper-14.4.0.min.css'),
+    load('script', 'assets/vendor/swiper/swiper-14.4.0.min.js')
+  ]).then((loaded) => loaded.every(Boolean) && typeof window.Swiper === 'function');
+  return economySwiperRequest;
+}
+
+// 초기화에 실패해도 여섯 지표와 출처는 기존 격자 목록으로 남는다
+function setupEconomyCarousel(list) {
+  const cards = Array.from(list.children);
+  if (cards.length < 2 || list.closest('.econ-carousel')) return;
+  const shell = el('div', { class: 'econ-carousel', id: 'econCarousel' });
+  const viewport = el('div', { class: 'econ-carousel__viewport', id: 'econViewport' });
+  list.before(shell);
+  viewport.append(list);
+  shell.append(viewport);
+  list.dataset.carouselState = 'static';
+  const activate = async () => {
+    list.dataset.carouselState = 'loading';
+    const loaded = await loadEconomySwiper();
+    // 늦게 도착한 코드가 이미 읽던 긴 목록을 줄이지 않도록 한다
+    if (!loaded || list.getBoundingClientRect().top < -80 || list.contains(document.activeElement) || list.querySelector('.kj-src[open]')) {
+      list.dataset.carouselState = 'static';
+      return;
+    }
+    initEconomyCarousel(shell, viewport, list, cards);
+  };
+  if ('IntersectionObserver' in window) {
+    const lazy = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      lazy.disconnect();
+      activate();
+    }, { rootMargin: '800px 0px' });
+    lazy.observe(shell);
+  } else activate();
+}
+
+function initEconomyCarousel(shell, viewport, list, cards) {
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const state = { enabled: !motion.matches, hovered: false, focused: false, visible: false };
+  const count = cards.length;
+  const toolbar = el('div', { class: 'econ-carousel__toolbar' });
+  const label = el('p', { id: 'econHint', class: 'econ-carousel__hint' }, '핵심 지표 ' + count + '개 · 옆으로 넘겨 보세요');
+  const actions = el('div', { class: 'econ-carousel__actions', role: 'group', 'aria-label': '경제 지표 넘기기' });
+  const counter = el('span', { id: 'econCounter', class: 'econ-carousel__counter', 'aria-live': 'off' }, '1 / ' + count);
+  const previous = el('button', { type: 'button', id: 'econPrev', 'aria-label': '이전 경제 지표', 'aria-controls': 'nums' }, '이전');
+  const next = el('button', { type: 'button', id: 'econNext', 'aria-label': '다음 경제 지표', 'aria-controls': 'nums' }, '다음');
+  const playback = el('button', { type: 'button', id: 'econPlayback', 'aria-controls': 'nums' });
+  const announcement = el('span', { class: 'kj-sr', role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' });
+  actions.append(counter, previous, next, playback);
+  toolbar.append(label, actions);
+  shell.prepend(toolbar);
+  shell.append(announcement);
+  shell.setAttribute('role', 'region');
+  shell.setAttribute('aria-roledescription', '캐러셀');
+  shell.setAttribute('aria-labelledby', 'ecoH');
+  shell.setAttribute('aria-describedby', 'econHint');
+  viewport.setAttribute('tabindex', '0');
+  viewport.setAttribute('aria-label', '경제 지표 목록, 좌우 방향키로 넘기기');
+  viewport.classList.add('swiper');
+  list.classList.remove('kj-stats');
+  list.classList.add('swiper-wrapper');
+  cards.forEach((card, index) => {
+    card.classList.add('swiper-slide');
+    card.dataset.econIndex = String(index);
+    card.setAttribute('role', 'group');
+    card.setAttribute('aria-roledescription', '슬라이드');
+    card.setAttribute('aria-label', (index + 1) + ' / ' + count + ' · ' + D.nums[index].k);
+    const ref = card.querySelector('.kj-stat__ref');
+    ref.setAttribute('tabindex', '0');
+    ref.setAttribute('role', 'region');
+    ref.setAttribute('aria-label', D.nums[index].k + ' 기준과 집계 설명');
+  });
+  shell.classList.add('is-ready');
+  const visibleCount = () => {
+    const desired = innerWidth >= 1600 ? 4 : innerWidth >= 1100 ? 3 : innerWidth >= 700 ? 2 : innerWidth >= 380 && !document.documentElement.classList.contains('big') ? 1.08 : 1;
+    return Math.min(count, desired);
+  };
+  let swiper;
+  const syncVisibility = () => {
+    if (!swiper || swiper.destroyed) return;
+    const bounds = viewport.getBoundingClientRect();
+    cards.forEach((card) => {
+      const box = card.getBoundingClientRect();
+      const fraction = Math.max(0, Math.min(box.right, bounds.right) - Math.max(box.left, bounds.left)) / Math.max(box.width, 1);
+      const visible = fraction > .5;
+      card.inert = !visible;
+      card.setAttribute('aria-hidden', String(!visible));
+    });
+    counter.textContent = (swiper.realIndex + 1) + ' / ' + count;
+    const locked = swiper.isLocked;
+    previous.disabled = locked;
+    next.disabled = locked;
+    playback.disabled = locked;
+  };
+  const syncAutoplay = () => {
+    if (!swiper || swiper.destroyed) return;
+    const run = state.enabled && !state.hovered && !state.focused && state.visible && !document.hidden && !swiper.isLocked;
+    if (run && !swiper.autoplay.running) swiper.autoplay.start();
+    if (!run && swiper.autoplay.running) swiper.autoplay.stop();
+    playback.setAttribute('aria-pressed', String(state.enabled));
+    playback.textContent = state.enabled ? '자동 넘김 끄기' : '자동 넘김 켜기';
+    shell.dataset.autoplay = run ? 'running' : 'paused';
+  };
+  const stopReading = () => {
+    state.enabled = false;
+    syncAutoplay();
+  };
+  try {
+    swiper = new window.Swiper(viewport, {
+      init: false,
+      speed: motion.matches ? 0 : 350,
+      slidesPerView: visibleCount(),
+      spaceBetween: innerWidth > 900 ? 24 : 16,
+      slidesPerGroup: 1,
+      loop: count >= 5,
+      rewind: count < 5,
+      loopAddBlankSlides: false,
+      watchOverflow: true,
+      watchSlidesProgress: true,
+      a11y: { enabled: false },
+      autoplay: { delay: 8000, disableOnInteraction: false, pauseOnMouseEnter: false },
+      on: {
+        init() { syncVisibility(); syncAutoplay(); },
+        slideChange() { syncVisibility(); },
+        transitionEnd() { syncVisibility(); },
+        resize() { syncVisibility(); syncAutoplay(); },
+        touchEnd() { syncAutoplay(); },
+        sliderFirstMove() { stopReading(); }
+      }
+    });
+    swiper.init();
+  } catch {
+    if (swiper && !swiper.destroyed && typeof swiper.destroy === 'function') {
+      try { swiper.destroy(true, true); } catch {}
+    }
+    cards.forEach((card) => {
+      card.inert = false;
+      ['aria-hidden', 'role', 'aria-roledescription', 'aria-label', 'style'].forEach((attribute) => card.removeAttribute(attribute));
+      card.classList.remove('swiper-slide');
+      const ref = card.querySelector('.kj-stat__ref');
+      ['tabindex', 'role', 'aria-label'].forEach((attribute) => ref.removeAttribute(attribute));
+      list.append(card);
+    });
+    list.classList.remove('swiper-wrapper');
+    list.classList.add('kj-stats');
+    list.dataset.carouselState = 'static';
+    viewport.classList.remove('swiper');
+    viewport.removeAttribute('tabindex');
+    viewport.removeAttribute('aria-label');
+    ['role', 'aria-roledescription', 'aria-labelledby', 'aria-describedby'].forEach((attribute) => shell.removeAttribute(attribute));
+    shell.classList.remove('is-ready');
+    toolbar.remove();
+    announcement.remove();
+    return;
+  }
+  list.dataset.carouselState = 'ready';
+  const announce = () => { announcement.textContent = (swiper.realIndex + 1) + '번째 지표, ' + D.nums[swiper.realIndex].k; };
+  const move = (direction) => {
+    stopReading();
+    if (direction > 0) swiper.slideNext();
+    else swiper.slidePrev();
+    announce();
+  };
+  previous.addEventListener('click', () => move(-1));
+  next.addEventListener('click', () => move(1));
+  playback.addEventListener('click', () => { state.enabled = !state.enabled; syncAutoplay(); });
+  viewport.addEventListener('keydown', (event) => {
+    if (event.target !== viewport || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+    event.preventDefault();
+    move(event.key === 'ArrowRight' ? 1 : -1);
+  });
+  shell.addEventListener('pointerenter', (event) => { if (event.pointerType !== 'mouse') return; state.hovered = true; syncAutoplay(); });
+  shell.addEventListener('pointerleave', () => { state.hovered = false; syncAutoplay(); });
+  shell.addEventListener('focusin', () => { state.focused = true; syncAutoplay(); });
+  shell.addEventListener('focusout', (event) => { state.focused = shell.contains(event.relatedTarget); syncAutoplay(); });
+  list.addEventListener('pointerdown', stopReading, { passive: true });
+  list.addEventListener('toggle', (event) => { if (event.target.matches('details[open]')) stopReading(); }, true);
+  document.addEventListener('visibilitychange', syncAutoplay);
+  motion.addEventListener('change', () => { if (motion.matches) state.enabled = false; swiper.params.speed = motion.matches ? 0 : 350; syncAutoplay(); });
+  const resize = () => {
+    swiper.params.slidesPerView = visibleCount();
+    swiper.params.spaceBetween = innerWidth > 900 ? 24 : 16;
+    swiper.update();
+    syncVisibility();
+    syncAutoplay();
+  };
+  window.addEventListener('resize', resize);
+  new MutationObserver(resize).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((entries) => { state.visible = entries.some((entry) => entry.isIntersecting); syncAutoplay(); }, { threshold: .1 }).observe(viewport);
+  } else { state.visible = true; syncAutoplay(); }
 }
 
 // 승인된 조간과 별개인 자동 갱신 숫자(data/live.json). 없거나 못 읽으면 띠를 숨긴 채 둔다
