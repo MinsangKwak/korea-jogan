@@ -155,3 +155,46 @@
   .news-edition .kj-mast__actions .kj-sizebtn { font-size: 14px; }
   .news-edition .kj-prog { padding: 20px; }
 }
+
+/* 화면 모드는 공통 토큰을 사용하고 지면과 조작 영역의 명도를 구분한다 */
+.news-edition { --news-panel: var(--bg); --news-rule: var(--line); }
+:root[data-color-mode="dark"] .news-edition { --news-panel: var(--surface); --news-rule: var(--line-strong); }
+.news-edition .kj-status { color: var(--ink); border-color: var(--line-strong); background: var(--surface); }
+.news-edition .kj-status:hover { color: var(--brand); border-color: var(--brand); background: var(--brand-soft); }
+.news-theme { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: .82rem; }
+.news-theme select { min-height: 44px; min-width: 110px; max-width: 100%; border: 1px solid var(--line-strong); border-radius: 0; padding: 8px; background: var(--surface-raised); color: var(--ink); font: inherit; cursor: pointer; }
+.news-theme select:hover { border-color: var(--brand); }
+.news-theme select:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.news-edition .kj-cats a[aria-current="true"] { background: var(--brand-soft); color: var(--brand); }
+.news-edition .kj-sechead > p:not(.kj-label):not(.kj-sechead__meta) { max-width: 43rem; font-size: .9rem; line-height: 1.8; color: var(--ink-2); }
+.news-edition .kj-sechead > p > strong { display: block; color: var(--ink); font-weight: 500; }
+.news-edition .kj-newscard { background: var(--news-panel); border-color: var(--news-rule); padding: 20px 0; }
+.news-edition .kj-newscard p { font-size: .94rem; line-height: 1.85; }
+.news-edition .kj-newscard h3 { font-size: 1.18rem; line-height: 1.6; }
+.kj-reading__lead { display: block; color: var(--ink); font-weight: 500; }
+.kj-reading__detail { display: block; margin-top: .5em; color: var(--ink-2); }
+.news-edition .kj-lead h1 { font-size: 2.45rem; }
+.news-edition .kj-lead__stand { font-size: 1rem; }
+.tracking-summary h3 { font-size: 1.4rem; }
+.tracking-summary p { font-size: .94rem; line-height: 1.85; }
+.tracking-phases li { font-size: .82rem; }
+.tracking-phases small { font-size: .78rem; }
+.tracking-articles { font-size: .85rem; }
+.tracking-articles small, .tracking-summary > small { font-size: .78rem; }
+#trackingDialog { background: var(--surface-raised); scroll-padding-top: 90px; }
+#trackingDialog > header { position: sticky; top: -24px; z-index: 2; margin: -24px -24px 0; padding: 16px 24px; background: var(--surface-raised); }
+#trackingTitle { margin: 0; }
+.tracking-summary details .kj-track { border-top: 1px solid var(--line); padding-top: 16px; }
+@media(max-width:900px) {
+  .news-edition .kj-lead h1 { font-size: 1.77rem; }
+  .news-edition .kj-mast__actions { gap: 8px 12px; align-items: center; }
+  .news-theme { flex-wrap: wrap; }
+  #trackingDialog > header { top: -16px; margin: -16px -16px 0; padding: 12px 16px; }
+}
+
+.news-edition details.nat-flow { padding: 0; background: var(--surface); border-block: 1px solid var(--line); }
+.nat-flow > summary { padding: 16px 20px; cursor: pointer; font-size: .95rem; font-weight: 700; color: var(--ink); }
+.nat-flow > summary:hover { color: var(--brand); background: var(--brand-soft); }
+.nat-flow > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.nat-flow > ol { padding: 0 24px 20px 44px; margin: 0; }
+.nat-flow > ol > li { margin-top: 12px; line-height: 1.85; }

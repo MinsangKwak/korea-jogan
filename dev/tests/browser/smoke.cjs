@@ -25,6 +25,7 @@ async function pageFor(options = {}) {
   const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, reducedMotion: 'reduce', colorScheme: options.dark ? 'dark' : 'light' });
   // 측정은 자동화 브라우저에서 꺼지므로, 사람 브라우저처럼 보이게 한 뒤 시험한다. automation 옵션이면 그대로 둔다
   if (!options.automation) await context.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
+  if (options.blockStorage) await context.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } }));
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -32,6 +33,7 @@ async function pageFor(options = {}) {
     const url = new URL(route.request().url());
     if (url.hostname !== 'jogan.test') return route.abort();
     if (options.missingMain && url.pathname === '/src/main.js') return route.abort();
+    if (options.slowTheme && url.pathname === '/src/core/theme.js') await new Promise((resolve) => setTimeout(resolve, 2500));
     if (options.delay && url.pathname === '/data/issues/index.json') await new Promise((resolve) => setTimeout(resolve, options.delay));
     // 배포본에는 공개 전 초안이 올라가지 않는다. 페이지에 실린 목록과 같은 것을 돌려줘 아침에도 같은 경로를 시험한다
     if (url.pathname === '/data/issues/index.json') return route.fulfill({ json: index });
@@ -96,6 +98,80 @@ async function check(name, options, run) {
         await page.locator('#regions').scrollIntoViewIfNeeded();
         await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, 'mobile-regions.png') });
       }
+    });
+  }
+  await check('화면 모드 선택·저장·기기 설정과 서랍 동기화', {}, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    await page.locator('#themeSelect').selectOption('dark');
+    assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
+    await page.reload();
+    await ready(page);
+    assert.equal(await page.locator('#themeSelect').inputValue(), 'dark');
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.locator('#themeSelect').selectOption('light');
+    assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'light');
+    assert.equal(await page.locator('html').evaluate((e) => getComputedStyle(e).colorScheme), 'light');
+    await page.locator('#menuBtn').click();
+    assert.equal(await page.locator('#drawerThemeSelect').inputValue(), 'light');
+    await page.locator('#drawerThemeSelect').selectOption('system');
+    assert.equal(await page.locator('#themeSelect').inputValue(), 'system');
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => document.documentElement.dataset.colorMode === 'dark');
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.waitForFunction(() => document.documentElement.dataset.colorMode === 'light');
+    await page.evaluate(() => localStorage.setItem('jogan-theme', 'unknown'));
+    await page.reload();
+    await ready(page);
+    assert.equal(await page.locator('#themeSelect').inputValue(), 'system');
+  });
+  await check('느린 테마 조작 스크립트가 본문 표시를 막지 않음', { slowTheme: true }, async (page) => {
+    await page.goto('http://jogan.test/', { waitUntil: 'domcontentloaded' });
+    await ready(page);
+    assert.equal(await page.locator('#themeSelect').isDisabled(), true);
+    assert.equal(await page.locator('#leadH').isVisible(), true);
+    await page.waitForFunction(() => !document.getElementById('themeSelect').disabled);
+    await page.locator('#themeSelect').selectOption('dark');
+    assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'dark');
+  });
+  await check('저장소 차단 시에도 화면 모드 전환', { blockStorage: true }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    await page.locator('#themeSelect').selectOption('dark');
+    assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'dark');
+    await page.locator('#themeSelect').selectOption('light');
+    assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'light');
+  });
+  for (const width of [320, 390, 1440]) {
+    await check('밝기별 발행 배지·추적 헤더·읽기 확대 ' + width, { width }, async (page) => {
+      await page.goto('http://jogan.test/');
+      await ready(page);
+      await page.locator('#trackingExpand').waitFor();
+      for (const mode of ['light', 'dark']) {
+        await page.locator('#themeSelect').selectOption(mode);
+        const ratio = await page.locator('#statusChip').evaluate((e) => {
+          const lum = (value) => { const a = value.match(/[\d.]+/g).slice(0, 3).map(Number).map((c) => { c /= 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; }); return a[0] * .2126 + a[1] * .7152 + a[2] * .0722; };
+          const s = getComputedStyle(e), a = lum(s.color), b = lum(s.backgroundColor);
+          return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+        });
+        assert.ok(ratio >= 4.5, mode + ' ' + ratio);
+      }
+      const original = await page.locator('#leadH').evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+      await page.locator('#bigBtn').click();
+      assert.ok(await page.locator('#leadH').evaluate((e) => parseFloat(getComputedStyle(e).fontSize)) > original);
+      assert.equal(await page.locator('#leadStand').textContent(), latest.lead.standfirst);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+      await page.locator('#trackingExpand').click();
+      assert.equal(await page.locator('#trackingContent .tracking-summary > .tracking-phases').count(), trackers.items.length);
+      assert.equal(await page.locator('#trackingContent details .tracking-phases').count(), 0);
+      await page.locator('#trackingContent details > summary').first().click();
+      await page.locator('#trackingDialog').evaluate((d) => { d.scrollTop = d.scrollHeight; });
+      const stickyHead = await page.locator('#trackingDialog > header').boundingBox();
+      const close = await page.locator('#trackingClose').boundingBox();
+      const dialog = await page.locator('#trackingDialog').boundingBox();
+      assert.ok(stickyHead.y <= dialog.y + 2, JSON.stringify({ stickyHead, dialog }));
+      assert.ok(close.y >= dialog.y && close.y + close.height <= dialog.y + dialog.height);
+      await page.locator('#trackingClose').click();
     });
   }
   await check('지난 호 URL·보관 목록', {}, async (page) => {
@@ -294,6 +370,9 @@ async function check(name, options, run) {
     const padding = await page.locator('#heroGrid').evaluate((e) => parseFloat(getComputedStyle(e).paddingRight));
     assert.ok(padding <= 24);
     await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="national"]').getAttribute('aria-current') === 'true');
+    await page.locator('#natFlow > summary').click();
+    assert.equal(await page.locator('#natFlow').getAttribute('open'), '');
+    assert.equal(await page.locator('#natFlow > ol > li').count(), latest.national.flow.length);
     const order = await page.evaluate(() => [...document.querySelectorAll('main > section')].map((s) => s.id));
     assert.deepEqual(order.slice(0, 4), ['national', 'track', 'home', 'regions']);
     // 진행 막대는 progress를 적은 주제에만 그린다

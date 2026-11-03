@@ -8,6 +8,17 @@ function el(tag, attrs, text) {
   return n;
 }
 
+// 긴 요약은 첫 결론과 나머지 설명을 나눠 읽는다. 원문 문자열의 순서와 내용은 유지한다
+function readingText(text, className = '') {
+  const p = el('p', { class: ('kj-reading ' + className).trim() });
+  const value = String(text || '');
+  const match = value.length > 100 && /다[.!?]\s+/.exec(value);
+  if (!match) { p.textContent = value; return p; }
+  const end = match.index + match[0].length;
+  p.append(el('strong', { class: 'kj-reading__lead' }, value.slice(0, end)), el('span', { class: 'kj-reading__detail' }, value.slice(end)));
+  return p;
+}
+
 // 목록 항목이 COLLAPSE_AT개를 넘으면 앞의 몇 개만 보이고, 목록 바로 뒤 '더보기' 단추로 펼친다
 // 같은 목록을 다시 그린 뒤 또 불러도 된다. 펼침 상태는 목록의 data-open에 남는다
 const COLLAPSE_AT = 3;
@@ -121,7 +132,7 @@ function newsItem(it, label) {
   a.append(cat);
   const h = el('h3');
   h.append(el('a', { href: it.url, target: '_blank', rel: 'noopener' }, it.title));
-  a.append(h, el('p', {}, it.summary));
+  a.append(h, readingText(it.summary));
   if (it.figures && it.figures.length) {
     const f = el('ul', { class: 'kj-figs', 'aria-label': '기사 속 수치' });
     it.figures.forEach((x) => f.append(el('li', {}, x)));

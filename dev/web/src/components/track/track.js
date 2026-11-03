@@ -13,7 +13,7 @@ function renderTrack(data) {
     const head = el('div', { class: 'kj-track__head' });
     head.append(el('h3', {}, item.title), el('span', { class: 'kj-badge' }, item.status));
     card.id = 'issue-' + item.id;
-    card.append(head, el('p', { class: 'kj-track__sum' }, item.summary));
+    card.append(head, readingText(item.summary, 'kj-track__sum'));
     if (item.phases) card.append(trackingPhases(item));
 
     const grid = el('div', { class: 'kj-track__grid' });
@@ -108,7 +108,7 @@ function setupTrackingPanel(data) {
   bar.hidden = hidden;
   reopen.hidden = false;
   reopen.textContent = '추적 ' + data.items.length;
-  $('trackingExpand').textContent = '이슈 추적 · ' + data.items.length + '건  펼치기';
+  $('trackingExpand').textContent = '이슈 추적 · ' + data.items.length + '건 · 펼쳐 보기';
   const open = (event) => {
     opener = event.currentTarget;
     content.replaceChildren();
@@ -116,11 +116,13 @@ function setupTrackingPanel(data) {
       const article = el('article', { class: 'tracking-summary' });
       article.append(el('small', {}, item.status), el('h3', {}, item.shortTitle || item.title), el('small', {}, longDate(data.updated) + ' 자료 대조 · 보도에 따른 편집상 단계'));
       if (item.phases) article.append(trackingPhases(item));
-      article.append(el('p', {}, item.summary), el('p', { class: 'tracking-next' }, item.next));
+      article.append(readingText(item.summary), readingText(item.next, 'tracking-next'));
       const details = el('details');
       details.append(el('summary', {}, '기사·타임라인 자세히 보기'));
       const card = $('issue-' + item.id).cloneNode(true);
       card.removeAttribute('id');
+      card.querySelectorAll('.kj-track__head, .kj-track__sum, .tracking-phases, .kj-prog__next').forEach((node) => node.remove());
+      if (item.links.some((link) => link.summary)) card.querySelectorAll('.kj-track__linkh, .kj-track__links').forEach((node) => node.remove());
       details.append(card);
       article.append(details);
       content.append(article);
