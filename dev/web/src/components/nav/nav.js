@@ -125,7 +125,7 @@ function setupDrawer() {
   dr.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.preventDefault(); closeDrawer(); return; }
     if (e.key !== 'Tab') return;
-    const items = Array.from(panel.querySelectorAll('a[href], button')).filter((x) => x.offsetParent !== null);
+    const items = Array.from(panel.querySelectorAll('a[href], button, select')).filter((x) => x.offsetParent !== null);
     if (!items.length) return;
     const first = items[0];
     const last = items[items.length - 1];

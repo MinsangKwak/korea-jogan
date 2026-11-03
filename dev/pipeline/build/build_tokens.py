@@ -46,7 +46,8 @@ def build(tokens: dict) -> str:
     plain += [f"--font-{k}: {v};" for k, v in tokens["type"]["families"].items()]
 
     out = [f"/* {tokens['name']} — generated from design/tokens.json by dev/pipeline/build/build_tokens.py. 손으로 고치지 않는다 */\n"]
-    out.append(block(":root", theme_lines(first) + plain))
+    out.append(block(":root", theme_lines(first) + plain + [f"color-scheme: {first};"]))
+    out.append(block(f':root[data-theme="{first}"]', theme_lines(first) + [f"color-scheme: {first};"]))
     for theme in themes[1:]:
         lines = theme_lines(theme) + [f"color-scheme: {theme};"]
         out.append(f"@media (prefers-color-scheme: {theme}) {{\n" + block(f':root:not([data-theme="{first}"])', lines, "  ") + "}\n")

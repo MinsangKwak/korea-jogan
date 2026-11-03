@@ -7,7 +7,7 @@ function renderNational() {
   $('natMeta').textContent = N.items.length + '건 · ' + asOfText();
   const flow = $('natFlow');
   flow.textContent = '';
-  flow.append(el('h4', {}, '오늘 전국 뉴스의 흐름'));
+  flow.append(el('summary', {}, '오늘의 흐름 ' + N.flow.length + '가지'));
   const ol = el('ol');
   N.flow.forEach((t) => ol.append(el('li', {}, t)));
   flow.append(ol);

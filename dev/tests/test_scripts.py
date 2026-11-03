@@ -283,6 +283,8 @@ class TokensTest(unittest.TestCase):
         # 다크 값은 기기 설정과 data-theme 두 곳에 들어간다
         self.assertEqual(css.count("--brand: #86aeea;"), 2)
         self.assertIn(':root:not([data-theme="light"])', css)
+        self.assertIn(':root[data-theme="light"]', css)
+        self.assertIn('color-scheme: light;', css)
 
 
 if __name__ == "__main__":

@@ -285,5 +285,15 @@ async function check(name, options, fn) {
     await page.waitForFunction(() => document.getElementById('authMessage').textContent.includes('불러오지 못했습니다'));
     assert.equal(await page.locator('#privateData').isVisible(), false);
   });
+  await check('신문에서 저장한 화면 모드를 관리자에도 적용', {}, async ({ page }) => {
+    await page.evaluate(() => localStorage.setItem('jogan-theme', 'dark'));
+    await page.reload();
+    await page.waitForFunction(() => document.documentElement.dataset.colorMode === 'dark');
+    assert.equal(await page.locator('html').evaluate((e) => getComputedStyle(e).colorScheme), 'dark');
+    await page.evaluate(() => localStorage.setItem('jogan-theme', 'light'));
+    await page.reload();
+    await page.waitForFunction(() => document.documentElement.dataset.colorMode === 'light');
+    assert.equal(await page.locator('html').evaluate((e) => getComputedStyle(e).colorScheme), 'light');
+  });
   console.log('관리자 브라우저 검사 ' + count + '건 통과');
 })().catch((error) => { console.error(error); process.exitCode = 1; }).finally(async () => { await browser?.close(); });
