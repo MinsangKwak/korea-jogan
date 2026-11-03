@@ -25,7 +25,7 @@ OG·Twitter 이미지와 NewsArticle 구조화 데이터는 `og-pixel.png`를 �
 
 [보안 정책 생성기](../../dev/pipeline/build/build_security.py)는 실제 인라인 실행 코드의 SHA-256 해시를 계산합니다. 최신 호·지난 호를 최종 HTML로 만든 뒤 해시를 갱신하며 관리자 정책도 같은 방식으로 생성합니다. 기사 JSON과 JSON-LD는 실행 코드로 취급하지 않습니다.
 
-- 자체 코드와 명시한 GA4·GoatCounter·Google 인증 출처만 스크립트로 허용합니다. 공개면과 관리자면의 외부 연결 범위를 나눴습니다.
+- 자체 코드와 명시한 GA4·GoatCounter·Google 인증 출처만 스크립트로 허용합니다. 공개면과 관리자면의 외부 연결 범위를 나눴습니다. 기존 GA4 설정을 유지하기 위해 Google 신호·연동 측정에서 사용하는 Google/국내 Google·DoubleClick·Google 신디케이션 연결과 Tag Manager 프레임도 명시적으로 허용합니다. 광고나 신호 기능을 새로 켜지는 않습니다.
 - 임의 인라인 코드·이벤트 속성·eval·object·base·worker를 차단합니다.
 - 외부 글꼴의 기존 인라인 onload를 외부 비동기 스크립트로 옮겨 첫 지면을 차단하지 않습니다.
 - 외부 사이트에는 referrer의 경로와 검색어를 보내지 않습니다.
