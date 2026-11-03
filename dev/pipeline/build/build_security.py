@@ -67,8 +67,9 @@ def policy(page: str, admin: bool = False) -> str:
         forms += ["https://oauth2.googleapis.com/revoke"]
     else:
         script_sources += ["https://www.googletagmanager.com", "https://gc.zgo.at"]
-        images += ["https://*.google-analytics.com", "https://*.googletagmanager.com"]
-        connections += ["https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googletagmanager.com", "https://*.google.com"]
+        images += ["https://*.google-analytics.com", "https://*.googletagmanager.com", "https://*.google.com", "https://*.google.co.kr", "https://*.g.doubleclick.net"]
+        connections += ["https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googletagmanager.com", "https://*.google.com", "https://*.google.co.kr", "https://*.g.doubleclick.net", "https://pagead2.googlesyndication.com"]
+        frames = ["https://www.googletagmanager.com"]
         if scripts.goatcounter:
             connections.append(scripts.goatcounter)
             images.append(scripts.goatcounter)
