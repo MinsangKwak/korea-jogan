@@ -41,6 +41,7 @@
   font-size: 1.05rem;
   font-weight: 900;
 }
+.news-edition .kj-foot h2[id] { scroll-margin-top: 128px; }
 .kj-foot p { margin: 0 0 var(--space-3); max-width: 50rem; }
 .kj-foot .kj-foot__section > :last-child { margin-bottom: 0; }
 .kj-foot__reading > div > :last-child { margin-bottom: 0; }
