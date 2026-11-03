@@ -52,6 +52,8 @@ const probe = `
         if (url.pathname === '/security-probe.js' && url.hostname === 'jogan.test') return route.fulfill({ body: probe, contentType: mime['.js'] });
         if (url.hostname === 'accounts.google.com') return route.fulfill({ body: 'window.google={accounts:{oauth2:{}}};window.gsiSecurityLoaded=true;', contentType: mime['.js'] });
         if (url.hostname !== 'jogan.test') {
+          if (route.request().resourceType() === 'image') return route.fulfill({ body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a85EAAAAASUVORK5CYII=', 'base64'), contentType: 'image/png' });
+          if (route.request().resourceType() === 'document') return route.fulfill({ body: '<!doctype html><meta charset="utf-8"><title>Google frame mock</title>', contentType: 'text/html' });
           if (url.pathname.endsWith('.js') || url.hostname === 'www.googletagmanager.com') return route.fulfill({ body: 'window.allowedGoogleScript=true;', contentType: mime['.js'] });
           return route.fulfill({ status: 200, body: '', contentType: mime['.css'] });
         }
@@ -76,6 +78,13 @@ const probe = `
             script.src = 'https://www.googletagmanager.com/gtag/js?id=G-TEST';
             document.head.append(script);
             await fetch('https://region1.google-analytics.com/g/collect');
+            await fetch('https://stats.g.doubleclick.net/g/collect');
+            await fetch('https://www.google.co.kr/ccm/collect');
+            await fetch('https://pagead2.googlesyndication.com/ccm/collect');
+            for (const url of ['https://www.google.com/ads/ga-audiences', 'https://www.google.co.kr/ads/ga-audiences', 'https://googleads.g.doubleclick.net/pagead/viewthroughconversion/test']) {
+              await new Promise((resolve) => { const image = new Image(); image.onload = image.onerror = resolve; image.src = url; document.body.append(image); });
+            }
+            await new Promise((resolve) => { const frame = document.createElement('iframe'); frame.onload = resolve; frame.src = 'https://www.googletagmanager.com/signals-test.html'; document.body.append(frame); });
           });
           await page.waitForFunction(() => !!window.allowedGoogleScript);
           await page.waitForFunction(() => document.getElementById('fontStyles').media === 'all');
