@@ -1,8 +1,10 @@
 # 2026.11.03 지면·삽화·보안 변경
 
-PC에서 넓어진 공간을 기사 비교에 사용하고, 카드 안쪽 여백과 읽기 설정을 명확하게 다듬었습니다. 전국 뉴스 1면과 이슈 추적 2면, 나머지 섹션의 순서는 유지합니다.
+**2026.11.03의 두 번째 변경 묶음으로, 지면 여백·픽셀 삽화·보안 정책을 정리한 기록입니다.** 전국 뉴스 1면·이슈 추적 2면과 이후 섹션 순서는 유지했습니다.
 
-## 지면과 조작
+반영 순서는 [문구·화면 모드](changes-2026-11-03.md) → **이 문서** → [섹션 배치·모바일 읽기](changes-2026-11-03-sections.md)입니다. 아래 ‘오른쪽 진행 정보 고정’은 당시 배치입니다. 현재는 사안 카드 자체를 PC 두 열로 배치하며, 최신 기준은 후속 기록을 따릅니다.
+
+## 당시 지면과 조작
 
 | 영역 | 적용한 내용 |
 | --- | --- |
@@ -34,10 +36,10 @@ OG·Twitter 이미지와 NewsArticle 구조화 데이터는 `og-pixel.png`를 �
 
 참고: [MDN CSP](https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/CSP), [메타에서 지원하지 않는 frame-ancestors](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/frame-ancestors), [Google 인증 CSP](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid), [GA4 CSP](https://developers.google.com/tag-platform/security/guides/csp).
 
-## 확인 범위
+## 당시 확인 범위
 
-Python 56건, 공개 지면 Chromium 57건, 관리자 Chromium 21건, CSP Chromium 3건을 검사합니다. 데이터 16개 호의 배포 규칙과 디자인 토큰 일치 여부도 확인합니다.
+이 변경 묶음에서 Python 56건, 공개 지면 Chromium 57건, 관리자 Chromium 21건, CSP Chromium 3건을 통과했습니다. 데이터 16개 호의 배포 규칙과 토큰 일치도 확인했습니다. 후속 섹션 변경에서 늘어난 검사 수와 구분합니다.
 
 브라우저 검사는 320~1,920px의 가로 넘침, 라이트·다크와 큰 글자, 카드 여백·열 수·삽화 로드·푸터, 480px 높이의 메뉴/추적 하단과 닫기, PC 오른쪽 내부 스크롤을 다룹니다. CSP 검사는 최신·지난 호·관리자 정상 동작 및 허용 출처를 확인하고, 실제 브라우저에서 코드·이벤트·외부 스크립트·연결·object 주입이 차단되는지 확인합니다. Google 인증과 통계 API 응답은 자동 검사에서 모의 응답을 사용하며 실제 계정의 지표 값까지 검증하는 것은 아닙니다.
 
-작업은 폴더·역할별 커밋으로 나누고, 검사를 거친 뒤 `dev → main → deploy` 경로로 반영합니다. 배포 실행 결과는 GitHub Actions의 해당 배포 기록을 기준으로 확인합니다.
+당시 작업은 폴더·역할별 커밋으로 나눠 검증한 뒤 `dev → main → deploy` 경로로 반영했습니다. 이 기록의 기능 배포 기준은 [`98a6d9f`](https://github.com/MinsangKwak/korea-jogan/commit/98a6d9f712471f1daff7ac14cb653cf1161fe97b)이며, 후속 변경과 합쳐 현재 검사 수로 다시 쓰지 않습니다.
