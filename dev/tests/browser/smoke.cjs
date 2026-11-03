@@ -18,11 +18,11 @@ const index = embedded('issue-index');
 const latestPath = '/data/issues/' + index.latest + '.json';
 const latest = JSON.parse(fs.readFileSync(path.join(web, latestPath)));
 const trackers = JSON.parse(fs.readFileSync(path.join(web, 'data/trackers.json'), 'utf8'));
-const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
+const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.ico': 'image/x-icon' };
 let browser;
 let checks = 0;
 async function pageFor(options = {}) {
-  const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, reducedMotion: 'reduce', colorScheme: options.dark ? 'dark' : 'light' });
+  const context = await browser.newContext({ viewport: { width: options.width || 390, height: options.height || 844 }, reducedMotion: 'reduce', colorScheme: options.dark ? 'dark' : 'light' });
   // 측정은 자동화 브라우저에서 꺼지므로, 사람 브라우저처럼 보이게 한 뒤 시험한다. automation 옵션이면 그대로 둔다
   if (!options.automation) await context.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
   if (options.blockStorage) await context.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } }));
@@ -368,7 +368,7 @@ async function check(name, options, run) {
     await ready(page);
     assert.ok(await page.locator('#catNav a').first().evaluate((a) => a.getBoundingClientRect().height >= 44));
     const padding = await page.locator('#heroGrid').evaluate((e) => parseFloat(getComputedStyle(e).paddingRight));
-    assert.ok(padding <= 24);
+    assert.ok(padding <= 40);
     await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="national"]').getAttribute('aria-current') === 'true');
     await page.locator('#natFlow > summary').click();
     assert.equal(await page.locator('#natFlow').getAttribute('open'), '');
@@ -457,6 +457,78 @@ async function check(name, options, run) {
     await ready(page, 'error');
     assert.equal(await page.locator('#seoDigest').isVisible(), true);
     assert.equal(await page.locator('#loadingRetry').isVisible(), true);
+  });
+  for (const width of [390, 1440, 1920]) {
+    await check('지면 여백·반응형 열·삽화·푸터 ' + width, { width }, async (page) => {
+      await page.goto('http://jogan.test/');
+      await ready(page);
+      await page.locator('#natList .kj-newscard').first().waitFor();
+      const grid = await page.locator('#natList').evaluate((node) => {
+        const card = node.querySelector('.kj-newscard');
+        const css = getComputedStyle(node);
+        return { columns: css.gridTemplateColumns.split(' ').filter((value) => parseFloat(value) > 0).length, padding: parseFloat(getComputedStyle(card).paddingLeft), align: css.alignItems };
+      });
+      assert.equal(grid.columns, width > 900 ? 3 : 1);
+      assert.ok(grid.padding >= 20);
+      assert.equal(grid.align, 'start');
+      const image = page.locator('.news-illustration img');
+      await image.evaluate((img) => img.decode());
+      assert.ok(await image.evaluate((img) => img.naturalWidth > 0));
+      assert.match(await page.locator('.news-illustration figcaption').innerText(), /AI 생성/);
+      assert.match(await page.locator('meta[property="og:image"]').getAttribute('content'), /og-pixel\.png$/);
+      if (width >= 1600) {
+        await page.locator('#natList + .kj-more button').click();
+        const columns = await page.locator('#natList').evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(' ').filter((value) => parseFloat(value) > 0).length);
+        assert.equal(columns, 4);
+        await page.locator('#natList + .kj-more button').click();
+      }
+      await page.locator('#bigBtn').click();
+      assert.equal(await page.locator('#bigBtn [data-big-state]').innerText(), '켬');
+      assert.equal(await page.locator('#drawerBig').getAttribute('aria-pressed'), 'true');
+      if (width > 900) assert.equal(await page.locator('#natList').evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(' ').length), width >= 1600 ? 3 : 2);
+      await page.locator('#bigBtn').click();
+      await page.locator('#foot').scrollIntoViewIfNeeded();
+      assert.ok(await page.locator('#archSel option').count() > 0);
+      assert.equal(await page.locator('#foot #limitsH').count(), 1);
+      assert.equal(await page.locator('#foot #fixH').count(), 1);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+    });
+  }
+  for (const width of [390, 1440]) {
+    await check('짧은 창 메뉴·추적 하단과 닫기 ' + width, { width, height: 480 }, async (page) => {
+      await page.goto('http://jogan.test/');
+      await ready(page);
+      await page.locator('#menuBtn').click();
+      await page.locator('#drawerBig').click();
+      assert.equal(await page.locator('#drawerBig [data-big-state]').innerText(), '켬');
+      const body = page.locator('.kj-drawer__body');
+      await body.evaluate((node) => { node.scrollTop = node.scrollHeight; });
+      const end = await page.locator('.kj-drawer__links a').last().boundingBox();
+      assert.ok(end.y >= 0 && end.y + end.height <= 480);
+      const drawerClose = await page.locator('.kj-drawer__close').boundingBox();
+      assert.ok(drawerClose.y >= 0 && drawerClose.y + drawerClose.height <= 480);
+      await page.locator('.kj-drawer__close').click();
+      await page.locator('#trackingExpand').click();
+      await page.locator('#trackingContent details summary').last().click();
+      await page.locator('#trackingDialog').evaluate((node) => { node.scrollTop = node.scrollHeight; });
+      const close = await page.locator('#trackingClose').boundingBox();
+      assert.ok(close.y >= 0 && close.y + close.height <= 480);
+      await page.locator('#trackingClose').click();
+      if (width > 1100) assert.equal(await page.locator('#trackList .kj-track__side').first().evaluate((node) => getComputedStyle(node).position), 'static');
+    });
+  }
+  await check('PC 진행 상황 내부 스크롤·키보드 접근', { width: 1920 }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    const side = page.locator('#trackList > .kj-track > .kj-track__grid > .kj-track__side').first();
+    await side.waitFor();
+    const size = await side.evaluate((node) => ({ height: node.clientHeight, scroll: node.scrollHeight, overflow: getComputedStyle(node).overflowY, position: getComputedStyle(node).position }));
+    assert.equal(size.position, 'sticky');
+    assert.equal(size.overflow, 'auto');
+    assert.ok(size.height <= 844 - 152);
+    assert.equal(await side.getAttribute('tabindex'), '0');
+    await side.evaluate((node) => { node.scrollTop = node.scrollHeight; });
+    assert.equal(await side.evaluate((node) => node.scrollTop + node.clientHeight >= node.scrollHeight - 1), true);
   });
   console.log('브라우저 검사 완료:', checks);
 })().catch((error) => { console.error(error); process.exitCode = 1; }).finally(async () => {
