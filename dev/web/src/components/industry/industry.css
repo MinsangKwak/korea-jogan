@@ -6,14 +6,98 @@
 .strip .d { font-size: 0.85rem; }
 @media (max-width: 760px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .oct { margin-top: var(--space-6); }
-.inds { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: var(--space-8); margin-top: var(--space-8); }
-.inds .kj-panel h3 { font-size: 1.15rem; }
-.inds .sum { margin: 0 0 var(--space-2); font-size: 0.95rem; color: var(--ink-2); }
-/* 산업 수치는 값이 문장처럼 길어 이름 · 값 · 기준을 세로로 쌓는다 */
-.inds .kj-kv li { grid-template-columns: minmax(0, 1fr); }
-.inds .kj-kv .v { grid-column: 1; grid-row: auto; order: 1; font-size: 0.95rem; font-weight: 700; white-space: normal; text-align: left; }
-.inds .kj-kv .m { order: 2; }
-.inds .news { margin: var(--space-3) 0 0; font-size: 0.85rem; color: var(--ink-3); }
+
+/* 핵심 수치는 같은 줄에서 비교하고 근거는 아래 넓은 지면에서 읽는다 */
+.industry-choices__head { margin-block: var(--space-8) var(--space-4); }
+.industry-choices__head h3 { margin: 0; font-size: 1.24rem; line-height: 1.4; }
+.industry-choices__head p { margin: var(--space-1) 0 0; color: var(--ink-2); font-size: .9rem; }
+.inds { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(10px, 1.3vw, 18px); }
+.industry-choice { display: grid; min-inline-size: 0; }
+.industry-choice__button {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  min-inline-size: 0;
+  padding: clamp(14px, 1.6vw, 22px);
+  border: var(--border-hairline) solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--ink);
+  line-height: 1.45;
+  text-align: start;
+  cursor: pointer;
+  scroll-margin-block-start: var(--anchor-clearance, 120px);
+}
+.industry-choice__button:hover, .industry-choice__button[aria-expanded="true"] { border-color: var(--brand); }
+.industry-choice__name { font-size: 1.02rem; font-weight: 800; margin-block-end: var(--space-3); }
+.industry-choice__name small { color: var(--ink-2); font-size: .78em; font-weight: 600; }
+.industry-choice__label { color: var(--ink-2); font-size: .82rem; }
+.industry-choice__value { color: var(--brand); font-size: clamp(1.05rem, 1rem + .35vw, 1.27rem); line-height: 1.42; font-variant-numeric: tabular-nums; }
+.industry-choice__action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-block-size: var(--tap-min);
+  margin-block-start: var(--space-3);
+  padding-inline: var(--space-2);
+  border-block-start: var(--border-hairline) solid var(--line);
+  color: var(--brand);
+  font-size: .84rem;
+  font-weight: 700;
+}
+.industry-choice__button:is(:hover, [aria-expanded="true"]) .industry-choice__action { background: var(--brand-soft); }
+.industry-choice__action svg { flex: none; inline-size: 1em; block-size: 1em; fill: none; stroke: currentColor; stroke-width: 2; }
+.industry-choice__button[aria-expanded="true"] .industry-choice__action svg { transform: rotate(180deg); }
+
+.industry-detail {
+  min-inline-size: 0;
+  margin-block-start: var(--space-4);
+  padding: var(--reading-inset, var(--space-4));
+  border: var(--border-hairline) solid var(--line);
+  border-block-start: 2px solid var(--brand);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  scroll-margin-block-start: var(--anchor-clearance, 120px);
+}
+.industry-detail__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2) var(--space-4); }
+.industry-detail__head h4 { margin: 0; font-size: 1.21rem; line-height: 1.45; scroll-margin-block-start: var(--anchor-clearance, 120px); }
+.industry-detail__close { padding-inline: var(--space-4); }
+.industry-detail__summary { margin: var(--space-2) 0 var(--space-4); max-inline-size: 55ch; color: var(--ink-2); }
+.industry-detail__facts { margin: 0; padding: 0; border-block-start: var(--border-hairline) solid var(--line-strong); list-style: none; }
+.industry-detail__facts > li { display: grid; min-inline-size: 0; gap: var(--space-1); align-items: baseline; padding-block: var(--space-3); border-block-end: var(--border-hairline) solid var(--line); line-height: 1.6; }
+.industry-detail__label { font-weight: 600; }
+.industry-detail__value { font-weight: 800; font-variant-numeric: tabular-nums; }
+.industry-detail__source { color: var(--ink-2); font-size: .84rem; }
+.industry-detail__article { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-2); margin: var(--space-4) 0 0; font-size: .9rem; }
+.industry-detail__article span { color: var(--ink-2); }
+
+@media (max-width: 519px) {
+  .industry-choice__button { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto; column-gap: var(--space-2); }
+  .industry-choice__name { grid-column: 1; grid-row: 1; align-self: center; margin-block-end: 0; }
+  .industry-choice__label, .industry-choice__value { grid-column: 1 / -1; }
+  .industry-choice__action { grid-column: 2; grid-row: 1; margin: 0; padding-inline: var(--space-1); border: 0; }
+}
+@media (min-width: 520px) {
+  .inds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @supports (grid-template-rows: subgrid) {
+    .industry-choice { grid-row: span 4; grid-template-rows: subgrid; row-gap: 0; }
+    .industry-choice__button { grid-row: span 4; grid-template-rows: subgrid; row-gap: 0; }
+  }
+}
+@media (min-width: 520px) and (max-width: 739px) {
+  .industry-choice:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (min-width: 740px) and (max-width: 1179px) {
+  .inds { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .industry-choice { grid-column: span 2; }
+  .industry-choice:nth-child(4):nth-last-child(2), .industry-choice:nth-child(5):last-child { grid-column: span 3; }
+}
+@media (min-width: 850px) {
+  .industry-detail__facts > li { grid-template-columns: minmax(0, .9fr) minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--space-4); }
+}
+@media (min-width: 1180px) {
+  .inds { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+}
 
 /* 산업 개요와 품목 비교를 나란히 읽고 좁은 화면에서는 순서대로 잇는다 */
 .news-edition .industry-overview { display: grid; gap: var(--space-8); align-items: start; }

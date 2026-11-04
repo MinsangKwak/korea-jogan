@@ -100,6 +100,23 @@ async function setScreenDark(page, on) {
   await toggle.waitFor();
   if ((await toggle.getAttribute('aria-checked') === 'true') !== on) await toggle.click();
 }
+async function comparisonTiles(tiles) {
+  const boxes = await tiles.evaluateAll((nodes) => nodes.map((node) => {
+    const { top, bottom, width, height } = node.getBoundingClientRect();
+    return { top, bottom, width, height, nestedScroll: [...node.querySelectorAll('*')].some((child) =>
+      ['auto', 'scroll'].includes(getComputedStyle(child).overflowY) && child.scrollHeight > child.clientHeight + 1) };
+  }));
+  assert.ok(boxes.length > 0 && boxes.every((box) => !box.nestedScroll && box.height < 320), '비교 카드는 짧게 유지하고 카드 안에서 스크롤하지 않습니다.');
+  for (const [index, box] of boxes.entries()) {
+    const sameRow = boxes.slice(index + 1).filter((other) => Math.abs(box.top - other.top) < 2);
+    assert.ok(sameRow.every((other) => Math.abs(box.bottom - other.bottom) < 2), '같은 행의 카드 아래선이 맞아야 합니다.');
+  }
+  return boxes;
+}
+async function noDetailScroll(detail) {
+  assert.equal(await detail.evaluate((node) => [node, ...node.querySelectorAll('*')].some((child) =>
+    ['auto', 'scroll'].includes(getComputedStyle(child).overflowY) && child.scrollHeight > child.clientHeight + 1)), false);
+}
 async function check(name, options, run) {
   const { page, context, errors } = await pageFor(options);
   try {
@@ -724,8 +741,32 @@ async function check(name, options, run) {
       assert.equal(await page.locator('#econPlayback').getAttribute('aria-pressed'), 'false');
       const count = latest.nums.length;
       assert.equal(await page.locator('#nums > .swiper-slide').count(), count);
-      const numbers = await page.locator('#nums > .swiper-slide').evaluateAll((cards) => cards.map((card) => ({ index: Number(card.dataset.econIndex), value: card.querySelector('.kj-stat__v').textContent, ref: card.querySelector('.kj-stat__ref').textContent })).sort((a, b) => a.index - b.index));
-      assert.deepEqual(numbers.map((card) => [card.value, card.ref]), latest.nums.map((item) => [item.v, item.ref]));
+      const numbers = await page.locator('#nums > .swiper-slide').evaluateAll((cards) => cards.map((card) => ({
+        index: Number(card.dataset.econIndex),
+        label: card.querySelector('.kj-stat__k').textContent,
+        value: card.querySelector('.kj-stat__v').textContent,
+        change: card.querySelector('.kj-dir').textContent,
+        base: card.querySelector('.econ-base').textContent
+      })).sort((a, b) => a.index - b.index));
+      assert.deepEqual(numbers.map((card) => [card.label, card.value, card.change]), latest.nums.map((item) => [item.k, item.v, item.d]));
+      assert.ok(numbers.every((card) => card.base.includes(latest.nums[card.index].src.base)));
+      await comparisonTiles(page.locator('#nums > .swiper-slide'));
+      const lines = await page.locator('#nums > .swiper-slide').evaluateAll((cards) => cards.map((card) =>
+        ['.kj-stat__k', '.kj-stat__v', '.kj-stat__row', '.econ-base', '.econ-detail-toggle'].map((field) => {
+          const { top, bottom } = card.querySelector(field).getBoundingClientRect();
+          return { top, bottom };
+        })));
+      for (const row of lines) {
+        assert.ok(row.slice(1).every((line, index) => line.top >= row[index].bottom - 1), '지표명·값·변동·기준일·버튼을 각각 한 줄씩 읽습니다.');
+      }
+      for (const column of [1, 4]) {
+        assert.ok(lines.every((row) => Math.abs(row[column].top - lines[0][column].top) < 2), '수치와 버튼의 가로 기준선이 카드마다 같아야 합니다.');
+      }
+      const detail = page.locator('#econDetail');
+      assert.equal(await detail.count(), 1);
+      assert.equal(await detail.isHidden(), true);
+      assert.equal(await page.locator('#nums .econ-detail-toggle[aria-controls="econDetail"][aria-expanded="false"]').count(), count);
+      assert.equal(await page.locator('#nums .kj-stat__ref, #nums .kj-src').count(), 0);
       await page.locator('#econPrev').click();
       await page.waitForFunction((expected) => document.getElementById('econViewport').swiper.realIndex === expected, count - 1);
       await page.locator('#econNext').click();
@@ -735,11 +776,34 @@ async function check(name, options, run) {
       await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex === 1);
       await page.locator('#econPlayback').click();
       assert.equal(await page.locator('#econPlayback').getAttribute('aria-pressed'), 'true');
-      const source = page.locator('#nums .swiper-slide-active .kj-src > summary');
-      await source.click();
+      const activeTile = page.locator('#nums .swiper-slide-active');
+      const trigger = activeTile.locator('.econ-detail-toggle');
+      const selected = latest.nums[Number(await activeTile.getAttribute('data-econ-index'))];
+      const tileBefore = await activeTile.boundingBox();
+      await trigger.focus();
+      await page.keyboard.press('Enter');
+      await detail.waitFor();
       await page.waitForFunction(() => document.getElementById('econPlayback').getAttribute('aria-pressed') === 'false');
-      assert.equal(await page.locator('#nums .swiper-slide-active .kj-src[open] a').first().isVisible(), true);
-      await source.click();
+      assert.equal(await trigger.getAttribute('aria-expanded'), 'true');
+      assert.ok((await detail.locator('#econDetailTitle').innerText()).includes(selected.k));
+      assert.ok(await detail.locator('#econDetailTitle').evaluate((node) => node === document.activeElement));
+      assert.equal(await detail.locator('.kj-stat__ref').textContent(), selected.ref);
+      assert.equal(await detail.locator('.kj-grade b').textContent(), selected.grade);
+      const viewportBox = await page.locator('#econViewport').boundingBox();
+      const detailBox = await detail.boundingBox();
+      assert.ok(detailBox.y >= viewportBox.y + viewportBox.height - 1);
+      if (width > 1000) assert.ok(detailBox.width > tileBefore.width * 1.5);
+      assert.ok(Math.abs((await activeTile.boundingBox()).height - tileBefore.height) < 2);
+      const source = detail.locator('.kj-src > summary');
+      if (!await detail.locator('.kj-src').evaluate((node) => node.open)) await source.click();
+      const original = detail.locator('.kj-src[open] a').first();
+      assert.ok(await original.isVisible());
+      assert.equal(await original.getAttribute('href'), selected.src.url);
+      await noDetailScroll(detail);
+      await detail.locator('#econDetailClose').click();
+      assert.equal(await detail.isHidden(), true);
+      assert.equal(await trigger.getAttribute('aria-expanded'), 'false');
+      assert.ok(await trigger.evaluate((node) => node === document.activeElement));
       assert.equal(await page.locator('#econPlayback').getAttribute('aria-pressed'), 'false');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
     });
@@ -752,6 +816,9 @@ async function check(name, options, run) {
     await page.waitForFunction(() => document.querySelector('script[src*="swiper-14"]') && document.getElementById('nums').dataset.carouselState === 'static');
     assert.equal(await page.locator('#nums.kj-stats > .kj-stat:visible').count(), latest.nums.length);
     assert.equal(await page.locator('#econPlayback').count(), 0);
+    const trigger = page.locator('#nums .econ-detail-toggle').last();
+    await trigger.click();
+    assert.equal(await page.locator('#econDetail .kj-stat__ref').textContent(), latest.nums.at(-1).ref);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
   });
   await check('경제 자동 넘김·가리기·포커스·동작 줄이기', { width: 1440 }, async (page) => {
@@ -774,10 +841,57 @@ async function check(name, options, run) {
     await page.waitForFunction(() => document.getElementById('econPlayback').getAttribute('aria-pressed') === 'false');
     assert.equal(await page.locator('#econCarousel').getAttribute('data-autoplay'), 'paused');
   });
+  for (const width of [320, 1440]) {
+    await check('주력산업 비교 행과 공용 상세에서 수치·출처·기사 읽기 ' + width, { width }, async (page) => {
+      await page.goto('http://jogan.test/');
+      await ready(page);
+      if (width === 320) await page.locator('#bigBtn').click();
+      const tiles = page.locator('#inds > article.industry-choice');
+      assert.equal(await tiles.count(), latest.industries.length);
+      const summaries = await tiles.evaluateAll((nodes) => nodes.map((node) =>
+        ['name', 'label', 'value'].map((field) => node.querySelector('.industry-choice__' + field).textContent)));
+      assert.deepEqual(summaries, latest.industries.map((item) => [item.name, ...item.f[0].slice(0, 2)]));
+      const boxes = await comparisonTiles(tiles.filter({ visible: true }));
+      if (width > 1000 && boxes.length > 1) assert.ok(Math.abs(boxes[0].top - boxes[1].top) < 2);
+      const detail = page.locator('#industryDetail');
+      const triggers = tiles.locator('button[aria-controls="industryDetail"]');
+      assert.equal(await detail.count(), 1);
+      assert.equal(await detail.isHidden(), true);
+      assert.deepEqual(await triggers.evaluateAll((nodes) => nodes.map((node) => node.getAttribute('aria-expanded'))), latest.industries.map(() => 'false'));
+      const first = triggers.first();
+      await first.focus();
+      await page.keyboard.press('Enter');
+      assert.equal(await first.getAttribute('aria-expanded'), 'true');
+      assert.ok(await detail.locator('#industryDetailTitle').evaluate((node) => node === document.activeElement));
+      const last = triggers.filter({ visible: true }).last();
+      const lastIndex = await last.evaluate((node) => [...document.querySelectorAll('#inds > article')].indexOf(node.closest('article')));
+      if (lastIndex !== 0) await last.click();
+      const selected = latest.industries[lastIndex];
+      assert.equal(await tiles.locator('button[aria-expanded="true"]').count(), 1);
+      assert.ok((await detail.locator('#industryDetailTitle').innerText()).includes(selected.name));
+      assert.equal(await detail.locator('.industry-detail__summary').textContent(), selected.sum);
+      const facts = await detail.locator('.industry-detail__facts > li').allTextContents();
+      assert.equal(facts.length, selected.f.length);
+      assert.ok(selected.f.every((fact, index) => fact.every((part) => facts[index].includes(part))));
+      const article = detail.locator('.industry-detail__article a');
+      assert.equal(await article.textContent(), selected.news[1]);
+      assert.equal(await article.getAttribute('href'), selected.news[2]);
+      assert.ok((await detail.locator('.industry-detail__article').innerText()).includes(selected.news[0]));
+      const grid = await page.locator('#inds').boundingBox();
+      const detailBox = await detail.boundingBox();
+      assert.ok(detailBox.y >= grid.y + grid.height - 1);
+      assert.ok(Math.abs(detailBox.width - grid.width) < 2);
+      await noDetailScroll(detail);
+      await detail.locator('.industry-detail__close').click();
+      assert.equal(await detail.isHidden(), true);
+      assert.ok(await last.evaluate((node) => node === document.activeElement));
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+    });
+  }
   await check('PC 기본 펼침·모바일 핵심 우선·선택 기억', { width: 1440 }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
-    const selectors = ['#natFlow', '.lead-extras', '#trackList .kj-track__timeline', '#industryChart', '#nums .econ-reference'];
+    const selectors = ['#natFlow', '.lead-extras', '#trackList .kj-track__timeline', '#industryChart'];
     for (const selector of selectors) assert.equal(await page.locator(selector).first().evaluate((node) => node.open), true, selector);
     const extras = page.locator('.lead-extras');
     await extras.locator('> summary').click();
