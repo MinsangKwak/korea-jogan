@@ -161,10 +161,6 @@
 :root[data-color-mode="dark"] .news-edition { --news-panel: var(--surface); --news-rule: var(--line-strong); }
 .news-edition .kj-status { color: var(--ink); border-color: var(--line-strong); background: var(--surface); }
 .news-edition .kj-status:hover { color: var(--brand); border-color: var(--brand); background: var(--brand-soft); }
-.news-theme { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: .82rem; }
-.news-theme select { min-height: 44px; min-width: 110px; max-width: 100%; border: 1px solid var(--line-strong); border-radius: 0; padding: 8px; background: var(--surface-raised); color: var(--ink); font: inherit; cursor: pointer; }
-.news-theme select:hover { border-color: var(--brand); }
-.news-theme select:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .news-edition .kj-cats a[aria-current="true"] { background: var(--brand-soft); color: var(--brand); }
 .news-edition .kj-sechead > p:not(.kj-label):not(.kj-sechead__meta) { max-width: 43rem; font-size: .9rem; line-height: 1.8; color: var(--ink-2); }
 .news-edition .kj-sechead > p > strong { display: block; color: var(--ink); font-weight: 500; }
@@ -188,7 +184,6 @@
 @media(max-width:900px) {
   .news-edition .kj-lead h1 { font-size: 1.77rem; }
   .news-edition .kj-mast__actions { gap: 8px 12px; align-items: center; }
-  .news-theme { flex-wrap: wrap; }
   #trackingDialog > header { top: -16px; margin: -16px -16px 0; padding: 12px 16px; }
 }
 
@@ -224,31 +219,10 @@
   .news-edition .hero-grid { gap: 24px; }
 }
 
-/* 삽화는 기사 사진과 구분하고, 고정 비율로 불러오기 중의 움직임을 막는다 */
-.news-edition .news-illustration { margin: 0 auto; padding-block: 20px 16px; }
-.news-illustration picture { display: block; background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
-.news-illustration img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 1; object-fit: cover; object-position: center bottom; image-rendering: pixelated; }
-.news-illustration figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding-top: 8px; color: var(--ink-3); font-size: .75rem; line-height: 1.7; }
-@media (max-width: 900px) {
-  .news-illustration img { aspect-ratio: 5 / 2; }
-  .news-illustration figcaption { font-size: .7rem; }
-}
-
-/* 토글은 손잡이와 상태 글자로, 선택 목록은 기존 select로 구분한다 */
-.kj-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
-.kj-toggle__track { display: inline-block; flex: none; width: 36px; height: 22px; padding: 3px; border: 1px solid var(--line-strong); border-radius: 20px; background: var(--surface); }
-.kj-toggle__track::after { content: ''; display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--ink-3); transition: transform .16s ease; }
-.kj-toggle[aria-pressed="true"] .kj-toggle__track { border-color: var(--on-brand); background: var(--on-brand); }
-.kj-toggle[aria-pressed="true"] .kj-toggle__track::after { background: var(--brand); transform: translateX(14px); }
-.kj-toggle__state { font-size: .72rem; font-weight: 500; }
 .news-edition .kj-drawer__label { margin: 24px 0 12px; color: var(--ink-3); font-size: .8rem; font-weight: 700; }
 .news-edition .kj-drawer__label:first-child { margin-top: 8px; }
 .news-edition .kj-drawer__tools { grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 0; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
 .news-edition .kj-drawer__tools > button { min-height: 48px; padding: 12px 16px; border-color: var(--line-strong); }
-.news-edition .kj-drawer__tools .kj-toggle { justify-content: space-between; }
-.news-edition .kj-drawer__tools .kj-toggle__state { margin-left: auto; }
-.news-edition .kj-drawer__tools button[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
-.news-edition .kj-drawer__tools .news-theme { justify-content: space-between; }
 .news-edition .kj-drawer__tools select { min-width: 160px; }
 .news-edition .kj-drawer__tools button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .news-edition .kj-drawer__panel { max-height: 100dvh; overflow: hidden; }
@@ -298,7 +272,4 @@
   .news-edition #trackList > .kj-track { padding: 20px; }
   .news-edition .kj-drawer__head { padding: 16px 20px; }
   .news-edition .kj-drawer__body { padding-inline: 20px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .kj-toggle__track::after { transition: none; }
 }

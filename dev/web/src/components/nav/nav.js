@@ -120,13 +120,6 @@ function setupDrawer() {
     closeDrawer(false);
     $(a.dataset.jump).scrollIntoView({ block: 'start' });
   }));
-  // 서랍 안의 글자 크기·공유 단추는 제호의 같은 단추를 그대로 누른다
-  const big = $('drawerBig');
-  const syncBig = () => big.setAttribute('aria-pressed', $('bigBtn').getAttribute('aria-pressed'));
-  big.addEventListener('click', () => { $('bigBtn').click(); syncBig(); });
-  $('bigBtn').addEventListener('click', syncBig);
-  syncBig();
-  $('drawerShare').addEventListener('click', () => $('shareBtn').click());
   // Esc로 닫고, Tab은 서랍 안에서만 돈다
   dr.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.preventDefault(); closeDrawer(); return; }

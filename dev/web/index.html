@@ -30,7 +30,7 @@
 <meta name="twitter:image:alt" content="대한민국 조간 · 픽셀로 그린 새벽 도시와 아침 신문">
 <link rel="alternate" type="application/rss+xml" title="대한민국 조간" href="feed.xml">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#f8fafb">
 <script>
 'use strict';
 // 모드 값만 먼저 적용하고 조작 스크립트는 본문을 차단하지 않는다
@@ -140,6 +140,8 @@ window.kjLoadTimer = setTimeout(() => {
 <link rel="stylesheet" href="src/components/nav/nav.css">
 <link rel="stylesheet" href="src/styles/editorial.css">
 <link rel="stylesheet" href="src/styles/discovery.css">
+<link rel="stylesheet" href="src/styles/reading.css">
+<link rel="stylesheet" href="src/components/header/header.css">
 </head>
 <body class="has-tabbar news-edition">
 <a class="skip" href="#main">본문으로 건너뛰기</a>
@@ -153,21 +155,18 @@ window.kjLoadTimer = setTimeout(() => {
         <span id="asOf"></span>
         <a class="kj-status" id="statusChip" href="#limitsH" hidden></a>
       </p>
-      <span class="kj-mast__actions">
-        <button class="kj-sizebtn kj-iconbtn" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="kj-iconbtn__lbl" id="shareLbl">공유</span></button>
-        <button class="kj-sizebtn kj-iconbtn kj-toggle" id="bigBtn" type="button" aria-pressed="false"><span class="kj-toggle__track" aria-hidden="true"></span><span>글자 크게</span><span class="kj-toggle__state" data-big-state aria-hidden="true">끔</span></button>
-        <label class="news-theme" for="themeSelect"><span>화면</span><select id="themeSelect" data-theme-select disabled aria-label="화면 모드"><option value="system">기기 설정</option><option value="light">라이트</option><option value="dark">다크</option></select></label>
-      </span>
-    <button class="kj-menubtn" id="menuBtn" type="button" aria-label="전체 메뉴" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>전체 메뉴</button>
+      <div class="kj-mast__actions">
+        <div class="kj-mast__preferences" role="group" aria-label="읽기 설정">
+          <button class="reading-switch" id="bigBtn" type="button" role="switch" aria-checked="false" data-big-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>글자 크게</span><span class="reading-switch__state" data-big-state aria-hidden="true">끔</span></span></button>
+          <button class="reading-switch" id="themeToggle" type="button" role="switch" aria-checked="false" data-theme-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>어두운 화면</span><span class="reading-switch__state" data-theme-state aria-hidden="true">끔</span></span></button>
+        </div>
+        <div class="kj-mast__utility">
+          <button class="reading-action" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>공유</button>
+          <button class="reading-action" id="menuBtn" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>전체 메뉴</button>
+        </div>
+      </div>
     </div>
   </div>
-  <figure class="kj-wrap news-illustration">
-    <picture>
-      <source type="image/webp" srcset="assets/images/news-dawn-pixel-720.webp 720w, assets/images/news-dawn-pixel.webp 1536w" sizes="(min-width: 1600px) 1536px, calc(100vw - 40px)">
-      <img src="assets/images/news-dawn-pixel.webp" width="1536" height="512" alt="아침 신문을 배달하는 자전거와 새벽 도시 풍경을 그린 픽셀 삽화" fetchpriority="high" decoding="async">
-    </picture>
-    <figcaption>아침을 여는 풍경 <span>AI 생성 삽화 · 실제 보도 사진이 아닙니다</span></figcaption>
-  </figure>
   <div class="kj-notice kj-notice--stale" id="stale" role="status" hidden>
     <div class="kj-wrap kj-notice__in"><p id="staleMsg"></p></div>
   </div>
@@ -208,9 +207,6 @@ window.kjLoadTimer = setTimeout(() => {
   <p id="loadingMessage">조간을 불러오고 있습니다.</p>
   <a class="kj-btn kj-btn--secondary" id="loadingRetry" href="" hidden>다시 불러오기</a>
 </div>
-<!-- kj:discovery -->
-<nav class="kj-wrap discovery-links" aria-label="주제와 지난 호"><a href="/topics/">이슈별 진행 상황</a><a href="/indicators/">경제 지표와 지난 기록</a><a href="/archive/">날짜별 뉴스 모아보기</a></nav>
-<!-- /kj:discovery -->
 <main id="main">
   <!-- kj:digest -->
   <!-- /kj:digest -->
@@ -227,6 +223,10 @@ window.kjLoadTimer = setTimeout(() => {
       <div class="kj-news" id="natList"></div>
     </div>
   </section>
+
+<!-- kj:discovery -->
+<nav class="kj-wrap discovery-links" aria-label="주제와 지난 호"><a href="/topics/">이슈별 진행 상황</a><a href="/indicators/">경제 지표와 지난 기록</a><a href="/archive/">날짜별 뉴스 모아보기</a></nav>
+<!-- /kj:discovery -->
 
   <section class="kj-sec" id="track" aria-labelledby="trackH" hidden>
     <div class="kj-wrap">
@@ -482,9 +482,10 @@ window.kjLoadTimer = setTimeout(() => {
     <div class="kj-drawer__body">
       <h3 class="kj-drawer__label" id="readingSettings">읽기 설정</h3>
       <div class="kj-drawer__tools" role="group" aria-labelledby="readingSettings">
-        <button class="kj-toggle" type="button" id="drawerBig" aria-pressed="false"><span>글자 크게</span><span class="kj-toggle__state" data-big-state aria-hidden="true">끔</span><span class="kj-toggle__track" aria-hidden="true"></span></button>
-        <button type="button" id="drawerShare">이 호 공유</button>
-        <label class="news-theme" for="drawerThemeSelect"><span>화면</span><select id="drawerThemeSelect" data-theme-select disabled aria-label="화면 모드"><option value="system">기기 설정</option><option value="light">라이트</option><option value="dark">다크</option></select></label>
+        <button class="reading-switch" id="drawerBig" type="button" role="switch" aria-checked="false" data-big-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>글자 크게</span><span class="reading-switch__state" data-big-state aria-hidden="true">끔</span></span></button>
+        <button class="reading-switch" id="drawerThemeToggle" type="button" role="switch" aria-checked="false" data-theme-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>어두운 화면</span><span class="reading-switch__state" data-theme-state aria-hidden="true">끔</span></span></button>
+        <button class="reading-action reading-action--system" id="drawerThemeSystem" type="button" data-theme-system aria-pressed="true" disabled>기기 설정 따르기<span class="reading-switch__state" data-theme-system-state aria-hidden="true">사용 중</span></button>
+        <button class="reading-action" id="drawerShare" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>이 호 공유</button>
       </div>
       <h3 class="kj-drawer__label">분야별 읽기</h3>
       <nav aria-label="전체 분야"><ul class="kj-drawer__secs" id="drawerNav"></ul></nav>
@@ -498,6 +499,17 @@ window.kjLoadTimer = setTimeout(() => {
     </div>
   </div>
 </div>
+
+<dialog class="reading-share" id="shareDialog" aria-labelledby="shareTitle">
+  <form method="dialog">
+    <h2 id="shareTitle">이 호 공유</h2>
+    <button class="reading-action" type="submit">닫기</button>
+  </form>
+  <label for="shareUrl">공유할 주소</label>
+  <input id="shareUrl" type="url" readonly>
+  <p>주소를 선택해 복사하세요.</p>
+</dialog>
+<p class="reading-toast" id="shareStatus" role="status"></p>
 
 <!-- 화면 스크립트. 공통(core) → 컴포넌트 → 진입점(main) 순서로 읽는다 -->
 <script type="application/json" id="issue-data">null</script>

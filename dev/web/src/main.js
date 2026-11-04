@@ -36,7 +36,6 @@ async function boot() {
     setupMetrics();
     renderNav();
     toggleSectionNav('track', false);
-    setupBig();
     setupShare();
     setupDrawer();
     setupToTop();

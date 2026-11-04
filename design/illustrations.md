@@ -1,15 +1,15 @@
-# 현재 삽화·공유 이미지·아이콘
+# 공유 이미지·아이콘과 삽화 기록
 
-**상단 픽셀 삽화와 공유 미리보기는 같은 가상 풍경을 사용하고, 파비콘은 작은 크기에 맞는 픽셀 신문으로 구분합니다.** 2026.11.03 적용한 자산이며, 지면에는 `AI 생성 삽화 · 실제 보도 사진이 아닙니다`를 표시합니다.
+**지면 상단의 삽화는 2026.11.04 개발 화면에서 제거했습니다.** 공유 미리보기에는 픽셀 풍경을, 파비콘에는 픽셀 신문을 유지합니다.
 
 [현재 지면 기준](guide.md) · [공개 메타태그](../dev/web/index.html) · [이미지 생성 도구](og/build.mjs)
 
-## 현재 사용하는 파일
+## 자산과 용도
 
 | 파일 | 크기 | 용도 |
 | --- | --- | --- |
-| [`news-dawn-pixel.webp`](../dev/web/assets/images/news-dawn-pixel.webp) | 1,536×512px · 206,470바이트 | PC용 상단 삽화 |
-| [`news-dawn-pixel-720.webp`](../dev/web/assets/images/news-dawn-pixel-720.webp) | 720×240px · 62,004바이트 | 작은 화면용 상단 삽화 |
+| [`news-dawn-pixel.webp`](../dev/web/assets/images/news-dawn-pixel.webp) | 1,536×512px · 206,470바이트 | 이전 PC용 상단 삽화 원본 |
+| [`news-dawn-pixel-720.webp`](../dev/web/assets/images/news-dawn-pixel-720.webp) | 720×240px · 62,004바이트 | 이전 모바일용 상단 삽화 원본 |
 | [`og-pixel.png`](../dev/web/assets/images/og-pixel.png) | 1,200×630px | OG·Twitter 공유 미리보기 |
 | [`favicon.svg`](../dev/web/assets/images/favicon.svg) | 64×64 viewBox | 픽셀 신문 아이콘 원본 |
 | [`icon-512.png`](../dev/web/assets/images/icon-512.png) | 512×512px | 웹 앱 아이콘 |
@@ -17,7 +17,7 @@
 | [`apple-touch-icon.png`](../dev/web/assets/images/apple-touch-icon.png) | 180×180px | Apple 홈 화면 아이콘 |
 | [`favicon.ico`](../dev/web/favicon.ico) | 16·32·48px | 작은 브라우저 파비콘 |
 
-`picture`·`srcset`으로 화면에 맞는 WebP를 선택합니다. 크기를 미리 지정하고 비동기로 디코딩하며, PC 4:1·900px 이하 5:2 영역에 맞춰 일부를 잘라 보여 줍니다. 안내 문구는 그림 안에 넣지 않고 HTML로 제공합니다.
+상단 WebP 두 파일은 자산 기록에 남겨 두었습니다. 개발 지면에서는 표시하지 않고 페이지를 열 때도 요청하지 않습니다.
 
 [공유 카드](og/card.html)는 제호·읽기 안내·삽화를 배치하고 특정 호의 숫자를 고정하지 않습니다. [아이콘 렌더링 원본](og/icon.html)은 같은 SVG를 참조합니다. 파비콘은 생성형 삽화를 잘라 만든 이미지가 아닙니다.
 
@@ -45,7 +45,6 @@ node design/og/build.mjs --icons-only
 
 | 변경 대상 | 확인할 참조 |
 | --- | --- |
-| 상단 WebP | 공개 HTML의 `picture`·`srcset`, 표시 크기와 대체 텍스트 |
 | OG 파일명 | 공개 OG·Twitter 메타태그, [호별 생성기](../dev/pipeline/build/build_pages.py)의 NewsArticle 이미지 |
 | 아이콘·버전 | 공개 페이지·[관리자](../dev/web/admin/index.html)·[manifest](../dev/web/manifest.webmanifest) |
 
@@ -53,10 +52,10 @@ node design/og/build.mjs --icons-only
 
 ## 생성 기록과 원본 프롬프트
 
-삽화는 내장 `image_gen`으로 새로 생성했습니다. 입력 이미지 편집은 사용하지 않았습니다. 저장된 생성 PNG 원본은 **2,172×724px**이며 공개 지면에는 압축한 WebP 두 크기를 사용합니다. 새벽 도시·강·자전거·신문의 가상 풍경으로, 특정 사건을 재현한 보도 자료가 아닙니다.
+삽화는 내장 `image_gen`으로 새로 생성했습니다. 입력 이미지 편집은 사용하지 않았습니다. 저장된 생성 PNG 원본은 **2,172×724px**이며 이전 지면에는 압축한 WebP 두 크기를 사용했습니다. 새벽 도시·강·자전거·신문의 가상 풍경으로, 특정 사건을 재현한 보도 자료가 아닙니다.
 
 ```text
 Use case: illustration-story. Asset: wide panoramic masthead illustration for a Korean data-driven morning newspaper website, Korea Jogan. Create a warm, witty, meticulously crafted 16-bit pixel-art scene of a South Korean city waking up at dawn: small newspaper delivery bicycle and folded morning newspaper in the foreground, layered contemporary city rooftops, a gentle river and distant low mountains. Calm blue, ivory, muted peach morning light with crisp square pixels and a restrained editorial feel. Wide landscape composition, approximately 3:1 ratio, all important detail within the central band so it can crop responsively. It will sit underneath the newspaper masthead and above real news. This is a playful decorative illustration, never an illustration of an actual incident: no politicians, no disaster, no aircraft, no protest, no victim, no charts or numeric claims. No lettering, no text, no logo, no watermark. Designed to look appealing on both an ivory light newsprint layout and a charcoal dark layout.
 ```
 
-같은 프롬프트도 동일한 결과를 보장하지 않습니다. 현재 공개된 WebP를 지면의 기준 파일로 유지합니다.
+같은 프롬프트도 동일한 결과를 보장하지 않습니다. WebP는 이전에 사용한 자산으로 보관합니다.

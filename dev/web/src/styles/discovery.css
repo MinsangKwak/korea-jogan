@@ -3,33 +3,36 @@
 .kj-track__permalink{display:inline-flex;align-items:center;min-height:44px;font-size:.82rem;text-underline-offset:4px}
 .discovery-page .skip{position:absolute;left:-9999px}
 .discovery-page .skip:focus{left:20px;top:12px;padding:12px;background:var(--bg);z-index:30}
-.discovery-page{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.85 var(--font-sans);overflow-wrap:anywhere}
+.discovery-page{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.8 var(--font-sans);overflow-wrap:anywhere}
 .discovery-page *{box-sizing:border-box}
 .discovery-page a{color:var(--brand);text-underline-offset:4px}
 .discovery-page a:hover{text-decoration-thickness:2px}
 .discovery-page :focus-visible{outline:3px solid var(--focus);outline-offset:4px}
-.discovery-mast,.discovery-main,.discovery-footer{width:min(100% - 64px,1440px);margin-inline:auto}
-.discovery-mast{display:flex;align-items:center;flex-wrap:wrap;gap:16px 32px;padding-block:24px;border-bottom:3px solid var(--ink)}
-.discovery-logo{font-family:"Noto Serif KR",serif;font-weight:900;font-size:clamp(25px,3vw,36px);text-decoration:none;color:var(--ink)!important}
+.discovery-mast,.discovery-main,.discovery-footer{width:min(100% - 64px,1320px);margin-inline:auto}
+.discovery-mast{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"logo tools" "nav nav";align-items:center;gap:10px 24px;padding-top:1.2rem;border-bottom:2px solid var(--brand)}
+.discovery-logo{grid-area:logo;width:fit-content;font:900 clamp(1.45rem,3vw,2.1rem)/1.4 var(--font-serif);letter-spacing:-.04em;text-decoration:none;color:var(--ink)!important}
 .discovery-mast nav,.discovery-footer nav{display:flex;flex-wrap:wrap;gap:8px 24px}
 .discovery-mast nav a,.discovery-footer nav a{display:inline-flex;align-items:center;min-height:44px}
-.discovery-mast label{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:.82rem}
-.discovery-mast select{min-height:44px;padding:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit}
+.discovery-mast nav{grid-area:nav;border-top:1px solid var(--line);gap:0 .9rem}
+.discovery-mast nav a{font-size:.9rem;font-weight:700;text-decoration:none}
+.discovery-mast nav a:hover{text-decoration:underline}
+.discovery-tools{grid-area:tools;display:flex;flex-wrap:wrap;align-items:center;gap:0 .5rem}
+.discovery-tools .reading-action--system{font-size:.8rem}
 .discovery-main{padding-block:32px 56px;min-height:55vh}
-.discovery-main h1{font-size:clamp(28px,3.4vw,48px);line-height:1.5;letter-spacing:-.04em;margin:16px 0;max-width:30ch}
-.discovery-main h2{font-size:clamp(22px,2vw,28px);line-height:1.6;margin:36px 0 16px}
-.discovery-main h3{font-size:20px;line-height:1.65;margin:0 0 12px}
-.discovery-main p{max-width:76ch}
+.discovery-main h1{font:900 clamp(1.65rem,3.4vw,2.6rem)/1.42 var(--font-serif);letter-spacing:-.035em;margin:12px 0 18px;max-width:30ch}
+.discovery-main h2{font-size:clamp(1.22rem,2vw,1.6rem);line-height:1.6;margin:36px 0 16px}
+.discovery-main h3{font-size:1.1rem;line-height:1.6;margin:0 0 12px}
+.discovery-main p{max-width:var(--measure)}
 .discovery-head{padding-bottom:28px;border-bottom:1px solid var(--line)}
 .discovery-head>p:last-child{margin-bottom:0}
 .discovery-kicker{color:var(--brand);font-size:.85rem;font-weight:700}
 .discovery-lead{font-size:1.1em;line-height:1.9}
 .discovery-meta{color:var(--ink-3);font-size:.82rem}
 .discovery-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-block:24px;padding:0;list-style:none}
-.discovery-card{padding:24px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.discovery-card{padding:1.25rem;background:var(--surface-raised);border-block-start:2px solid var(--brand);border-block-end:1px solid var(--line);min-width:0}
 .discovery-card p:last-child{margin-bottom:0}
-.discovery-card h2{margin:0 0 16px;font-size:clamp(20px,1.8vw,26px)}
-.discovery-value{font-size:clamp(26px,3vw,42px);font-weight:900;line-height:1.5;margin:12px 0;font-variant-numeric:tabular-nums}
+.discovery-card h2{margin:0 0 16px;font-size:clamp(1.1rem,1.8vw,1.4rem)}
+.discovery-value{font-size:clamp(1.45rem,3vw,2.3rem);font-weight:900;line-height:1.5;margin:12px 0;font-variant-numeric:tabular-nums}
 .discovery-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 32px}
 .discovery-facts div{border-top:1px solid var(--line);padding-top:12px}
 .discovery-facts dt{font-size:.8rem;color:var(--ink-3)}
@@ -54,6 +57,6 @@
 .discovery-footer{padding-block:24px 48px;border-top:3px solid var(--ink);font-size:.82rem;color:var(--ink-3)}
 .discovery-main details{border-top:1px solid var(--line);margin-top:24px;padding-block:16px}
 .discovery-main summary{cursor:pointer;min-height:44px;font-weight:700}
-@media(max-width:900px){.discovery-mast,.discovery-main,.discovery-footer{width:calc(100% - 40px)}.discovery-mast{gap:12px 20px}.discovery-mast nav{order:3;width:100%;gap:8px 20px}.discovery-mast label{margin-left:0}.discovery-main{padding-top:24px}.discovery-grid{grid-template-columns:1fr}.discovery-card{padding:20px}.discovery-phases{grid-template-columns:repeat(2,minmax(0,1fr))}.discovery-note{padding:16px 20px}.discovery-table th,.discovery-table td{padding:12px}.discovery-links{gap:4px 20px}}
-@media print{.discovery-mast label,.discovery-footer nav{display:none}.discovery-mast,.discovery-main,.discovery-footer{width:100%}.discovery-table-wrap{overflow:visible}.discovery-page{font-size:11pt}.discovery-grid{display:block}.discovery-card{break-inside:avoid;margin-block:12px}}
+@media(max-width:900px){.discovery-mast,.discovery-main,.discovery-footer{width:calc(100% - 40px)}.discovery-mast{grid-template-columns:minmax(0,1fr);grid-template-areas:"logo" "tools" "nav";gap:8px}.discovery-mast nav{gap:0 14px}.discovery-tools{gap:0 .25rem}.discovery-main{padding-top:24px}.discovery-grid{grid-template-columns:1fr}.discovery-card{padding:20px}.discovery-phases{grid-template-columns:repeat(2,minmax(0,1fr))}.discovery-note{padding:16px 20px}.discovery-table th,.discovery-table td{padding:12px}.discovery-links{gap:4px 20px}}
+@media print{.discovery-tools,.discovery-footer nav{display:none}.discovery-mast,.discovery-main,.discovery-footer{width:100%}.discovery-table-wrap{overflow:visible}.discovery-page{font-size:11pt}.discovery-grid{display:block}.discovery-card{break-inside:avoid;margin-block:12px}}
 @media(max-width:600px){.discovery-facts{grid-template-columns:1fr}}
