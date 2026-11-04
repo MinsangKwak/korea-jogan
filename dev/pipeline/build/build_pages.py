@@ -302,7 +302,7 @@ def discovery_page(template: str, item: dict) -> str:
 <meta name="kj-updated" content="{esc(item['modified'][:10])}">
 <meta name="jg-ga4" content="{esc(ga[1] if ga else '')}">
 <meta name="jg-goatcounter" content="{esc(goat[1] if goat else '')}">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <meta name="theme-color" content="#f8fafb">
 <link rel="canonical" href="{esc(url)}">
 <meta property="og:type" content="website">
@@ -348,7 +348,6 @@ def discovery_page(template: str, item: dict) -> str:
   <div class="discovery-tools" role="group" aria-label="읽기 설정">
     <button class="reading-switch" id="discoveryBig" type="button" role="switch" aria-checked="false" data-big-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>글자 크게</span><span class="reading-switch__state" data-big-state aria-hidden="true">끔</span></span></button>
     <button class="reading-switch" id="discoveryTheme" type="button" role="switch" aria-checked="false" data-theme-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>어두운 화면</span><span class="reading-switch__state" data-theme-state aria-hidden="true">끔</span></span></button>
-    <button class="reading-action reading-action--system" id="discoveryThemeSystem" type="button" data-theme-system aria-pressed="true" disabled>기기 설정 따르기</button>
   </div>
 </header>
 {item['body']}

@@ -2,7 +2,7 @@
 
 사용: python3 dev/pipeline/build/build_tokens.py          # 파일을 새로 쓴다
       python3 dev/pipeline/build/build_tokens.py --check  # 지금 파일이 토큰과 같은지만 본다(다르면 종료 코드 1)
-다크 테마는 기기 설정(prefers-color-scheme)과 data-theme="dark" 두 경로로 켠다.
+기본은 밝은 화면이며, data-theme="dark"를 선택할 때만 다크 토큰을 적용한다.
 """
 from __future__ import annotations
 
@@ -50,7 +50,6 @@ def build(tokens: dict) -> str:
     out.append(block(f':root[data-theme="{first}"]', theme_lines(first) + [f"color-scheme: {first};"]))
     for theme in themes[1:]:
         lines = theme_lines(theme) + [f"color-scheme: {theme};"]
-        out.append(f"@media (prefers-color-scheme: {theme}) {{\n" + block(f':root:not([data-theme="{first}"])', lines, "  ") + "}\n")
         out.append(block(f':root[data-theme="{theme}"]', lines))
     return "\n".join(out)
 
