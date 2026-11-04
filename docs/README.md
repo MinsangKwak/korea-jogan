@@ -28,7 +28,7 @@
 | [Swiper 원본·라이선스](../dev/web/assets/vendor/swiper/README.md) | 로컬 라이브러리 버전·원본·SHA-256을 확인할 때 |
 | [검색·외부 소개 계획](planning/backlinks.md) | 검색·방문 기준선, 고정 도착 페이지, UTM 소개 계획을 확인할 때 |
 | [초안 편집 운영](planning/editorial.md) | 결론부터 읽히는 문장, 사실 보존 검사, 자동 편집 대상과 예약 상태를 확인할 때 |
-| [자동화 이관 상태](dev/publish-automation.md) | Codex 예약 지시 갱신·첫 실행과 GitHub 안정 코드 발행의 책임을 확인할 때 |
+| [자동화 이관 상태](dev/publish-automation.md) | Codex 지시 갱신 완료·첫 실행 상태와 GitHub 안정 코드 발행을 확인할 때 |
 
 ## 최신 변경부터 읽기
 
