@@ -33,8 +33,6 @@ function renderLead() {
     related.append(a);
   });
   const briefsBox = document.querySelector('.briefs-box');
-  briefsBox.setAttribute('role', 'region');
-  briefsBox.setAttribute('tabindex', '0');
   briefsBox.setAttribute('aria-labelledby', 'relatedH briefH');
   briefsBox.prepend(related);
   D.briefs.forEach((b) => {
@@ -54,4 +52,5 @@ function renderLead() {
   extras.append(extrasBody);
   briefsBox.append(extras);
   responsiveDisclosure(extras);
+  matchReadingColumns($('heroGrid'), 901, ['머리기사', '함께 읽을 주제와 핵심 숫자'], extras);
 }

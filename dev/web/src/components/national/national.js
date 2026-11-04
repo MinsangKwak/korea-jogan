@@ -41,6 +41,7 @@ function renderNational() {
     seen.add(item.cat);
   });
   const list = leadItems.concat(remaining);
+  clearReadingPair(box);
   box.replaceChildren();
   box.classList.toggle('nat-board--single', list.length < 2);
   if (!list.length) {
@@ -69,6 +70,7 @@ function renderNational() {
     reading.replaceChildren(article);
     buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
     if (move) {
+      if (reading.parentElement.classList.contains('paired-pane')) reading.parentElement.scrollTop = 0;
       title.focus({ preventScroll: true });
       reading.scrollIntoView({ block: 'start' });
     }
@@ -93,4 +95,5 @@ function renderNational() {
     collapse(headlines, { limit: 5, noun: '건', start: true });
   }
   select(0);
+  matchReadingColumns(box, 1000, ['선택한 전국 기사', '전국 기사 제목 목록']);
 }

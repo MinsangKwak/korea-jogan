@@ -147,12 +147,22 @@
 .news-edition .news-quick span, .news-edition .news-quick small { font-size: .85rem; }
 
 /* 진행 상황과 통계는 숫자·기준·출처를 같은 순서로 읽는다 */
-.news-edition #trackList > .kj-track {
+.news-edition #trackList .kj-track {
   border-radius: var(--radius-md);
   background: var(--surface-raised);
   border-color: var(--line);
   border-top-color: var(--brand);
 }
+
+.paired-pane { display: flow-root; min-inline-size: 0; }
+[data-paired-reading] > .paired-pane {
+  max-block-size: var(--paired-block-size, none);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--line-strong) var(--surface);
+  scroll-padding-block: var(--space-2);
+}
+.paired-pane[data-paired-overflow]:focus-visible { outline-offset: -3px; }
 .news-edition #trackList .kj-track__head h3 { font-size: 1.27rem; line-height: 1.5; }
 .news-edition #trackList .kj-track__sum, .news-edition .tracking-summary p { font-size: 1rem; line-height: 1.8; }
 .news-edition #trackingDialog { border-radius: var(--radius-md); }
