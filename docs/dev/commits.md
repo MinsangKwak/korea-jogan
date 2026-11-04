@@ -44,7 +44,7 @@
 | `data` | 발행 자료 갱신 | `data(issue): YYYY-MM-DD호 초안` |
 | `ci` | 자동 검사·배포 설정 | `ci(infra): 배포 전에 토큰 생성 결과 검사` |
 | `release` | 여러 변경을 묶은 버전 갱신 | `release: 발행 자동화 개선 반영` |
-| `sync` | 브랜치 동기화 | `sync: dev → main` |
+| `sync` | 브랜치 동기화 | `sync: 검증한 코드의 main·deploy 반영` |
 | `chore` | 그 밖의 유지보수 | 구체적인 다른 종류를 먼저 검토 |
 
 ## 문서별 커밋과 병합
