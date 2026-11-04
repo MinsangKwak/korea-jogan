@@ -6,6 +6,11 @@ on:
   push:
     branches: [deploy]
   workflow_dispatch:
+    inputs:
+      source_sha:
+        description: 배포할 deploy 커밋의 고정 SHA
+        required: false
+        type: string
   schedule:
     # 한국 시간 평일 09:17~22:17 매시(UTC 00~13시)
     - cron: "17 0-13 * * 1-5"
@@ -21,17 +26,49 @@ concurrency:
 
 jobs:
   deploy:
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/deploy') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/deploy') ||
+      (github.event_name == 'schedule' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     env:
       ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
     steps:
-      # 예약 실행은 기본 브랜치에서 시작하므로 배포 대상인 deploy를 직접 받는다
+      - name: 고정 배포 입력 확인
+        env:
+          REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          source = os.environ.get("REQUESTED_SOURCE_SHA", "")
+          if source and not re.fullmatch(r"[0-9a-f]{40}", source):
+              raise SystemExit("source_sha에는 40자리 소문자 커밋 SHA가 필요합니다")
+          PY
+      # push는 이벤트 커밋, 수동 실행은 지정한 SHA, 예약은 deploy 최신 소스를 받는다
       - uses: actions/checkout@v4
         with:
-          ref: deploy
+          ref: ${{ github.event_name == 'push' && github.sha || inputs.source_sha || 'deploy' }}
+          fetch-depth: 0
+      - id: source
+        name: 실제 배포 소스와 deploy 일치 확인
+        env:
+          EXPECTED_SOURCE_SHA: ${{ github.event_name == 'push' && github.sha || inputs.source_sha || '' }}
+        run: |
+          ACTUAL_SOURCE_SHA="$(git rev-parse HEAD)"
+          git fetch origin refs/heads/deploy:refs/remotes/origin/deploy
+          if [ -n "$EXPECTED_SOURCE_SHA" ] && [ "$ACTUAL_SOURCE_SHA" != "$EXPECTED_SOURCE_SHA" ]; then
+            echo "::error::요청한 커밋과 실제 체크아웃한 커밋이 다릅니다"
+            exit 1
+          fi
+          if [ "$ACTUAL_SOURCE_SHA" != "$(git rev-parse origin/deploy)" ]; then
+            echo "::error::deploy가 변경되어 오래된 소스로 덮어쓰지 않습니다"
+            exit 1
+          fi
+          printf 'sha=%s\n' "$ACTUAL_SOURCE_SHA" >> "$GITHUB_OUTPUT"
       # 키가 없으면 예약 실행은 다시 배포할 이유가 없어 여기서 멈춘다
       - id: gate
         name: 예약 실행 조건
@@ -63,6 +100,11 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         continue-on-error: true
         run: python dev/pipeline/build/build_live.py
+      - name: 실제 배포 소스 기록
+        if: steps.gate.outputs.run == 'true'
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: python3 dev/pipeline/build/build_info.py --source-sha "$SOURCE_SHA"
       - if: steps.gate.outputs.run == 'true'
         uses: actions/configure-pages@v5
       - if: steps.gate.outputs.run == 'true'
