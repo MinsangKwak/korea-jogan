@@ -23,14 +23,6 @@
 
 .news-edition .kj-more svg { flex: none; }
 
-.news-edition .kj-stat__foot,
-.news-edition .econ-carousel.is-ready .kj-stat__foot {
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-2);
-}
-
 .news-edition .kj-src { min-inline-size: 0; max-inline-size: 100%; }
 .news-edition .kj-src > summary {
   min-block-size: var(--tap-min);
@@ -44,8 +36,6 @@
 
 .news-edition .kj-src > summary:hover,
 .news-edition .kj-src[open] > summary { background: var(--brand-soft); color: var(--brand-strong); }
-.news-edition .kj-stat__foot > .kj-src[open] { flex-basis: 100%; }
-.news-edition .kj-stat__foot .kj-src > summary { padding-inline-start: 0; }
 .news-edition .kj-src > summary::after { flex: none; }
 
 /* 검색과 지난 호 선택은 입력 옆에 실행 버튼을 둔다 */
