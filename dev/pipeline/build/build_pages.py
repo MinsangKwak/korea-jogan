@@ -24,6 +24,9 @@ ROOT = Path(__file__).resolve().parents[3]
 PUBLIC = ROOT / "dev" / "web"
 ISSUES = PUBLIC / "data" / "issues"
 SITE = "https://korea-jogan.com/"
+OG_IMAGE = "assets/images/og-first-light.png"
+OG_IMAGE_ALT = "대한민국 조간 · 신문 지면 뒤로 떠오르는 해"
+ICON_VERSION = "first-light-20261104"
 DIGEST = re.compile(r"<!-- kj:digest -->.*?<!-- /kj:digest -->", re.S)
 LDJSON = re.compile(r'<script type="application/ld\+json">\n(.*?)\n</script>', re.S)
 DISCOVERY = re.compile(r"<!-- kj:discovery -->.*?<!-- /kj:discovery -->", re.S)
@@ -179,7 +182,7 @@ def article_ld(issue: dict, url: str, desc: str) -> dict:
         "datePublished": published_at(issue),
         "dateModified": published_at(issue),
         "inLanguage": "ko-KR",
-        "image": [SITE + "assets/images/og-pixel.png"],
+        "image": [SITE + OG_IMAGE],
         "keywords": keywords(issue),
         "articleSection": sections(issue),
         "isAccessibleForFree": True,
@@ -311,17 +314,19 @@ def discovery_page(template: str, item: dict) -> str:
 <meta property="og:title" content="{title}">
 <meta property="og:description" content="{desc}">
 <meta property="og:url" content="{esc(url)}">
-<meta property="og:image" content="{SITE}assets/images/og-pixel.png">
+<meta property="og:image" content="{SITE}{OG_IMAGE}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="대한민국 조간 · 픽셀로 그린 새벽 도시와 아침 신문">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="{esc(OG_IMAGE_ALT)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{title}">
 <meta name="twitter:description" content="{desc}">
-<meta name="twitter:image" content="{SITE}assets/images/og-pixel.png">
-<link rel="icon" href="/assets/images/favicon.svg?v=pixel-20261103" type="image/svg+xml">
-<link rel="icon" href="/favicon.ico?v=pixel-20261103" sizes="any">
-<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=pixel-20261103">
+<meta name="twitter:image" content="{SITE}{OG_IMAGE}">
+<meta name="twitter:image:alt" content="{esc(OG_IMAGE_ALT)}">
+<link rel="icon" href="/assets/images/favicon.svg?v={ICON_VERSION}" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico?v={ICON_VERSION}" sizes="any">
+<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v={ICON_VERSION}">
 <link rel="alternate" type="application/rss+xml" title="대한민국 조간" href="/feed.xml">
 {verification}
 {theme}

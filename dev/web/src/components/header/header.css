@@ -97,12 +97,26 @@
   padding-block: clamp(.85rem, 2.15vw, 1.55rem);
 }
 .news-edition .kj-mast .kj-mast__logo {
+  display: flex;
+  align-items: center;
   justify-self: start;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  gap: clamp(.55rem, 1.35vw, .95rem);
   font: 900 clamp(1.55rem, 3.7vw, 2.55rem)/1.25 var(--font-serif);
   letter-spacing: -.055em;
   text-align: left;
   white-space: normal;
 }
+.kj-mast__symbol {
+  display: block;
+  flex: none;
+  inline-size: clamp(2.45rem, 4.8vw, 3.7rem);
+  block-size: auto;
+  border-radius: 20.5%;
+}
+:root[data-theme="dark"] .kj-mast__symbol { outline: 1px solid var(--line-strong); }
+.kj-mast__wordmark { min-inline-size: 0; word-break: keep-all; overflow-wrap: anywhere; }
 .news-edition .kj-mast .kj-mast__logo small {
   display: block;
   margin-top: .2rem;
