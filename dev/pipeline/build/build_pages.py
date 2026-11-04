@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 from build_security import secure_page
+import build_discovery
 
 ROOT = Path(__file__).resolve().parents[3]
 PUBLIC = ROOT / "dev" / "web"
@@ -25,6 +26,7 @@ ISSUES = PUBLIC / "data" / "issues"
 SITE = "https://korea-jogan.com/"
 DIGEST = re.compile(r"<!-- kj:digest -->.*?<!-- /kj:digest -->", re.S)
 LDJSON = re.compile(r'<script type="application/ld\+json">\n(.*?)\n</script>', re.S)
+DISCOVERY = re.compile(r"<!-- kj:discovery -->.*?<!-- /kj:discovery -->", re.S)
 # 요약에 넣을 목록 길이. 검색 로봇이 읽기에 충분하고 페이지가 지나치게 길지 않게
 NEWS_MAX = 12
 REGION_MAX = 17
@@ -219,6 +221,7 @@ def home_page(template: str, issue: dict, index: dict) -> str:
     page = DIGEST.sub(lambda _: digest(issue), template, count=1)
     merged = list(dict.fromkeys(BASE_KEYWORDS + keywords(issue)))[:KEYWORD_MAX]
     page = set_attr(page, r'(<meta name="keywords" content=")[^"]*(">)', ", ".join(merged))
+    page = with_discovery_links(page, issue, index)
     return secure_page(embed_data(with_article(page, issue, SITE, desc), issue, index))
 
 
@@ -242,7 +245,109 @@ def issue_page(template: str, issue: dict, index: dict) -> str:
     extra = f'<meta name="kj-date" content="{esc(date)}">\n<meta property="article:published_time" content="{esc(published_at(issue))}">\n'
     page = page.replace('<link rel="canonical"', extra + '<link rel="canonical"', 1)
     page = DIGEST.sub(lambda _: digest(issue), page, count=1)
+    page = with_discovery_links(page, issue, index)
     return secure_page(embed_data(with_article(page, issue, url, desc), issue, index))
+
+
+def with_discovery_links(page: str, issue: dict, index: dict) -> str:
+    dates = index["issues"]
+    position = dates.index(issue["date"])
+    links = [('<a href="/topics/">이슈별 진행 상황</a>'),
+             ('<a href="/indicators/">경제 지표와 지난 기록</a>'),
+             ('<a href="/archive/">날짜별 뉴스 모아보기</a>')]
+    if position + 1 < len(dates):
+        date = dates[position + 1]
+        links.append(f'<a href="/{esc(date)}" rel="prev">이전 호 · {esc(long_date(date))}</a>')
+    if position > 0:
+        date = dates[position - 1]
+        links.append(f'<a href="/{esc(date)}" rel="next">다음 호 · {esc(long_date(date))}</a>')
+    block = '<!-- kj:discovery -->\n<nav class="kj-wrap discovery-links" aria-label="주제와 지난 호">' + "".join(links) + '</nav>\n<!-- /kj:discovery -->'
+    return DISCOVERY.sub(lambda _: block, page, count=1)
+
+
+def discovery_page(template: str, item: dict) -> str:
+    path = item["path"].removesuffix("index.html")
+    url = SITE + path
+    match = LDJSON.search(template)
+    graph = json.loads(match.group(1))["@graph"] if match else []
+    graph = [node for node in graph if node.get("@type") in ("WebSite", "NewsMediaOrganization")]
+    crumbs = [{"@type": "ListItem", "position": 1, "name": "대한민국 조간", "item": SITE}]
+    parent = path.split("/")[0]
+    labels = {"topics": "이슈 추적", "indicators": "경제 지표", "archive": "지난 호"}
+    if len(path.strip("/").split("/")) > 1:
+        crumbs.append({"@type": "ListItem", "position": 2, "name": labels[parent], "item": SITE + parent + "/"})
+    crumbs.append({"@type": "ListItem", "position": len(crumbs) + 1, "name": item["title"].removesuffix(" | 대한민국 조간"), "item": url})
+    graph += [{"@type": "BreadcrumbList", "@id": url + "#breadcrumb", "itemListElement": crumbs},
+              {"@type": "CollectionPage" if item["kind"] in ("archive", "topics", "indicators") else "WebPage",
+               "@id": url + "#page", "url": url, "name": item["title"], "description": item["description"],
+               "inLanguage": "ko-KR", "dateModified": item["modified"], "isAccessibleForFree": True,
+               "isPartOf": {"@id": SITE + "#website"}, "breadcrumb": {"@id": url + "#breadcrumb"},
+               "publisher": {"@id": SITE + "#org"}}]
+    data = json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False, indent=2).replace("<", "\\u003c")
+    ga = re.search(r'<meta name="jg-ga4" content="([^"]*)">', template)
+    goat = re.search(r'<meta name="jg-goatcounter" content="([^"]*)">', template)
+    verification = "\n".join(re.findall(r'<meta name="(?:google|naver)-site-verification" content="[^"]*">', template))
+    theme = next((script for script in re.findall(r'<script>.*?</script>', template, re.S) if "jogan-theme" in script), "")
+    title, desc = esc(item["title"]), esc(item["description"])
+    page = f'''<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{title}</title>
+<meta name="description" content="{desc}">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="kj-generated" content="discovery">
+<meta name="kj-page-kind" content="{esc(item['kind'])}">
+<meta name="kj-updated" content="{esc(item['modified'][:10])}">
+<meta name="jg-ga4" content="{esc(ga[1] if ga else '')}">
+<meta name="jg-goatcounter" content="{esc(goat[1] if goat else '')}">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff">
+<link rel="canonical" href="{esc(url)}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="대한민국 조간">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{desc}">
+<meta property="og:url" content="{esc(url)}">
+<meta property="og:image" content="{SITE}assets/images/og-pixel.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="대한민국 조간 · 픽셀로 그린 새벽 도시와 아침 신문">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{title}">
+<meta name="twitter:description" content="{desc}">
+<meta name="twitter:image" content="{SITE}assets/images/og-pixel.png">
+<link rel="icon" href="/assets/images/favicon.svg?v=pixel-20261103" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico?v=pixel-20261103" sizes="any">
+<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=pixel-20261103">
+<link rel="alternate" type="application/rss+xml" title="대한민국 조간" href="/feed.xml">
+{verification}
+{theme}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="fontStyles" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap" media="print">
+<link rel="stylesheet" href="/src/styles/tokens.css">
+<link rel="stylesheet" href="/src/styles/kj.css">
+<link rel="stylesheet" href="/src/styles/discovery.css">
+<script type="application/ld+json">
+{data}
+</script>
+<script src="/src/core/fonts.js" async></script>
+<script src="/src/core/theme.js" defer></script>
+<script src="/src/core/metrics.js" defer></script>
+<script src="/src/core/discovery.js" defer></script>
+</head>
+<body class="discovery-page">
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+<header class="discovery-mast"><a href="/" class="discovery-logo">대한민국 조간</a><nav aria-label="신문 읽기"><a href="/">오늘 뉴스</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/archive/">지난 호</a></nav><label for="discoveryTheme">화면 <select id="discoveryTheme" data-theme-select disabled><option value="system">기기 설정</option><option value="light">라이트</option><option value="dark">다크</option></select></label></header>
+{item['body']}
+<footer class="discovery-footer"><p><a href="/">대한민국 조간</a> · 출처와 기준일을 함께 읽습니다.</p><nav aria-label="운영 안내"><a href="/#limitsH">수집 방법과 한계</a><a href="/#fixH">정정 기록</a><a href="/feed.xml">RSS 구독</a><a href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" rel="noopener">오류 신고</a></nav><p>기획·데이터·디자인·개발 <a href="https://github.com/MinsangKwak" rel="author">MinsangKwak</a> · 코드 MIT · 글 CC BY 4.0</p></footer>
+</body>
+</html>
+'''
+    return secure_page(page)
 
 
 def published() -> list[dict]:
@@ -270,8 +375,28 @@ def build() -> list[Path]:
     # 이미 한 번 돌린 index.html이어도 요약·기사 정보만 바뀌므로 그대로 틀로 쓴다
     template = home.read_text(encoding="utf-8")
     issues = published()
+    trackers_file = PUBLIC / "data" / "trackers.json"
+    trackers = json.loads(trackers_file.read_text(encoding="utf-8")) if trackers_file.exists() else {"items": []}
+    extra = build_discovery.pages(issues, trackers)
+    expected = {PUBLIC / item["path"] for item in extra}
+    for folder in ("archive", "topics", "indicators"):
+        for stale in (PUBLIC / folder).rglob("*.html"):
+            if stale not in expected and '<meta name="kj-generated" content="discovery">' in stale.read_text(encoding="utf-8"):
+                stale.unlink()
+    dates = {issue["date"] for issue in issues}
+    for stale in PUBLIC.glob("20??-??-??.html"):
+        if stale.stem not in dates and '<meta name="kj-date"' in stale.read_text(encoding="utf-8"):
+            stale.unlink()
     written = []
     if not issues:
+        template = DIGEST.sub("<!-- kj:digest -->\n<!-- /kj:digest -->", template, count=1)
+        template = DISCOVERY.sub("<!-- kj:discovery -->\n<!-- /kj:discovery -->", template, count=1)
+        data = json.loads(LDJSON.search(template).group(1))
+        data["@graph"] = [node for node in data["@graph"] if node.get("@type") != "NewsArticle"]
+        template = LDJSON.sub(lambda _: '<script type="application/ld+json">\n' + json.dumps(data, ensure_ascii=False, indent=2).replace("<", "\\u003c") + '\n</script>', template, count=1)
+        for element_id in ("issue-data", "issue-index"):
+            template = re.sub(r'(<script type="application/json" id="' + element_id + r'">).*?(</script>)', r'\g<1>null\2', template, count=1, flags=re.S)
+        home.write_text(secure_page(template), encoding="utf-8")
         return written
     index = published_index(issues)
     for issue in issues:
@@ -280,6 +405,11 @@ def build() -> list[Path]:
         written.append(out)
     home.write_text(home_page(template, issues[0], index), encoding="utf-8")
     written.append(home)
+    for item in extra:
+        out = PUBLIC / item["path"]
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(discovery_page(template, item), encoding="utf-8")
+        written.append(out)
     admin = PUBLIC / "admin" / "index.html"
     if admin.exists():
         admin.write_text(secure_page(admin.read_text(encoding="utf-8"), admin=True), encoding="utf-8")
@@ -288,7 +418,7 @@ def build() -> list[Path]:
 
 def main() -> int:
     written = build()
-    print(f"호별 페이지 {len(written) - 1}개와 첫 화면 요약을 만들었습니다.")
+    print(f"검색용 정적 페이지 {len(written)}개를 만들었습니다.")
     return 0
 
 

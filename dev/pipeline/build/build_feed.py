@@ -11,6 +11,7 @@ import json
 import sys
 from pathlib import Path
 from xml.sax.saxutils import escape
+import build_discovery
 
 ROOT = Path(__file__).resolve().parents[3]
 PUBLIC = ROOT / "dev" / "web"
@@ -59,6 +60,10 @@ def build_sitemap() -> str:
     urls = [(SITE, issues[0]["date"] if issues else None, "daily")]
     # 호별 페이지도 정정으로 바뀔 수 있어 변경 주기는 적지 않는다
     urls += [(f"{SITE}{i['date']}", i["date"], None) for i in issues]
+    trackers_file = PUBLIC / "data" / "trackers.json"
+    trackers = json.loads(trackers_file.read_text(encoding="utf-8")) if trackers_file.exists() else {"items": []}
+    urls += [(SITE + item["path"].removesuffix("index.html"), item["modified"], None)
+             for item in build_discovery.pages(issues, trackers)]
     rows = "".join(
         f"  <url>\n    <loc>{escape(loc)}</loc>\n"
         + (f"    <lastmod>{mod}</lastmod>\n" if mod else "")
