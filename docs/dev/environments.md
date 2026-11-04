@@ -49,8 +49,11 @@ flowchart TD
 | 개발 도메인 | `dev.korea-jogan.com`, Git 브랜치 `dev` 연결 |
 | 배포 보호 | 모든 배포에 Vercel Authentication 적용 |
 | 현재 팀 구성 | OWNER 1명 |
-| 첫 실제 배포 | 확인 대기 |
+| 첫 실제 배포 | [`f4df437b`](https://vercel.com/minsangkwaks-projects/korea-jogan-dev/EQcoTBWNJtHv8bAjHEn6gwogBsEN) READY, 메타데이터·헤더·인증 경계 확인 |
+| 기본 개발 주소 | [https://korea-jogan-dev-git-dev-minsangkwaks-projects.vercel.app](https://korea-jogan-dev-git-dev-minsangkwaks-projects.vercel.app) · Vercel 로그인 보호 |
 | 개발 도메인 DNS | 현재 NXDOMAIN. 외부 DNS 설정 대기 |
+
+인증된 연결로 첫 배포의 `preview-build.json`을 HTTP 200으로 읽어 `dev`·해당 SHA·2026-11-04호·17개 호와 검색 제외·비공개 캐시 헤더를 대조했습니다. 비로그인 첫 화면·색인 JSON·측정 스크립트·메타데이터는 모두 로그인으로 HTTP 302 이동했습니다.
 
 Vercel 로그인과 이 프로젝트 접근 권한은 같은 뜻이 아닙니다. 현재 OWNER 1명이 확인됐으며 다른 검토자에게 보여 주려면 실제 팀·공유 권한을 별도로 확인합니다. 프로젝트를 만든 사실만으로 외부 검토자의 접근을 보장하지 않습니다.
 
@@ -60,9 +63,9 @@ Vercel 로그인과 이 프로젝트 접근 권한은 같은 뜻이 아닙니다
 
 | 설정 위치 | 종류 | 호스트 | 값 | TTL |
 | --- | --- | --- | --- | --- |
-| Gabia DNS | `CNAME` | `dev` | `7e4c24757c5a10ba.vercel-dns-017.com` | 기본값 |
+| Gabia DNS | `CNAME` | `dev` | `cname.vercel-dns.com.` | 기본값 |
 
-루트 `korea-jogan.com`의 기존 A 레코드는 유지합니다. DNS를 저장한 뒤에도 캐시·전파와 인증서 준비에 따라 접속 시점이 달라질 수 있습니다. 현재는 DNS 연결·개발 HTTPS 접속·보호 화면 통과를 완료했다고 기록하지 않습니다.
+루트 `korea-jogan.com`의 기존 A 레코드는 유지합니다. DNS를 저장한 뒤에도 캐시·전파와 인증서 준비에 따라 접속 시점이 달라질 수 있습니다. 기본 Vercel 주소의 HTTPS·보호 경계는 확인했으며, `dev.korea-jogan.com`의 DNS·HTTPS 연결은 아직 완료되지 않았습니다.
 
 ## 미리보기에서 확인할 것
 

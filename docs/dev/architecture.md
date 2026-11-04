@@ -32,7 +32,7 @@
 
 ## 발행과 배포 흐름
 
-00시 Codex는 안정 `main`의 SHA에서 오늘 `daily` 브랜치를 만들고 조사·사실 초안·문장 편집·검사를 수행합니다. 등록된 예약의 `daily` 지시 갱신과 첫 실행은 [자동화 상태](publish-automation.md#현재-상태)에서 구분합니다. `daily.yml`은 RSS·ECOS 수동 수집기이며 전체 조사 예약을 대체하지 않습니다.
+00시 Codex는 안정 `main`의 SHA에서 오늘 `daily` 브랜치를 만들고 조사·사실 초안·문장 편집·검사를 수행합니다. 등록된 예약의 `daily` 지시는 갱신·활성을 확인했으며 첫 실행은 아직 미확인입니다. [자동화 상태](publish-automation.md#현재-상태)에서 구분합니다. `daily.yml`은 RSS·ECOS 수동 수집기이며 전체 조사 예약을 대체하지 않습니다.
 
 아침 `publish.yml`은 안정 `main`의 코드로 실행합니다. 고정한 일일 SHA의 CI를 확인하고 [prepare_daily.py](../../dev/pipeline/publish/prepare_daily.py)로 오늘 JSON·색인·실제 추적 갱신만 가져옵니다. 일일 브랜치 전체·그 안의 코드·미검증 `dev`는 병합하거나 실행하지 않습니다. 데이터·상태·동시 변경 검사 뒤 미확인 초안을 자동 공개하고 `main`·`deploy`에 반영합니다. `main` 참조에서만 실행하며 제한 시간은 15분입니다. 배포 결과물의 `build-info.json`에 실제 체크아웃한 소스 SHA와 호 날짜를 남기고, 복구 확인에서도 둘을 함께 대조합니다.
 
@@ -42,7 +42,7 @@
 
 Vercel의 `korea-jogan-dev`는 모든 배포에 Authentication을 적용한 개발 프로젝트입니다. 개발 전용 `dist-preview`는 운영 결과물과 분리하며 공개 호만 포함합니다. 검색 제외 HTML·응답 헤더·robots, GA4 비활성화와 관리자 읽기 전용 안내를 개발 기준으로 사용합니다. 보호 설정·실제 배포·DNS 연결 완료는 서로 다른 확인 항목입니다.
 
-`dev.korea-jogan.com`은 `dev` 브랜치에 연결했지만 현재 외부 DNS 설정이 필요합니다. 첫 실제 Vercel 배포와 HTTPS 접근은 [환경 변경 기록](changes-2026-11-04-preview.md)의 확인 상태를 따릅니다. 수동 승격은 운영자 확인 입력 `admin_preview_verified`를 요구합니다. 토큰 없는 CI의 배포 상태 확인을 현재 Vercel 인증 정책의 자동 증명으로 표현하지 않습니다. 해당 SHA의 Pages 배포 성공과 공개 빌드 정보를 확인한 뒤 운영 완료로 기록합니다.
+`dev.korea-jogan.com`은 `dev` 브랜치에 연결했지만 현재 외부 DNS 설정이 필요합니다. 기본 Vercel 주소의 첫 배포 READY·HTTPS·인증 경계를 확인했으며 사용자 도메인의 DNS 연결은 아직 대기입니다. [환경 변경 기록](changes-2026-11-04-preview.md)에서 구분합니다. 수동 승격은 운영자 확인 입력 `admin_preview_verified`를 요구합니다. 토큰 없는 CI의 배포 상태 확인을 현재 Vercel 인증 정책의 자동 증명으로 표현하지 않습니다. 해당 SHA의 Pages 배포 성공과 공개 빌드 정보를 확인한 뒤 운영 완료로 기록합니다.
 
 ## 브라우저의 로딩과 오류 경계
 

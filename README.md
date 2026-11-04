@@ -44,7 +44,7 @@
 
 00시 Codex가 안정 `main`에서 `daily/YYYY-MM-DD`를 만들고 새 자료 조사·사실 초안·문장 편집·검사를 거쳐 오늘 자료만 저장합니다. 아침 발행은 고정한 일일 SHA의 CI와 허용 파일을 확인한 뒤 **안정 코드에 데이터만 반영**합니다. 개발 `dev`의 미완성 코드나 일일 브랜치 전체를 운영에 병합하지 않습니다.
 
-06:05 Codex는 공개 상태를 읽기 전용으로 확인하고 실제 공개는 GitHub의 06:07·06:37·07:17·08:17 예약이 담당합니다. Codex 예약 2개는 첫 예약 2026.11.05로 등록·활성을 확인했으며, 새 일일 브랜치 지시 갱신과 첫 실행은 별도 확인합니다. [자동화 상태](docs/dev/publish-automation.md) · [초안 편집 기준](docs/planning/editorial.md)
+06:05 Codex는 공개 상태를 읽기 전용으로 확인하고 실제 공개는 GitHub의 06:07·06:37·07:17·08:17 예약이 담당합니다. Codex 예약 2개는 첫 예약 2026.11.05로 등록·활성을 확인했으며, 00시 일일 브랜치 작성과 06:05 안정 SHA·공개 빌드 확인으로 지시 갱신도 완료했습니다. 첫 실행 결과는 아직 미확인입니다. [자동화 상태](docs/dev/publish-automation.md) · [초안 편집 기준](docs/planning/editorial.md)
 
 사람이 원문과 대조한 호에는 편집자 확인을, 그렇지 않은 호에는 자동 발행을 표시합니다. 두 경로 모두 검사를 통과해야 공개되며, 검사 실패·오늘 호 누락·브랜치 충돌 시 공개를 중단합니다.
 
@@ -64,12 +64,12 @@
 
 | 구분 | 역할·주소 | 확인 상태 |
 | --- | --- | --- |
-| 개발 `dev` | Vercel `korea-jogan-dev`, 보호된 미리보기 | 프로젝트·Git·모든 배포 인증 설정 확인. 첫 실제 배포 대기 |
+| 개발 `dev` | Vercel `korea-jogan-dev`, 보호된 미리보기 | 첫 `f4df437b` 배포 READY·인증 경계·메타데이터 확인 |
 | 개발 도메인 | `dev.korea-jogan.com`, `dev` 브랜치 연결 | Gabia CNAME 추가 필요. 현재 DNS NXDOMAIN |
 | 안정 `main` | 검토한 코드와 선별 반영한 일일 자료 | 코드 승격과 일일 발행의 기준 |
 | 운영 `deploy` | [korea-jogan.com](https://korea-jogan.com/) · GitHub Pages | 승인된 코드와 공개 자료 제공 |
 
-개발 미리보기는 별도 `dist-preview`에 공개 호만 생성하고 검색 제외·GA4 비활성·관리자 읽기 전용 기준을 적용합니다. 코드 승격은 검토한 정확한 SHA의 CI·해당 Vercel 배포 성공·운영자의 인증/관리자 확인·조상 관계를 확인합니다. DNS 연결·첫 배포·운영 반영은 각각 확인하며 현재 설정 등록만으로 완료를 주장하지 않습니다.
+개발 미리보기는 별도 `dist-preview`에 공개 호만 생성하고 검색 제외·GA4 비활성·관리자 읽기 전용 기준을 적용합니다. 코드 승격은 검토한 정확한 SHA의 CI·해당 Vercel 배포 성공·운영자의 인증/관리자 확인·조상 관계를 확인합니다. 기본 Vercel 주소와 운영 Pages의 초기 `f4df437b` 반영을 확인했습니다. 실제 Vercel 응답을 사용하는 승격 검사의 통합 결과는 [PR #92](https://github.com/MinsangKwak/korea-jogan/pull/92)에서 확인합니다. 사용자 개발 도메인의 DNS와 첫 일일 실행은 별도로 확인합니다.
 
 [DNS 설정과 접근 권한](docs/dev/environments.md) · [코드와 일일 데이터의 두 경로](docs/dev/branches.md) · [이번 변경 상태](docs/dev/changes-2026-11-04-preview.md)
 

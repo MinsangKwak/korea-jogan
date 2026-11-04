@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 TEAM = "minsangkwaks-projects"
 PROJECT = "korea-jogan-dev"
+STATUS_API = "https://api.github.com/repos/MinsangKwak/korea-jogan/statuses/"
 REQUIRED_CHECKS = ("data", "browser")
 
 
@@ -42,7 +43,7 @@ def latest(items: list[dict]) -> dict | None:
     return max(items, key=lambda item: (item.get("id") if isinstance(item.get("id"), int) else -1, str(item.get("started_at") or item.get("created_at") or "")))
 
 
-def preview_proof(sha: str, checks: dict, statuses: dict, team: str = TEAM, project: str = PROJECT) -> str:
+def preview_proof(sha: str, checks: dict, statuses: list, team: str = TEAM, project: str = PROJECT) -> str:
     candidates = []
     for item in checks.get("check_runs", []):
         if not isinstance(item, dict) or not isinstance(item.get("app"), dict) or item["app"].get("slug") != "vercel" or item.get("head_sha") != sha:
@@ -53,18 +54,17 @@ def preview_proof(sha: str, checks: dict, statuses: dict, team: str = TEAM, proj
     proof = latest(candidates)
     if proof:
         return proof["proof_url"] if proof["passed"] else ""
-    if statuses.get("sha") == sha:
-        for item in statuses.get("statuses", []):
-            if not isinstance(item, dict) or not isinstance(item.get("creator"), dict) or item["creator"].get("login") != "vercel[bot]":
-                continue
-            url = item.get("target_url")
-            if project_url(url, team, project):
-                candidates.append({**item, "proof_url": url, "passed": item.get("state") == "success"})
+    for item in statuses:
+        if not isinstance(item, dict) or item.get("url") != STATUS_API + sha or not isinstance(item.get("creator"), dict) or item["creator"].get("login") != "vercel[bot]":
+            continue
+        url = item.get("target_url")
+        if project_url(url, team, project):
+            candidates.append({**item, "proof_url": url, "passed": item.get("state") == "success"})
     proof = latest(candidates)
     return proof["proof_url"] if proof and proof["passed"] else ""
 
 
-def check(sha: str, dev_sha: str, checks: dict, statuses: dict, team: str = TEAM, project: str = PROJECT) -> list[str]:
+def check(sha: str, dev_sha: str, checks: dict, statuses: list, team: str = TEAM, project: str = PROJECT) -> list[str]:
     errors = []
     if not isinstance(sha, str) or not SHA.fullmatch(sha):
         return ["승격 SHA는 소문자 40자리 커밋이어야 합니다"]
@@ -72,13 +72,13 @@ def check(sha: str, dev_sha: str, checks: dict, statuses: dict, team: str = TEAM
         errors.append("요청한 SHA가 현재 dev와 다릅니다. 새 커밋을 다시 검증해야 합니다")
     if not isinstance(checks, dict) or not isinstance(checks.get("check_runs"), list):
         return errors + ["GitHub check-runs 응답을 읽을 수 없습니다"]
-    if not isinstance(statuses, dict) or not isinstance(statuses.get("statuses"), list):
-        return errors + ["GitHub combined status 응답을 읽을 수 없습니다"]
+    if not isinstance(statuses, list):
+        return errors + ["작성자가 포함된 GitHub 원본 status 목록이 필요합니다"]
     count = checks.get("total_count", len(checks["check_runs"]))
     if not isinstance(count, int) or count < 0 or count > len(checks["check_runs"]):
         errors.append("검사 응답이 잘렸습니다. 전체 최신 검사 결과가 필요합니다")
-    if statuses.get("sha") != sha:
-        errors.append("결합 상태 응답이 요청한 커밋과 다릅니다")
+    if any(not isinstance(item, dict) or item.get("url") != STATUS_API + sha for item in statuses):
+        errors.append("원본 status 주소가 지정 저장소의 요청 커밋과 다릅니다")
     for name in REQUIRED_CHECKS:
         candidates = [item for item in checks["check_runs"] if isinstance(item, dict)
                       and item.get("name") == name and item.get("head_sha") == sha
