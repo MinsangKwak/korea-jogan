@@ -593,7 +593,7 @@ async function check(name, options, run) {
       }
       assert.equal(await page.locator('.news-illustration').count(), 0);
       assert.deepEqual(illustrations, []);
-      assert.match(await page.locator('meta[property="og:image"]').getAttribute('content'), /og-pixel\.png$/);
+      assert.match(await page.locator('meta[property="og:image"]').getAttribute('content'), /og-first-light\.png$/);
       const choice = page.locator('#natHeadlines .nat-headline').nth(1);
       const selectedTitle = await choice.locator('strong').innerText();
       const selected = latest.national.items.find((item) => item.title === selectedTitle);
