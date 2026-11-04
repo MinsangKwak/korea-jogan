@@ -12,6 +12,7 @@ function renderTrack(data) {
     const card = el('article', { class: 'kj-track' });
     const head = el('div', { class: 'kj-track__head' });
     head.append(el('h3', {}, item.title), el('span', { class: 'kj-badge' }, item.status));
+    if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id)) head.append(el('a', { href: '/topics/' + item.id + '/', class: 'kj-track__permalink' }, '이 이슈의 전체 기록'));
     card.id = 'issue-' + item.id;
     card.append(head, readingText(item.summary, 'kj-track__sum'));
     if (item.phases) card.append(trackingPhases(item));
