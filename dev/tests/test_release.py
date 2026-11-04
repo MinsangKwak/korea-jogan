@@ -26,8 +26,8 @@ def checks() -> dict:
     ]}
 
 
-def statuses() -> dict:
-    return {"sha": SHA, "statuses": [{"id": 3, "context": "Vercel", "state": "success", "target_url": PROOF, "creator": {"login": "vercel[bot]"}, "created_at": "2026-11-04T00:00:00Z"}]}
+def statuses() -> list:
+    return [{"id": 3, "url": check_release.STATUS_API + SHA, "context": "Vercel", "state": "success", "target_url": PROOF, "creator": {"login": "vercel[bot]"}, "created_at": "2026-11-04T00:00:00Z"}]
 
 
 class ReleaseTest(unittest.TestCase):
@@ -40,6 +40,32 @@ class ReleaseTest(unittest.TestCase):
 
     def test_exact_sha_ci_and_project_deployment_pass(self):
         self.assertEqual(self.errors(), [])
+
+    def test_actual_raw_status_shape_preserves_creator_and_sha(self):
+        sha = "f4df437b95e7786b701ae8e107735ecc3e72ced9"
+        api_url = "https://api.github.com/repos/MinsangKwak/korea-jogan/statuses/" + sha
+        target = "https://vercel.com/minsangkwaks-projects/korea-jogan-dev/EQcoTBWNJtHv8bAjHEn6gwogBsEN"
+        raw = [
+            {"id": 58004830947, "url": api_url, "context": "Vercel", "state": "success", "creator": {"login": "vercel[bot]"}, "target_url": target},
+            {"id": 58004827091, "url": api_url, "context": "Vercel", "state": "pending", "creator": {"login": "vercel[bot]"}, "target_url": target},
+        ]
+        runs = checks()
+        for item in runs["check_runs"]:
+            item["head_sha"] = sha
+        self.assertEqual(check_release.check(sha, sha, runs, raw), [])
+
+    def test_combined_status_without_creator_cannot_prove_deployment(self):
+        raw_without_creator = [{key: value for key, value in self.statuses[0].items() if key != "creator"}]
+        combined = {"sha": SHA, "statuses": raw_without_creator, "state": "success"}
+        self.assertTrue(check_release.check(SHA, SHA, self.checks, combined))
+        self.assertTrue(check_release.check(SHA, SHA, self.checks, raw_without_creator))
+
+    def test_raw_status_api_url_must_bind_repository_and_exact_sha(self):
+        for url in (check_release.STATUS_API + OTHER, "https://api.github.com/repos/another/repository/statuses/" + SHA, "https://api.github.com.evil.example/repos/MinsangKwak/korea-jogan/statuses/" + SHA, check_release.STATUS_API + SHA + "?fake=true", None):
+            with self.subTest(url=url):
+                self.statuses = statuses()
+                self.statuses[0]["url"] = url
+                self.assertTrue(self.errors())
 
     def test_stale_or_invalid_candidate_is_rejected(self):
         self.assertTrue(check_release.check(SHA, OTHER, self.checks, self.statuses))
@@ -75,27 +101,27 @@ class ReleaseTest(unittest.TestCase):
         for change in ({"creator": {"login": "someone"}}, {"target_url": "https://example.com/"}, {"state": "pending"}):
             with self.subTest(change=change):
                 self.statuses = statuses()
-                self.statuses["statuses"][0].update(change)
+                self.statuses[0].update(change)
                 self.assertTrue(self.errors())
 
     def test_wrong_sha_or_wrong_project_preview_is_rejected(self):
-        self.statuses["sha"] = OTHER
+        self.statuses[0]["url"] = check_release.STATUS_API + OTHER
         self.assertTrue(self.errors())
         for url in ("https://vercel.com/minsangkwaks-projects/another-project/DEP123", "https://vercel.com/another-team/korea-jogan-dev/DEP123", "https://vercel.com/minsangkwaks-projects/korea-jogan-dev-evil/DEP123", "https://vercel.com/minsangkwaks-projects/korea-jogan-dev", "https://vercel.com.evil.example/minsangkwaks-projects/korea-jogan-dev/DEP123", "https://user:pass@vercel.com/minsangkwaks-projects/korea-jogan-dev/DEP123"):
             with self.subTest(url=url):
                 self.statuses = statuses()
-                self.statuses["statuses"][0]["target_url"] = url
+                self.statuses[0]["target_url"] = url
                 self.assertTrue(self.errors())
 
     def test_dashboard_navigation_or_path_traversal_is_not_deployment_proof(self):
         for path in ("settings", "../another-project/DEP123", "%2e%2e", "DEP123/builds"):
             with self.subTest(path=path):
                 self.statuses = statuses()
-                self.statuses["statuses"][0]["target_url"] = "https://vercel.com/minsangkwaks-projects/korea-jogan-dev/" + path
+                self.statuses[0]["target_url"] = "https://vercel.com/minsangkwaks-projects/korea-jogan-dev/" + path
                 self.assertTrue(self.errors())
 
     def test_trusted_vercel_check_can_supply_same_project_proof(self):
-        self.statuses["statuses"] = []
+        self.statuses = []
         self.checks["check_runs"].append({"id": 3, "name": "Vercel", "head_sha": SHA, "app": {"slug": "vercel"}, "status": "completed", "conclusion": "success", "details_url": PROOF, "started_at": "2026-11-04T00:00:00Z"})
         self.checks["total_count"] = 3
         self.assertEqual(self.errors(), [])
@@ -103,9 +129,9 @@ class ReleaseTest(unittest.TestCase):
         self.assertTrue(self.errors())
 
     def test_new_preview_failure_cannot_fall_back_to_old_success(self):
-        later = copy.deepcopy(self.statuses["statuses"][0])
+        later = copy.deepcopy(self.statuses[0])
         later.update(id=4, created_at="2026-11-04T01:00:00Z", state="failure")
-        self.statuses["statuses"].append(later)
+        self.statuses.append(later)
         self.assertTrue(self.errors())
 
     def test_missing_malformed_or_truncated_results_fail_closed(self):
@@ -118,7 +144,7 @@ class ReleaseTest(unittest.TestCase):
     def test_malformed_app_and_creator_cannot_crash_or_prove_success(self):
         self.checks["check_runs"].append({"name": "Vercel", "head_sha": SHA, "app": "vercel", "details_url": PROOF})
         self.checks["total_count"] = 3
-        self.statuses["statuses"][0]["creator"] = "vercel[bot]"
+        self.statuses[0]["creator"] = "vercel[bot]"
         self.assertTrue(self.errors())
 
     def test_cli_reports_invalid_json_without_traceback(self):
