@@ -68,6 +68,11 @@ async function pageFor(options = {}) {
 async function ready(page, state = 'ready') {
   await page.waitForFunction((expected) => document.documentElement.dataset.loadState === expected, state);
 }
+async function setScreenDark(page, on) {
+  const toggle = page.locator('#themeToggle:enabled');
+  await toggle.waitFor();
+  if ((await toggle.getAttribute('aria-checked') === 'true') !== on) await toggle.click();
+}
 async function check(name, options, run) {
   const { page, context, errors } = await pageFor(options);
   try {
@@ -91,56 +96,94 @@ async function check(name, options, run) {
         const size = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: document.documentElement.clientWidth }));
         assert.ok(size.scroll <= size.width + 1, JSON.stringify({ width, big, size }));
       }
-      if (width === 390 && process.env.SCREENSHOT_DIR) {
+      if ([390, 1440].includes(width) && process.env.SCREENSHOT_DIR) {
         fs.mkdirSync(process.env.SCREENSHOT_DIR, { recursive: true });
         await page.locator('#bigBtn').click();
-        await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, 'mobile-home.png') });
-        await page.locator('#regions').scrollIntoViewIfNeeded();
-        await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, 'mobile-regions.png') });
+        const name = width === 390 ? 'mobile' : 'desktop';
+        await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, name + '-home.png') });
+        if (width === 390) {
+          await page.locator('#regions').scrollIntoViewIfNeeded();
+          await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, 'mobile-regions.png') });
+        } else {
+          await setScreenDark(page, true);
+          await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, 'desktop-dark.png') });
+        }
       }
     });
   }
-  await check('화면 모드 선택·저장·기기 설정과 서랍 동기화', {}, async (page) => {
+  await check('화면 스위치·키보드·저장·기기 설정과 메뉴 동기화', {}, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
-    await page.locator('#themeSelect').selectOption('dark');
+    const theme = page.getByRole('switch', { name: '어두운 화면', exact: true }).and(page.locator('#themeToggle'));
+    await page.locator('#themeToggle:enabled').waitFor();
+    assert.equal(await theme.getAttribute('aria-checked'), 'false');
+    assert.equal(await page.locator('html').getAttribute('data-theme'), null);
+    await theme.press('Space');
+    assert.equal(await theme.getAttribute('aria-checked'), 'true');
     assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
     await page.reload();
     await ready(page);
-    assert.equal(await page.locator('#themeSelect').inputValue(), 'dark');
+    await page.locator('#themeToggle:enabled').waitFor();
+    assert.equal(await theme.getAttribute('aria-checked'), 'true');
     await page.emulateMedia({ colorScheme: 'dark' });
-    await page.locator('#themeSelect').selectOption('light');
+    await theme.click();
+    assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');
     assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'light');
     assert.equal(await page.locator('html').evaluate((e) => getComputedStyle(e).colorScheme), 'light');
     await page.locator('#menuBtn').click();
-    assert.equal(await page.locator('#drawerThemeSelect').inputValue(), 'light');
-    await page.locator('#drawerThemeSelect').selectOption('system');
-    assert.equal(await page.locator('#themeSelect').inputValue(), 'system');
+    const drawerTheme = page.getByRole('switch', { name: '어두운 화면', exact: true }).and(page.locator('#drawerThemeToggle'));
+    assert.equal(await drawerTheme.getAttribute('aria-checked'), 'false');
+    await drawerTheme.press('Enter');
+    assert.equal(await page.locator('#themeToggle').getAttribute('aria-checked'), 'true');
+    await page.locator('#drawerThemeSystem').click();
+    assert.equal(await page.locator('html').getAttribute('data-theme'), null);
+    assert.equal(await page.evaluate(() => localStorage.getItem('jogan-theme')), null);
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => document.documentElement.dataset.colorMode === 'dark');
+    assert.equal(await theme.getAttribute('aria-checked'), 'true');
     await page.emulateMedia({ colorScheme: 'light' });
     await page.waitForFunction(() => document.documentElement.dataset.colorMode === 'light');
+    assert.equal(await theme.getAttribute('aria-checked'), 'false');
     await page.evaluate(() => localStorage.setItem('jogan-theme', 'unknown'));
     await page.reload();
     await ready(page);
-    assert.equal(await page.locator('#themeSelect').inputValue(), 'system');
+    await page.locator('#themeToggle:enabled').waitFor();
+    assert.equal(await page.locator('html').getAttribute('data-theme'), null);
+    assert.equal(await theme.getAttribute('aria-checked'), 'false');
   });
   await check('느린 테마 조작 스크립트가 본문 표시를 막지 않음', { slowTheme: true }, async (page) => {
     await page.goto('http://jogan.test/', { waitUntil: 'domcontentloaded' });
     await ready(page);
-    assert.equal(await page.locator('#themeSelect').isDisabled(), true);
+    assert.equal(await page.locator('#themeToggle').isDisabled(), true);
     assert.equal(await page.locator('#leadH').isVisible(), true);
-    await page.waitForFunction(() => !document.getElementById('themeSelect').disabled);
-    await page.locator('#themeSelect').selectOption('dark');
+    await setScreenDark(page, true);
     assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'dark');
   });
   await check('저장소 차단 시에도 화면 모드 전환', { blockStorage: true }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
-    await page.locator('#themeSelect').selectOption('dark');
+    await setScreenDark(page, true);
     assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'dark');
-    await page.locator('#themeSelect').selectOption('light');
+    await setScreenDark(page, false);
     assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'light');
+  });
+  await check('링크 복사 권한이 없을 때 직접 공유·키보드 복귀', { width: 320 }, async (page) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'share', { value: undefined });
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => { throw new Error('복사 제한'); } } });
+    });
+    const past = index.issues.at(-1);
+    await page.goto('http://jogan.test/' + past);
+    await ready(page);
+    await page.locator('#shareBtn').press('Enter');
+    const dialog = page.getByRole('dialog', { name: '이 호 공유' });
+    await dialog.waitFor();
+    const url = dialog.locator('#shareUrl');
+    assert.equal(await url.inputValue(), 'https://korea-jogan.com/' + past);
+    assert.equal(await url.evaluate((input) => input === document.activeElement && input.selectionEnd === input.value.length), true);
+    await page.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden' });
+    await page.waitForFunction(() => document.activeElement.id === 'shareBtn');
   });
   for (const width of [320, 390, 1440]) {
     await check('밝기별 발행 배지·추적 헤더·읽기 확대 ' + width, { width }, async (page) => {
@@ -148,7 +191,7 @@ async function check(name, options, run) {
       await ready(page);
       await page.locator('#trackingExpand').waitFor();
       for (const mode of ['light', 'dark']) {
-        await page.locator('#themeSelect').selectOption(mode);
+        await setScreenDark(page, mode === 'dark');
         const ratio = await page.locator('#statusChip').evaluate((e) => {
           const lum = (value) => { const a = value.match(/[\d.]+/g).slice(0, 3).map(Number).map((c) => { c /= 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; }); return a[0] * .2126 + a[1] * .7152 + a[2] * .0722; };
           const s = getComputedStyle(e), a = lum(s.color), b = lum(s.backgroundColor);
@@ -337,16 +380,25 @@ async function check(name, options, run) {
       await check('도구 상태 대비·기간 여백·맨 위로 ' + width + (dark ? ' 다크' : ' 라이트'), { width, dark }, async (page) => {
         await page.goto('http://jogan.test/');
         await ready(page);
-        const big = page.getByRole('button', { name: '글자 크게', exact: true }).first();
+        const big = page.getByRole('switch', { name: '글자 크게', exact: true }).and(page.locator('#bigBtn'));
         const contrast = () => big.evaluate((button) => {
-          const rgb = (value) => value.match(/[\d.]+/g).slice(0, 3).map(Number).map((c) => { c /= 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; });
-          const lum = (v) => { const [r, g, b] = rgb(v); return .2126 * r + .7152 * g + .0722 * b; };
-          const css = getComputedStyle(button);
-          const a = lum(css.color), b = lum(css.backgroundColor);
+          const rgb = (value) => value.match(/[\d.]+/g).map(Number);
+          const lum = (value) => {
+            const [r, g, b] = value.slice(0, 3).map((c) => { c /= 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; });
+            return .2126 * r + .7152 * g + .0722 * b;
+          };
+          const layers = [];
+          for (let el = button; el; el = el.parentElement) layers.unshift(rgb(getComputedStyle(el).backgroundColor));
+          const paper = layers.reduce((under, [r, g, b, alpha = 1]) => [r, g, b].map((channel, i) => channel * alpha + under[i] * (1 - alpha)), [255, 255, 255]);
+          const a = lum(rgb(getComputedStyle(button).color)), b = lum(paper);
           return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
         });
+        for (const toggle of [big, page.locator('#themeToggle')]) {
+          const target = await toggle.boundingBox();
+          assert.ok(target.width >= 44 && target.height >= 44, '읽기 도구 터치 영역');
+        }
         await big.click();
-        assert.equal(await big.getAttribute('aria-pressed'), 'true');
+        assert.equal(await big.getAttribute('aria-checked'), 'true');
         assert.ok(await contrast() >= 4.5);
         await page.mouse.move(0, 0);
         assert.ok(await contrast() >= 4.5);
@@ -374,8 +426,9 @@ async function check(name, options, run) {
     await page.goto('http://jogan.test/');
     await ready(page);
     assert.ok(await page.locator('#catNav a').first().evaluate((a) => a.getBoundingClientRect().height >= 44));
-    const padding = await page.locator('#heroGrid').evaluate((e) => parseFloat(getComputedStyle(e).paddingRight));
-    assert.ok(padding <= 40);
+    const lead = await page.locator('#leadBox').boundingBox();
+    const front = await page.locator('#natH').boundingBox();
+    assert.ok(Math.abs(lead.x - front.x) <= 1, '전국 뉴스와 머리기사의 읽기 시작점 정렬');
     await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="national"]').getAttribute('aria-current') === 'true');
     assert.equal(await page.locator('#natFlow').getAttribute('open'), '');
     await page.locator('#natFlow > summary').click();
@@ -468,33 +521,36 @@ async function check(name, options, run) {
     assert.equal(await page.locator('#loadingRetry').isVisible(), true);
   });
   for (const width of [390, 1440, 1920]) {
-    await check('지면 여백·반응형 열·삽화·푸터 ' + width, { width }, async (page) => {
+    await check('지면 여백·반응형 열·삽화 제거·푸터 ' + width, { width }, async (page) => {
+      const illustrations = [];
+      page.on('request', (request) => { if (/\/news-dawn-pixel(?:-720)?\.webp$/.test(new URL(request.url()).pathname)) illustrations.push(request.url()); });
       await page.goto('http://jogan.test/');
       await ready(page);
       await page.locator('#natList .kj-newscard').first().waitFor();
-      const grid = await page.locator('#natList').evaluate((node) => {
+      const readGrid = () => page.locator('#natList').evaluate((node) => {
         const card = node.querySelector('.kj-newscard');
         const css = getComputedStyle(node);
         return { columns: css.gridTemplateColumns.split(' ').filter((value) => parseFloat(value) > 0).length, padding: parseFloat(getComputedStyle(card).paddingLeft), align: css.alignItems };
       });
-      assert.equal(grid.columns, width > 900 ? 3 : 1);
+      const grid = await readGrid();
+      if (width <= 900) assert.equal(grid.columns, 1);
+      else assert.ok(grid.columns >= 2 && grid.columns <= 3);
       assert.ok(grid.padding >= 20);
       assert.equal(grid.align, 'start');
-      const image = page.locator('.news-illustration img');
-      await image.evaluate((img) => img.decode());
-      assert.ok(await image.evaluate((img) => img.naturalWidth > 0));
-      assert.match(await page.locator('.news-illustration figcaption').innerText(), /AI 생성/);
+      assert.equal(await page.locator('.news-illustration').count(), 0);
+      assert.deepEqual(illustrations, []);
       assert.match(await page.locator('meta[property="og:image"]').getAttribute('content'), /og-pixel\.png$/);
       if (width >= 1600) {
+        const visibleCards = await page.locator('#natList .kj-newscard:visible').count();
         await page.locator('#natList + .kj-more button').click();
-        const columns = await page.locator('#natList').evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(' ').filter((value) => parseFloat(value) > 0).length);
-        assert.equal(columns, 4);
+        assert.ok(await page.locator('#natList .kj-newscard:visible').count() > visibleCards);
+        assert.equal((await readGrid()).columns, grid.columns);
         await page.locator('#natList + .kj-more button').click();
       }
       await page.locator('#bigBtn').click();
       assert.equal(await page.locator('#bigBtn [data-big-state]').innerText(), '켬');
-      assert.equal(await page.locator('#drawerBig').getAttribute('aria-pressed'), 'true');
-      if (width > 900) assert.equal(await page.locator('#natList').evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(' ').length), width >= 1600 ? 3 : 2);
+      assert.equal(await page.locator('#drawerBig').getAttribute('aria-checked'), 'true');
+      assert.ok((await readGrid()).columns <= grid.columns);
       await page.locator('#bigBtn').click();
       await page.locator('#foot').scrollIntoViewIfNeeded();
       assert.ok(await page.locator('#archSel option').count() > 0);

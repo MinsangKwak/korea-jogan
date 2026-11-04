@@ -84,6 +84,9 @@ async function identity(page) {
       await identity(page);
       assert.equal(await page.locator('#leadH').isVisible(), true);
       assert.equal(await page.locator('#pageLoading').isVisible(), false);
+      await page.getByRole('switch', { name: '어두운 화면', exact: true }).click();
+      await page.getByRole('switch', { name: '글자 크게', exact: true }).click();
+      assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'dark');
       assert.equal(await page.locator('meta[name="jg-ga4"]').getAttribute('content'), '');
       assert.equal(await page.locator('meta[name="jg-goatcounter"]').getAttribute('content'), '');
       assert.equal(await page.evaluate(() => typeof window.gtag), 'undefined');
@@ -156,9 +159,10 @@ async function identity(page) {
       assert.equal(await page.locator('main h1').isVisible(), true);
       assert.equal(await page.locator('#sources').isVisible(), true);
       assert.ok(await page.locator('main table tbody tr').count());
-      await page.locator('#discoveryTheme').selectOption('dark');
+      const theme = page.getByRole('switch', { name: '어두운 화면', exact: true });
+      await theme.click();
       assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'dark');
-      await page.locator('#discoveryTheme').selectOption('light');
+      await theme.click();
       assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'light');
     });
 

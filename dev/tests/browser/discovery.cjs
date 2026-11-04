@@ -97,20 +97,28 @@ async function check(name, options, run) {
       });
     }
 
-    await check('화면 모드 저장·기기 설정과 정적 본문 유지', {}, async ({ page }) => {
+    await check('화면·글자 크기 스위치 저장·기기 설정과 정적 본문 유지', {}, async ({ page }) => {
       await page.goto(origin + '/indicators/');
       await page.locator('#discoveryTheme:enabled').waitFor();
       const heading = await page.locator('main h1').textContent();
-      await page.locator('#discoveryTheme').selectOption('dark');
+      const theme = page.getByRole('switch', { name: '어두운 화면', exact: true });
+      const size = page.getByRole('switch', { name: '글자 크게', exact: true });
+      const headingSize = () => page.locator('main h1').evaluate((node) => parseFloat(getComputedStyle(node).fontSize));
+      const normal = await headingSize();
+      await theme.press('Space');
+      await size.press('Enter');
+      assert.ok(await headingSize() > normal);
       assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'dark');
       await page.reload();
       await page.locator('#discoveryTheme:enabled').waitFor();
-      assert.equal(await page.locator('#discoveryTheme').inputValue(), 'dark');
-      await page.locator('#discoveryTheme').selectOption('light');
+      assert.equal(await theme.getAttribute('aria-checked'), 'true');
+      assert.equal(await size.getAttribute('aria-checked'), 'true');
+      await theme.click();
       assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'light');
       await page.emulateMedia({ colorScheme: 'dark' });
-      await page.locator('#discoveryTheme').selectOption('system');
+      await page.locator('#discoveryThemeSystem').click();
       await page.waitForFunction(() => document.documentElement.dataset.colorMode === 'dark');
+      assert.equal(await page.locator('html').getAttribute('data-theme'), null);
       assert.equal(await page.locator('main h1').textContent(), heading);
     });
 
