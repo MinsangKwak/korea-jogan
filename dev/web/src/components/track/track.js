@@ -118,7 +118,7 @@ function setupTrackingPanel(data) {
   let hidden = false;
   try { hidden = sessionStorage.getItem('jogan-tracking-hidden') === '1'; } catch {}
   bar.hidden = hidden;
-  reopen.hidden = false;
+  reopen.hidden = !hidden;
   reopen.textContent = '추적 ' + data.items.length;
   $('trackingExpand').textContent = '이슈 추적 · ' + data.items.length + '건 · 펼쳐 보기';
   const open = (event) => {
@@ -149,6 +149,7 @@ function setupTrackingPanel(data) {
   reopen.onclick = open;
   $('trackingHide').onclick = () => {
     bar.hidden = true;
+    reopen.hidden = false;
     try { sessionStorage.setItem('jogan-tracking-hidden', '1'); } catch {}
     reopen.focus({ preventScroll: true });
   };

@@ -1,0 +1,257 @@
+/* 읽기 도구는 겉 테두리 없이 같은 손잡이와 상태 글자를 사용한다 */
+.reading-switch,
+.reading-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: .45rem;
+  min-width: 44px;
+  min-height: max(44px, var(--tap-min));
+  padding: .25rem .4rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: 700 .86rem/1.35 var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+.reading-switch:hover:not(:disabled),
+.reading-action:hover:not(:disabled) {
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+}
+.reading-switch:focus-visible,
+.reading-action:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.reading-switch:disabled,
+.reading-action:disabled {
+  opacity: .68;
+  cursor: default;
+}
+.reading-action svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.reading-switch__track {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+.reading-switch__track::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ink-3);
+}
+.reading-switch[aria-checked="true"] .reading-switch__track {
+  border-color: var(--brand);
+  background: var(--brand);
+}
+.reading-switch[aria-checked="true"] .reading-switch__track::before {
+  transform: translateX(16px);
+  background: var(--on-brand);
+}
+.reading-switch__copy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: .05rem .35rem;
+  min-width: 0;
+}
+.reading-switch__state {
+  color: var(--ink-2);
+  font-size: .76rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.reading-switch[aria-checked="true"] .reading-switch__state,
+.reading-action--system[aria-pressed="true"] { color: var(--brand-strong); }
+.reading-action--system {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+.reading-action--system .reading-switch__state { text-decoration: none; }
+
+/* 제호와 호 정보는 왼쪽에 두고, 읽기 설정과 메뉴는 오른쪽에 나란히 둔다 */
+.news-edition .kj-mast {
+  border-top: 4px solid var(--brand);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-raised);
+}
+.news-edition .kj-mast__in {
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+  grid-template-areas: "logo actions" "meta actions";
+  align-items: center;
+  gap: .45rem 1rem;
+  padding-block: clamp(.85rem, 2.15vw, 1.55rem);
+}
+.news-edition .kj-mast .kj-mast__logo {
+  justify-self: start;
+  font: 900 clamp(1.55rem, 3.7vw, 2.55rem)/1.25 var(--font-serif);
+  letter-spacing: -.055em;
+  text-align: left;
+  white-space: normal;
+}
+.news-edition .kj-mast .kj-mast__logo small {
+  display: block;
+  margin-top: .2rem;
+  color: var(--ink-2);
+  font: 500 .86rem/1.45 var(--font-sans);
+  letter-spacing: 0;
+  opacity: 1;
+}
+.news-edition .kj-mast__meta {
+  min-width: 0;
+  gap: .3rem .65rem;
+  color: var(--ink-2);
+  font-size: .83rem;
+  line-height: 1.5;
+}
+.news-edition .kj-mast__meta time { color: var(--ink); font-weight: 700; }
+.news-edition .kj-mast__meta > span { opacity: 1; }
+.news-edition .kj-mast__actions {
+  justify-self: end;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  gap: .2rem .65rem;
+}
+.kj-mast__preferences, .kj-mast__utility {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .15rem .35rem;
+}
+.kj-mast__utility {
+  padding-inline-start: .6rem;
+  border-inline-start: 1px solid var(--line);
+}
+.news-edition .kj-mast__actions #menuBtn { margin: 0; }
+.kj-mast__utility .reading-action[aria-expanded="true"] { color: var(--brand-strong); }
+
+@media (max-width: 960px) {
+  .news-edition .kj-mast__in {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "logo" "meta" "actions";
+  }
+  .news-edition .kj-mast__actions {
+    justify-self: stretch;
+    justify-content: space-between;
+  }
+}
+@media (max-width: 600px) {
+  .news-edition .kj-mast .kj-mast__logo { font-size: clamp(1.38rem, 6.2vw, 2rem); }
+  .news-edition .kj-mast .kj-mast__logo small { font-size: .8rem; }
+  .news-edition .kj-mast__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .1rem;
+    padding-top: .3rem;
+    border-top: 1px solid var(--line);
+  }
+  .kj-mast__preferences {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kj-mast__preferences .reading-switch { padding-inline: .15rem; }
+  .kj-mast__utility {
+    padding: 0;
+    border: 0;
+  }
+  .kj-mast__utility .reading-action:first-child { padding-inline-start: .15rem; }
+}
+
+/* 서랍에서도 읽기 도구의 의미와 모양을 유지한다 */
+.news-edition .kj-drawer__tools {
+  gap: .15rem;
+  padding-bottom: 1rem;
+}
+.news-edition .kj-drawer__tools > :is(.reading-switch, .reading-action) {
+  min-height: max(44px, var(--tap-min));
+  padding: .3rem .4rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+}
+.news-edition .kj-drawer__tools > :is(.reading-switch, .reading-action):hover:not(:disabled) {
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+}
+.news-edition .kj-drawer__tools > .reading-action--system { color: var(--ink-2); }
+.news-edition .kj-drawer__tools > .reading-action--system[aria-pressed="true"] { color: var(--brand-strong); }
+.kj-drawer__tools .reading-switch__copy { width: 100%; justify-content: space-between; }
+
+/* 링크 복사 권한이 없으면 화면 안에서 주소를 선택할 수 있다 */
+.reading-share {
+  width: min(25rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+.reading-share::backdrop { background: var(--scrim); }
+.reading-share form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .3rem;
+  margin-bottom: .6rem;
+}
+.reading-share h2 { margin: 0; font-size: 1.2rem; }
+.reading-share label { display: block; margin-bottom: .3rem; font-weight: 700; }
+.reading-share input {
+  width: 100%;
+  min-height: 44px;
+  padding: .45rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--bg);
+}
+.reading-share p { margin: .55rem 0 0; color: var(--ink-2); font-size: .9rem; }
+.reading-toast {
+  position: fixed;
+  inset-block-end: max(1rem, env(safe-area-inset-bottom, 0px));
+  inset-inline-start: 50%;
+  z-index: 100;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  margin: 0;
+  padding: .5rem .8rem;
+  border-radius: 6px;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--bg);
+  opacity: 0;
+  pointer-events: none;
+}
+.reading-toast:not(:empty) { opacity: 1; }
+
+@media (forced-colors: active) {
+  .reading-switch__track { border-color: ButtonText; }
+  .reading-switch__track::before { background: ButtonText; }
+  .reading-switch[aria-checked="true"] .reading-switch__track { border-color: Highlight; }
+  .reading-switch[aria-checked="true"] .reading-switch__track::before { background: Highlight; }
+}

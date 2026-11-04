@@ -1,5 +1,5 @@
 'use strict';
-// 제호: 호 날짜·수집 시각, 상태 안내, 공유, 글자 크게
+// 제호: 호 날짜·수집 시각, 상태 안내, 공유
 
 // 조간은 00시 발행. 최신 호가 오늘 날짜가 아니면 지난 호를 보고 있다고 먼저 알린다
 function renderStale() {
@@ -17,25 +17,41 @@ function renderStale() {
 
 // 공유는 휴대폰 공유 창을 먼저 쓰고, 없으면 링크를 복사한다. 링크는 지금 보는 호를 가리킨다
 function setupShare() {
-  const btn = $('shareBtn');
-  btn.addEventListener('click', async () => {
+  const dialog = $('shareDialog');
+  const input = $('shareUrl');
+  const status = $('shareStatus');
+  let timer = 0;
+  let opener = null;
+  const share = async (event) => {
     if (!D) return;
+    const button = event.currentTarget;
     const url = issueUrl(D.date);
     const data = { title: '대한민국 조간 · ' + longDate(D.date), text: D.lead.headline, url };
     track('share', D.date);
     if (navigator.share) {
-      try { await navigator.share(data); } catch (e) { /* 사용자가 공유 창을 닫은 경우 */ }
-      return;
+      try {
+        await navigator.share(data);
+        return;
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+      }
     }
     try {
       await navigator.clipboard.writeText(url);
-      $('shareLbl').textContent = '링크 복사됨';
-      btn.setAttribute('aria-label', '링크 복사됨');
-    } catch (e) {
-      window.prompt('이 링크를 복사하세요', url);
+      clearTimeout(timer);
+      status.textContent = '링크를 복사했습니다.';
+      timer = setTimeout(() => { status.textContent = ''; }, 2400);
+    } catch {
+      if (dialog.open) return;
+      opener = button;
+      input.value = url;
+      dialog.showModal();
+      input.focus();
+      input.select();
     }
-    setTimeout(() => { $('shareLbl').textContent = '공유'; btn.removeAttribute('aria-label'); }, 2000);
-  });
+  };
+  ['shareBtn', 'drawerShare'].forEach((id) => $(id).addEventListener('click', share));
+  dialog.addEventListener('close', () => { if (opener) opener.focus({ preventScroll: true }); });
 }
 
 function asOfText() {
@@ -93,20 +109,4 @@ function renderNotice() {
   } else {
     box.append(el('strong', {}, '시안 호입니다.'), document.createTextNode(' 수치는 공식 발표 원문이나 그 발표를 인용한 기사로 확인했습니다. '), more);
   }
-}
-
-function setupBig() {
-  const btn = $('bigBtn');
-  const apply = (on) => {
-    document.documentElement.classList.toggle('big', on);
-    btn.setAttribute('aria-pressed', String(on));
-    document.querySelectorAll('[data-big-state]').forEach((state) => { state.textContent = on ? '켬' : '끔'; });
-  };
-  // 글자 크기 선택은 이 기기에만 저장한다. 저장소가 막혀도 화면은 그대로 동작
-  try { apply(localStorage.getItem('jg_big') === '1'); } catch (e) { apply(false); }
-  btn.addEventListener('click', () => {
-    const on = btn.getAttribute('aria-pressed') !== 'true';
-    apply(on);
-    try { localStorage.setItem('jg_big', on ? '1' : '0'); } catch (e) { /* 저장 실패는 무시 */ }
-  });
 }
