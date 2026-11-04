@@ -231,7 +231,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .kj-drawer__sec[aria-current="true"] b::after { content: " · 지금 읽는 곳"; font-size: 0.75rem; font-weight: 700; }
 .kj-drawer__subs { display: flex; flex-wrap: wrap; gap: var(--space-1); list-style: none; margin: 0 0 var(--space-1); padding: 0; }
 .kj-drawer__subs button {
-  min-height: 36px; padding: 0 var(--space-3); background: var(--surface); color: var(--ink-2); border: 0; border-radius: var(--radius-pill);
+  min-height: var(--tap-min); padding: var(--space-1) var(--space-3); background: var(--surface); color: var(--ink-2); border: 0; border-radius: var(--radius-pill);
   font-size: 0.82rem; font-weight: 500; cursor: pointer;
 }
 .kj-drawer__subs button:hover { background: var(--brand-soft); color: var(--brand); }
