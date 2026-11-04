@@ -1,0 +1,136 @@
+/* 목록 도구는 항목이 시작되는 위치에 두고, 색과 모양으로 다음 동작을 구분한다 */
+.news-edition .kj-more {
+  justify-content: flex-start;
+  align-items: center;
+  margin-block-start: var(--space-3);
+}
+
+.news-edition .kj-more .kj-btn {
+  min-block-size: var(--tap-min);
+  max-inline-size: 100%;
+  padding-inline: var(--space-3);
+  border-color: var(--line-strong);
+  color: var(--ink);
+  text-align: start;
+}
+
+.news-edition .kj-more .kj-btn:hover,
+.news-edition .kj-more .kj-btn[aria-expanded="true"] {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand-strong);
+}
+
+.news-edition .kj-more svg { flex: none; }
+
+.news-edition .kj-stat__foot,
+.news-edition .econ-carousel.is-ready .kj-stat__foot {
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+
+.news-edition .kj-src { min-inline-size: 0; max-inline-size: 100%; }
+.news-edition .kj-src > summary {
+  min-block-size: var(--tap-min);
+  max-inline-size: 100%;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .2em;
+}
+
+.news-edition .kj-src > summary:hover,
+.news-edition .kj-src[open] > summary { background: var(--brand-soft); color: var(--brand-strong); }
+.news-edition .kj-stat__foot > .kj-src[open] { flex-basis: 100%; }
+.news-edition .kj-stat__foot .kj-src > summary { padding-inline-start: 0; }
+.news-edition .kj-src > summary::after { flex: none; }
+
+/* 검색과 지난 호 선택은 입력 옆에 실행 버튼을 둔다 */
+.news-edition :is(.kj-search, .kj-foot .kj-archive) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.news-edition :is(.kj-search, .kj-foot .kj-archive) .kj-btn {
+  min-inline-size: var(--tap-min);
+  min-block-size: 48px;
+  padding: var(--space-1) clamp(12px, 2vw, 20px);
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+}
+
+.news-edition .kj-foot .kj-archive select {
+  min-block-size: 48px;
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-md);
+}
+
+/* 지표 이동과 자동 넘김은 목록 바로 위 한 줄에 모은다 */
+.news-edition .econ-carousel__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding-block-end: var(--space-2);
+  margin-block-end: var(--space-3);
+  border-block-end: var(--border-hairline) solid var(--line);
+}
+
+.news-edition .econ-carousel__actions {
+  align-items: center;
+  gap: var(--space-1);
+  max-inline-size: 100%;
+}
+
+.news-edition .econ-carousel__counter {
+  min-inline-size: 2.75rem;
+  text-align: center;
+}
+
+.news-edition .econ-carousel__actions button {
+  min-inline-size: var(--tap-min);
+  min-block-size: var(--tap-min);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.news-edition #econPlayback { margin-inline-start: var(--space-1); }
+
+@media (max-width: 600px) {
+  .news-edition .econ-carousel__actions { inline-size: 100%; }
+  .news-edition .econ-carousel__counter { text-align: start; }
+}
+
+@media (max-width: 360px) {
+  .news-edition .kj-foot .kj-archive { grid-template-columns: minmax(0, 1fr); }
+  .news-edition .kj-foot .kj-archive .kj-btn { inline-size: auto; justify-self: start; }
+}
+
+/* 닫기와 위로 이동은 같은 크기의 아이콘 영역에 둔다 */
+.news-edition :is(.kj-drawer__close, #trackingHide, #trackingClose) {
+  flex: 0 0 var(--tap-min);
+  display: inline-grid;
+  place-items: center;
+  inline-size: var(--tap-min);
+  min-block-size: var(--tap-min);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+}
+
+.news-edition :is(#trackingHide, #trackingClose):hover { background: var(--brand-soft); color: var(--brand-strong); }
+.news-edition .kj-drawer__close:hover { background: var(--head-line); color: var(--head); }
+.news-edition .kj-drawer__close:focus-visible { outline-color: var(--head-ink); }
+.news-edition .kj-totop { color: var(--brand); }
+.news-edition .kj-totop:hover { background: var(--brand-soft); color: var(--brand-strong); }
+
+@media (forced-colors: active) {
+  .news-edition .kj-more .kj-btn[aria-expanded="true"],
+  .news-edition .econ-carousel__actions button[aria-pressed="true"] { border-color: Highlight; }
+}

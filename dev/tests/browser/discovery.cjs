@@ -17,7 +17,7 @@ let browser;
 let checks = 0;
 
 async function surface(options = {}) {
-  const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, reducedMotion: 'reduce', colorScheme: 'light', javaScriptEnabled: options.javaScriptEnabled !== false });
+  const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, reducedMotion: 'reduce', colorScheme: options.dark ? 'dark' : 'light', javaScriptEnabled: options.javaScriptEnabled !== false });
   if (options.human) await context.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
   if (options.internal) await context.addInitScript(() => localStorage.setItem('kj-internal', '1'));
   await context.addInitScript(() => {
@@ -57,11 +57,12 @@ async function check(name, options, run) {
   browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--no-sandbox'] });
   try {
     assert.ok(pages.length >= 3, '검색 도착 페이지가 생성되지 않음');
-    await check('전체 검색 페이지의 본문·근거가 JavaScript 없이 읽힘', { javaScriptEnabled: false }, async ({ page }) => {
+    await check('전체 검색 페이지의 본문·근거가 JavaScript 없이 밝게 읽힘', { javaScriptEnabled: false, dark: true }, async ({ page }) => {
       const titles = new Set();
       for (const routePath of pages) {
         const response = await page.goto(origin + routePath);
         assert.equal(response.status(), 200, routePath);
+        assert.equal(await page.locator('html').evaluate((e) => getComputedStyle(e).colorScheme), 'light', routePath);
         assert.equal(await page.locator('main h1').count(), 1, routePath);
         assert.ok((await page.locator('main h1').textContent()).trim(), routePath);
         assert.equal(await page.locator('main h1').isVisible(), true, routePath);
@@ -97,7 +98,7 @@ async function check(name, options, run) {
       });
     }
 
-    await check('화면·글자 크기 스위치 저장·기기 설정과 정적 본문 유지', {}, async ({ page }) => {
+    await check('밝은 화면 기본·화면과 글자 크기 저장·정적 본문 유지', { dark: true }, async ({ page }) => {
       await page.goto(origin + '/indicators/');
       await page.locator('#discoveryTheme:enabled').waitFor();
       const heading = await page.locator('main h1').textContent();
@@ -105,6 +106,8 @@ async function check(name, options, run) {
       const size = page.getByRole('switch', { name: '글자 크게', exact: true });
       const headingSize = () => page.locator('main h1').evaluate((node) => parseFloat(getComputedStyle(node).fontSize));
       const normal = await headingSize();
+      assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'light');
+      assert.equal(await theme.getAttribute('aria-checked'), 'false');
       await theme.press('Space');
       await size.press('Enter');
       assert.ok(await headingSize() > normal);
@@ -115,10 +118,11 @@ async function check(name, options, run) {
       assert.equal(await size.getAttribute('aria-checked'), 'true');
       await theme.click();
       assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'light');
-      await page.emulateMedia({ colorScheme: 'dark' });
-      await page.locator('#discoveryThemeSystem').click();
-      await page.waitForFunction(() => document.documentElement.dataset.colorMode === 'dark');
-      assert.equal(await page.locator('html').getAttribute('data-theme'), null);
+      assert.equal(await page.evaluate(() => localStorage.getItem('jogan-theme')), null);
+      await page.reload();
+      await page.locator('#discoveryTheme:enabled').waitFor();
+      assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');
+      assert.equal(await theme.getAttribute('aria-checked'), 'false');
       assert.equal(await page.locator('main h1').textContent(), heading);
     });
 

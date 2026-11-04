@@ -81,14 +81,7 @@
   font-weight: 500;
   white-space: nowrap;
 }
-.reading-switch[aria-checked="true"] .reading-switch__state,
-.reading-action--system[aria-pressed="true"] { color: var(--brand-strong); }
-.reading-action--system {
-  color: var(--ink-2);
-  text-decoration: underline;
-  text-underline-offset: .2em;
-}
-.reading-action--system .reading-switch__state { text-decoration: none; }
+.reading-switch[aria-checked="true"] .reading-switch__state { color: var(--brand-strong); }
 
 /* 제호와 호 정보는 왼쪽에 두고, 읽기 설정과 메뉴는 오른쪽에 나란히 둔다 */
 .news-edition .kj-mast {
@@ -155,7 +148,7 @@
   }
   .news-edition .kj-mast__actions {
     justify-self: stretch;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
 }
 @media (max-width: 600px) {
@@ -174,10 +167,15 @@
   }
   .kj-mast__preferences .reading-switch { padding-inline: .15rem; }
   .kj-mast__utility {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 0;
     border: 0;
   }
-  .kj-mast__utility .reading-action:first-child { padding-inline-start: .15rem; }
+  .kj-mast__utility .reading-action {
+    justify-self: start;
+    padding-inline: .15rem;
+  }
 }
 
 /* 서랍에서도 읽기 도구의 의미와 모양을 유지한다 */
@@ -197,8 +195,6 @@
   background: var(--brand-soft);
   color: var(--brand-strong);
 }
-.news-edition .kj-drawer__tools > .reading-action--system { color: var(--ink-2); }
-.news-edition .kj-drawer__tools > .reading-action--system[aria-pressed="true"] { color: var(--brand-strong); }
 .kj-drawer__tools .reading-switch__copy { width: 100%; justify-content: space-between; }
 
 /* 링크 복사 권한이 없으면 화면 안에서 주소를 선택할 수 있다 */

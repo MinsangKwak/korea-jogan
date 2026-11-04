@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#x27;self&#x27;; base-uri &#x27;none&#x27;; object-src &#x27;none&#x27;; script-src &#x27;self&#x27; &#x27;sha256-KIu55cxUQ/1hNNLCbgR/9nPj5Ksa0HTkOxN/uzgseR4=&#x27; https://accounts.google.com/gsi/client; script-src-attr &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src &#x27;self&#x27; https://fonts.gstatic.com; img-src &#x27;self&#x27; data:; connect-src &#x27;self&#x27; https://accounts.google.com/gsi/ https://analyticsdata.googleapis.com https://oauth2.googleapis.com/revoke; frame-src https://accounts.google.com/gsi/; form-action &#x27;self&#x27; https://oauth2.googleapis.com/revoke; manifest-src &#x27;self&#x27;; worker-src &#x27;none&#x27;">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;self&#x27;; base-uri &#x27;none&#x27;; object-src &#x27;none&#x27;; script-src &#x27;self&#x27; &#x27;sha256-Qdinrw/DhMZqJX33brQgCbze8QhJ8S95Kagf3Du8gRY=&#x27; https://accounts.google.com/gsi/client; script-src-attr &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src &#x27;self&#x27; https://fonts.gstatic.com; img-src &#x27;self&#x27; data:; connect-src &#x27;self&#x27; https://accounts.google.com/gsi/ https://analyticsdata.googleapis.com https://oauth2.googleapis.com/revoke; frame-src https://accounts.google.com/gsi/; form-action &#x27;self&#x27; https://oauth2.googleapis.com/revoke; manifest-src &#x27;self&#x27;; worker-src &#x27;none&#x27;">
 <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
@@ -14,12 +14,14 @@
 // 모드 값만 먼저 적용하고 조작 스크립트는 본문을 차단하지 않는다
 (function () {
   const root = document.documentElement;
-  let mode = 'system';
-  try { const saved = localStorage.getItem('jogan-theme'); if (saved === 'light' || saved === 'dark') mode = saved; } catch {}
-  if (mode !== 'system') root.dataset.theme = mode;
-  const resolved = mode === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode;
-  root.dataset.colorMode = resolved;
-  root.style.colorScheme = resolved;
+  let mode = 'light';
+  try {
+    if (localStorage.getItem('jogan-theme') === 'dark') mode = 'dark';
+    if (localStorage.getItem('jg_big') === '1') root.classList.add('big');
+  } catch {}
+  root.dataset.theme = mode;
+  root.dataset.colorMode = mode;
+  root.style.colorScheme = mode;
 })();
 </script>
 <script src="/src/core/theme.js" async></script>

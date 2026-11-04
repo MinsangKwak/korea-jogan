@@ -1,6 +1,59 @@
-/* 국가채무 막대는 연도 옆 배지(중기전망)가 잘리지 않게 이름 칸을 넓힌다 */
-@media (max-width: 520px) {
-  #debtChart .kj-bar { grid-template-columns: 7.4rem minmax(0, 1fr); row-gap: 2px; }
-  #debtChart .kj-bar__m { margin-top: 0; }
+/* 정치·재정 패널은 내용 높이만 차지하고 긴 목록에 더 넓은 열을 준다 */
+.politics-grid, .fiscal-grid, .politics-overview, .fiscal-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(1rem, 2.4vw, 1.75rem);
+  min-width: 0;
 }
-.term .kj-progress { margin: var(--space-3) 0 0; }
+.politics-overview, .fiscal-overview { gap: var(--space-4); }
+@media (min-width: 1040px) {
+  .politics-grid { grid-template-columns: minmax(0, .9fr) minmax(0, 1.25fr); }
+  .fiscal-grid { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }
+}
+
+/* 임기 숫자·선거 기한은 짧은 목록, 주간 일정은 날짜 순으로 읽는다 */
+.politics-heading__subjects { display: inline-block; }
+.politics-term .kj-big { color: var(--brand); font-size: clamp(1.55rem, 2.8vw, 2.1rem); }
+.politics-term .kj-progress { margin-block-start: var(--space-2); }
+.politics-term .kj-progress__meta { flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
+.politics-term .kj-kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin-top: var(--space-3); }
+.politics-term .kj-kv li { display: block; padding: var(--space-2) clamp(.45rem, 1.2vw, .75rem); border: 0; border-radius: var(--radius-sm); background: var(--surface); }
+.politics-term .kj-kv .k { display: block; color: var(--ink-2); font-size: .85rem; }
+.politics-term .kj-kv .v { display: block; text-align: start; max-width: none; white-space: nowrap; }
+.politics-deadlines .kj-dday li { grid-template-columns: minmax(0, 1fr) auto; padding-block: var(--space-2); }
+.politics-deadlines .kj-dday li:last-child { border-bottom: 0; }
+.politics-deadlines .kj-dday .m { min-width: 0; }
+.politics-deadlines .kj-dday .d { font-size: 1.14rem; }
+.politics-agenda .kj-agenda li { grid-template-columns: minmax(0, 3.8rem) minmax(0, 1fr); }
+.politics-agenda .kj-agenda .day { color: var(--brand); }
+.politics-agenda .kj-agenda .cat { font-size: .86em; }
+.politics-agenda__source { border-top: 1px solid var(--line); margin-top: var(--space-3); }
+.politics-agenda__source > summary { padding-block: var(--space-2); min-height: var(--tap-min); color: var(--brand); font-size: .9rem; font-weight: 700; cursor: pointer; }
+.politics-agenda__source > summary:hover { text-decoration: underline; text-underline-offset: .16em; }
+.politics-agenda__source > .src-note { margin-top: var(--space-1); max-width: var(--measure); }
+
+/* 값과 기준을 함께 줄바꿈하고, 차트의 연도·금액은 모두 노출한다 */
+.fiscal-grid .kj-kv li { min-width: 0; }
+.fiscal-grid .kj-kv .v { white-space: normal; overflow-wrap: anywhere; }
+.fiscal-overview .kj-kv .v { max-inline-size: 17ch; }
+.fiscal-grid .kj-kv li:last-child { border-bottom: 0; }
+.fiscal-grid .kj-alloc-list li { min-width: 0; }
+#debtChart .kj-bar { grid-template-columns: minmax(0, 7rem) minmax(0, 1fr) minmax(0, auto); gap: var(--space-1) var(--space-3); padding-block: var(--space-1); border-bottom: 1px solid var(--line); }
+#debtChart .kj-bar:last-child { border-bottom: 0; }
+#debtChart .kj-bar__lab, #debtChart .kj-bar__v { white-space: normal; overflow: visible; }
+#debtChart .kj-bar__m { grid-column: 2 / -1; margin: 0; }
+@media (max-width: 860px) {
+  .fiscal-overview .kj-kv .v { max-inline-size: none; }
+}
+@media (max-width: 620px) {
+  #debtChart .kj-bar { grid-template-columns: minmax(0, 1fr) auto; }
+  #debtChart .kj-bar__v { grid-column: 2; grid-row: 1; }
+  #debtChart .kj-bar__tr, #debtChart .kj-bar__m { grid-column: 1 / -1; }
+  #debtChart .kj-bar__tr { grid-row: 2; }
+}
+@media (max-width: 460px) {
+  .politics-deadlines .kj-dday .n { grid-column: 1 / -1; }
+  .politics-deadlines .kj-dday .d { grid-row: 2; }
+  .politics-agenda .kj-agenda li { grid-template-columns: minmax(0, 3rem) minmax(0, 1fr); gap: var(--space-2); }
+}
