@@ -18,7 +18,7 @@
 .econ-carousel__actions button:disabled { cursor: default; opacity: .5; }
 .econ-carousel :is(button, .econ-carousel__viewport, .kj-stat__ref):focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .econ-carousel.is-ready .econ-carousel__viewport { overflow: hidden; padding: 4px; margin: -4px; }
-.econ-carousel.is-ready .swiper-wrapper { align-items: stretch; }
+.econ-carousel.is-ready .swiper-wrapper { align-items: flex-start; }
 .econ-carousel.is-ready .kj-stat { display: flex; flex-direction: column; box-sizing: border-box; height: auto; padding: 24px; gap: 10px; border: 1px solid var(--line); }
 .econ-carousel.is-ready .kj-stat__k { line-height: 1.7; }
 .econ-carousel.is-ready .kj-stat__v { font-size: 1.8rem; line-height: 1.4; }

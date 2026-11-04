@@ -39,6 +39,6 @@ function renderPolitics() {
     li.append(day, t);
     $('agenda').append(li);
   });
-  collapse($('agenda'), { noun: '개', name: '이번 주 일정', start: true });
+  collapse($('agenda'), { limit: 5, noun: '개', name: '이번 주 일정', start: true });
   $('agendaSrc').textContent = '출처: ' + D.agendaSrc;
 }

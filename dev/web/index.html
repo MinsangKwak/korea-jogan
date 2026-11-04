@@ -2,7 +2,7 @@
 <html lang="ko" class="no-js">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#x27;self&#x27;; base-uri &#x27;none&#x27;; object-src &#x27;none&#x27;; script-src &#x27;self&#x27; &#x27;sha256-KIu55cxUQ/1hNNLCbgR/9nPj5Ksa0HTkOxN/uzgseR4=&#x27; &#x27;sha256-8aNzJ0xIS9cuLfyRr5M+4fwoNVkOQMC4eCSqdZc/P8g=&#x27; https://www.googletagmanager.com https://gc.zgo.at; script-src-attr &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com; font-src &#x27;self&#x27; https://fonts.gstatic.com; img-src &#x27;self&#x27; data: https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com https://*.google.co.kr https://*.g.doubleclick.net; connect-src &#x27;self&#x27; https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.google.com https://*.google.co.kr https://*.g.doubleclick.net https://pagead2.googlesyndication.com; frame-src https://www.googletagmanager.com; form-action &#x27;self&#x27;; manifest-src &#x27;self&#x27;; worker-src &#x27;none&#x27;">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;self&#x27;; base-uri &#x27;none&#x27;; object-src &#x27;none&#x27;; script-src &#x27;self&#x27; &#x27;sha256-Qdinrw/DhMZqJX33brQgCbze8QhJ8S95Kagf3Du8gRY=&#x27; &#x27;sha256-8aNzJ0xIS9cuLfyRr5M+4fwoNVkOQMC4eCSqdZc/P8g=&#x27; https://www.googletagmanager.com https://gc.zgo.at; script-src-attr &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com; font-src &#x27;self&#x27; https://fonts.gstatic.com; img-src &#x27;self&#x27; data: https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com https://*.google.co.kr https://*.g.doubleclick.net; connect-src &#x27;self&#x27; https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.google.com https://*.google.co.kr https://*.g.doubleclick.net https://pagead2.googlesyndication.com; frame-src https://www.googletagmanager.com; form-action &#x27;self&#x27;; manifest-src &#x27;self&#x27;; worker-src &#x27;none&#x27;">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>대한민국 조간 | 오늘의 코스피·환율·국가채무와 뉴스 요약</title>
@@ -29,19 +29,21 @@
 <meta name="twitter:image" content="https://korea-jogan.com/assets/images/og-pixel.png">
 <meta name="twitter:image:alt" content="대한민국 조간 · 픽셀로 그린 새벽 도시와 아침 신문">
 <link rel="alternate" type="application/rss+xml" title="대한민국 조간" href="feed.xml">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <meta name="theme-color" content="#f8fafb">
 <script>
 'use strict';
 // 모드 값만 먼저 적용하고 조작 스크립트는 본문을 차단하지 않는다
 (function () {
   const root = document.documentElement;
-  let mode = 'system';
-  try { const saved = localStorage.getItem('jogan-theme'); if (saved === 'light' || saved === 'dark') mode = saved; } catch {}
-  if (mode !== 'system') root.dataset.theme = mode;
-  const resolved = mode === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode;
-  root.dataset.colorMode = resolved;
-  root.style.colorScheme = resolved;
+  let mode = 'light';
+  try {
+    if (localStorage.getItem('jogan-theme') === 'dark') mode = 'dark';
+    if (localStorage.getItem('jg_big') === '1') root.classList.add('big');
+  } catch {}
+  root.dataset.theme = mode;
+  root.dataset.colorMode = mode;
+  root.style.colorScheme = mode;
 })();
 </script>
 <script src="src/core/theme.js" async></script>
@@ -141,6 +143,7 @@ window.kjLoadTimer = setTimeout(() => {
 <link rel="stylesheet" href="src/styles/editorial.css">
 <link rel="stylesheet" href="src/styles/discovery.css">
 <link rel="stylesheet" href="src/styles/reading.css">
+<link rel="stylesheet" href="src/styles/actions.css">
 <link rel="stylesheet" href="src/components/header/header.css">
 </head>
 <body class="has-tabbar news-edition">
@@ -212,15 +215,14 @@ window.kjLoadTimer = setTimeout(() => {
   <!-- /kj:digest -->
   <section class="kj-sec" id="national" aria-labelledby="natH">
     <div class="kj-wrap">
-      <header class="kj-sechead">
-        <p class="kj-label">전국</p>
+      <header class="kj-sechead nat-heading">
         <h2 id="natH">오늘의 전국 뉴스</h2>
-        <p><strong>오늘의 주요 뉴스를 분야별로 읽습니다.</strong> 요약은 원문을 바탕으로 정리했고, 수치는 기사에 나온 값을 표시합니다.</p>
         <p class="kj-sechead__meta" id="natMeta"></p>
+        <p class="nat-guide">제목을 고르면 기사 요약과 원문 링크를 볼 수 있습니다.</p>
       </header>
       <details class="kj-callout nat-flow" id="natFlow"></details>
       <div class="kj-chips kj-chips--scroll nat-chips" id="natCtrl" role="group" aria-label="분야 선택"></div>
-      <div class="kj-news" id="natList"></div>
+      <div class="nat-board" id="natList"></div>
     </div>
   </section>
 
@@ -316,29 +318,34 @@ window.kjLoadTimer = setTimeout(() => {
     <div class="kj-wrap">
       <header class="kj-sechead">
         <p class="kj-label">정치</p>
-        <h2 id="polH">임기·선거·예산 일정</h2>
+        <h2 id="polH"><span class="politics-heading__subjects">임기·선거·예산</span> 일정</h2>
         <p><strong>임기와 주요 일정의 남은 날짜를 확인합니다.</strong> 법정 기한과 현행 규칙에 따른 계산값을 구분합니다.</p>
       </header>
-      <div class="three">
-        <div class="kj-panel term">
-          <h3>대통령 임기</h3>
-          <div class="kj-big" id="termDay">—</div>
-          <div class="kj-progress" role="progressbar" aria-label="임기 경과율" id="termBar" aria-valuemin="0" aria-valuemax="100"><i id="termFill"></i></div>
-          <div class="kj-progress__meta"><span>2025.06.04 취임</span><span id="termPct">—</span><span>2030.06.03 만료</span></div>
-          <ul class="kj-kv">
-            <li><span class="k">경과일</span><span class="v" id="termElapsed">—</span></li>
-            <li><span class="k">남은 날</span><span class="v" id="termLeft">—</span></li>
-          </ul>
+      <div class="politics-grid">
+        <div class="politics-overview">
+          <section class="kj-panel politics-term" aria-labelledby="termH">
+            <h3 id="termH">대통령 임기</h3>
+            <div class="kj-big" id="termDay">—</div>
+            <div class="kj-progress" role="progressbar" aria-label="임기 경과율" id="termBar" aria-valuemin="0" aria-valuemax="100"><i id="termFill"></i></div>
+            <div class="kj-progress__meta"><span>2025.06.04 취임</span><span id="termPct">—</span><span>2030.06.03 만료</span></div>
+            <ul class="kj-kv">
+              <li><span class="k">경과일</span><span class="v" id="termElapsed">—</span></li>
+              <li><span class="k">남은 날</span><span class="v" id="termLeft">—</span></li>
+            </ul>
+          </section>
+          <section class="kj-panel politics-deadlines" aria-labelledby="deadlineH">
+            <h3 id="deadlineH">선거·예산 D-Day</h3>
+            <ul class="kj-dday" id="elec"></ul>
+          </section>
         </div>
-        <div class="kj-panel">
-          <h3>선거·예산 D-Day</h3>
-          <ul class="kj-dday" id="elec"></ul>
-        </div>
-        <div class="kj-panel">
-          <h3>이번 주 일정</h3>
+        <section class="kj-panel politics-agenda" aria-labelledby="agendaH">
+          <h3 id="agendaH">이번 주 일정</h3>
           <ul class="kj-agenda" id="agenda"></ul>
-          <p class="src-note" id="agendaSrc"></p>
-        </div>
+          <details class="politics-agenda__source">
+            <summary>일정 출처와 확인 범위</summary>
+            <p class="src-note" id="agendaSrc"></p>
+          </details>
+        </section>
       </div>
     </div>
   </section>
@@ -385,9 +392,9 @@ window.kjLoadTimer = setTimeout(() => {
         <h2 id="fisH">국가채무와 국민연금</h2>
         <p><strong>국가채무와 연금의 장기 흐름을 봅니다.</strong> 새 공식 발표가 있을 때 갱신하며 확정값과 전망을 구분합니다.</p>
       </header>
-      <div class="two">
-        <div class="kj-panel">
-          <h3>국가채무</h3>
+      <div class="fiscal-grid">
+        <section class="kj-panel fiscal-debt" aria-labelledby="fiscalDebtH">
+          <h3 id="fiscalDebtH">국가채무</h3>
           <ul class="kj-kv" id="fisMonthly"></ul>
           <p class="src-note" id="fisMonthlySrc"></p>
           <h4 id="debtH">연도별 국가채무 (중앙+지방, 조 원)</h4>
@@ -395,20 +402,26 @@ window.kjLoadTimer = setTimeout(() => {
           <ul class="kj-bars" id="debtChart" aria-labelledby="debtH" style="margin-top:var(--space-4)"></ul>
           <ul class="kj-legend"><li><i class="c1"></i>결산(확정)</li><li><i class="fc"></i>추경·정부안·중기전망</li><li>금액을 확인하지 못한 해는 '미확인'</li></ul>
           <p class="src-note" id="debtSrc"></p>
-          <h4>앞으로의 전망</h4>
-          <ul class="kj-kv" id="fisOutlook"></ul>
-          <p class="src-note" id="fisOutlookSrc"></p>
-        </div>
-        <div class="kj-panel">
-          <h3>국민연금 기금</h3>
-          <ul class="kj-kv" id="npsKv"></ul>
-          <h4>어디에 투자하나</h4>
-          <div class="kj-alloc" id="npsBar" role="img"></div>
-          <ul class="kj-alloc-list" id="npsList"></ul>
-          <p class="src-note" id="npsSrc"></p>
-          <h4>연금개혁 확정 내용</h4>
-          <ul class="kj-kv" id="npsReform"></ul>
-          <p class="src-note" id="npsReformSrc"></p>
+        </section>
+        <div class="fiscal-overview">
+          <section class="kj-panel" aria-labelledby="fiscalOutlookH">
+            <h3 id="fiscalOutlookH">국가채무·예산 전망</h3>
+            <ul class="kj-kv" id="fisOutlook"></ul>
+            <p class="src-note" id="fisOutlookSrc"></p>
+          </section>
+          <section class="kj-panel" aria-labelledby="pensionH">
+            <h3 id="pensionH">국민연금 기금</h3>
+            <ul class="kj-kv" id="npsKv"></ul>
+            <h4>어디에 투자하나</h4>
+            <div class="kj-alloc" id="npsBar" role="img"></div>
+            <ul class="kj-alloc-list" id="npsList"></ul>
+            <p class="src-note" id="npsSrc"></p>
+          </section>
+          <section class="kj-panel" aria-labelledby="pensionReformH">
+            <h3 id="pensionReformH">연금개혁 확정 내용</h3>
+            <ul class="kj-kv" id="npsReform"></ul>
+            <p class="src-note" id="npsReformSrc"></p>
+          </section>
         </div>
       </div>
     </div>
@@ -484,7 +497,6 @@ window.kjLoadTimer = setTimeout(() => {
       <div class="kj-drawer__tools" role="group" aria-labelledby="readingSettings">
         <button class="reading-switch" id="drawerBig" type="button" role="switch" aria-checked="false" data-big-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>글자 크게</span><span class="reading-switch__state" data-big-state aria-hidden="true">끔</span></span></button>
         <button class="reading-switch" id="drawerThemeToggle" type="button" role="switch" aria-checked="false" data-theme-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>어두운 화면</span><span class="reading-switch__state" data-theme-state aria-hidden="true">끔</span></span></button>
-        <button class="reading-action reading-action--system" id="drawerThemeSystem" type="button" data-theme-system aria-pressed="true" disabled>기기 설정 따르기<span class="reading-switch__state" data-theme-system-state aria-hidden="true">사용 중</span></button>
         <button class="reading-action" id="drawerShare" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>이 호 공유</button>
       </div>
       <h3 class="kj-drawer__label">분야별 읽기</h3>
