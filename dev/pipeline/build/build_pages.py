@@ -303,7 +303,7 @@ def discovery_page(template: str, item: dict) -> str:
 <meta name="jg-ga4" content="{esc(ga[1] if ga else '')}">
 <meta name="jg-goatcounter" content="{esc(goat[1] if goat else '')}">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#f8fafb">
 <link rel="canonical" href="{esc(url)}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="대한민국 조간">
@@ -330,6 +330,7 @@ def discovery_page(template: str, item: dict) -> str:
 <link id="fontStyles" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap" media="print">
 <link rel="stylesheet" href="/src/styles/tokens.css">
 <link rel="stylesheet" href="/src/styles/kj.css">
+<link rel="stylesheet" href="/src/components/header/header.css">
 <link rel="stylesheet" href="/src/styles/discovery.css">
 <script type="application/ld+json">
 {data}
@@ -341,7 +342,15 @@ def discovery_page(template: str, item: dict) -> str:
 </head>
 <body class="discovery-page">
 <a class="skip" href="#main">본문으로 건너뛰기</a>
-<header class="discovery-mast"><a href="/" class="discovery-logo">대한민국 조간</a><nav aria-label="신문 읽기"><a href="/">오늘 뉴스</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/archive/">지난 호</a></nav><label for="discoveryTheme">화면 <select id="discoveryTheme" data-theme-select disabled><option value="system">기기 설정</option><option value="light">라이트</option><option value="dark">다크</option></select></label></header>
+<header class="discovery-mast">
+  <a href="/" class="discovery-logo">대한민국 조간</a>
+  <nav aria-label="신문 읽기"><a href="/">오늘 뉴스</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/archive/">지난 호</a></nav>
+  <div class="discovery-tools" role="group" aria-label="읽기 설정">
+    <button class="reading-switch" id="discoveryBig" type="button" role="switch" aria-checked="false" data-big-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>글자 크게</span><span class="reading-switch__state" data-big-state aria-hidden="true">끔</span></span></button>
+    <button class="reading-switch" id="discoveryTheme" type="button" role="switch" aria-checked="false" data-theme-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>어두운 화면</span><span class="reading-switch__state" data-theme-state aria-hidden="true">끔</span></span></button>
+    <button class="reading-action reading-action--system" id="discoveryThemeSystem" type="button" data-theme-system aria-pressed="true" disabled>기기 설정 따르기</button>
+  </div>
+</header>
 {item['body']}
 <footer class="discovery-footer"><p><a href="/">대한민국 조간</a> · 출처와 기준일을 함께 읽습니다.</p><nav aria-label="운영 안내"><a href="/#limitsH">수집 방법과 한계</a><a href="/#fixH">정정 기록</a><a href="/feed.xml">RSS 구독</a><a href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" rel="noopener">오류 신고</a></nav><p>기획·데이터·디자인·개발 <a href="https://github.com/MinsangKwak" rel="author">MinsangKwak</a> · 코드 MIT · 글 CC BY 4.0</p></footer>
 </body>

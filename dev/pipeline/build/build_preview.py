@@ -30,7 +30,7 @@ NOINDEX = "noindex, nofollow, noarchive, nosnippet"
 META = re.compile(r'<meta\b[^>]*>', re.I)
 LDJSON = re.compile(r'(<script\b[^>]*type=["\']application/ld\+json["\'][^>]*>)(.*?)(</script>)', re.I | re.S)
 IDENTITY = re.compile(r"[0-9a-f]{40}\Z", re.I)
-BANNER_CSS = """.kj-preview{padding:12px max(20px,calc((100% - 1540px)/2));border-bottom:2px solid var(--brand,#0047a0);background:var(--brand-soft,#e7eef8);color:var(--ink,#141414);font:500 13px/1.7 var(--font-sans,sans-serif);overflow-wrap:anywhere}.kj-preview strong{margin-right:12px}.kj-preview code{font:inherit;font-variant-numeric:tabular-nums}.kj-preview span{margin-right:12px}@media print{.kj-preview{border:2px solid currentColor}}
+BANNER_CSS = """.kj-preview{padding:12px max(20px,calc((100% - 1540px)/2));border-bottom:2px solid var(--brand,#0047a0);background:var(--brand-soft,#e7eef8);color:var(--ink,#141414);font:500 13px/1.7 var(--font-sans,sans-serif);overflow-wrap:anywhere}.kj-preview strong{margin-right:12px}.kj-preview code{font:inherit;font-variant-numeric:tabular-nums}.kj-preview span{margin-right:12px}@media(max-width:600px){.kj-preview{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;padding:8px 16px}.kj-preview strong,.kj-preview span{margin:0}.kj-preview span:last-child{display:none}.kj-preview code{display:inline-block;max-width:10ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}}@media print{.kj-preview{border:2px solid currentColor}}
 """
 
 
