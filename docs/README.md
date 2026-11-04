@@ -21,6 +21,7 @@
 | [데이터 규격](planning/data-spec.md) | 날짜별 호·추적·정정 JSON을 작성하거나 검사 범위를 확인할 때 |
 | [GA4 관리자 연결](dev/ga4-admin.md) | OAuth·GA4 설정, 조회 권한·연결 오류를 점검할 때 |
 | [브랜치와 배포](dev/branches.md) | dev·main·deploy를 반영하거나 이력 충돌을 복구할 때 |
+| [일일 발행 자동화 구성](dev/publish-automation.md) | 예약 작업과 워크플로의 경계를 보거나 발행 운영을 이관할 때 |
 | [커밋 메시지](dev/commits.md) | 문서·화면·데이터 등의 변경 목적을 기록할 때 |
 | [AI 작업 지침](dev/CLAUDE.md) | 변경 범위·언어·발행·확인 기록 원칙을 확인할 때 |
 | [삽화와 공유 이미지](../design/illustrations.md) | 픽셀 삽화의 생성 기록과 OG·파비콘 재생성을 확인할 때 |

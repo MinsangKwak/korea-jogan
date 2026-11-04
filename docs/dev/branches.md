@@ -51,6 +51,8 @@ GitHub 예약은 실행 목표 시각이며 지연될 수 있습니다. 이미 `
 | [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `deploy` push·수동·평일 매시 예약 | `deploy` 체크아웃, 검사·RSS/사이트맵/호별 HTML 생성, Pages 배포 |
 | [daily.yml](../../.github/workflows/daily.yml) | 수동 | RSS·ECOS 원자료 수집과 결과 아티팩트 저장 |
 
+예약 작업과 워크플로가 각각 어디까지 맡는지, 이관 시 확인할 것은 [일일 발행 자동화 구성](publish-automation.md)에 있습니다.
+
 평일 **09:17~22:17**에는 같은 `deploy` 소스의 ECOS 최신 숫자를 갱신해 다시 배포합니다. 예약 실행은 `ECOS_API_KEY`가 없으면 건너뛰며, 키가 있어도 커밋을 추가하지 않습니다. 조간 본문과 별도인 최신 숫자 띠를 갱신하는 작업입니다.
 
 ## 실패와 복구
