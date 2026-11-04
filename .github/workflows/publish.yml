@@ -1,14 +1,10 @@
-# 매일 06:00(한국 시간) dev의 오늘 호를 main·deploy로 빨리 감기하고 배포를 띄운다
-# 사람이 승인하지 않은 초안은 검사를 통과하면 '자동 발행'으로 공개한다(화면에 편집자 확인 전으로 표시)
-# 오늘 호가 없거나 검사에 실패하면 아무것도 올리지 않고 지난 호를 그대로 둔다
+# 안정된 main 코드에 오늘 일일 브랜치의 데이터만 반영한다. dev 실험 코드는 공개하지 않는다
 name: 아침 발행
 
 on:
   workflow_dispatch:
   schedule:
-    # GitHub 예약 실행은 정각에 몰려 밀린다(10/23 06:00 예약이 08:47에 실행).
-    # 정각을 피한 06:07에 돌리고, 밀리거나 빠질 때를 위해 06:37·07:17·08:17에 다시 본다(한국 시간).
-    # 이미 올라간 호는 빨리 감기 단계에서 건너뛰므로 여러 번 돌아도 한 번만 발행된다
+    # 한국 시간 06:07 첫 시도와 06:37·07:17·08:17 재확인
     - cron: "7 21 * * *"
     - cron: "37 21 * * *"
     - cron: "17 22 * * *"
@@ -17,6 +13,7 @@ on:
 permissions:
   contents: write
   actions: write
+  checks: read
 
 concurrency:
   group: publish
@@ -24,70 +21,165 @@ concurrency:
 
 jobs:
   publish:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: dev
+          ref: main
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # 오늘(KST) 호가 목록의 최신 호이고 초안 또는 승인 상태인지 본다
-      - id: gate
-        name: 오늘 호 승인 여부
+      - id: source
+        name: 오늘 일일 브랜치와 안정된 main 확인
         run: |
           DATE="$(TZ=Asia/Seoul date +%F)"
-          python3 - "$DATE" <<'PY'
-          import json, os, sys
+          MAIN_SHA="$(git rev-parse HEAD)"
+          printf 'date=%s\nmain_sha=%s\n' "$DATE" "$MAIN_SHA" >> "$GITHUB_OUTPUT"
+          STATE="$(python3 - "$DATE" <<'PY'
+          import json, sys
           from pathlib import Path
           date = sys.argv[1]
           issues = Path("dev/web/data/issues")
+          index = json.loads((issues / "index.json").read_text(encoding="utf-8"))
+          if index.get("latest", "") > date:
+              raise SystemExit("main의 최신 호가 오늘 이후 날짜입니다")
           path = issues / f"{date}.json"
-          latest = json.loads((issues / "index.json").read_text(encoding="utf-8")).get("latest")
-          status = json.loads(path.read_text(encoding="utf-8")).get("status") if path.exists() else None
-          run = status in ("draft", "published") and latest == date
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
-              out.write(f"run={str(run).lower()}\n")
-              out.write(f"date={date}\nstatus={status}\n")
-          if not run:
-              print(f"::notice::{date}호를 올리지 않습니다(상태: {status or '없음'}, 최신 호: {latest})")
+          issue = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+          print("published" if index.get("latest") == date and issue.get("date") == date and issue.get("status") == "published" else "draft")
           PY
-      # 06시까지 사람이 승인하지 않았으면 검사를 통과한 초안을 자동 발행으로 바꿔 dev에 올린다
-      - name: 자동 발행
-        if: steps.gate.outputs.run == 'true' && steps.gate.outputs.status == 'draft'
-        run: |
-          python dev/pipeline/publish/validate.py
-          python dev/pipeline/publish/approve.py "${{ steps.gate.outputs.date }}" --auto
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "data(issue): ${{ steps.gate.outputs.date }}호 자동 발행"
-          git push origin HEAD:dev
-      - name: 배포 규칙 검사
-        if: steps.gate.outputs.run == 'true'
-        run: python dev/pipeline/publish/validate.py --deploy
-      # main이 dev의 조상이 아니면(누가 main에 따로 올린 경우) 덮어쓰지 않고 멈춘다
-      - id: push
-        name: main·deploy 빨리 감기
-        if: steps.gate.outputs.run == 'true'
-        run: |
-          git fetch origin main deploy
-          if [ "$(git rev-parse origin/deploy)" = "$(git rev-parse HEAD)" ]; then
-            echo "deploy가 이미 dev와 같은 커밋입니다."
-            echo "pushed=false" >> "$GITHUB_OUTPUT"
+          )"
+          if [ "$STATE" = "published" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "existing=true" >> "$GITHUB_OUTPUT"
+            echo "오늘 호는 main에 공개 상태입니다. 데이터를 다시 쓰지 않고 배포 상태를 확인합니다."
             exit 0
           fi
-          for b in main deploy; do
-            if ! git merge-base --is-ancestor "origin/$b" HEAD; then
-              echo "::error::$b가 dev의 조상이 아니라 빨리 감기할 수 없습니다. 브랜치를 손으로 맞춘 뒤 다시 실행합니다"
+          if REMOTE="$(git ls-remote --exit-code --heads origin "refs/heads/daily/$DATE")"; then
+            SOURCE_SHA="${REMOTE%%[[:space:]]*}"
+          else
+            CODE=$?
+            if [ "$CODE" = 2 ]; then
+              echo "run=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::daily/$DATE 초안이 없어 지난 공개 호를 유지합니다"
+              exit 0
+            fi
+            echo "::error::일일 브랜치를 조회하지 못했습니다"
+            exit "$CODE"
+          fi
+          git fetch origin "$SOURCE_SHA"
+          test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_SHA"
+          printf 'run=true\nexisting=false\nsource_sha=%s\n' "$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+      - name: 선택한 일일 커밋의 CI 확인
+        if: steps.source.outputs.run == 'true' && steps.source.outputs.existing != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/commits/$SOURCE_SHA/check-runs?per_page=100&filter=latest" > "$RUNNER_TEMP/daily-checks.json"
+          python3 - "$SOURCE_SHA" "$RUNNER_TEMP/daily-checks.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          sys.path.insert(0, "dev/pipeline/publish")
+          from prepare_daily import require_checks
+          require_checks(json.loads(Path(sys.argv[2]).read_text(encoding="utf-8")), sys.argv[1])
+          print("일일 커밋의 데이터·브라우저 CI 성공 확인")
+          PY
+      - id: prepared
+        name: 안정된 코드에 오늘 데이터만 준비
+        if: steps.source.outputs.run == 'true' && steps.source.outputs.existing != 'true'
+        env:
+          DATE: ${{ steps.source.outputs.date }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+          MAIN_SHA: ${{ steps.source.outputs.main_sha }}
+        run: python3 dev/pipeline/publish/prepare_daily.py --date "$DATE" --source-ref "$SOURCE_SHA" --main-ref "$MAIN_SHA"
+      - name: 초안 검사와 자동 발행 표시
+        if: steps.prepared.outputs.changed == 'true'
+        env:
+          DATE: ${{ steps.source.outputs.date }}
+        run: |
+          python3 dev/pipeline/publish/validate.py
+          STATUS="$(python3 - "$DATE" <<'PY'
+          import json, sys
+          from pathlib import Path
+          print(json.loads(Path(f"dev/web/data/issues/{sys.argv[1]}.json").read_text(encoding="utf-8"))["status"])
+          PY
+          )"
+          if [ "$STATUS" = "draft" ]; then
+            python3 dev/pipeline/publish/approve.py "$DATE" --auto
+          fi
+          python3 dev/pipeline/publish/validate.py --deploy
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "dev/web/data/issues/$DATE.json" dev/web/data/issues/index.json dev/web/data/trackers.json
+          git commit -m "data(issue): ${DATE}호 자동 발행"
+      - name: 배포 규칙 확인
+        if: steps.source.outputs.run == 'true'
+        run: python3 dev/pipeline/publish/validate.py --deploy
+      - id: push
+        name: main과 deploy를 같은 검증 커밋으로 반영
+        if: steps.source.outputs.run == 'true'
+        env:
+          DATE: ${{ steps.source.outputs.date }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+          MAIN_SHA: ${{ steps.source.outputs.main_sha }}
+        run: |
+          git fetch origin main deploy
+          if [ "$(git rev-parse origin/main)" != "$MAIN_SHA" ]; then
+            echo "::error::확인 중 main이 바뀌어 반영하지 않습니다"
+            exit 1
+          fi
+          if [ -n "$SOURCE_SHA" ]; then
+            REMOTE="$(git ls-remote --exit-code --heads origin "refs/heads/daily/$DATE")"
+            if [ "${REMOTE%%[[:space:]]*}" != "$SOURCE_SHA" ]; then
+              echo "::error::확인 중 일일 초안이 바뀌어 반영하지 않습니다"
+              exit 1
+            fi
+          fi
+          for BRANCH in main deploy; do
+            if ! git merge-base --is-ancestor "origin/$BRANCH" HEAD; then
+              echo "::error::$BRANCH가 대상 커밋의 조상이 아니어서 반영하지 않습니다"
               exit 1
             fi
           done
-          git push origin HEAD:main HEAD:deploy
-          echo "pushed=true" >> "$GITHUB_OUTPUT"
-      # GITHUB_TOKEN으로 올린 push는 다른 워크플로를 띄우지 않으므로 배포는 직접 실행한다
+          CHANGED=false
+          if [ "$(git rev-parse origin/deploy)" != "$(git rev-parse HEAD)" ]; then
+            CHANGED=true
+          fi
+          git push --atomic origin HEAD:main HEAD:deploy
+          printf 'pushed=%s\nsource_sha=%s\n' "$CHANGED" "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - id: live
+        name: 이미 반영한 커밋의 공개 상태 확인
+        if: steps.source.outputs.run == 'true' && steps.push.outputs.pushed != 'true'
+        env:
+          DATE: ${{ steps.source.outputs.date }}
+          SOURCE_SHA: ${{ steps.push.outputs.source_sha }}
+        run: |
+          python3 - "$DATE" "$SOURCE_SHA" <<'PY'
+          import json, os, sys, urllib.request
+          from urllib.parse import urlencode
+          sys.path.insert(0, "dev/pipeline/publish")
+          from prepare_daily import published_build_matches
+          date, source = sys.argv[1:]
+          current = False
+          try:
+              def public_json(path):
+                  url = "https://korea-jogan.com/" + path + "?" + urlencode({"source": source})
+                  request = urllib.request.Request(url, headers={"Cache-Control": "no-cache"})
+                  with urllib.request.urlopen(request, timeout=20) as response:
+                      return json.load(response)
+              current = published_build_matches(public_json("data/issues/index.json"), public_json("build-info.json"), date, source)
+          except (OSError, ValueError):
+              pass
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("current=" + str(current).lower() + "\n")
+          print("오늘 호 공개 확인" if current else "공개 확인이 되지 않아 같은 커밋의 배포를 다시 요청합니다")
+          PY
       - name: 사이트 배포 실행
-        if: steps.push.outputs.pushed == 'true'
+        if: steps.source.outputs.run == 'true' && (steps.push.outputs.pushed == 'true' || steps.live.outputs.current != 'true')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run deploy-pages.yml --ref deploy
+          SOURCE_SHA: ${{ steps.push.outputs.source_sha }}
+        run: gh workflow run deploy-pages.yml --ref deploy -f source_sha="$SOURCE_SHA"

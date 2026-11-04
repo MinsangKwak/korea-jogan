@@ -1,9 +1,9 @@
-# dev·main에 올라오거나 PR이 열리면 데이터 검사와 커밋 제목 검사를 돌린다
+# dev·main·일일 브랜치에 올라오거나 PR이 열리면 검사한다
 name: 검사
 
 on:
   push:
-    branches: [dev, main]
+    branches: [dev, main, 'daily/**']
   pull_request:
     branches: [dev, main, deploy]
 

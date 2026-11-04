@@ -7,6 +7,11 @@ dev/web/feed.xml
 dev/web/sitemap.xml
 # 배포 때 build_pages.py가 만드는 호별 페이지
 dev/web/20[0-9][0-9]-[0-9][0-9]-[0-9][0-9].html
+dev/web/archive/
+dev/web/topics/
+dev/web/indicators/
+dev/web/build-info.json
+dist-preview/
 dev/pipeline/collect/raw/rss/*.json
 dev/web/data/live.json
 

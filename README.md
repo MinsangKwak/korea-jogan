@@ -2,11 +2,11 @@
 
 **전국 뉴스와 장기 이슈, 공식 숫자를 출처·기준일과 함께 읽는 데이터 신문입니다.** 기사마다 다르게 보도한 숫자는 집계 기간과 기준을 나란히 비교하고, 사람이 확인한 호와 자동으로 발행한 호를 구분합니다.
 
-[서비스](https://korea-jogan.com/) · [운영 화면](https://korea-jogan.com/admin/) · [문서 안내](docs/README.md) · [최신 UI 변경](docs/dev/changes-2026-11-03-sections.md)
+[서비스](https://korea-jogan.com/) · [운영 화면](https://korea-jogan.com/admin/) · [문서 안내](docs/README.md) · [개발·운영 환경](docs/dev/environments.md) · [최신 환경 변경](docs/dev/changes-2026-11-04-preview.md)
 
 ## 현재 제공하는 화면
 
-**2026.11.03 기능 기준입니다.** PC에서는 여러 정보를 나란히 비교하고, 모바일에서는 요약·현재 단계·숫자·기준일·검색을 먼저 보여 줍니다. 보조 내용을 접어도 핵심 정보는 남습니다.
+**2026.11.04 기능 기준입니다.** PC에서는 여러 정보를 나란히 비교하고, 모바일에서는 요약·현재 단계·숫자·기준일·검색을 먼저 보여 줍니다. 보조 내용을 접어도 핵심 정보는 남습니다.
 
 | 영역 | 현재 동작 |
 | --- | --- |
@@ -17,6 +17,7 @@
 | 경제 지표 | 가로 순환 슬라이드와 이전·다음·자동 넘김 제어. 읽는 동작에서는 멈추고 기준일·출처를 표시 |
 | 산업·재정 | PC 산업 요약 옆에 품목별 수출 그래프 배치. 국가채무·국민연금은 수치와 근거로 확인 |
 | 공통 읽기 도구 | 기기 설정·라이트·다크, 글자 확대, 전체 메뉴, 맨 위로, 지난 호·정정 기록 |
+| 주제별 고정 주소 | [지난 호](https://korea-jogan.com/archive/)·[추적 사안](https://korea-jogan.com/topics/)·[경제 지표 기록](https://korea-jogan.com/indicators/). 스크립트 없이도 본문·근거·내부 링크 제공 |
 
 읽는 순서는 **전국 → 이슈 추적 → 홈 → 지역 → 언론 → 정치 → 경제 → 산업 → 재정**의 9개 섹션입니다. 모바일에서는 보조 주제·타임라인·상세 집계·산업 그래프를 기본으로 접고, PC에서는 펼쳐 둡니다. 긴 근거 기사 표는 건수를 표시해 필요할 때 읽게 합니다.
 
@@ -41,9 +42,11 @@
 
 ## 자료가 공개되기까지
 
-![초안 작성, 데이터 검사, 사람 확인 또는 자동 발행, 배포로 이어지는 흐름](docs/assets/publishing-flow.png)
+00시 Codex가 안정 `main`에서 `daily/YYYY-MM-DD`를 만들고 새 자료 조사·사실 초안·문장 편집·검사를 거쳐 오늘 자료만 저장합니다. 아침 발행은 고정한 일일 SHA의 CI와 허용 파일을 확인한 뒤 **안정 코드에 데이터만 반영**합니다. 개발 `dev`의 미완성 코드나 일일 브랜치 전체를 운영에 병합하지 않습니다.
 
-00시 조사는 저장소 외부 예약 작업, 06시 공개는 GitHub Actions가 담당합니다. 사람이 원문과 대조한 호에는 편집자 확인을, 그렇지 않은 호에는 자동 발행을 표시합니다. 두 경로 모두 검사를 통과해야 공개되며, 검사 실패·오늘 호 누락·브랜치 충돌 시 공개를 중단합니다.
+06:05 Codex는 공개 상태를 읽기 전용으로 확인하고 실제 공개는 GitHub의 06:07·06:37·07:17·08:17 예약이 담당합니다. Codex 예약 2개는 첫 예약 2026.11.05로 등록·활성을 확인했으며, 새 일일 브랜치 지시 갱신과 첫 실행은 별도 확인합니다. [자동화 상태](docs/dev/publish-automation.md) · [초안 편집 기준](docs/planning/editorial.md)
+
+사람이 원문과 대조한 호에는 편집자 확인을, 그렇지 않은 호에는 자동 발행을 표시합니다. 두 경로 모두 검사를 통과해야 공개되며, 검사 실패·오늘 호 누락·브랜치 충돌 시 공개를 중단합니다.
 
 | 데이터 | 표시하는 의미 |
 | --- | --- |
@@ -57,9 +60,22 @@
 
 [발행 절차와 실패 대응](docs/planning/runbook.md) · [배포 구조](docs/dev/architecture.md) · [프로젝트 Notion](https://www.notion.so/3ffcbbdd109b8167a28dd65769e55676)
 
+## 개발 미리보기와 운영 환경
+
+| 구분 | 역할·주소 | 확인 상태 |
+| --- | --- | --- |
+| 개발 `dev` | Vercel `korea-jogan-dev`, 보호된 미리보기 | 프로젝트·Git·모든 배포 인증 설정 확인. 첫 실제 배포 대기 |
+| 개발 도메인 | `dev.korea-jogan.com`, `dev` 브랜치 연결 | Gabia CNAME 추가 필요. 현재 DNS NXDOMAIN |
+| 안정 `main` | 검토한 코드와 선별 반영한 일일 자료 | 코드 승격과 일일 발행의 기준 |
+| 운영 `deploy` | [korea-jogan.com](https://korea-jogan.com/) · GitHub Pages | 승인된 코드와 공개 자료 제공 |
+
+개발 미리보기는 별도 `dist-preview`에 공개 호만 생성하고 검색 제외·GA4 비활성·관리자 읽기 전용 기준을 적용합니다. 코드 승격은 검토한 정확한 SHA의 CI·해당 Vercel 배포 성공·운영자의 인증/관리자 확인·조상 관계를 확인합니다. DNS 연결·첫 배포·운영 반영은 각각 확인하며 현재 설정 등록만으로 완료를 주장하지 않습니다.
+
+[DNS 설정과 접근 권한](docs/dev/environments.md) · [코드와 일일 데이터의 두 경로](docs/dev/branches.md) · [이번 변경 상태](docs/dev/changes-2026-11-04-preview.md)
+
 ## 기술과 실행
 
-화면은 HTML·CSS·바닐라 JavaScript, 수집·검사·생성은 Python으로 구성합니다. 프레임워크·번들러·상시 서버·DB 없이 GitHub Pages에서 제공하며, 경제 슬라이드용 Swiper는 라이선스와 버전을 기록해 로컬에 보관합니다.
+화면은 HTML·CSS·바닐라 JavaScript, 수집·검사·생성은 Python으로 구성합니다. 운영은 프레임워크·번들러·상시 서버·DB 없이 GitHub Pages에서 제공하고 개발은 보호된 Vercel에서 검토하며, 경제 슬라이드용 Swiper는 라이선스와 버전을 기록해 로컬에 보관합니다.
 
 CI 기준은 Python 3.12와 Node.js 22입니다. 저장소 루트에서 HTTP 서버로 실행합니다.
 
@@ -97,9 +113,9 @@ npm test
 | 수집·검사·페이지 생성 | [dev/pipeline/](dev/pipeline/) |
 | 자동 검사 | [dev/tests/](dev/tests/) |
 | 디자인 토큰·삽화·공유 이미지 | [design/](design/) |
-| 브랜치·커밋·배포 규칙 | [브랜치 운영](docs/dev/branches.md) · [커밋 작성](docs/dev/commits.md) |
+| 환경·브랜치·커밋·배포 규칙 | [개발·운영 환경](docs/dev/environments.md) · [브랜치 운영](docs/dev/branches.md) · [커밋 작성](docs/dev/commits.md) |
 
-일반 변경은 `dev`에서 검증해 `main`에 반영하고, `deploy`를 같은 커밋으로 맞춰 배포합니다. 문서 변경은 문서별 목적과 커밋을 구분하며, 병합 방식은 해당 작업의 요청을 따릅니다.
+일반 코드는 `dev`의 정확한 SHA를 CI·보호된 미리보기에서 검토한 뒤 `main`·`deploy`로 승격합니다. 일일 자료는 `main` 기반 `daily`에서 별도로 준비해 데이터만 가져옵니다. 문서 변경은 문서별 목적과 커밋을 구분하며, 병합 방식은 해당 작업의 요청을 따릅니다.
 
 ## 한계와 다음 과제
 
@@ -120,7 +136,7 @@ ECOS 키는 GitHub Secrets의 `ECOS_API_KEY`로 관리합니다. 키·토큰을 
 <tr><td><img src="docs/assets/service-desktop-20261030.jpg" alt="2026년 10월 30일 PC 운영 화면" width="760"></td><td><img src="docs/assets/service-mobile-20261030.jpg" alt="2026년 10월 30일 모바일 운영 화면" width="250"></td></tr>
 </table>
 
-[최신 섹션·모바일 변경](docs/dev/changes-2026-11-03-sections.md) · [지면·이미지·보안 변경](docs/dev/changes-2026-11-03-layout.md) · [문장·테마 개선](docs/dev/changes-2026-11-03.md) · [2026.10.30 기록](docs/dev/changes-2026-10-30.md) · [Figma 설계 출발점](https://www.figma.com/design/Eep2qLjiPT9jhDUyLU8Zjx)
+[개발 환경·일일 발행 분리](docs/dev/changes-2026-11-04-preview.md) · [검색 도착 페이지·편집](docs/dev/changes-2026-11-04-seo.md) · [섹션·모바일 변경](docs/dev/changes-2026-11-03-sections.md) · [지면·이미지·보안 변경](docs/dev/changes-2026-11-03-layout.md) · [문장·테마 개선](docs/dev/changes-2026-11-03.md) · [2026.10.30 기록](docs/dev/changes-2026-10-30.md) · [Figma 설계 출발점](https://www.figma.com/design/Eep2qLjiPT9jhDUyLU8Zjx)
 
 ## 이용 조건
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import sys
 import urllib.request
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 # 발행 목록은 RSS와 같은 기준(dev/pipeline/build/build_feed.py)으로 읽는다
@@ -29,14 +30,22 @@ def find_key() -> str:
     raise FileNotFoundError("dev/web/<키>.txt 형태의 IndexNow 키 파일이 없음")
 
 
-def payload(key: str, issues: list[dict]) -> dict:
+def payload(key: str, issues: list[dict], discovery_urls: list[str] | None = None) -> dict:
     # 첫 화면과 최근 호 페이지만 알린다. 지난 호는 사이트맵으로 충분하다
     urls = [build_feed.SITE] + [build_feed.SITE + i["date"] for i in issues[:2]]
+    urls += [url for url in (discovery_urls or [])
+             if url.startswith(tuple(build_feed.SITE + path for path in ("archive/", "topics/", "indicators/")))]
+    urls = list(dict.fromkeys(urls))
     return {"host": HOST, "key": key, "keyLocation": f"{build_feed.SITE}{key}.txt", "urlList": urls}
 
 
 def main() -> int:
-    body = payload(find_key(), build_feed.published())
+    sitemap = PUBLIC / "sitemap.xml"
+    urls = []
+    if sitemap.exists():
+        tree = ET.fromstring(sitemap.read_text(encoding="utf-8"))
+        urls = [node.text for node in tree.findall("{*}url/{*}loc") if node.text]
+    body = payload(find_key(), build_feed.published(), urls)
     req = urllib.request.Request(ENDPOINT, data=json.dumps(body).encode("utf-8"),
                                  headers={"Content-Type": "application/json; charset=utf-8"})
     try:

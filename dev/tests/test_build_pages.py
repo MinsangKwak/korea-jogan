@@ -136,6 +136,11 @@ class PagesTest(unittest.TestCase):
 
 
 class IndexNowTest(unittest.TestCase):
+    def test_discovery_notification_stays_on_our_site(self):
+        site = indexnow.build_feed.SITE
+        body = indexnow.payload("abc12345", [], [site + "topics/", site + "topics/", "https://example.com/topics/"])
+        self.assertEqual(body["urlList"], [site, site + "topics/"])
+
     def test_payload_lists_home_and_recent_issues(self):
         body = indexnow.payload("abc12345", [{"date": "2026-10-22"}, {"date": "2026-10-21"}, {"date": "2026-10-20"}])
         site = indexnow.build_feed.SITE

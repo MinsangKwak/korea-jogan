@@ -139,6 +139,7 @@ window.kjLoadTimer = setTimeout(() => {
 <link rel="stylesheet" href="src/components/footer/footer.css">
 <link rel="stylesheet" href="src/components/nav/nav.css">
 <link rel="stylesheet" href="src/styles/editorial.css">
+<link rel="stylesheet" href="src/styles/discovery.css">
 </head>
 <body class="has-tabbar news-edition">
 <a class="skip" href="#main">본문으로 건너뛰기</a>
@@ -207,6 +208,9 @@ window.kjLoadTimer = setTimeout(() => {
   <p id="loadingMessage">조간을 불러오고 있습니다.</p>
   <a class="kj-btn kj-btn--secondary" id="loadingRetry" href="" hidden>다시 불러오기</a>
 </div>
+<!-- kj:discovery -->
+<nav class="kj-wrap discovery-links" aria-label="주제와 지난 호"><a href="/topics/">이슈별 진행 상황</a><a href="/indicators/">경제 지표와 지난 기록</a><a href="/archive/">날짜별 뉴스 모아보기</a></nav>
+<!-- /kj:discovery -->
 <main id="main">
   <!-- kj:digest -->
   <!-- /kj:digest -->
@@ -449,6 +453,7 @@ window.kjLoadTimer = setTimeout(() => {
           <button type="submit" class="kj-btn kj-btn--secondary">이 호 보기</button>
         </form>
         <p>매일 아침 받아 보려면 <a href="feed.xml">RSS</a>를 구독하세요.</p>
+        <p><a href="/archive/">전체 지난 호 목록</a> · <a href="/topics/">이슈별 기록</a> · <a href="/indicators/">지표별 기록</a></p>
       </section>
       <section class="kj-foot__section kj-foot__section--corrections" aria-labelledby="fixH">
         <h2 id="fixH">정정 기록</h2>

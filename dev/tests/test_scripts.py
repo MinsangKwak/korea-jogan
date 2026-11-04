@@ -228,7 +228,10 @@ class FeedTest(Site):
     def test_sitemap_lists_home_and_skips_drafts(self):
         doc = xml.dom.minidom.parseString(build_feed.build_sitemap().encode("utf-8"))
         locs = [n.firstChild.data for n in doc.getElementsByTagName("loc")]
-        self.assertEqual(locs, [build_feed.SITE, build_feed.SITE + DATE])
+        self.assertEqual(locs[:2], [build_feed.SITE, build_feed.SITE + DATE])
+        self.assertIn(build_feed.SITE + "archive/", locs)
+        self.assertIn(build_feed.SITE + "topics/", locs)
+        self.assertEqual(len(locs), len(set(locs)))
         self.assertEqual(doc.getElementsByTagName("lastmod")[0].firstChild.data, DATE)
         self.edit(lambda i: i.update(status="draft"))
         doc = xml.dom.minidom.parseString(build_feed.build_sitemap().encode("utf-8"))
