@@ -18,6 +18,8 @@ function matchReadingColumns(grid, width, labels, disclosure = null) {
     pane.append(column);
     return pane;
   });
+  const note = el('p', { class: grid.classList.contains('kj-wrap') ? 'kj-wrap paired-scroll-note' : 'paired-scroll-note', hidden: '' });
+  grid.after(note);
   let frame = 0;
 
   function update() {
@@ -27,10 +29,17 @@ function matchReadingColumns(grid, width, labels, disclosure = null) {
     // Measure the inner columns so the shared cap never changes their natural height.
     const heights = active ? columns.map((column) => column.getBoundingClientRect().height) : [0, 0];
     const limit = Math.min(...heights);
+    const longer = active ? heights.findIndex((height) => height - limit > 1) : -1;
     if (active) grid.style.setProperty('--paired-block-size', `${limit}px`);
     else grid.style.removeProperty('--paired-block-size');
+    note.hidden = longer === -1;
+    const side = longer === 0 ? 'start' : 'end';
+    if (longer !== -1 && note.dataset.side !== side) {
+      note.dataset.side = side;
+      note.textContent = (longer === 0 ? '왼쪽' : '오른쪽') + ' 열에서 아래로 스크롤해 더 읽기 ↓';
+    }
     panes.forEach((pane, index) => {
-      const overflow = active && heights[index] - limit > 1;
+      const overflow = index === longer;
       pane.toggleAttribute('data-paired-overflow', overflow);
       if (overflow) {
         pane.tabIndex = 0;
@@ -59,6 +68,7 @@ function matchReadingColumns(grid, width, labels, disclosure = null) {
     disclosure?.removeEventListener('toggle', schedule);
     grid.removeAttribute('data-paired-reading');
     grid.style.removeProperty('--paired-block-size');
+    note.remove();
     panes.forEach((pane, index) => pane.replaceWith(columns[index]));
     readingPairs.delete(grid);
   });
