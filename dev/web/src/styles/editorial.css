@@ -223,7 +223,6 @@
 .news-edition .kj-drawer__label:first-child { margin-top: 8px; }
 .news-edition .kj-drawer__tools { grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 0; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
 .news-edition .kj-drawer__tools > button { min-height: 48px; padding: 12px 16px; border-color: var(--line-strong); }
-.news-edition .kj-drawer__tools button[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
 .news-edition .kj-drawer__tools select { min-width: 160px; }
 .news-edition .kj-drawer__tools button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .news-edition .kj-drawer__panel { max-height: 100dvh; overflow: hidden; }
