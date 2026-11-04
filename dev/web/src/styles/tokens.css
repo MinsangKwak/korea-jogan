@@ -1,21 +1,21 @@
 /* 대한민국 조간 — generated from design/tokens.json by dev/pipeline/build/build_tokens.py. 손으로 고치지 않는다 */
 
 :root {
-  --bg: #ffffff;
-  --surface: #f4f5f7;
+  --bg: #f8fafb;
+  --surface: #eef3f7;
   --surface-raised: #ffffff;
-  --ink: #141414;
-  --ink-2: #474c54;
-  --ink-3: #62676f;
-  --line: #e1e3e7;
-  --line-strong: #868c95;
-  --brand: #0047a0;
-  --brand-strong: #00357a;
-  --brand-soft: #e7eef8;
+  --ink: #172738;
+  --ink-2: #34495a;
+  --ink-3: #506474;
+  --line: #d6e0e8;
+  --line-strong: #75889b;
+  --brand: #24577c;
+  --brand-strong: #174163;
+  --brand-soft: #e6eef5;
   --on-brand: #ffffff;
   --hl: #a14a00;
   --hl-soft: #fdf0dc;
-  --head: #111111;
+  --head: #172738;
   --head-ink: #ffffff;
   --head-line: rgba(255,255,255,0.6);
   --scrim: rgba(17,17,17,0.45);
@@ -46,9 +46,9 @@
   --border-hairline: 1px;
   --border-rule: 3px;
   --border-focus: 3px;
-  --fs: 17px;
-  --fs-wide: 18px;
-  --fs-big: 21px;
+  --fs: 18px;
+  --fs-wide: 19px;
+  --fs-big: 23px;
   --tap-min: 44px;
   --nav-h: 52px;
   --tabbar-h: 60px;
@@ -56,26 +56,27 @@
   --rail-w: 9rem;
   --wrap: 1120px;
   --measure: 42rem;
+  --font-serif: "Noto Serif KR", "Batang", "AppleMyungjo", serif;
   --font-sans: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   color-scheme: light;
 }
 
 :root[data-theme="light"] {
-  --bg: #ffffff;
-  --surface: #f4f5f7;
+  --bg: #f8fafb;
+  --surface: #eef3f7;
   --surface-raised: #ffffff;
-  --ink: #141414;
-  --ink-2: #474c54;
-  --ink-3: #62676f;
-  --line: #e1e3e7;
-  --line-strong: #868c95;
-  --brand: #0047a0;
-  --brand-strong: #00357a;
-  --brand-soft: #e7eef8;
+  --ink: #172738;
+  --ink-2: #34495a;
+  --ink-3: #506474;
+  --line: #d6e0e8;
+  --line-strong: #75889b;
+  --brand: #24577c;
+  --brand-strong: #174163;
+  --brand-soft: #e6eef5;
   --on-brand: #ffffff;
   --hl: #a14a00;
   --hl-soft: #fdf0dc;
-  --head: #111111;
+  --head: #172738;
   --head-ink: #ffffff;
   --head-line: rgba(255,255,255,0.6);
   --scrim: rgba(17,17,17,0.45);
@@ -96,22 +97,22 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #121417;
-    --surface: #1b1e23;
-    --surface-raised: #22262c;
-    --ink: #eceef1;
-    --ink-2: #bcc1c8;
-    --ink-3: #9aa0a9;
-    --line: #2d3138;
-    --line-strong: #6b727c;
-    --brand: #86aeea;
-    --brand-strong: #a9c6f2;
-    --brand-soft: #1a2940;
-    --on-brand: #121417;
+    --bg: #151e2a;
+    --surface: #1d2a3a;
+    --surface-raised: #223244;
+    --ink: #f0f4f7;
+    --ink-2: #c9d4df;
+    --ink-3: #a8b8c8;
+    --line: #35475a;
+    --line-strong: #788fa5;
+    --brand: #a0c8ed;
+    --brand-strong: #beddf7;
+    --brand-soft: #263b50;
+    --on-brand: #122436;
     --hl: #f2b765;
     --hl-soft: #3a2c16;
-    --head: #000000;
-    --head-ink: #ffffff;
+    --head: #101923;
+    --head-ink: #f0f4f7;
     --head-line: rgba(255,255,255,0.6);
     --scrim: rgba(0,0,0,0.6);
     --bar: #6f7885;
@@ -131,22 +132,22 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #121417;
-  --surface: #1b1e23;
-  --surface-raised: #22262c;
-  --ink: #eceef1;
-  --ink-2: #bcc1c8;
-  --ink-3: #9aa0a9;
-  --line: #2d3138;
-  --line-strong: #6b727c;
-  --brand: #86aeea;
-  --brand-strong: #a9c6f2;
-  --brand-soft: #1a2940;
-  --on-brand: #121417;
+  --bg: #151e2a;
+  --surface: #1d2a3a;
+  --surface-raised: #223244;
+  --ink: #f0f4f7;
+  --ink-2: #c9d4df;
+  --ink-3: #a8b8c8;
+  --line: #35475a;
+  --line-strong: #788fa5;
+  --brand: #a0c8ed;
+  --brand-strong: #beddf7;
+  --brand-soft: #263b50;
+  --on-brand: #122436;
   --hl: #f2b765;
   --hl-soft: #3a2c16;
-  --head: #000000;
-  --head-ink: #ffffff;
+  --head: #101923;
+  --head-ink: #f0f4f7;
   --head-line: rgba(255,255,255,0.6);
   --scrim: rgba(0,0,0,0.6);
   --bar: #6f7885;

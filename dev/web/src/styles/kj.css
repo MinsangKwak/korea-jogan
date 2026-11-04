@@ -5,7 +5,8 @@
 :root.big { --fs: var(--fs-big); }
 [data-theme="dark"] { color-scheme: dark; }
 *, *::before, *::after { box-sizing: border-box; }
-html { font-size: var(--fs); }
+html { font-size: var(--fs); scrollbar-color: var(--line-strong) var(--surface); }
+@media (forced-colors: active) { html { scrollbar-color: auto; } }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
   font-family: var(--font-sans); font-size: 1rem; line-height: 1.7;
