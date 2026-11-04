@@ -18,16 +18,16 @@
 <meta property="og:url" content="https://korea-jogan.com/">
 <meta property="og:site_name" content="대한민국 조간">
 <meta property="og:locale" content="ko_KR">
-<meta property="og:image" content="https://korea-jogan.com/assets/images/og-pixel.png">
+<meta property="og:image" content="https://korea-jogan.com/assets/images/og-first-light.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/png">
-<meta property="og:image:alt" content="대한민국 조간 · 픽셀로 그린 새벽 도시와 아침 신문">
+<meta property="og:image:alt" content="대한민국 조간 · 신문 지면 뒤로 떠오르는 해">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="대한민국 조간 | 같은 사실, 다른 숫자">
 <meta name="twitter:description" content="같은 사실, 다른 숫자. 기사마다 숫자가 왜 갈렸는지 출처와 기준으로 보여 주는 아침 신문입니다.">
-<meta name="twitter:image" content="https://korea-jogan.com/assets/images/og-pixel.png">
-<meta name="twitter:image:alt" content="대한민국 조간 · 픽셀로 그린 새벽 도시와 아침 신문">
+<meta name="twitter:image" content="https://korea-jogan.com/assets/images/og-first-light.png">
+<meta name="twitter:image:alt" content="대한민국 조간 · 신문 지면 뒤로 떠오르는 해">
 <link rel="alternate" type="application/rss+xml" title="대한민국 조간" href="feed.xml">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#f8fafb">
@@ -49,11 +49,11 @@
 <script src="src/core/theme.js" async></script>
 <meta name="application-name" content="대한민국 조간">
 <meta name="apple-mobile-web-app-title" content="조간">
-<link rel="icon" href="assets/images/favicon.svg?v=pixel-20261103" type="image/svg+xml">
-<link rel="icon" href="/favicon.ico?v=pixel-20261103" sizes="any">
-<link rel="icon" href="assets/images/icon-192.png?v=pixel-20261103" type="image/png" sizes="192x192">
-<link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png?v=pixel-20261103">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/images/favicon.svg?v=first-light-20261104" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico?v=first-light-20261104" sizes="any">
+<link rel="icon" href="assets/images/icon-192.png?v=first-light-20261104" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png?v=first-light-20261104">
+<link rel="manifest" href="manifest.webmanifest?v=first-light-20261104">
 <!-- 발행 목록. 머리에 두어야 아래 스크립트가 옛 주소를 옮길 때 읽을 수 있다 -->
 <script type="application/json" id="issue-index">null</script>
 <script>
@@ -152,7 +152,10 @@ window.kjLoadTimer = setTimeout(() => {
 <header id="top">
   <div class="kj-mast">
     <div class="kj-wrap kj-mast__in">
-      <a class="kj-mast__logo" href="#top">대한민국 조간<small>데이터로 읽는 오늘의 대한민국</small></a>
+      <a class="kj-mast__logo" href="#top">
+        <img class="kj-mast__symbol" src="assets/images/jogan-symbol.svg" width="112" height="112" alt="">
+        <span class="kj-mast__wordmark">대한민국 조간<small>데이터로 읽는 오늘의 대한민국</small></span>
+      </a>
       <p class="kj-mast__meta">
         <time id="issueDate" datetime="">—</time>
         <span id="asOf"></span>
