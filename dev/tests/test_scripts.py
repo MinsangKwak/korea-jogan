@@ -283,9 +283,10 @@ class TokensTest(unittest.TestCase):
         self.assertIn("--focus: var(--brand);", css)
         self.assertIn("--radius-md: 8px;", css)
         self.assertIn("--font-sans: sans-serif;", css)
-        # 다크 값은 기기 설정과 data-theme 두 곳에 들어간다
-        self.assertEqual(css.count("--brand: #86aeea;"), 2)
-        self.assertIn(':root:not([data-theme="light"])', css)
+        # 다크 값은 사용자가 선택한 화면에서만 적용한다
+        self.assertEqual(css.count("--brand: #86aeea;"), 1)
+        self.assertIn(':root[data-theme="dark"]', css)
+        self.assertNotIn("prefers-color-scheme", css)
         self.assertIn(':root[data-theme="light"]', css)
         self.assertIn('color-scheme: light;', css)
 

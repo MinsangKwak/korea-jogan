@@ -111,45 +111,44 @@ async function check(name, options, run) {
       }
     });
   }
-  await check('화면 스위치·키보드·저장·기기 설정과 메뉴 동기화', {}, async (page) => {
+  await check('밝은 화면 기본·키보드 전환·저장과 메뉴 동기화', { dark: true }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
+    const root = page.locator('html');
     const theme = page.getByRole('switch', { name: '어두운 화면', exact: true }).and(page.locator('#themeToggle'));
+    const assertLight = async () => {
+      assert.equal(await root.getAttribute('data-theme'), 'light');
+      assert.equal(await root.getAttribute('data-color-mode'), 'light');
+      assert.equal(await root.evaluate((e) => getComputedStyle(e).colorScheme), 'light');
+      assert.equal(await theme.getAttribute('aria-checked'), 'false');
+    };
     await page.locator('#themeToggle:enabled').waitFor();
-    assert.equal(await theme.getAttribute('aria-checked'), 'false');
-    assert.equal(await page.locator('html').getAttribute('data-theme'), null);
+    assert.equal(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches), true);
+    await assertLight();
     await theme.press('Space');
     assert.equal(await theme.getAttribute('aria-checked'), 'true');
-    assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
+    assert.equal(await root.getAttribute('data-theme'), 'dark');
+    assert.equal(await page.evaluate(() => localStorage.getItem('jogan-theme')), 'dark');
     await page.reload();
     await ready(page);
     await page.locator('#themeToggle:enabled').waitFor();
     assert.equal(await theme.getAttribute('aria-checked'), 'true');
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await theme.click();
-    assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');
-    assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'light');
-    assert.equal(await page.locator('html').evaluate((e) => getComputedStyle(e).colorScheme), 'light');
+    assert.equal(await root.getAttribute('data-color-mode'), 'dark');
     await page.locator('#menuBtn').click();
     const drawerTheme = page.getByRole('switch', { name: '어두운 화면', exact: true }).and(page.locator('#drawerThemeToggle'));
-    assert.equal(await drawerTheme.getAttribute('aria-checked'), 'false');
+    assert.equal(await drawerTheme.getAttribute('aria-checked'), 'true');
     await drawerTheme.press('Enter');
-    assert.equal(await page.locator('#themeToggle').getAttribute('aria-checked'), 'true');
-    await page.locator('#drawerThemeSystem').click();
-    assert.equal(await page.locator('html').getAttribute('data-theme'), null);
+    await assertLight();
     assert.equal(await page.evaluate(() => localStorage.getItem('jogan-theme')), null);
     await page.keyboard.press('Escape');
-    await page.waitForFunction(() => document.documentElement.dataset.colorMode === 'dark');
-    assert.equal(await theme.getAttribute('aria-checked'), 'true');
     await page.emulateMedia({ colorScheme: 'light' });
-    await page.waitForFunction(() => document.documentElement.dataset.colorMode === 'light');
-    assert.equal(await theme.getAttribute('aria-checked'), 'false');
-    await page.evaluate(() => localStorage.setItem('jogan-theme', 'unknown'));
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await assertLight();
+    await page.evaluate(() => localStorage.setItem('jogan-theme', 'system'));
     await page.reload();
     await ready(page);
     await page.locator('#themeToggle:enabled').waitFor();
-    assert.equal(await page.locator('html').getAttribute('data-theme'), null);
-    assert.equal(await theme.getAttribute('aria-checked'), 'false');
+    await assertLight();
   });
   await check('느린 테마 조작 스크립트가 본문 표시를 막지 않음', { slowTheme: true }, async (page) => {
     await page.goto('http://jogan.test/', { waitUntil: 'domcontentloaded' });
@@ -287,6 +286,7 @@ async function check(name, options, run) {
   await check('모바일 메뉴·Esc·포커스 복귀·지역 선택', { dark: true }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
+    await setScreenDark(page, true);
     await page.locator('#tabMenu').click();
     assert.equal(await page.locator('#drawer').isVisible(), true);
     await page.keyboard.press('Escape');
@@ -380,6 +380,7 @@ async function check(name, options, run) {
       await check('도구 상태 대비·기간 여백·맨 위로 ' + width + (dark ? ' 다크' : ' 라이트'), { width, dark }, async (page) => {
         await page.goto('http://jogan.test/');
         await ready(page);
+        await setScreenDark(page, dark);
         const big = page.getByRole('switch', { name: '글자 크게', exact: true }).and(page.locator('#bigBtn'));
         const contrast = () => big.evaluate((button) => {
           const rgb = (value) => value.match(/[\d.]+/g).map(Number);
@@ -521,31 +522,47 @@ async function check(name, options, run) {
     assert.equal(await page.locator('#loadingRetry').isVisible(), true);
   });
   for (const width of [390, 1440, 1920]) {
-    await check('지면 여백·반응형 열·삽화 제거·푸터 ' + width, { width }, async (page) => {
+    await check('전국 기사 읽기 배치·삽화 제거·푸터 ' + width, { width }, async (page) => {
       const illustrations = [];
       page.on('request', (request) => { if (/\/news-dawn-pixel(?:-720)?\.webp$/.test(new URL(request.url()).pathname)) illustrations.push(request.url()); });
       await page.goto('http://jogan.test/');
       await ready(page);
       await page.locator('#natList .kj-newscard').first().waitFor();
       const readGrid = () => page.locator('#natList').evaluate((node) => {
-        const card = node.querySelector('.kj-newscard');
         const css = getComputedStyle(node);
-        return { columns: css.gridTemplateColumns.split(' ').filter((value) => parseFloat(value) > 0).length, padding: parseFloat(getComputedStyle(card).paddingLeft), align: css.alignItems };
+        return { columns: css.gridTemplateColumns.split(' ').filter((value) => parseFloat(value) > 0).length, align: css.alignItems };
       });
       const grid = await readGrid();
-      if (width <= 900) assert.equal(grid.columns, 1);
-      else assert.ok(grid.columns >= 2 && grid.columns <= 3);
-      assert.ok(grid.padding >= 20);
+      assert.equal(grid.columns, width < 1000 ? 1 : 2);
       assert.equal(grid.align, 'start');
+      const articleBox = await page.locator('#natArticle').boundingBox();
+      const chooserBox = await page.locator('.nat-chooser').boundingBox();
+      if (width < 1000) assert.ok(chooserBox.y >= articleBox.y + articleBox.height);
+      else {
+        assert.ok(articleBox.width > chooserBox.width);
+        assert.ok(Math.abs(articleBox.y - chooserBox.y) <= 1);
+      }
       assert.equal(await page.locator('.news-illustration').count(), 0);
       assert.deepEqual(illustrations, []);
       assert.match(await page.locator('meta[property="og:image"]').getAttribute('content'), /og-pixel\.png$/);
+      const choice = page.locator('#natHeadlines .nat-headline').nth(1);
+      const selectedTitle = await choice.locator('strong').innerText();
+      const selected = latest.national.items.find((item) => item.title === selectedTitle);
+      await choice.press('Space');
+      assert.equal(await page.locator('#natArticleTitle').innerText(), selectedTitle);
+      assert.equal(await page.locator('#natArticleTitle').evaluate((node) => node === document.activeElement), true);
+      assert.equal(await choice.getAttribute('aria-pressed'), 'true');
+      assert.equal(await page.locator('#natArticle .kj-reading').textContent(), selected.summary);
+      assert.equal(await page.locator('#natArticle .nat-original').getAttribute('href'), selected.url);
+      assert.equal(await page.locator('#natArticle .nat-original').getAttribute('target'), '_blank');
       if (width >= 1600) {
-        const visibleCards = await page.locator('#natList .kj-newscard:visible').count();
-        await page.locator('#natList + .kj-more button').click();
-        assert.ok(await page.locator('#natList .kj-newscard:visible').count() > visibleCards);
+        const visible = await page.locator('#natHeadlines .nat-headline:visible').count();
+        const more = page.locator('#natHeadlines + .kj-more button');
+        await more.click();
+        assert.ok(await page.locator('#natHeadlines .nat-headline:visible').count() > visible);
         assert.equal((await readGrid()).columns, grid.columns);
-        await page.locator('#natList + .kj-more button').click();
+        await more.click();
+        assert.equal(await page.locator('#natHeadlines .nat-headline:visible').count(), visible);
       }
       await page.locator('#bigBtn').click();
       assert.equal(await page.locator('#bigBtn [data-big-state]').innerText(), '켬');
