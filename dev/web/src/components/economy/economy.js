@@ -1,26 +1,73 @@
 'use strict';
-// 경제: 핵심 숫자 카드와 최신 공식 숫자 띠
+// 경제: 지표 비교, 선택한 지표의 근거, 최신 공식 숫자 띠
 
 function renderNums() {
   D.nums.slice(0, 4).forEach((m) => {
     const a = el('a', { href: '#economy' });
-    a.append(el('span', {}, m.k), el('b', {}, m.v), el('small', {}, m.d + ' · ' + m.ref));
+    a.append(el('span', {}, m.k), el('b', {}, m.v), el('small', { class: 'news-quick__change' }, m.d), el('small', { class: 'news-quick__base' }, m.src.base));
     $('quickNums').append(a);
   });
-  D.nums.forEach((m) => {
+  const list = $('nums');
+  const metrics = D.nums;
+  const toggles = [];
+  const detail = el('section', { id: 'econDetail', class: 'econ-detail', 'aria-labelledby': 'econDetailTitle', hidden: '' });
+  const header = el('div', { class: 'econ-detail__header' });
+  const title = el('h3', { id: 'econDetailTitle', tabindex: '-1' });
+  const close = el('button', { type: 'button', id: 'econDetailClose', class: 'kj-btn kj-btn--ghost', 'aria-label': '지표 상세 닫기' }, '닫기');
+  const body = el('div', { class: 'econ-detail__body' });
+  header.append(title, close);
+  detail.append(header, body);
+  list.after(detail);
+  let selected = -1;
+
+  const closeDetail = () => {
+    const opener = toggles[selected];
+    if (!opener) return;
+    selected = -1;
+    opener.setAttribute('aria-expanded', 'false');
+    detail.hidden = true;
+    body.replaceChildren();
+    list.dispatchEvent(new Event('economy-detail-change'));
+    const target = opener.closest('[inert]') ? $('econViewport') : opener;
+    target?.focus();
+  };
+  close.addEventListener('click', closeDetail);
+
+  metrics.forEach((m, index) => {
     const t = el('div', { class: 'kj-stat' });
     t.append(el('span', { class: 'kj-stat__k' }, m.k), el('span', { class: 'kj-stat__v' }, m.v));
     const row = el('div', { class: 'kj-stat__row' });
     row.append(el('span', { class: 'kj-dir kj-dir--' + m.dir, 'aria-label': DIR_LABEL[m.dir] + ' ' + m.d }, m.d));
-    const foot = el('div', { class: 'kj-stat__foot' });
-    foot.append(gradeBadge(m.grade), srcDisclosure(m.src, '경제 · ' + m.k));
-    const reference = el('details', { class: 'econ-reference' });
-    reference.append(el('summary', {}, '기준·집계 설명'), el('span', { class: 'kj-stat__ref' }, m.ref));
-    responsiveDisclosure(reference, { wideOpen: true, narrowOpen: false, breakpoint: 900 });
-    t.append(row, el('span', { class: 'econ-base' }, '기준일 · ' + m.src.base), reference, foot);
-    $('nums').append(t);
+    const button = el('button', {
+      class: 'econ-detail-toggle', type: 'button', 'aria-controls': detail.id, 'aria-expanded': 'false', 'aria-label': m.k + ' 기준·출처'
+    }, '기준·출처');
+    button.append(svgIcon('M6 9l6 6 6-6'));
+    button.addEventListener('click', () => {
+      if (selected === index) { closeDetail(); return; }
+      if (selected !== -1) toggles[selected].setAttribute('aria-expanded', 'false');
+      selected = index;
+      button.setAttribute('aria-expanded', 'true');
+      const reference = el('div', { class: 'econ-detail__reference' });
+      reference.append(el('h4', {}, '기준·집계 설명'), el('p', { class: 'kj-stat__ref' }, m.ref));
+      const source = el('div', { class: 'econ-detail__source' });
+      const disclosure = srcDisclosure(m.src, '경제 · ' + m.k);
+      disclosure.open = true;
+      source.append(gradeBadge(m.grade), disclosure);
+      title.textContent = m.k + ' 기준·출처';
+      body.replaceChildren(reference, source);
+      detail.hidden = false;
+      list.dispatchEvent(new Event('economy-detail-change'));
+      title.focus({ preventScroll: true });
+      const bounds = detail.getBoundingClientRect();
+      if (bounds.top < 0 || bounds.top > innerHeight - Math.min(bounds.height, 240)) {
+        title.scrollIntoView({ block: 'start', behavior: 'instant' });
+      }
+    });
+    toggles.push(button);
+    t.append(row, el('span', { class: 'econ-base' }, '기준일 · ' + m.src.base), button);
+    list.append(t);
   });
-  setupEconomyCarousel($('nums'));
+  setupEconomyCarousel(list, detail);
 }
 
 let economySwiperRequest = null;
@@ -52,7 +99,7 @@ function loadEconomySwiper() {
 }
 
 // 초기화에 실패해도 여섯 지표와 출처는 기존 격자 목록으로 남는다
-function setupEconomyCarousel(list) {
+function setupEconomyCarousel(list, detail) {
   const cards = Array.from(list.children);
   if (cards.length < 2 || list.closest('.econ-carousel')) return;
   const shell = el('div', { class: 'econ-carousel', id: 'econCarousel' });
@@ -65,11 +112,11 @@ function setupEconomyCarousel(list) {
     list.dataset.carouselState = 'loading';
     const loaded = await loadEconomySwiper();
     // 늦게 도착한 코드가 이미 읽던 긴 목록을 줄이지 않도록 한다
-    if (!loaded || list.getBoundingClientRect().top < -80 || list.contains(document.activeElement) || list.querySelector('.kj-src[open]')) {
+    if (!loaded || list.getBoundingClientRect().top < -80 || list.contains(document.activeElement) || !detail.hidden) {
       list.dataset.carouselState = 'static';
       return;
     }
-    initEconomyCarousel(shell, viewport, list, cards);
+    initEconomyCarousel(shell, viewport, list, cards, detail);
   };
   if ('IntersectionObserver' in window) {
     const lazy = new IntersectionObserver((entries) => {
@@ -81,7 +128,7 @@ function setupEconomyCarousel(list) {
   } else activate();
 }
 
-function initEconomyCarousel(shell, viewport, list, cards) {
+function initEconomyCarousel(shell, viewport, list, cards, detail) {
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const state = { enabled: !motion.matches, hovered: false, focused: false, visible: false };
   const count = cards.length;
@@ -112,14 +159,10 @@ function initEconomyCarousel(shell, viewport, list, cards) {
     card.setAttribute('role', 'group');
     card.setAttribute('aria-roledescription', '슬라이드');
     card.setAttribute('aria-label', (index + 1) + ' / ' + count + ' · ' + D.nums[index].k);
-    const ref = card.querySelector('.kj-stat__ref');
-    ref.setAttribute('tabindex', '0');
-    ref.setAttribute('role', 'region');
-    ref.setAttribute('aria-label', D.nums[index].k + ' 기준과 집계 설명');
   });
   shell.classList.add('is-ready');
   const visibleCount = () => {
-    const desired = innerWidth >= 1600 ? 4 : innerWidth >= 1100 ? 3 : innerWidth >= 700 ? 2 : innerWidth >= 380 && !document.documentElement.classList.contains('big') ? 1.08 : 1;
+    const desired = innerWidth >= 1350 ? 4 : innerWidth >= 1100 ? 3 : innerWidth >= 700 ? 2 : innerWidth >= 380 && !document.documentElement.classList.contains('big') ? 1.08 : 1;
     return Math.min(count, desired);
   };
   let swiper;
@@ -130,6 +173,7 @@ function initEconomyCarousel(shell, viewport, list, cards) {
       const box = card.getBoundingClientRect();
       const fraction = Math.max(0, Math.min(box.right, bounds.right) - Math.max(box.left, bounds.left)) / Math.max(box.width, 1);
       const visible = fraction > .5;
+      if (!visible && card.contains(document.activeElement)) viewport.focus({ preventScroll: true });
       card.inert = !visible;
       card.setAttribute('aria-hidden', String(!visible));
     });
@@ -137,15 +181,15 @@ function initEconomyCarousel(shell, viewport, list, cards) {
     const locked = swiper.isLocked;
     previous.disabled = locked;
     next.disabled = locked;
-    playback.disabled = locked;
   };
   const syncAutoplay = () => {
     if (!swiper || swiper.destroyed) return;
-    const run = state.enabled && !state.hovered && !state.focused && state.visible && !document.hidden && !swiper.isLocked;
+    const run = state.enabled && !state.hovered && !state.focused && state.visible && !document.hidden && !swiper.isLocked && detail.hidden;
     if (run && !swiper.autoplay.running) swiper.autoplay.start();
     if (!run && swiper.autoplay.running) swiper.autoplay.stop();
     playback.setAttribute('aria-pressed', String(state.enabled));
     playback.textContent = state.enabled ? '자동 넘김 끄기' : '자동 넘김 켜기';
+    playback.disabled = swiper.isLocked || !detail.hidden;
     shell.dataset.autoplay = run ? 'running' : 'paused';
   };
   const stopReading = () => {
@@ -184,8 +228,6 @@ function initEconomyCarousel(shell, viewport, list, cards) {
       card.inert = false;
       ['aria-hidden', 'role', 'aria-roledescription', 'aria-label', 'style'].forEach((attribute) => card.removeAttribute(attribute));
       card.classList.remove('swiper-slide');
-      const ref = card.querySelector('.kj-stat__ref');
-      ['tabindex', 'role', 'aria-label'].forEach((attribute) => ref.removeAttribute(attribute));
       list.append(card);
     });
     list.classList.remove('swiper-wrapper');
@@ -221,7 +263,7 @@ function initEconomyCarousel(shell, viewport, list, cards) {
   shell.addEventListener('focusin', () => { state.focused = true; syncAutoplay(); });
   shell.addEventListener('focusout', (event) => { state.focused = shell.contains(event.relatedTarget); syncAutoplay(); });
   list.addEventListener('pointerdown', stopReading, { passive: true });
-  list.addEventListener('toggle', (event) => { if (event.target.matches('details[open]')) stopReading(); }, true);
+  list.addEventListener('economy-detail-change', () => { if (detail.hidden) syncAutoplay(); else stopReading(); });
   document.addEventListener('visibilitychange', syncAutoplay);
   motion.addEventListener('change', () => { if (motion.matches) state.enabled = false; swiper.params.speed = motion.matches ? 0 : 350; syncAutoplay(); });
   const resize = () => {
