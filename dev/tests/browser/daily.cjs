@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
-const { chromium } = require('playwright');
+const { openBrowser } = require('./browser.cjs');
 const repo = path.resolve(__dirname, '../../..');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'jogan-daily-browser-'));
 const web = path.join(temp, 'web');
@@ -99,7 +99,7 @@ async function check(name, options, run) {
 (async () => {
   try {
     console.log('일일 후보 검사:', actualDraft ? '실제 draft ' + candidate.date : '실제 draft 없음 · 모의 초안 ' + candidate.date + ' (원본 ' + sourceIssue.date + ' 복사)');
-    browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--no-sandbox'] });
+    browser = await openBrowser();
     await check('후보의 실제 날짜·머리기사와 9개 섹션 전체 초기화', {}, async (page) => {
       await candidateReady(page);
       assert.deepEqual(await page.evaluate(() => D), candidate);

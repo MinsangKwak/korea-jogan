@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from check_release import required_checks
 
 ROOT = Path(__file__).resolve().parents[3]
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -109,13 +110,13 @@ def require_checks(payload: dict, ref: str) -> None:
         raise PreparationError("CI 검사 응답이 누락되거나 잘려 전체 결과를 확인할 수 없습니다")
     found = {}
     for item in payload["check_runs"]:
-        if not isinstance(item, dict) or item.get("head_sha") != ref or (item.get("app") or {}).get("slug") != "github-actions":
+        if not isinstance(item, dict) or item.get("head_sha") != ref or not isinstance(item.get("app"), dict) or item["app"].get("slug") != "github-actions":
             continue
         name = item.get("name")
-        if name in ("data", "browser") and isinstance(item.get("id"), int):
+        if name in required_checks(payload, ref) and isinstance(item.get("id"), int):
             if name not in found or item["id"] > found[name]["id"]:
                 found[name] = item
-    for name in ("data", "browser"):
+    for name in required_checks(payload, ref):
         check = found.get(name)
         if not check or check.get("status") != "completed" or check.get("conclusion") != "success":
             raise PreparationError(f"일일 커밋의 {name} CI 성공이 확인되지 않았습니다")

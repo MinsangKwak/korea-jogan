@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium } = require('playwright');
+const { openBrowser } = require('./browser.cjs');
 const web = path.resolve(__dirname, '../../web');
 
 function publishedIndex() {
@@ -104,7 +104,7 @@ async function check(name, options, fn) {
   // 배포 설정의 클라이언트 ID는 비어 있거나 공개 웹 클라이언트 ID 꼴이어야 한다(보안 비밀번호 금지)
   const deployed = /clientId: '([^']*)'/.exec(fs.readFileSync(path.join(web, 'admin/config.js'), 'utf8'))[1];
   assert.ok(deployed === '' || /^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(deployed), deployed);
-  browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--no-sandbox'] });
+  browser = await openBrowser();
   await check('미설정 안내와 공개 발행 현황, 로그인 전 비공개 통계 없음', { noConfig: true }, async ({ page, requests }) => {
     assert.equal(await page.locator('#setup').getAttribute('open'), '');
     assert.equal(await page.locator('#privateData').isVisible(), false);

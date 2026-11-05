@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
-const { chromium } = require('playwright');
+const { openBrowser } = require('./browser.cjs');
 const repo = path.resolve(__dirname, '../../..');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'jogan-security-'));
 const web = path.join(temp, 'web');
@@ -51,7 +51,7 @@ const probe = `
 })();`;
 
 (async () => {
-  const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--no-sandbox'] });
+  const browser = await openBrowser();
   let count = 0;
   try {
     for (const routePath of ['/', '/2026-10-19', '/admin/']) {
