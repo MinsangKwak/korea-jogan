@@ -1,0 +1,40 @@
+name: 전체 검사
+description: 데이터·토큰·Python·커밋·브라우저 검사를 하나의 실행 환경에서 수행
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+        cache-dependency-path: dev/tests/browser/package-lock.json
+    - name: 데이터 검사
+      shell: bash
+      run: python3 dev/pipeline/publish/validate.py
+    - name: 디자인 토큰 CSS 최신 여부
+      shell: bash
+      run: python3 dev/pipeline/build/build_tokens.py --check
+    - name: 스크립트 시험
+      shell: bash
+      run: python3 -m unittest discover -s dev/tests
+    - name: PR 커밋 제목
+      if: github.event_name == 'pull_request'
+      shell: bash
+      env:
+        BASE_BRANCH: ${{ github.base_ref }}
+      run: node dev/tools/check_commit_msg.mjs --range "origin/$BASE_BRANCH..HEAD"
+    - name: 브라우저 검사 도구 설치
+      shell: bash
+      working-directory: dev/tests/browser
+      run: npm ci
+    - name: 실제 사용하는 Chromium Headless Shell 설치
+      shell: bash
+      working-directory: dev/tests/browser
+      run: npx playwright install --with-deps --only-shell chromium
+    - name: 최신·지난 호·관리자·보안·검색·개발·일일 후보 전체 검사
+      shell: bash
+      working-directory: dev/tests/browser
+      run: npm test

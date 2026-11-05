@@ -11,6 +11,11 @@ on:
         description: 배포할 deploy 커밋의 고정 SHA
         required: false
         type: string
+      retry_attempt:
+        description: 자동 재시도 횟수
+        required: false
+        default: '0'
+        type: string
   schedule:
     # 한국 시간 평일 09:17~22:17 매시(UTC 00~13시)
     - cron: "17 0-13 * * 1-5"
@@ -26,6 +31,8 @@ concurrency:
 
 jobs:
   deploy:
+    outputs:
+      source_sha: ${{ steps.source.outputs.sha }}
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/deploy') ||
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/deploy') ||
@@ -114,8 +121,36 @@ jobs:
       - id: deployment
         if: steps.gate.outputs.run == 'true'
         uses: actions/deploy-pages@v4
+      - name: 실제 공개 날짜·호 JSON·홈·빌드 SHA와 시각 확인
+        if: steps.gate.outputs.run == 'true'
+        run: python3 dev/pipeline/publish/verify_publication.py
       # 새 호가 올라갔을 때만 검색엔진에 알린다. 매시 숫자 갱신 배포에서는 보내지 않는다
       - name: 검색엔진에 새 주소 알리기(IndexNow)
         if: steps.gate.outputs.run == 'true' && github.event_name != 'schedule'
         continue-on-error: true
         run: python dev/pipeline/publish/indexnow.py
+
+  retry:
+    needs: deploy
+    if: >-
+      always() && needs.deploy.result == 'failure' && needs.deploy.outputs.source_sha != '' &&
+      (inputs.retry_attempt == '' || inputs.retry_attempt == '0' || inputs.retry_attempt == '1')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SOURCE_SHA: ${{ needs.deploy.outputs.source_sha }}
+      PREVIOUS_ATTEMPT: ${{ inputs.retry_attempt || '0' }}
+    steps:
+      - name: 같은 소스의 배포·검사를 최대 두 번 자동 재시도
+        run: |
+          CURRENT_SHA="$(gh api "repos/$GH_REPO/git/ref/heads/deploy" --jq '.object.sha')"
+          if [ "$CURRENT_SHA" != "$SOURCE_SHA" ]; then
+            echo "새 배포 소스가 있어 이전 소스의 재시도를 중단합니다"
+            exit 0
+          fi
+          NEXT_ATTEMPT="$(( PREVIOUS_ATTEMPT + 1 ))"
+          gh workflow run deploy-pages.yml --ref deploy -f source_sha="$SOURCE_SHA" -f retry_attempt="$NEXT_ATTEMPT"

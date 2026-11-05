@@ -1,60 +1,28 @@
-# dev·main·일일 브랜치에 올라오거나 PR이 열리면 검사한다
 name: 검사
 
 on:
   push:
-    branches: [dev, main, 'daily/**']
+    branches: ['daily/**']
   pull_request:
     branches: [dev, main, deploy]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: 검사할 고정 커밋 SHA
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 jobs:
-  data:
+  verify:
+    name: verify-ci
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: 데이터 검사
-        run: python dev/pipeline/publish/validate.py
-      - name: 디자인 토큰 CSS 최신 여부
-        run: python dev/pipeline/build/build_tokens.py --check
-      - name: 스크립트 시험
-        run: python -m unittest discover -s dev/tests
-
-  commit-msg:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.source_sha || github.sha }}
           fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      # 어긋나면 실패로 표시하되 병합을 막는 필수 검사로 두지는 않는다
-      - name: PR 커밋 제목
-        run: node dev/tools/check_commit_msg.mjs --range "origin/${{ github.base_ref }}..HEAD"
-
-  browser:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: 브라우저 검사 도구 설치
-        working-directory: dev/tests/browser
-        run: npm ci
-      - name: Chromium 설치
-        working-directory: dev/tests/browser
-        run: npx playwright install --with-deps chromium
-      - name: 최신·지난 호와 모바일·오류 화면 검사
-        working-directory: dev/tests/browser
-        run: npm test
+      - uses: ./.github/actions/verify

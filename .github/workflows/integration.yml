@@ -1,0 +1,56 @@
+name: 통합 검사와 자동 승격
+
+on:
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: 자동 동기화한 통합 후보 SHA
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  checks: write
+  statuses: read
+  actions: write
+
+jobs:
+  integration:
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          fetch-depth: 0
+      - id: proof
+        name: 현재 통합 후보의 검사 증거 시작
+        env:
+          REQUESTED_SHA: ${{ inputs.source_sha || github.sha }}
+        run: |
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          REMOTE="$(git ls-remote --exit-code origin "$GITHUB_REF")"
+          if [ "$ACTUAL_SHA" != "$REQUESTED_SHA" ] || [ "$ACTUAL_SHA" != "${REMOTE%%[[:space:]]*}" ]; then
+            echo "검사 대상이 현재 통합 후보와 달라 중단합니다"
+            exit 1
+          fi
+          CHECK_ID="$(gh api "repos/$GH_REPO/check-runs" -f name=verify-ci -f head_sha="$ACTUAL_SHA" -f status=in_progress -f details_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq '.id')"
+          printf 'id=%s\n' "$CHECK_ID" >> "$GITHUB_OUTPUT"
+      - id: verify
+        uses: ./.github/actions/verify
+      - name: 전체 검사 결과를 같은 커밋에 고정
+        if: always() && steps.proof.outputs.id != ''
+        env:
+          CHECK_ID: ${{ steps.proof.outputs.id }}
+          RESULT: ${{ steps.verify.outcome == 'success' && 'success' || 'failure' }}
+        run: |
+          gh api --method PATCH "repos/$GH_REPO/check-runs/$CHECK_ID" -f status=completed -f conclusion="$RESULT" -f 'output[title]=전체 데이터·Python·브라우저 검사' -f 'output[summary]=공통 검사 단계의 모든 필수 명령 결과입니다. 실패·취소·누락은 성공으로 기록하지 않습니다.'
+      - name: 같은 실행 환경에서 태그·승격·배포 요청
+        if: steps.verify.outcome == 'success'
+        run: python3 dev/pipeline/publish/auto_release.py --wait-seconds 300

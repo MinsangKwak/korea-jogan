@@ -4,7 +4,8 @@ name: 아침 발행
 on:
   workflow_dispatch:
   schedule:
-    # 한국 시간 06:07 첫 시도와 06:37·07:17·08:17 재확인
+    # 한국 시간 06:00 자동 발행과 기존 06:07·06:37·07:17·08:17 재확인
+    - cron: "0 21 * * *"
     - cron: "7 21 * * *"
     - cron: "37 21 * * *"
     - cron: "17 22 * * *"
@@ -38,6 +39,11 @@ jobs:
           DATE="$(TZ=Asia/Seoul date +%F)"
           MAIN_SHA="$(git rev-parse HEAD)"
           printf 'date=%s\nmain_sha=%s\n' "$DATE" "$MAIN_SHA" >> "$GITHUB_OUTPUT"
+          if [ "$(TZ=Asia/Seoul date +%H)" -lt 6 ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "06시 발행 시각 전이므로 초안을 공개하지 않습니다"
+            exit 0
+          fi
           STATE="$(python3 - "$DATE" <<'PY'
           import json, sys
           from pathlib import Path
@@ -158,19 +164,13 @@ jobs:
           SOURCE_SHA: ${{ steps.push.outputs.source_sha }}
         run: |
           python3 - "$DATE" "$SOURCE_SHA" <<'PY'
-          import json, os, sys, urllib.request
-          from urllib.parse import urlencode
+          import os, sys
           sys.path.insert(0, "dev/pipeline/publish")
-          from prepare_daily import published_build_matches
+          from verify_publication import check_once
           date, source = sys.argv[1:]
           current = False
           try:
-              def public_json(path):
-                  url = "https://korea-jogan.com/" + path + "?" + urlencode({"source": source})
-                  request = urllib.request.Request(url, headers={"Cache-Control": "no-cache"})
-                  with urllib.request.urlopen(request, timeout=20) as response:
-                      return json.load(response)
-              current = published_build_matches(public_json("data/issues/index.json"), public_json("build-info.json"), date, source)
+              current = check_once(source, date)
           except (OSError, ValueError):
               pass
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
@@ -182,4 +182,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_SHA: ${{ steps.push.outputs.source_sha }}
-        run: gh workflow run deploy-pages.yml --ref deploy -f source_sha="$SOURCE_SHA"
+        run: |
+          python3 - <<'PY'
+          import os, sys
+          sys.path.insert(0, "dev/pipeline/publish")
+          from auto_release import ensure_deployment
+          requested = ensure_deployment(os.environ["SOURCE_SHA"])
+          print("사이트 배포 요청" if requested else "같은 소스의 공개 완료 또는 진행 중인 배포 확인")
+          PY
