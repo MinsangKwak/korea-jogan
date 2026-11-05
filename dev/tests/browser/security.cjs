@@ -28,6 +28,7 @@ pages.build()
 execFileSync('python3', ['-c', buildPublicFixture, path.join(repo, 'dev/pipeline/build'), web]);
 const publicIndex = JSON.parse(fs.readFileSync(path.join(web, 'data/issues/index.json'), 'utf8'));
 const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp' };
+const requiredDirectives = ['script-src-elem', 'script-src-attr', 'script-src', 'connect-src', 'object-src'];
 const probe = `
 (async () => {
   window.securityProbe = {};
@@ -114,14 +115,15 @@ const probe = `
           script.src = '/security-probe.js';
           document.head.append(script);
         });
-        await page.waitForFunction(() => window.securityProbe?.done && window.cspEvents.length >= 5);
+        // 같은 지시어의 중복 이벤트를 완료 조건으로 세지 않고 모든 차단 결과를 기다린다
+        await page.waitForFunction((directives) => window.securityProbe?.done && directives.every((directive) => window.cspEvents.some((event) => event.directive === directive)), requiredDirectives);
         const result = await page.evaluate(() => ({ probe: window.securityProbe, inline: window.unsafeInlineRan, handler: window.unsafeHandlerRan, eval: window.unsafeEvalRan, events: window.cspEvents }));
         assert.equal(result.inline, undefined);
         assert.equal(result.handler, undefined);
         assert.equal(result.eval, undefined);
         assert.equal(result.probe.evalBlocked, true);
         assert.equal(result.probe.connectBlocked, true);
-        for (const directive of ['script-src-elem', 'script-src-attr', 'script-src', 'connect-src', 'object-src']) assert.ok(result.events.some((event) => event.directive === directive), directive + ' 미차단');
+        for (const directive of requiredDirectives) assert.ok(result.events.some((event) => event.directive === directive), directive + ' 미차단');
         console.log('통과: 정상 기능과 CSP 주입 차단 ' + routePath);
         count += 1;
       } finally { await context.close(); }
