@@ -20,6 +20,14 @@ STATUS_API = "https://api.github.com/repos/MinsangKwak/korea-jogan/statuses/"
 REQUIRED_CHECKS = ("data", "browser")
 
 
+def required_checks(payload: dict, sha: str) -> tuple[str, ...]:
+    runs = payload.get("check_runs", []) if isinstance(payload, dict) else []
+    combined = [item for item in runs if isinstance(item, dict) and item.get("name") == "verify-ci"
+                and item.get("head_sha") == sha and isinstance(item.get("app"), dict)
+                and item["app"].get("slug") == "github-actions"]
+    return ("verify-ci",) if combined else REQUIRED_CHECKS
+
+
 def project_url(value: object, team: str = TEAM, project: str = PROJECT) -> bool:
     if not isinstance(value, str) or any(ord(char) <= 32 or ord(char) == 127 for char in value):
         return False
@@ -79,7 +87,7 @@ def check(sha: str, dev_sha: str, checks: dict, statuses: list, team: str = TEAM
         errors.append("검사 응답이 잘렸습니다. 전체 최신 검사 결과가 필요합니다")
     if any(not isinstance(item, dict) or item.get("url") != STATUS_API + sha for item in statuses):
         errors.append("원본 status 주소가 지정 저장소의 요청 커밋과 다릅니다")
-    for name in REQUIRED_CHECKS:
+    for name in required_checks(checks, sha):
         candidates = [item for item in checks["check_runs"] if isinstance(item, dict)
                       and item.get("name") == name and item.get("head_sha") == sha
                       and isinstance(item.get("app"), dict) and item["app"].get("slug") == "github-actions"]
