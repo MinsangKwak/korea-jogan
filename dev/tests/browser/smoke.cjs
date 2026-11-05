@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
-const { chromium } = require('playwright');
+const { openBrowser } = require('./browser.cjs');
 const repo = path.resolve(__dirname, '../../..');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'jogan-browser-'));
 const web = path.join(temp, 'web');
@@ -127,7 +127,7 @@ async function check(name, options, run) {
   } finally { await context.close(); }
 }
 (async () => {
-  browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--no-sandbox'] });
+  browser = await openBrowser();
   for (const width of [320, 360, 390, 430, 768, 900, 1440]) {
     await check('최신 호·전체 폭 ' + width, { width }, async (page) => {
       await page.goto('http://jogan.test/');

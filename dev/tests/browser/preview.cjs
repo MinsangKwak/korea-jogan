@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
-const { chromium } = require('playwright');
+const { openBrowser } = require('./browser.cjs');
 const repo = path.resolve(__dirname, '../../..');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'jogan-preview-browser-'));
 const source = path.join(temp, 'source');
@@ -77,7 +77,7 @@ async function identity(page) {
 
 (async () => {
   try {
-    browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--no-sandbox'] });
+    browser = await openBrowser();
     await check('개발 첫 화면의 초기화·CSP·운영 측정 제외', {}, async ({ page }) => {
       await page.goto(origin + '/');
       await ready(page);

@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
-const { chromium } = require('playwright');
+const { openBrowser } = require('./browser.cjs');
 const repo = path.resolve(__dirname, '../../..');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'jogan-discovery-'));
 const web = path.join(temp, 'web');
@@ -54,7 +54,7 @@ async function check(name, options, run) {
 }
 
 (async () => {
-  browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--no-sandbox'] });
+  browser = await openBrowser();
   try {
     assert.ok(pages.length >= 3, '검색 도착 페이지가 생성되지 않음');
     await check('전체 검색 페이지의 본문·근거가 JavaScript 없이 밝게 읽힘', { javaScriptEnabled: false, dark: true }, async ({ page }) => {
