@@ -4,6 +4,8 @@
 
 [환경과 DNS 안내](environments.md) · [브랜치 절차](branches.md) · [자동화 상태](publish-automation.md) · [이전 검색 개선](changes-2026-11-04-seo.md)
 
+이 문서는 환경 분리 작업 당시 기록입니다. 이후 가비아 CNAME 등록·지면과 브랜드 운영 반영·11/05 첫 실행과 발행 복구는 [최신 변경 기록](changes-2026-11-05.md)과 [환경 안내](environments.md)를 따릅니다. 아래 DNS·첫 실행의 대기 표기는 당시 상태입니다.
+
 ## 확인 상태
 
 | 구분 | 현재 기록 |

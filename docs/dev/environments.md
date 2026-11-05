@@ -51,21 +51,27 @@ flowchart TD
 | 현재 팀 구성 | OWNER 1명 |
 | 첫 실제 배포 | [`f4df437b`](https://vercel.com/minsangkwaks-projects/korea-jogan-dev/EQcoTBWNJtHv8bAjHEn6gwogBsEN) READY, 메타데이터·헤더·인증 경계 확인 |
 | 기본 개발 주소 | [https://korea-jogan-dev-git-dev-minsangkwaks-projects.vercel.app](https://korea-jogan-dev-git-dev-minsangkwaks-projects.vercel.app) · Vercel 로그인 보호 |
-| 개발 도메인 DNS | 현재 NXDOMAIN. 외부 DNS 설정 대기 |
+| 개발 도메인 DNS | 가비아 CNAME 등록 완료. 11/04 Vercel의 도메인·인증서 및 HTTPS 확인 이력 있음. 사용자 네트워크 접속은 별도 확인 |
 
 인증된 연결로 첫 배포의 `preview-build.json`을 HTTP 200으로 읽어 `dev`·해당 SHA·2026-11-04호·17개 호와 검색 제외·비공개 캐시 헤더를 대조했습니다. 비로그인 첫 화면·색인 JSON·측정 스크립트·메타데이터는 모두 로그인으로 HTTP 302 이동했습니다.
 
 Vercel 로그인과 이 프로젝트 접근 권한은 같은 뜻이 아닙니다. 현재 OWNER 1명이 확인됐으며 다른 검토자에게 보여 주려면 실제 팀·공유 권한을 별도로 확인합니다. 프로젝트를 만든 사실만으로 외부 검토자의 접근을 보장하지 않습니다.
 
-## 개발 도메인 연결: 운영자가 할 일
+## 개발 도메인 연결과 접속 확인
 
-도메인 DNS는 Gabia에서 관리됩니다. 아래 레코드를 추가한 뒤 Vercel의 도메인 확인과 실제 HTTPS 접근을 점검합니다.
+도메인 DNS는 Gabia에서 관리됩니다. 2026.11.04 사용자가 등록한 값은 아래와 같습니다. 등록을 다시 요청하거나 같은 호스트의 레코드를 중복 추가하지 않습니다.
 
 | 설정 위치 | 종류 | 호스트 | 값 | TTL |
 | --- | --- | --- | --- | --- |
-| Gabia DNS | `CNAME` | `dev` | `cname.vercel-dns.com.` | 기본값 |
+| Gabia DNS | `CNAME` | `dev` | `7e4c24757c5a10ba.vercel-dns-017.com.` | `600` |
 
-루트 `korea-jogan.com`의 기존 A 레코드는 유지합니다. DNS를 저장한 뒤에도 캐시·전파와 인증서 준비에 따라 접속 시점이 달라질 수 있습니다. 기본 Vercel 주소의 HTTPS·보호 경계는 확인했으며, `dev.korea-jogan.com`의 DNS·HTTPS 연결은 아직 완료되지 않았습니다.
+루트 `korea-jogan.com`의 기존 A 레코드는 유지합니다. 위 값은 등록 당시 Vercel 권장값이며 일반 대안인 `cname.vercel-dns.com.`을 추가 레코드로 함께 넣지 않습니다. 배포마다 바뀌는 고유 URL과 달리 개발 별칭·브랜치 도메인은 계속 사용합니다.
+
+11/04 Vercel에서 도메인 설정·인증서를 확인하고 HTTPS 응답을 확인한 이력이 있습니다. 이후 사용자 PC에서는 `NXDOMAIN`이 이어졌으므로 사용자 네트워크의 접속 완료까지 확인했다고 적지 않습니다. 현재 네트워크와 다른 DNS의 응답을 비교하고, 모바일 데이터에서도 확인합니다. 개발 검토에는 [보호된 Vercel 별칭](https://korea-jogan-dev-git-dev-minsangkwaks-projects.vercel.app/)을 사용할 수 있습니다.
+
+## 2026.11.05 운영 확인 기준
+
+지면·브랜드 개편은 11/04 `33efeb0`으로 운영 반영됐습니다. 11/05에는 안정 코드에서 관리자 보안 검사를 고친 뒤 오늘 호를 발행한 `d5b493a`의 Pages 성공과 공개 `build-info.json`의 같은 SHA·호 날짜를 확인했습니다. `dev`와 일일 발행 후 운영 SHA가 다른 것은 역할 분리의 결과이며, 다음 코드 승격 전 안정 이력을 포함해야 합니다. [오늘 복구·배포 근거](changes-2026-11-05.md)
 
 ## 미리보기에서 확인할 것
 
