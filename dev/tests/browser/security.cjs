@@ -10,7 +10,23 @@ const repo = path.resolve(__dirname, '../../..');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'jogan-security-'));
 const web = path.join(temp, 'web');
 fs.cpSync(path.join(repo, 'dev/web'), web, { recursive: true });
-execFileSync('python3', ['-c', 'import sys;from pathlib import Path;sys.path.insert(0,sys.argv[1]);import build_pages as b;b.PUBLIC=Path(sys.argv[2]);b.ISSUES=b.PUBLIC/"data/issues";b.build()', path.join(repo, 'dev/pipeline/build'), web]);
+const buildPublicFixture = `
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, sys.argv[1])
+import build_pages as pages
+
+pages.PUBLIC = Path(sys.argv[2])
+pages.ISSUES = pages.PUBLIC / "data/issues"
+public_issues = pages.published()
+(pages.ISSUES / "index.json").write_text(json.dumps(pages.published_index(public_issues)), encoding="utf-8")
+pages.build()
+`;
+// 관리자가 직접 읽는 JSON 색인도 공개용 HTML과 같은 호를 가리킨다
+execFileSync('python3', ['-c', buildPublicFixture, path.join(repo, 'dev/pipeline/build'), web]);
+const publicIndex = JSON.parse(fs.readFileSync(path.join(web, 'data/issues/index.json'), 'utf8'));
 const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp' };
 const probe = `
 (async () => {
@@ -66,6 +82,7 @@ const probe = `
         await page.goto('http://jogan.test' + routePath);
         if (routePath.startsWith('/admin')) {
           await page.locator('#publishData').waitFor({ state: 'visible' });
+          assert.equal(await page.locator('#latestIssue').textContent(), publicIndex.latest);
           await page.waitForFunction(() => !!window.gsiSecurityLoaded);
           await page.evaluate(async () => {
             await fetch('https://analyticsdata.googleapis.com/v1beta/properties/1:batchRunReports');
