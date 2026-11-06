@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#x27;self&#x27;; base-uri &#x27;none&#x27;; object-src &#x27;none&#x27;; script-src &#x27;self&#x27; &#x27;sha256-Qdinrw/DhMZqJX33brQgCbze8QhJ8S95Kagf3Du8gRY=&#x27; https://accounts.google.com/gsi/client; script-src-attr &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src &#x27;self&#x27; https://fonts.gstatic.com; img-src &#x27;self&#x27; data:; connect-src &#x27;self&#x27; https://accounts.google.com/gsi/ https://analyticsdata.googleapis.com https://oauth2.googleapis.com/revoke; frame-src https://accounts.google.com/gsi/; form-action &#x27;self&#x27; https://oauth2.googleapis.com/revoke; manifest-src &#x27;self&#x27;; worker-src &#x27;none&#x27;">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;self&#x27;; base-uri &#x27;none&#x27;; object-src &#x27;none&#x27;; script-src &#x27;self&#x27; &#x27;sha256-Qdinrw/DhMZqJX33brQgCbze8QhJ8S95Kagf3Du8gRY=&#x27; https://accounts.google.com/gsi/client; script-src-attr &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src &#x27;self&#x27; https://fonts.gstatic.com; img-src &#x27;self&#x27; data:; connect-src &#x27;self&#x27; https://accounts.google.com/gsi/ https://analyticsdata.googleapis.com https://oauth2.googleapis.com/revoke https://www.googleapis.com/webmasters/v3/ https://searchconsole.googleapis.com/v1/; frame-src https://accounts.google.com/gsi/; form-action &#x27;self&#x27; https://oauth2.googleapis.com/revoke; manifest-src &#x27;self&#x27;; worker-src &#x27;none&#x27;">
 <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
@@ -47,7 +47,7 @@
 
     <section class="admin-auth" aria-labelledby="authTitle">
       <div><h2 id="authTitle">Google 계정으로 통계 연결</h2><p id="authMessage" role="status">대한민국 조간 GA4 속성의 조회 권한이 있는 계정이 필요합니다.</p></div>
-      <div class="admin-actions"><button type="button" class="kj-btn kj-btn--primary" id="connect">Google 계정으로 연결</button><button type="button" class="kj-btn kj-btn--secondary" id="disconnect" hidden>연결 해제</button></div>
+      <div class="admin-actions"><button type="button" class="kj-btn kj-btn--primary" id="connect">Google 계정으로 연결</button><button type="button" class="kj-btn kj-btn--secondary" id="disconnect" hidden>Google 연결 해제</button></div>
     </section>
     <details id="setup" class="admin-setup">
       <summary>처음 연결하는 경우 · Google OAuth 설정</summary>
@@ -60,7 +60,7 @@
         <p id="configError" class="admin-error" role="alert"></p>
       </form>
     </details>
-    <noscript><p class="admin-error">통계를 보려면 JavaScript를 사용 설정해 주세요. 위의 GA4 열기로도 확인할 수 있습니다.</p></noscript>
+    <noscript><p class="admin-error">통계와 운영 도구를 사용하려면 JavaScript를 사용 설정해 주세요. 위의 GA4 열기로도 통계를 확인할 수 있습니다.</p></noscript>
 
 
 
@@ -120,6 +120,35 @@
         <p class="admin-muted" id="acquisitionNote">상위 10개 기준입니다. 방문자 수는 여러 항목에 겹칠 수 있어 합산하지 않습니다.</p>
       </section>
     </div>
+
+    <section class="admin-section" aria-labelledby="searchTitle">
+      <div class="admin-section-head"><div><p class="admin-eyebrow">Google 검색 실적</p><h2 id="searchTitle">검색에서 발견되고 있나요</h2></div><span class="kj-badge kj-badge--muted" id="searchState">연결 전</span></div>
+      <p class="admin-muted" id="searchMessage" role="status">Search Console 조회 권한이 있는 계정으로 연결하면 검색어·페이지별 노출과 클릭, Google의 색인 기록을 확인할 수 있습니다. GA4와 별도로 읽기 권한을 요청합니다.</p>
+      <div class="admin-actions"><button class="kj-btn kj-btn--primary" id="searchConnect" type="button" disabled>Google 검색 연결</button><button class="kj-btn kj-btn--secondary" id="searchRefresh" type="button" disabled>검색 새로고침</button><button class="kj-btn kj-btn--secondary" id="searchDisconnect" type="button" hidden disabled>Google 연결 해제</button><a id="searchConsoleLink" href="https://search.google.com/search-console?resource_id=https%3A%2F%2Fkorea-jogan.com%2F" target="_blank" rel="noopener">Search Console 열기 ↗</a></div>
+      <div class="admin-actions admin-search-filters">
+        <label class="admin-period" for="searchDays">검색 기간 <select id="searchDays"><option value="7">7일 · 3일 전까지</option><option value="28" selected>28일 · 3일 전까지</option></select></label>
+        <label class="admin-period" for="searchCountry">국가 <select id="searchCountry"><option value="all">전체 국가</option><option value="kor">대한민국</option></select></label>
+      </div>
+      <p class="admin-error" id="searchError" role="status"></p>
+      <div id="searchData" hidden>
+        <p class="admin-muted"><code id="searchProperty"></code><br><span id="searchRange"></span></p>
+        <div class="admin-summary"><div class="admin-stat"><span>검색 클릭</span><strong id="searchClicks">—</strong></div><div class="admin-stat"><span>검색 노출</span><strong id="searchImpressions">—</strong></div><div class="admin-stat"><span>클릭률</span><strong id="searchCtr">—</strong></div><div class="admin-stat"><span>평균 게재순위</span><strong id="searchPosition">—</strong></div></div>
+        <p class="admin-muted" id="searchTableHelp">좁은 화면에서는 표를 좌우로 움직여 클릭·노출 수치를 확인하세요.</p>
+        <div class="admin-grid admin-grid--search">
+          <article class="admin-panel"><h3>어떤 검색어로 발견됐나요</h3><p class="admin-muted">클릭 기준 상위 10개 · 이름이 생략된 검색어는 표에 포함되지 않을 수 있습니다.</p><div class="admin-table-scroll admin-table-scroll--search" id="searchQueries" tabindex="0" role="region" aria-label="검색어별 실적 표" aria-describedby="searchTableHelp"></div></article>
+          <article class="admin-panel"><h3>어떤 페이지가 검색됐나요</h3><p class="admin-muted">클릭 기준 상위 10개 · 표의 행을 더해 전체 요약으로 사용하지 않습니다.</p><div class="admin-table-scroll admin-table-scroll--search" id="searchPages" tabindex="0" role="region" aria-label="검색 페이지별 실적 표" aria-describedby="searchTableHelp"></div></article>
+        </div>
+        <p class="admin-muted" id="searchSitemap"></p>
+        <article class="admin-panel">
+          <h3>대표 페이지의 Google 색인 기록</h3>
+          <p class="admin-muted">Google에 기록된 수집·대표 주소 상태를 읽습니다. 현재 페이지를 새로 수집하거나 검색 등록을 요청하는 기능은 아닙니다.</p>
+          <div class="admin-field"><label for="searchTarget">확인할 페이지</label><select id="searchTarget"><option value="https://korea-jogan.com/">첫 화면</option><option value="https://korea-jogan.com/topics/">이슈 목록</option><option value="https://korea-jogan.com/topics/muan-airport/">무안공항 참사 기록</option><option value="https://korea-jogan.com/indicators/">경제 지표 목록</option><option value="https://korea-jogan.com/indicators/usd-krw/">원·달러 환율 기록</option></select></div>
+          <button class="kj-btn kj-btn--secondary admin-search-inspect" id="searchInspect" type="button" disabled>Google 색인 기록 조회</button>
+          <p class="admin-muted" id="searchInspectMessage" role="status"></p><dl class="admin-inspect-data" id="searchInspectData"></dl>
+        </article>
+      </div>
+      <details class="admin-setup"><summary>검색 연결에 필요한 설정</summary><p>기존 OAuth 클라이언트를 사용하며 Google Cloud에서 <a href="https://console.cloud.google.com/apis/library/searchconsole.googleapis.com" target="_blank" rel="noopener">Search Console API</a>를 사용 설정해야 합니다. 해당 Google 계정에도 korea-jogan.com 속성의 조회 권한이 필요합니다. Google 연결 해제는 이 화면의 검색·GA4 연결을 모두 정리합니다.</p><p>검색은 미국 태평양 시간과 Google 확정 자료를 사용하고 처리 지연을 고려해 3일 전까지 조회합니다. GA4의 하루 수치와 직접 일치시키지 않습니다. 노출이나 클릭이 0건이라는 이유만으로 색인이 안 됐다고 판단하지 않습니다.</p></details>
+    </section>
 
     <section class="admin-section" aria-labelledby="campaignToolsTitle">
       <div class="admin-section-head"><div><p class="admin-eyebrow">주제별 소개</p><h2 id="campaignToolsTitle">홍보 글과 추적 링크 만들기</h2></div></div>

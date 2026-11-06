@@ -39,6 +39,14 @@
 .admin-field textarea { resize: none; min-height: 16rem; line-height: 1.6; }
 .admin-campaign-output { display: grid; gap: var(--space-4); margin-top: var(--space-6); }
 .admin-copy-status { min-height: 1.5em; margin-block: 0; }
+.admin-search-filters { margin-top: var(--space-4); }
+.admin-grid--search { grid-template-columns: minmax(0, 1fr); }
+.admin-table-scroll--search .admin-table { min-width: 38rem; }
+.admin-search-inspect { margin-top: var(--space-4); }
+.admin-inspect-data { margin-bottom: 0; overflow-wrap: anywhere; }
+.admin-inspect-data > div { padding-block: var(--space-2); border-bottom: 1px solid var(--line); }
+.admin-inspect-data dt { color: var(--ink-3); font-size: 0.85rem; }
+.admin-inspect-data dd { margin: var(--space-1) 0 0; }
 .admin-section { margin-top: var(--space-10); border-top: var(--border-rule) solid var(--ink); padding-top: var(--space-6); }
 .admin-section-head { margin-bottom: var(--space-6); }
 .admin-section-head h2 { margin: var(--space-1) 0 0; font-size: 1.5rem; }

@@ -14,11 +14,13 @@ function publishedIndex() {
 const clientId = '123456789-test.apps.googleusercontent.com';
 const storageKey = 'jogan.admin.oauth-client-id';
 const scope = 'https://www.googleapis.com/auth/analytics.readonly';
+const searchScope = 'https://www.googleapis.com/auth/webmasters.readonly';
 const gis = `window.google={accounts:{oauth2:{initTokenClient(options){return {requestAccessToken(){
-  window.testAuth=()=>options.callback({access_token:'test-only-token',expires_in:3600,scope:'${scope}'});
+  window.testScope=options.scope;
+  window.testAuth=(overrides={})=>options.callback({access_token:'test-only-token',expires_in:3600,scope:options.scope,...overrides});
   window.testDeny=()=>options.callback({error:'access_denied'});
   window.testPopup=()=>options.error_callback({type:'popup_closed'});
-}}},hasGrantedAllScopes:()=>true,revoke:()=>{window.testRevoked=true}}}};`;
+}}},hasGrantedAllScopes:(result,...scopes)=>scopes.every(scope=>(result.scope||'').split(' ').includes(scope)),revoke:()=>{window.testRevoked=true}}}};`;
 const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json' };
 let browser;
 let count = 0;
@@ -49,7 +51,8 @@ async function fixture(options = {}) {
   const page = await context.newPage();
   const errors = [];
   const requests = [];
-  const state = { error: options.error, empty: options.empty, trendRows: options.trendRows, threshold: options.threshold, hang: false, delay: false, batchError: false };
+  const searchRequests = [];
+  const state = { error: options.error, empty: options.empty, trendRows: options.trendRows, threshold: options.threshold, hang: false, delay: false, batchError: false, noSite: options.noSite, searchError: options.searchError, searchEmpty: false, searchDelay: false };
   page.on('pageerror', (error) => errors.push(error.message));
   await page.route('**/*', async (route) => {
     const url = new URL(route.request().url());
@@ -72,6 +75,22 @@ async function fixture(options = {}) {
       assert.ok(url.pathname.endsWith(':batchRunReports'));
       return route.fulfill({ json: { reports: body.requests.map((item) => (state.empty ? {} : fake(item, state))) } });
     }
+    if (url.hostname === 'www.googleapis.com' || url.hostname === 'searchconsole.googleapis.com') {
+      searchRequests.push(route.request());
+      assert.equal(route.request().headers().authorization, 'Bearer test-only-token');
+      if (state.searchDelay) await new Promise((resolve) => setTimeout(resolve, 200));
+      if (state.searchError) return route.fulfill({ status: state.searchError, json: { error: { status: 'ERROR' } } });
+      if (url.pathname === '/webmasters/v3/sites') return route.fulfill({ json: { siteEntry: state.noSite ? [{ siteUrl: 'https://other.test/', permissionLevel: 'siteOwner' }] : [{ siteUrl: 'https://korea-jogan.com/', permissionLevel: 'siteFullUser' }] } });
+      if (url.pathname.endsWith('/sitemaps')) return route.fulfill({ json: { sitemap: [{ path: 'https://korea-jogan.com/sitemap.xml', errors: '0', warnings: '0' }] } });
+      assert.equal(route.request().method(), 'POST');
+      const body = route.request().postDataJSON();
+      if (url.pathname.endsWith('/searchAnalytics/query')) {
+        const keys = { query: ['환율 기준일 <img src=x onerror=alert(1)>'], page: ['https://korea-jogan.com/indicators/usd-krw/'], date: [body.endDate] }[body.dimensions[0]];
+        return route.fulfill({ json: state.searchEmpty ? {} : { rows: [{ ...(keys ? { keys } : {}), clicks: 3, impressions: 100, ctr: 0.03, position: 8.5 }] } });
+      }
+      assert.equal(url.pathname, '/v1/urlInspection/index:inspect');
+      return route.fulfill({ json: { inspectionResult: { indexStatusResult: { verdict: 'PASS', coverageState: '색인에 등록됨', googleCanonical: body.inspectionUrl, userCanonical: body.inspectionUrl, lastCrawlTime: '2026-11-01T00:00:00Z' } } } });
+    }
     if (url.hostname !== 'jogan.test') return route.abort();
     if (options.publishFailed && url.pathname === '/data/issues/index.json') return route.fulfill({ status: 404, body: '' });
     // 배포용 기본 클라이언트 ID와 상관없이 미설정 상태부터 검사한다
@@ -83,7 +102,7 @@ async function fixture(options = {}) {
     catch { return route.fulfill({ status: 404, body: '' }); }
   });
   await page.goto('http://jogan.test/admin/');
-  return { context, page, errors, requests, state };
+  return { context, page, errors, requests, searchRequests, state };
 }
 
 async function connect(page) {
@@ -94,6 +113,13 @@ async function connect(page) {
 
 async function settled(page) {
   await page.waitForFunction(() => !document.getElementById('refresh').disabled);
+}
+
+async function connectSearch(page) {
+  await page.waitForFunction(() => !!window.google?.accounts?.oauth2);
+  await page.locator('#searchConnect').click();
+  await page.evaluate(() => window.testAuth());
+  await page.waitForFunction(() => !document.getElementById('searchRefresh').disabled || !document.getElementById('searchConnect').disabled);
 }
 
 async function check(name, options, fn) {
@@ -111,6 +137,122 @@ async function check(name, options, fn) {
   const deployed = /clientId: '([^']*)'/.exec(fs.readFileSync(path.join(web, 'admin/config.js'), 'utf8'))[1];
   assert.ok(deployed === '' || /^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(deployed), deployed);
   browser = await openBrowser();
+  await check('검색 읽기 권한과 태평양 날짜·국가 필터·모바일 표', { width: 320 }, async ({ page, searchRequests, requests }) => {
+    assert.equal(searchRequests.length, 0);
+    assert.equal(await page.locator('#searchData').isVisible(), false);
+    await connectSearch(page);
+    assert.equal(await page.evaluate(() => window.testScope), searchScope);
+    assert.equal(requests.length, 0);
+    assert.equal(await page.locator('#searchClicks').innerText(), '3');
+    assert.equal(await page.locator('#searchImpressions').innerText(), '100');
+    assert.equal(await page.locator('#searchCtr').innerText(), '3%');
+    assert.equal(await page.locator('#searchPosition').innerText(), '8.5');
+    assert.equal(await page.locator('#searchQueries img').count(), 0);
+    assert.match(await page.locator('#searchQueries').innerText(), /환율 기준일 <img/);
+    assert.match(await page.locator('#searchSitemap').innerText(), /오류 0건/);
+    assert.ok(await page.locator('#searchQueries').evaluate((element) => element.scrollWidth > element.clientWidth));
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth));
+    await page.locator('#searchDays').selectOption('7');
+    await page.waitForFunction(() => document.getElementById('searchState').textContent === '조회 완료');
+    await page.locator('#searchCountry').selectOption('kor');
+    await page.waitForFunction(() => document.getElementById('searchState').textContent === '조회 완료');
+    const reports = searchRequests.filter((item) => item.url().endsWith('/searchAnalytics/query')).slice(-4).map((item) => item.postDataJSON());
+    assert.equal(reports.length, 4);
+    assert.ok(reports.every((body) => body.type === 'web' && body.dataState === 'final'));
+    assert.ok(reports.every((body) => (new Date(body.endDate) - new Date(body.startDate)) / 86400000 === 6));
+    assert.ok(reports.every((body) => body.dimensionFilterGroups[0].filters[0].expression === '^https://korea-jogan[.]com/'));
+    assert.ok(reports.every((body) => body.dimensionFilterGroups[0].filters[1].expression === 'kor'));
+    assert.match(await page.locator('#searchRange').innerText(), /미국 태평양 시간.*노출 기록 1일/);
+    if (process.env.SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, 'admin-search-mobile.png'), fullPage: true });
+  });
+  await check('검색 속성 권한이 없어도 GA4 조회 결과 유지', { noSite: true }, async ({ page, searchRequests }) => {
+    await connect(page); await settled(page);
+    await connectSearch(page);
+    assert.match(await page.locator('#searchMessage').innerText(), /조회 권한이 없습니다/);
+    assert.equal(await page.locator('#searchData').isVisible(), false);
+    assert.equal(await page.locator('#todayUsers').innerText(), '4');
+    assert.equal(searchRequests.length, 1);
+  });
+  await check('검색 API 설정·권한 오류의 안내와 재연결', { searchError: 403 }, async ({ page, state }) => {
+    await connectSearch(page);
+    assert.match(await page.locator('#searchMessage').innerText(), /API 사용 설정.*조회 권한/);
+    assert.equal(await page.locator('#searchData').isVisible(), false);
+    state.searchError = 0;
+    await connectSearch(page);
+    assert.equal(await page.locator('#searchClicks').innerText(), '3');
+  });
+  await check('검색 0건·서버 오류·필터 교체의 결과 구분', {}, async ({ page, state }) => {
+    await connectSearch(page);
+    state.searchError = 500;
+    await page.locator('#searchRefresh').click();
+    await page.waitForFunction(() => document.getElementById('searchState').textContent === '조회 실패');
+    assert.equal(await page.locator('#searchClicks').innerText(), '3');
+    assert.match(await page.locator('#searchError').innerText(), /마지막 조회 결과/);
+    await page.locator('#searchDays').selectOption('7');
+    await page.waitForFunction(() => document.getElementById('searchState').textContent === '조회 실패');
+    assert.equal(await page.locator('#searchData').isVisible(), false);
+    assert.equal(await page.locator('#searchClicks').innerText(), '—');
+    state.searchError = 0; state.searchEmpty = true;
+    await page.locator('#searchRefresh').click();
+    await page.waitForFunction(() => document.getElementById('searchState').textContent === '조회 완료');
+    assert.equal(await page.locator('#searchClicks').innerText(), '0');
+    assert.equal(await page.locator('#searchImpressions').innerText(), '0');
+    assert.equal(await page.locator('#searchPosition').innerText(), '—');
+    assert.match(await page.locator('#searchQueries').innerText(), /집계된 데이터가 없습니다/);
+  });
+  await check('색인 조회 대상이 바뀌면 이전 응답을 폐기', {}, async ({ page, state, searchRequests }) => {
+    await connectSearch(page);
+    state.searchDelay = true;
+    await page.locator('#searchInspect').click();
+    await page.locator('#searchTarget').selectOption('https://korea-jogan.com/indicators/usd-krw/');
+    await page.waitForTimeout(250);
+    assert.equal(await page.locator('#searchInspectData').innerText(), '');
+    state.searchDelay = false;
+    await page.locator('#searchInspect').click();
+    await page.waitForFunction(() => document.getElementById('searchInspectMessage').textContent.includes('통과'));
+    assert.match(await page.locator('#searchInspectData').innerText(), /https:\/\/korea-jogan.com\/indicators\/usd-krw\//);
+    assert.equal(searchRequests.at(-1).postDataJSON().inspectionUrl, 'https://korea-jogan.com/indicators/usd-krw/');
+    assert.equal(searchRequests.at(-1).postDataJSON().languageCode, 'ko-KR');
+  });
+  await check('Google 연결 해제 시 검색·GA4 자료와 늦은 응답 정리', {}, async ({ page, state }) => {
+    await connect(page); await settled(page); await connectSearch(page);
+    state.searchDelay = true;
+    await page.locator('#searchRefresh').click();
+    await page.locator('#disconnect').click();
+    await page.waitForTimeout(250);
+    assert.equal(await page.locator('#searchData').isVisible(), false);
+    assert.equal(await page.locator('#searchQueries').innerText(), '');
+    assert.equal(await page.locator('#privateData').isVisible(), false);
+    assert.equal(await page.locator('#searchConnect').isEnabled(), true);
+    assert.equal(await page.evaluate(() => window.testRevoked), true);
+    const data = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage } }));
+    assert.deepEqual(data.local, { [storageKey]: clientId, 'kj-internal': '1' });
+    assert.deepEqual(data.session, {});
+  });
+  await check('검색 인증 팝업 종료·미동의·잘못된 범위는 조회하지 않음', {}, async ({ page, searchRequests }) => {
+    await page.waitForFunction(() => !!window.google?.accounts?.oauth2);
+    for (const action of ['popup', 'deny', 'scope']) {
+      await page.locator('#searchConnect').click();
+      await page.evaluate((action) => action === 'scope' ? window.testAuth({ scope: '' }) : action === 'deny' ? window.testDeny() : window.testPopup(), action);
+      assert.equal(await page.locator('#searchConnect').isEnabled(), true);
+      assert.equal(await page.locator('#searchData').isVisible(), false);
+    }
+    assert.equal(searchRequests.length, 0);
+    await connectSearch(page);
+    assert.equal(await page.locator('#searchClicks').innerText(), '3');
+  });
+  await check('검색 날짜의 월 경계와 허용 대상 밖 주소 차단', {}, async ({ page, searchRequests }) => {
+    const data = await page.evaluate(async () => {
+      const api = await import('/admin/search-api.js');
+      const range = api.searchRange(7, new Date('2026-03-01T02:00:00Z'));
+      let invalid = false;
+      try { await api.inspectSearchUrl('test-only-token', 'https://korea-jogan.com/', 'https://other.test/'); }
+      catch (error) { invalid = error.code === 'INVALID_TARGET'; }
+      return { range, invalid };
+    });
+    assert.deepEqual(data, { range: { startDate: '2026-02-19', endDate: '2026-02-25' }, invalid: true });
+    assert.equal(searchRequests.length, 0);
+  });
   await check('로그인 없이 주제별 소개와 채널별 추적 링크 생성', { noConfig: true, width: 320 }, async ({ page, requests }) => {
     await page.locator('#campaignUrl').waitFor();
     await page.waitForFunction(() => document.getElementById('campaignUrl').value.includes('utm_source='));
