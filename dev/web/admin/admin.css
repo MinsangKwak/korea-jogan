@@ -28,6 +28,17 @@
 .admin-config-row input { min-width: 0; flex: 1 1 22rem; max-width: 36rem; padding: var(--space-3); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--bg); }
 .admin-error { color: var(--danger); font-size: 0.9rem; }
 .admin-error:empty { display: none; }
+.admin-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.admin-field { min-width: 0; }
+.admin-field label { display: block; margin-bottom: var(--space-2); font-size: 0.9rem; font-weight: 700; }
+.admin-field :is(input, select, textarea) { display: block; box-sizing: border-box; width: 100%; min-height: var(--tap-min); padding: var(--space-3); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); font: inherit; }
+.admin-field select { cursor: pointer; }
+.admin-field select:hover { border-color: var(--brand); }
+.admin-field :is(input, select, textarea):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.admin-field [aria-invalid="true"] { border-color: var(--danger); }
+.admin-field textarea { resize: none; min-height: 16rem; line-height: 1.6; }
+.admin-campaign-output { display: grid; gap: var(--space-4); margin-top: var(--space-6); }
+.admin-copy-status { min-height: 1.5em; margin-block: 0; }
 .admin-section { margin-top: var(--space-10); border-top: var(--border-rule) solid var(--ink); padding-top: var(--space-6); }
 .admin-section-head { margin-bottom: var(--space-6); }
 .admin-section-head h2 { margin: var(--space-1) 0 0; font-size: 1.5rem; }
@@ -96,6 +107,7 @@
   .admin-kpis > :nth-child(n + 3) { border-top: 1px solid var(--line); }
 }
 @media (max-width: 760px) {
+  .admin-field-grid { grid-template-columns: minmax(0, 1fr); }
   .admin-main { padding-top: var(--space-6); }
   .admin-kpis strong { font-size: 2rem; }
   .admin-panel { padding: var(--space-4); }
