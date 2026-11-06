@@ -63,6 +63,7 @@ def policy(page: str, admin: bool = False) -> str:
         script_sources += ["https://accounts.google.com/gsi/client"]
         styles += ["https://accounts.google.com/gsi/style"]
         connections += ["https://accounts.google.com/gsi/", "https://analyticsdata.googleapis.com", "https://oauth2.googleapis.com/revoke"]
+        connections += ["https://www.googleapis.com/webmasters/v3/", "https://searchconsole.googleapis.com/v1/"]
         frames = ["https://accounts.google.com/gsi/"]
         forms += ["https://oauth2.googleapis.com/revoke"]
     else:
