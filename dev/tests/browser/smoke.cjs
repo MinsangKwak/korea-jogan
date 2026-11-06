@@ -17,11 +17,14 @@ const embedded = (id) => JSON.parse(fs.readFileSync(path.join(web, 'index.html')
 const index = embedded('issue-index');
 const latestPath = '/data/issues/' + index.latest + '.json';
 const latest = JSON.parse(fs.readFileSync(path.join(web, latestPath)));
+// 발행일의 지표 수와 무관하게 PC 순환·자동 넘김을 계속 검사할 6개 모의 지표
+const carouselMetrics = Array.from({ length: 6 }, (_, index) => ({ ...structuredClone(latest.nums[index % latest.nums.length]), k: '검사 지표 ' + (index + 1) }));
 const trackers = JSON.parse(fs.readFileSync(path.join(web, 'data/trackers.json'), 'utf8'));
 const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.ico': 'image/x-icon' };
 let browser;
 let checks = 0;
 async function pageFor(options = {}) {
+  const transformIssue = options.transformIssue || options.bad;
   const context = await browser.newContext({ viewport: { width: options.width || 390, height: options.height || 844 }, reducedMotion: 'reduce', colorScheme: options.dark ? 'dark' : 'light' });
   // 측정은 자동화 브라우저에서 꺼지므로, 사람 브라우저처럼 보이게 한 뒤 시험한다. automation 옵션이면 그대로 둔다
   if (!options.automation) await context.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
@@ -39,9 +42,9 @@ async function pageFor(options = {}) {
     if (url.pathname === '/data/issues/index.json') return route.fulfill({ json: index });
     if (options.hung && url.pathname === latestPath) return;
     if (options.missing && url.pathname === latestPath) return route.fulfill({ status: 404, body: '' });
-    if (options.bad && url.pathname === latestPath) {
+    if (transformIssue && url.pathname === latestPath) {
       const data = structuredClone(latest);
-      options.bad(data);
+      transformIssue(data);
       return route.fulfill({ json: data });
     }
     if (options.badLive && url.pathname === '/data/live.json') return route.fulfill({ json: { updatedAt: 'bad', items: [{}] } });
@@ -53,9 +56,9 @@ async function pageFor(options = {}) {
       if (path.extname(file) === '.html') {
         body = body.toString();
         if (options.missing || options.delay || options.hung) body = body.replace(/(<script type="application\/json" id="issue-(?:data|index)">).*?(<\/script>)/gs, '$1null$2');
-        if (options.bad) body = body.replace(/(<script type="application\/json" id="issue-data">)(.*?)(<\/script>)/s, (_all, open, json, close) => {
+        if (transformIssue) body = body.replace(/(<script type="application\/json" id="issue-data">)(.*?)(<\/script>)/s, (_all, open, json, close) => {
           const data = JSON.parse(json);
-          options.bad(data);
+          transformIssue(data);
           return open + JSON.stringify(data).replace(/</g, '\\u003c') + close;
         });
       }
@@ -728,8 +731,9 @@ async function check(name, options, run) {
     await pairedSize(page, '.fiscal-grid');
     assert.ok(await long.isVisible());
   });
-  for (const width of [390, 1440, 1920]) {
-    await check('경제 지표 순환·키보드·출처 읽기 ' + width, { width }, async (page) => {
+  const carouselCases = [390, 1440, 1920].flatMap((width) => [{ width, nums: latest.nums }, ...(width >= 1440 ? [{ width, nums: carouselMetrics, fixture: true }] : [])]);
+  for (const { width, nums, fixture } of carouselCases) {
+    await check('경제 지표 순환·키보드·출처 읽기 ' + width + (fixture ? ' · 6개 고정 지표' : ''), { width, transformIssue: fixture ? (data) => { data.nums = nums; } : undefined }, async (page) => {
       let vendorRequests = 0;
       page.on('request', (request) => { if (request.url().includes('/assets/vendor/swiper/')) vendorRequests += 1; });
       await page.goto('http://jogan.test/');
@@ -739,7 +743,7 @@ async function check(name, options, run) {
       await page.locator('#nums[data-carousel-state="ready"]').waitFor();
       assert.ok(vendorRequests >= 2);
       assert.equal(await page.locator('#econPlayback').getAttribute('aria-pressed'), 'false');
-      const count = latest.nums.length;
+      const count = nums.length;
       assert.equal(await page.locator('#nums > .swiper-slide').count(), count);
       const numbers = await page.locator('#nums > .swiper-slide').evaluateAll((cards) => cards.map((card) => ({
         index: Number(card.dataset.econIndex),
@@ -748,8 +752,8 @@ async function check(name, options, run) {
         change: card.querySelector('.kj-dir').textContent,
         base: card.querySelector('.econ-base').textContent
       })).sort((a, b) => a.index - b.index));
-      assert.deepEqual(numbers.map((card) => [card.label, card.value, card.change]), latest.nums.map((item) => [item.k, item.v, item.d]));
-      assert.ok(numbers.every((card) => card.base.includes(latest.nums[card.index].src.base)));
+      assert.deepEqual(numbers.map((card) => [card.label, card.value, card.change]), nums.map((item) => [item.k, item.v, item.d]));
+      assert.ok(numbers.every((card) => card.base.includes(nums[card.index].src.base)));
       await comparisonTiles(page.locator('#nums > .swiper-slide'));
       const lines = await page.locator('#nums > .swiper-slide').evaluateAll((cards) => cards.map((card) =>
         ['.kj-stat__k', '.kj-stat__v', '.kj-stat__row', '.econ-base', '.econ-detail-toggle'].map((field) => {
@@ -767,18 +771,28 @@ async function check(name, options, run) {
       assert.equal(await detail.isHidden(), true);
       assert.equal(await page.locator('#nums .econ-detail-toggle[aria-controls="econDetail"][aria-expanded="false"]').count(), count);
       assert.equal(await page.locator('#nums .kj-stat__ref, #nums .kj-src').count(), 0);
-      await page.locator('#econPrev').click();
-      await page.waitForFunction((expected) => document.getElementById('econViewport').swiper.realIndex === expected, count - 1);
-      await page.locator('#econNext').click();
-      await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex === 0);
-      await page.locator('#econViewport').focus();
-      await page.keyboard.press('ArrowRight');
-      await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex === 1);
-      await page.locator('#econPlayback').click();
-      assert.equal(await page.locator('#econPlayback').getAttribute('aria-pressed'), 'true');
+      // PC에 모두 보이는 날은 버튼 비활성화·전체 접근을 확인하고 순환은 별도 6개 지표로 유지한다
+      if (width >= 1440 && count <= 4) {
+        for (const id of ['econPrev', 'econNext', 'econPlayback']) assert.equal(await page.locator('#' + id).isDisabled(), true);
+        assert.equal(await page.locator('#nums > .swiper-slide[aria-hidden="false"]').count(), count);
+        assert.equal(await page.locator('#nums > .swiper-slide').evaluateAll((cards) => cards.some((card) => card.inert)), false);
+        await page.locator('#econViewport').focus();
+        await page.keyboard.press('ArrowRight');
+        assert.equal(await page.locator('#econViewport').evaluate((node) => node.swiper.realIndex), 0);
+      } else {
+        await page.locator('#econPrev').click();
+        await page.waitForFunction((expected) => document.getElementById('econViewport').swiper.realIndex === expected, count - 1);
+        await page.locator('#econNext').click();
+        await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex === 0);
+        await page.locator('#econViewport').focus();
+        await page.keyboard.press('ArrowRight');
+        await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex === 1);
+        await page.locator('#econPlayback').click();
+        assert.equal(await page.locator('#econPlayback').getAttribute('aria-pressed'), 'true');
+      }
       const activeTile = page.locator('#nums .swiper-slide-active');
       const trigger = activeTile.locator('.econ-detail-toggle');
-      const selected = latest.nums[Number(await activeTile.getAttribute('data-econ-index'))];
+      const selected = nums[Number(await activeTile.getAttribute('data-econ-index'))];
       const tileBefore = await activeTile.boundingBox();
       await trigger.focus();
       await page.keyboard.press('Enter');
@@ -821,12 +835,13 @@ async function check(name, options, run) {
     assert.equal(await page.locator('#econDetail .kj-stat__ref').textContent(), latest.nums.at(-1).ref);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
   });
-  await check('경제 자동 넘김·가리기·포커스·동작 줄이기', { width: 1440 }, async (page) => {
+  await check('경제 자동 넘김·가리기·포커스·동작 줄이기', { width: 1440, transformIssue: (data) => { data.nums = carouselMetrics; } }, async (page) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('http://jogan.test/');
     await ready(page);
     await page.locator('#economy').evaluate((node) => node.scrollIntoView({ block: 'start' }));
     await page.locator('#nums[data-carousel-state="ready"]').waitFor();
+    assert.equal(await page.locator('#nums > .swiper-slide').count(), 6);
     await page.waitForFunction(() => document.getElementById('econCarousel').dataset.autoplay === 'running');
     await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex !== 0, null, { timeout: 12000 });
     await page.locator('#econViewport').focus();
