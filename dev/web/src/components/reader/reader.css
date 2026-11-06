@@ -1,0 +1,17 @@
+/* 첫 기사 앞의 작은 안내이며 본문·기록 페이지와 같은 지면·토큰을 사용한다 */
+.reader-tools { margin-block: var(--space-4); }
+.reader-tools__inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 1fr); gap: var(--space-4) var(--space-8); padding-block: var(--space-3); border-block: 1px solid var(--line); }
+.reader-tools__lead { margin: 0; font-size: 0.95rem; font-weight: 700; }
+.reader-tools__links { display: flex; align-items: center; flex-wrap: wrap; gap: 0 var(--space-4); }
+.reader-tools__links a, .reader-tools__subscribe > summary { display: inline-flex; align-items: center; min-height: var(--tap-min); font-size: 0.9rem; }
+.reader-tools__subscribe { min-width: 0; }
+.reader-tools__subscribe > summary { display: list-item; align-content: center; cursor: pointer; color: var(--brand); text-underline-offset: 0.18em; }
+.reader-tools__subscribe > summary:hover { color: var(--brand-strong); text-decoration: underline; }
+.reader-tools__rss { padding-block: var(--space-2); font-size: 0.9rem; }
+.reader-tools__rss p { margin-top: 0; }
+.reader-tools__rss label { display: block; margin-bottom: var(--space-2); font-weight: 700; }
+.reader-tools__copy { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.reader-tools__copy input { flex: 1 1 14rem; width: 100%; min-width: 0; min-height: var(--tap-min); padding: var(--space-2); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); font: inherit; }
+.reader-tools__status { min-height: 1.5em; margin-block: var(--space-2); }
+.reader-tools__rss > a { display: inline-flex; align-items: center; min-height: var(--tap-min); }
+@media (max-width: 760px) { .reader-tools__inner { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); } }
