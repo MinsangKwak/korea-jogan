@@ -104,6 +104,18 @@
         </div>
         <p class="admin-muted">화면이 열려 있을 때 5분마다 갱신합니다. 체류 시간은 GA4 참여 시간(화면이 앞에 있던 시간) 기준입니다.</p>
       </section>
+      <section class="admin-section" aria-labelledby="acquisitionTitle">
+        <div class="admin-section-head"><div><p class="admin-eyebrow">유입과 재방문</p><h2 id="acquisitionTitle">어떤 소개가 독자로 이어졌나요</h2></div></div>
+        <p class="admin-muted">위에서 선택한 기간을 함께 사용합니다. 세션은 방문 횟수, 세션당 참여는 GA4 참여 시간을 세션으로 나눈 값입니다.</p>
+        <div class="admin-grid">
+          <article class="admin-panel"><h3>소스·매체별 유입</h3><p class="admin-muted">검색·카페·SNS 등 실제 유입 출처</p><div class="admin-table-scroll" id="sources"></div></article>
+          <article class="admin-panel"><h3>홍보 캠페인별 유입</h3><p class="admin-muted">홍보 링크의 캠페인과 소스·매체 기준</p><div class="admin-table-scroll" id="campaigns"></div></article>
+          <article class="admin-panel"><h3>처음 들어온 페이지</h3><p class="admin-muted">첫 페이지가 어떤 읽기로 이어졌는지 비교합니다.</p><div class="admin-table-scroll" id="landings"></div></article>
+          <article class="admin-panel"><h3>첫 방문과 재방문</h3><p class="admin-muted">같은 사람이 기간 안에 두 유형에 포함될 수 있습니다. 재방문율을 계산한 표는 아닙니다.</p><div class="admin-table-scroll" id="returning"></div></article>
+          <article class="admin-panel"><h3>읽기·받아보기 행동</h3><p class="admin-muted">RSS 열기·주소 복사 등 행동 기록입니다. 실제 구독 완료를 뜻하지 않습니다.</p><div id="readerActions"></div></article>
+        </div>
+        <p class="admin-muted" id="acquisitionNote">상위 10개 기준입니다. 방문자 수는 여러 항목에 겹칠 수 있어 합산하지 않습니다.</p>
+      </section>
     </div>
 
     <section class="admin-section" aria-labelledby="publishTitle">
