@@ -929,6 +929,33 @@ async function check(name, options, run) {
     await page.locator('#drawer').waitFor({ state: 'hidden' });
     assert.equal(await extras.evaluate((node) => node.open), true, '메뉴로 숨긴 내용에 바로 이동하면 먼저 펼침');
   });
+  await check('첫 화면의 받아보기 이동·RSS 복사와 행동 기록', { width: 320 }, async (page) => {
+    await page.goto('http://jogan.test/'); await ready(page);
+    assert.equal(await page.locator('[data-reader-tools]').count(), 1);
+    const open = page.locator('.kj-mast__utility [data-reader-subscribe]');
+    await open.focus(); await page.keyboard.press('Enter');
+    await page.waitForFunction(() => document.getElementById('readerSubscribe').open);
+    assert.equal(await page.locator('#readerSubscribe > summary').evaluate((node) => node === document.activeElement), true);
+    assert.equal(await page.locator('#readerFeed').inputValue(), 'https://korea-jogan.com/feed.xml');
+    await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (value) => { window.readerCopied = value; } } }));
+    await page.locator('#readerFeedCopy:enabled').click();
+    await page.waitForFunction(() => document.getElementById('readerFeedStatus').textContent.includes('복사했습니다'));
+    assert.equal(await page.evaluate(() => window.readerCopied), 'https://korea-jogan.com/feed.xml');
+    assert.equal(await page.evaluate(() => (window.dataLayer || []).filter((row) => row[0] === 'event' && row[1] === 'reader_feed_copy').length), 1);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth));
+    await page.locator('#readerSubscribe > summary').focus(); await page.keyboard.press('Space');
+    assert.equal(await page.locator('#readerSubscribe').evaluate((node) => node.open), false);
+  });
+  await check('RSS 복사 제한 시 직접 복사와 성공 집계 구분', { width: 1440 }, async (page) => {
+    await page.goto('http://jogan.test/'); await ready(page);
+    await page.locator('#readerSubscribe > summary').click();
+    await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('blocked'); } } }));
+    await page.locator('#readerFeedCopy:enabled').click();
+    await page.waitForFunction(() => document.getElementById('readerFeedStatus').textContent.includes('직접 복사'));
+    assert.equal(await page.locator('#readerFeed').evaluate((node) => node === document.activeElement && node.selectionEnd === node.value.length), true);
+    assert.equal(await page.evaluate(() => (window.dataLayer || []).filter((row) => row[0] === 'event' && row[1] === 'reader_feed_copy').length), 0);
+    assert.equal(await page.locator('#readerFeedCopy').isEnabled(), true);
+  });
   console.log('브라우저 검사 완료:', checks);
 })().catch((error) => { console.error(error); process.exitCode = 1; }).finally(async () => {
   if (browser) await browser.close();

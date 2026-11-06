@@ -57,6 +57,27 @@ async function check(name, options, run) {
   browser = await openBrowser();
   try {
     assert.ok(pages.length >= 3, '검색 도착 페이지가 생성되지 않음');
+    await check('검색 진입 페이지에서 스크립트 없이 RSS 주소와 읽기 안내 제공', { javaScriptEnabled: false, width: 320 }, async ({ page }) => {
+      for (const routePath of ['/topics/muan-airport/', '/indicators/usd-krw/']) {
+        await page.goto(origin + routePath);
+        assert.equal(await page.locator('[data-reader-tools]').count(), 1);
+        await page.locator('#readerSubscribe > summary').click();
+        assert.equal(await page.locator('#readerFeed').inputValue(), 'https://korea-jogan.com/feed.xml');
+        assert.equal(await page.locator('#readerFeedCopy').isDisabled(), true);
+        assert.equal(await page.locator('[data-reader-action="feed_open"]').getAttribute('href'), '/feed.xml');
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth));
+      }
+    });
+    await check('검색 진입 페이지의 받아보기와 복사 도구 연결', { width: 390 }, async ({ page }) => {
+      await page.goto(origin + '/topics/muan-airport/');
+      await page.locator('[data-reader-subscribe]').click();
+      await page.waitForFunction(() => document.getElementById('readerSubscribe').open);
+      await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.readerFeedCopied = text; } } }));
+      await page.locator('#readerFeedCopy:enabled').click();
+      await page.waitForFunction(() => document.getElementById('readerFeedStatus').textContent.includes('복사했습니다'));
+      assert.equal(await page.evaluate(() => window.readerFeedCopied), 'https://korea-jogan.com/feed.xml');
+      assert.ok(await page.locator('main h1').isVisible());
+    });
     await check('전체 검색 페이지의 본문·근거가 JavaScript 없이 밝게 읽힘', { javaScriptEnabled: false, dark: true }, async ({ page }) => {
       const titles = new Set();
       for (const routePath of pages) {

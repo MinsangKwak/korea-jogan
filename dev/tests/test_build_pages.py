@@ -44,6 +44,19 @@ class PagesTest(unittest.TestCase):
     def ld(self, page):
         return json.loads(build_pages.LDJSON.search(page).group(1))
 
+    def test_reader_tools_are_static_unique_and_keep_site_origin(self):
+        build_pages.build()
+        home = (build_pages.PUBLIC / 'index.html').read_text(encoding='utf-8')
+        past = (build_pages.PUBLIC / f'{DATE}.html').read_text(encoding='utf-8')
+        topic = (build_pages.PUBLIC / 'topics/index.html').read_text(encoding='utf-8')
+        for page in (home, past, topic):
+            self.assertEqual(page.count('data-reader-tools '), 1)
+            self.assertIn('value="https://korea-jogan.com/feed.xml"', page)
+            self.assertIn('href="/topics/"', page)
+            self.assertIn('href="/indicators/"', page)
+            self.assertIn('id="readerFeedCopy" disabled', page)
+        self.assertEqual(build_pages.with_reader_tools(home), home)
+
     def test_issue_page_has_own_head_and_digest(self):
         build_pages.build()
         page = (self.tmp / "dev" / "web" / f"{DATE}.html").read_text(encoding="utf-8")
