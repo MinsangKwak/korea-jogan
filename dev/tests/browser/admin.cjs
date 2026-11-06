@@ -111,6 +111,53 @@ async function check(name, options, fn) {
   const deployed = /clientId: '([^']*)'/.exec(fs.readFileSync(path.join(web, 'admin/config.js'), 'utf8'))[1];
   assert.ok(deployed === '' || /^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(deployed), deployed);
   browser = await openBrowser();
+  await check('로그인 없이 주제별 소개와 채널별 추적 링크 생성', { noConfig: true, width: 320 }, async ({ page, requests }) => {
+    await page.locator('#campaignUrl').waitFor();
+    await page.waitForFunction(() => document.getElementById('campaignUrl').value.includes('utm_source='));
+    assert.equal(await page.locator('#privateData').isVisible(), false);
+    await page.locator('#campaignTopic').selectOption('exchange');
+    await page.locator('#campaignChannel').focus();
+    await page.keyboard.press('Space');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await page.locator('#campaignName').fill('readership_test');
+    await page.locator('#campaignContent').fill('exchange_b');
+    await page.locator('#campaignForm button').click();
+    const url = new URL(await page.locator('#campaignUrl').inputValue());
+    assert.equal(url.origin, 'https://korea-jogan.com');
+    assert.equal(url.pathname, '/indicators/usd-krw/');
+    assert.deepEqual(Object.fromEntries(url.searchParams), { utm_source: 'threads', utm_medium: 'social', utm_campaign: 'readership_test', utm_content: 'exchange_b' });
+    assert.match(await page.locator('#campaignDraft').inputValue(), /환율 기사마다 숫자가 다르다면/);
+    assert.equal((await page.locator('#campaignDraft').inputValue()).split('\n').filter(Boolean).length, 5);
+    assert.equal(requests.length, 0);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth));
+  });
+  await check('잘못된 캠페인 입력을 차단하고 첫 오류에 포커스', {}, async ({ page }) => {
+    await page.waitForFunction(() => !!document.getElementById('campaignUrl').value);
+    await page.locator('#campaignName').fill('<img src=x onerror=alert(1)>');
+    await page.locator('#campaignForm button').click();
+    assert.equal(await page.locator('#campaignName').getAttribute('aria-invalid'), 'true');
+    assert.equal(await page.locator('#campaignName').evaluate((field) => field === document.activeElement), true);
+    assert.equal(await page.locator('#copyCampaignDraft').isDisabled(), true);
+    assert.equal(await page.locator('#campaignUrl').inputValue(), '');
+    assert.equal(await page.locator('#campaignForm img').count(), 0);
+    await page.locator('#campaignName').fill('readership_1');
+    assert.equal(await page.locator('#campaignName').getAttribute('aria-invalid'), null);
+    assert.equal(await page.locator('#copyCampaignDraft').isEnabled(), true);
+  });
+  await check('홍보 글 복사 성공과 제한 환경의 직접 복사 안내', {}, async ({ page, requests }) => {
+    await page.waitForFunction(() => !!document.getElementById('campaignUrl').value);
+    await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (value) => { window.testCopiedText = value; } } }));
+    await page.locator('#copyCampaignDraft').click();
+    await page.waitForFunction(() => document.getElementById('campaignStatus').textContent.includes('복사했습니다'));
+    assert.equal(await page.evaluate(() => window.testCopiedText), await page.locator('#campaignDraft').inputValue());
+    await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('blocked'); } } }));
+    await page.locator('#copyCampaignLink').click();
+    await page.waitForFunction(() => document.getElementById('campaignStatus').textContent.includes('직접 복사'));
+    assert.equal(await page.locator('#campaignUrl').evaluate((field) => field === document.activeElement && field.selectionEnd === field.value.length), true);
+    assert.equal(await page.locator('#copyCampaignLink').isEnabled(), true);
+    assert.equal(requests.length, 0);
+  });
   await check('미설정 안내와 공개 발행 현황, 로그인 전 비공개 통계 없음', { noConfig: true }, async ({ page, requests }) => {
     assert.equal(await page.locator('#setup').getAttribute('open'), '');
     assert.equal(await page.locator('#privateData').isVisible(), false);
