@@ -23,7 +23,7 @@ let authPending = false;
 
 // 신문 화면의 섹션 id → 메뉴 이름. 이벤트 이름은 section_<id>로 들어온다
 const SECTION_NAMES = { home: '홈', media: '언론', national: '전국', regions: '지역', politics: '정치', economy: '경제', industry: '산업', fiscal: '재정' };
-const LIST_IDS = ['devices', 'topPages', 'channels', 'sections', 'regions'];
+const LIST_IDS = ['devices', 'topPages', 'channels', 'sections', 'regions', 'sources', 'campaigns', 'landings', 'returning', 'readerActions'];
 // 오늘·최근 7일 칸의 기본 설명. 조회 뒤에는 '고유 사용자' 자리에 조회수가 들어간다
 const NOTES = { today: '오늘 0시부터 · 고유 사용자', week: '오늘 포함 7일 · 고유 사용자' };
 const STAT_IDS = ['todayUsers', 'todayTime', 'weekUsers', 'weekTime', 'reportUsers', 'reportViews', 'reportSessions', 'reportTimeAvg'];
@@ -239,7 +239,7 @@ function trend(data, hourly) {
 }
 
 function renderReports(reports, periodLabel) {
-  const [summary, today, week, trendReport, sections, pages, channels, regions, devices] = reports;
+  const [summary, today, week, trendReport, sections, pages, channels, regions, devices, sources, campaigns, landings, returning, readerActions] = reports;
   const totals = values(summary);
   $('reportUsers').textContent = number(totals[0] || 0);
   $('reportViews').textContent = number(totals[1] || 0);
@@ -258,6 +258,18 @@ function renderReports(reports, periodLabel) {
   table($('regions'), placeRows(rows(regions)), '지역', '방문자');
   const deviceNames = { desktop: '데스크톱', mobile: '모바일', tablet: '태블릿' };
   table($('devices'), rows(devices).map((item) => ({ ...item, label: deviceNames[item.label] || item.label })), '기기', '방문자');
+  const acquisitionRows = (report) => rows(report).map((item) => ({ ...item, cells: [number(item.value), number(item.second), item.value && !item.metrics[2] ? '0초' : duration(perUser(item.metrics[2], item.value))] }));
+  const columns = ['세션', '방문자', '세션당 참여'];
+  table($('sources'), acquisitionRows(sources), '소스 / 매체', columns);
+  table($('campaigns'), acquisitionRows(campaigns).map((item) => ({ ...item, label: (item.label === '(not set)' ? '캠페인 미지정' : item.label) + ' · ' + (item.dimensions[1] || '매체 미기록') })), '캠페인 · 소스 / 매체', columns);
+  table($('landings'), acquisitionRows(landings), '처음 들어온 페이지', columns);
+  const visitorTypes = { new: '첫 방문', returning: '재방문', '(not set)': '분류되지 않음' };
+  table($('returning'), acquisitionRows(returning).map((item) => ({ ...item, label: visitorTypes[item.label] || item.label })), '방문 유형', columns);
+  const actionNames = { reader_feed_copy: 'RSS 주소 복사', reader_feed_open: 'RSS 열기', reader_subscribe_open: '받아보기 안내 열기', reader_topic_open: '이슈 기록으로 이동', reader_indicator_open: '경제 지표로 이동', reader_share: '공유 실행' };
+  table($('readerActions'), rows(readerActions).map((item) => ({ ...item, label: actionNames[item.label] || item.label, cells: [number(item.value), number(item.second)] })), '읽기·받아보기 행동', ['횟수', '사용자']);
+  $('acquisitionNote').textContent = [sources, campaigns, landings, returning, readerActions].some((report) => report.metadata?.subjectToThresholding)
+    ? 'Google의 개인정보 보호 기준으로 일부 소규모 자료가 생략될 수 있습니다. 표시된 항목은 상위 10개이며 전체 합계와 다를 수 있습니다.'
+    : '상위 10개 기준입니다. 방문자는 여러 유입·방문 유형에 겹칠 수 있어 합산하지 않습니다. 적은 표본에서는 인원과 참여 시간을 함께 비교하세요.';
   $('reportClock').textContent = clock() + ' 갱신';
   $('reportTime').textContent = `${periodLabel} · ${summary.metadata?.timeZone || 'GA4 속성 시간대'} 기준 · 오늘의 수치는 집계가 늦을 수 있습니다.`;
 }
@@ -392,7 +404,7 @@ $('period').addEventListener('change', () => {
   controller?.abort();
   busy = false;
   for (const id of ['reportUsers', 'reportViews', 'reportSessions', 'reportTimeAvg']) $(id).textContent = '—';
-  for (const id of ['topPages', 'channels', 'sections', 'regions', 'devices', 'trendChart', 'trendAxis']) $(id).replaceChildren();
+  for (const id of [...LIST_IDS, 'trendChart', 'trendAxis']) $(id).replaceChildren();
   $('trendChart').setAttribute('aria-label', '선택한 기간의 통계를 불러오는 중');
   $('reportTime').textContent = '선택한 기간의 통계를 불러오고 있습니다.';
   paused = false;

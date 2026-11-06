@@ -41,7 +41,7 @@ const sectionFilter = { orGroup: { expressions: [prefix('section_'), prefix('dwe
 const metric = (...names) => names.map((name) => ({ name }));
 const byFirst = (name) => ({ orderBys: [{ metric: { metricName: name }, desc: true }] });
 
-// 기간 보고서와 '오늘·최근 7일' 고정 지표를 batchRunReports 두 번으로 받는다(한 번에 5개까지)
+// 기간·고정 지표·유입 보고서를 5개·4개·5개로 나눠 같은 기간에 조회한다
 export async function loadReports(token, period, signal) {
   const startDate = { today: 'today', '7daysAgo': '6daysAgo', '28daysAgo': '27daysAgo' }[period];
   if (!startDate) throw new ApiError(400, 'INVALID_PERIOD');
@@ -53,7 +53,8 @@ export async function loadReports(token, period, signal) {
   const glance = metric('activeUsers', 'userEngagementDuration', 'screenPageViews');
   const url = `https://analyticsdata.googleapis.com/v1beta/properties/${CONFIG.propertyId}:batchRunReports`;
   const batch = (requests) => request(url, { token, signal, body: { requests } });
-  const [main, more] = await Promise.all([
+  const acquisitionMetrics = metric('sessions', 'activeUsers', 'userEngagementDuration');
+  const [main, more, acquisition] = await Promise.all([
     batch([
       { ...common, metrics: metric('activeUsers', 'screenPageViews', 'sessions', 'userEngagementDuration') },
       { ...range('today'), metrics: glance },
@@ -66,10 +67,17 @@ export async function loadReports(token, period, signal) {
       { ...common, dimensions: [{ name: 'sessionDefaultChannelGroup' }], metrics: metric('sessions'), ...byFirst('sessions'), limit: '10' },
       { ...common, dimensions: [{ name: 'region' }], metrics: metric('activeUsers'), ...byFirst('activeUsers'), limit: '10' },
       { ...common, dimensions: [{ name: 'deviceCategory' }], metrics: metric('activeUsers'), ...byFirst('activeUsers'), limit: '10' }
+    ]),
+    batch([
+      { ...common, dimensions: [{ name: 'sessionSourceMedium' }], metrics: acquisitionMetrics, ...byFirst('sessions'), limit: '10' },
+      { ...common, dimensions: [{ name: 'sessionCampaignName' }, { name: 'sessionSourceMedium' }], metrics: acquisitionMetrics, ...byFirst('sessions'), limit: '10' },
+      { ...common, dimensions: [{ name: 'landingPage' }], metrics: acquisitionMetrics, ...byFirst('sessions'), limit: '10' },
+      { ...common, dimensions: [{ name: 'newVsReturning' }], metrics: acquisitionMetrics, ...byFirst('sessions'), limit: '5' },
+      { ...common, dimensionFilter: { andGroup: { expressions: [host, prefix('reader_')] } }, dimensions: [{ name: 'eventName' }], metrics: metric('eventCount', 'totalUsers'), ...byFirst('eventCount'), limit: '10' }
     ])
   ]);
-  if (main.reports?.length !== 5 || more.reports?.length !== 4) throw new ApiError(502, 'INVALID_RESPONSE');
-  return [...main.reports, ...more.reports];
+  if (main.reports?.length !== 5 || more.reports?.length !== 4 || acquisition.reports?.length !== 5) throw new ApiError(502, 'INVALID_RESPONSE');
+  return [...main.reports, ...more.reports, ...acquisition.reports];
 }
 
 export function values(report) {
@@ -80,7 +88,8 @@ export function values(report) {
 export function rows(report) {
   return (report.rows || []).map((row) => {
     const metrics = (row.metricValues || []).map((item) => Number(item.value) || 0);
-    return { label: row.dimensionValues?.[0]?.value || '(not set)', value: metrics[0] || 0, second: metrics[1] || 0, metrics };
+    const dimensions = (row.dimensionValues || []).map((item) => item.value);
+    return { label: dimensions[0] || '(not set)', dimensions, value: metrics[0] || 0, second: metrics[1] || 0, metrics };
   });
 }
 
