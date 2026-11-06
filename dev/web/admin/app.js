@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { request, loadReports, values, rows, explain } from './api.js';
+import { initSearch } from './search.js';
 
 const $ = (id) => document.getElementById(id);
 const number = (value) => new Intl.NumberFormat('ko-KR').format(value);
@@ -20,6 +21,7 @@ let busy = false;
 let paused = false;
 let googleLoading;
 let authPending = false;
+let searchController;
 
 // 신문 화면의 섹션 id → 메뉴 이름. 이벤트 이름은 section_<id>로 들어온다
 const SECTION_NAMES = { home: '홈', media: '언론', national: '전국', regions: '지역', politics: '정치', economy: '경제', industry: '산업', fiscal: '재정' };
@@ -94,6 +96,7 @@ function emptyPanels() {
 }
 
 function disconnect(text = '연결을 해제했습니다. 다시 연결하면 최신 통계를 조회합니다.') {
+  searchController?.reset('Google 연결을 해제했습니다. 검색에 다시 연결해 주세요.');
   token = '';
   expiry = 0;
   authPending = false;
@@ -468,4 +471,5 @@ async function loadPublishing() {
   }
 }
 $('retryPublish').addEventListener('click', loadPublishing);
+searchController = initSearch({ getClientId: () => clientId, validClient, prepareGoogle: googleLibrary, renderTable: table, missingClient: () => { $('setup').open = true; $('clientId').focus(); }, disconnected: () => disconnect('Google 연결을 해제했습니다.') });
 loadPublishing();
