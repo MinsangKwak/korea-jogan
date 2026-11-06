@@ -78,7 +78,20 @@
         <p class="admin-muted" id="reportTime">기간별 보고서는 GA4 속성 시간대를 따르며, 오늘의 수치는 집계가 늦을 수 있습니다.</p>
         <div class="admin-summary"><div class="admin-stat"><span>방문자</span><strong id="reportUsers">—</strong></div><div class="admin-stat"><span>조회수</span><strong id="reportViews">—</strong></div><div class="admin-stat"><span>세션</span><strong id="reportSessions">—</strong></div><div class="admin-stat"><span>1인 평균 체류</span><strong id="reportTimeAvg">—</strong></div></div>
         <div class="admin-grid admin-grid--wide">
-          <article class="admin-panel"><h3>방문자 추이</h3><p class="admin-muted">오늘은 시간별, 그 밖은 날짜별 · 막대에 올리면 조회수도 보입니다</p><div class="admin-bars admin-bars--trend" id="trendChart" role="img" aria-label="통계를 불러오는 중"></div><div class="admin-axis" id="trendAxis"></div></article>
+          <article class="admin-panel">
+            <h3>방문자 추이</h3>
+            <p class="admin-muted" id="trendHelp">오늘은 시간별, 그 밖은 날짜별 · 막대에 마우스를 올리거나 터치하면 수치가 보입니다. 키보드는 Tab으로 이동하고 Esc로 닫습니다.</p>
+            <div class="admin-trend" id="trendPlot">
+              <div class="admin-trend-scroll" id="trendViewport">
+                <div class="admin-bars admin-bars--trend" id="trendChart" role="group" aria-label="통계를 불러오는 중" aria-describedby="trendHelp"></div>
+                <div class="admin-axis" id="trendAxis"></div>
+              </div>
+              <div class="admin-chart-tooltip" id="trendTooltip" role="tooltip" hidden>
+                <strong id="trendTooltipDate"></strong>
+                <dl><div><dt>방문자</dt><dd id="trendTooltipUsers"></dd></div><div><dt>조회수</dt><dd id="trendTooltipViews"></dd></div></dl>
+              </div>
+            </div>
+          </article>
           <article class="admin-panel"><h3>접속 기기</h3><p class="admin-muted">기기별 방문자</p><div id="devices"></div></article>
         </div>
         <div class="admin-grid admin-grid--wide">

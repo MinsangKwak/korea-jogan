@@ -59,6 +59,23 @@
 .admin-bars--trend { grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr)); height: 200px; }
 .admin-bars--trend .admin-empty { grid-column: 1 / -1; align-self: center; }
 #trendAxis span:nth-child(2) { color: var(--ink-2); font-weight: 700; }
+/* 낮은 막대와 0명도 열 전체로 선택하고 좁은 화면에서는 그래프 안에서 가로로 이동한다 */
+.admin-trend { position: relative; margin-top: var(--space-4); }
+.admin-trend-scroll { overflow-x: auto; padding: 3px; margin: -3px; scroll-padding-inline: 3px; overscroll-behavior-inline: contain; }
+.admin-trend .admin-bars { margin-top: 0; }
+.admin-trend .admin-bars, #trendAxis { min-width: calc(var(--n, 7) * 27px - 3px); }
+.admin-chart-point { appearance: none; display: flex; align-items: flex-end; width: 100%; height: 100%; min-width: 0; padding: 0; border: 0; border-radius: var(--radius-xs); background: transparent; color: inherit; cursor: pointer; }
+.admin-chart-point .admin-bar { display: block; width: 100%; height: var(--h); }
+.admin-chart-point:is(:hover, [data-active]) { background: var(--surface); }
+.admin-chart-point[data-active] .admin-bar { outline: 2px solid var(--ink); outline-offset: -2px; }
+.admin-chart-point:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+/* 툴팁은 그래프 폭 안에 두고 포인터를 옮겨도 수치를 계속 읽을 수 있게 한다 */
+.admin-chart-tooltip { position: absolute; z-index: 2; top: var(--space-2); left: 0; box-sizing: border-box; width: 13rem; max-width: 100%; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); box-shadow: 0 4px 16px rgb(0 0 0 / 0.14); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.admin-chart-tooltip strong { display: block; margin-bottom: var(--space-2); }
+.admin-chart-tooltip dl { display: grid; gap: var(--space-1); margin: 0; }
+.admin-chart-tooltip dl > div { display: flex; justify-content: space-between; gap: var(--space-3); }
+.admin-chart-tooltip dt { color: var(--ink-2); }
+.admin-chart-tooltip dd { margin: 0; font-weight: 700; }
 /* 목록 막대: 표의 이름 아래에 가장 큰 값 대비 길이로 그린다. 숫자는 오른쪽 열 */
 .admin-meter { display: block; height: 6px; margin-top: var(--space-1); width: var(--w); background: var(--brand); border-radius: 0 var(--radius-xs) var(--radius-xs) 0; }
 .admin-empty { padding: var(--space-6) var(--space-4); background: var(--surface); color: var(--ink-3); font-size: 0.9rem; }

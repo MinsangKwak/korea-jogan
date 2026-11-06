@@ -25,10 +25,11 @@ let count = 0;
 const row = (metrics, dimension) => ({ metricValues: metrics.map((value) => ({ value: String(value) })), dimensionValues: dimension === undefined ? [] : [{ value: dimension }] });
 const report = (metrics, dimension) => ({ rows: [row(metrics, dimension)], metadata: { timeZone: 'Asia/Seoul' } });
 // 요청한 차원·기간에 맞춰 GA4 응답을 흉내 낸다
-function fake(item) {
+function fake(item, state) {
   const dimension = item.dimensions?.[0]?.name;
   if (!dimension) return item.dateRanges[0].startDate === 'today' ? report([4, 480, 8]) : item.metrics.length === 4 ? report([12, 39, 15, 1800]) : report([12, 2160, 39]);
-  if (dimension === 'date') return { rows: ['20261019', '20261020', '20261021'].map((date, index) => row([index + 2, index * 3], date)) };
+  if (dimension === 'date') return { rows: state.trendRows || ['20261019', '20261020', '20261021'].map((date, index) => row([index + 2, index * 3], date)) };
+  if (dimension === 'dateHour') return { rows: state.trendRows || ['2026110600', '2026110608', '2026110614'].map((date, index) => row([index * 2, index * 3], date)) };
   if (dimension === 'eventName') return { rows: [row([7, 7, 0], 'section_media'), row([5, 9, 600], 'dwell_media'), row([2, 2, 0], 'section_fiscal'), row([2, 2, 90], 'dwell_fiscal')] };
   if (dimension === 'pagePath') return report([22, 10, 1200], '<img src=x onerror=alert(1)> 조간');
   if (dimension === 'sessionDefaultChannelGroup') return report([10], 'Organic Search');
@@ -38,12 +39,12 @@ function fake(item) {
 }
 
 async function fixture(options = {}) {
-  const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, colorScheme: options.dark ? 'dark' : 'light', reducedMotion: 'reduce' });
+  const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, hasTouch: !!options.touch, colorScheme: options.dark ? 'dark' : 'light', reducedMotion: 'reduce' });
   if (!options.noConfig) await context.addInitScript(({ key, id }) => localStorage.setItem(key, id), { key: storageKey, id: clientId });
   const page = await context.newPage();
   const errors = [];
   const requests = [];
-  const state = { error: options.error, empty: options.empty, hang: false, delay: false, batchError: false };
+  const state = { error: options.error, empty: options.empty, trendRows: options.trendRows, hang: false, delay: false, batchError: false };
   page.on('pageerror', (error) => errors.push(error.message));
   await page.route('**/*', async (route) => {
     const url = new URL(route.request().url());
@@ -64,7 +65,7 @@ async function fixture(options = {}) {
       }
       const body = route.request().postDataJSON();
       assert.ok(url.pathname.endsWith(':batchRunReports'));
-      return route.fulfill({ json: { reports: body.requests.map((item) => (state.empty ? {} : fake(item))) } });
+      return route.fulfill({ json: { reports: body.requests.map((item) => (state.empty ? {} : fake(item, state))) } });
     }
     if (url.hostname !== 'jogan.test') return route.abort();
     if (options.publishFailed && url.pathname === '/data/issues/index.json') return route.fulfill({ status: 404, body: '' });
@@ -166,6 +167,90 @@ async function check(name, options, fn) {
       assert.equal(await page.locator('#connect').evaluate((element) => element === document.activeElement), true);
     });
   }
+  await check('추이 툴팁의 실제 수치·0명·호버 유지·Esc 닫기', { width: 1440, trendRows: [row([12, 89], '20261106'), row([1234, 2345], '20261104'), row([0, 0], '20261105')] }, async ({ page, requests }) => {
+    await connect(page); await settled(page);
+    const points = page.locator('#trendChart button');
+    const tooltip = page.getByRole('tooltip');
+    await points.first().hover({ position: { x: 8, y: 180 } });
+    assert.equal(await tooltip.isVisible(), true);
+    assert.equal(await page.locator('#trendTooltipDate').innerText(), '2026년 11월 4일');
+    assert.equal(await page.locator('#trendTooltipUsers').innerText(), '1,234명');
+    assert.equal(await page.locator('#trendTooltipViews').innerText(), '2,345회');
+    await tooltip.hover();
+    assert.equal(await tooltip.isVisible(), true);
+    await page.keyboard.press('Escape');
+    assert.equal(await tooltip.isVisible(), false);
+    await points.nth(1).hover({ position: { x: 8, y: 180 } });
+    assert.equal(await page.locator('#trendTooltipUsers').innerText(), '0명');
+    assert.equal(await page.locator('#trendTooltipViews').innerText(), '0회');
+    await points.last().hover({ position: { x: 8, y: 180 } });
+    assert.equal(await page.locator('#trendTooltipDate').innerText(), '2026년 11월 6일');
+    assert.equal(await page.locator('#trendTooltipViews').innerText(), '89회');
+    assert.equal(requests.length, 2);
+    if (process.env.SCREENSHOT_DIR) await page.locator('#trendPlot').locator('..').screenshot({ path: path.join(process.env.SCREENSHOT_DIR, 'admin-tooltip-desktop.png') });
+    await page.locator('h1').hover();
+    assert.equal(await tooltip.isVisible(), false);
+  });
+  await check('추이 키보드 이동·기간별 시간·재조회와 연결 해제 정리', {}, async ({ page, state }) => {
+    await connect(page); await settled(page);
+    const points = page.locator('#trendChart button');
+    const tooltip = page.getByRole('tooltip');
+    await points.first().focus();
+    assert.match(await points.first().getAttribute('aria-label'), /2026년 10월 19일 · 방문자 2명 · 조회수 0회/);
+    assert.equal(await tooltip.isVisible(), true);
+    await page.keyboard.press('Tab');
+    assert.equal(await page.locator('#trendTooltipDate').innerText(), '2026년 10월 20일');
+    await page.keyboard.press('Escape');
+    assert.equal(await tooltip.isVisible(), false);
+    assert.equal(await points.nth(1).evaluate((point) => point === document.activeElement), true);
+    await page.keyboard.press('Enter');
+    assert.equal(await tooltip.isVisible(), true);
+    state.delay = true;
+    await page.locator('#period').selectOption('today');
+    assert.equal(await tooltip.isVisible(), false);
+    await settled(page);
+    await points.first().focus();
+    assert.equal(await page.locator('#trendTooltipDate').innerText(), '2026년 11월 6일 0시');
+    assert.equal(await page.locator('#trendTooltipUsers').innerText(), '0명');
+    state.empty = true;
+    await page.locator('#refresh').click(); await settled(page);
+    assert.equal(await tooltip.isVisible(), false);
+    assert.equal(await points.count(), 0);
+    state.empty = false;
+    await page.locator('#refresh').click(); await settled(page);
+    await points.first().focus();
+    await page.locator('#disconnect').click();
+    assert.equal(await tooltip.isVisible(), false);
+    assert.equal(await page.locator('#trendTooltipDate').textContent(), '');
+    assert.equal(await page.locator('#trendTooltipUsers').textContent(), '');
+    assert.equal(await page.locator('#trendTooltipViews').textContent(), '');
+    assert.equal(await points.count(), 0);
+  });
+  await check('320px 터치·28개 열 가로 이동·다크 화면 툴팁 경계', { width: 320, touch: true, trendRows: Array.from({ length: 28 }, (_, index) => row([index, index * 3], new Date(Date.UTC(2026, 9, 10 + index)).toISOString().slice(0, 10).replaceAll('-', ''))) }, async ({ page }) => {
+    await page.evaluate(() => localStorage.setItem('jogan-theme', 'dark'));
+    await page.reload();
+    await connect(page); await settled(page);
+    await page.locator('#period').selectOption('28daysAgo'); await settled(page);
+    const points = page.locator('#trendChart button');
+    const tooltip = page.getByRole('tooltip');
+    assert.ok((await points.first().boundingBox()).width >= 24);
+    for (const point of [points.first(), points.last()]) {
+      await point.scrollIntoViewIfNeeded();
+      await point.tap({ position: { x: 12, y: 180 } });
+      assert.equal(await tooltip.isVisible(), true);
+      const tip = await tooltip.boundingBox();
+      const plot = await page.locator('#trendPlot').boundingBox();
+      assert.ok(tip.x >= plot.x - 1 && tip.x + tip.width <= plot.x + plot.width + 1, JSON.stringify({ tip, plot }));
+    }
+    assert.equal(await page.locator('#trendTooltipDate').innerText(), '2026년 11월 6일');
+    assert.equal(await page.locator('#trendTooltipUsers').innerText(), '27명');
+    assert.equal(await page.locator('#trendTooltipViews').innerText(), '81회');
+    assert.ok(await page.locator('#trendViewport').evaluate((viewport) => viewport.scrollLeft > 0));
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth));
+    if (process.env.SCREENSHOT_DIR) await page.locator('#trendPlot').locator('..').screenshot({ path: path.join(process.env.SCREENSHOT_DIR, 'admin-tooltip-mobile-dark.png') });
+    await page.locator('h1').tap();
+    assert.equal(await tooltip.isVisible(), false);
+  });
   await check('0명과 빈 목록을 정상 데이터로 표시', { empty: true }, async ({ page }) => {
     await connect(page); await settled(page);
     assert.equal(await page.locator('#todayUsers').innerText(), '0');
