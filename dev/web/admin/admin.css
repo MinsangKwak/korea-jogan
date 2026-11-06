@@ -52,6 +52,8 @@
 .admin-panel > p { margin-top: var(--space-1); }
 .admin-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.9rem; }
 .admin-table caption { text-align: left; }
+.admin-table-scroll { overflow-x: auto; }
+.admin-table-scroll .admin-table { min-width: 32rem; }
 .admin-table th { color: var(--ink-3); font-size: 0.8rem; font-weight: 500; }
 .admin-table th, .admin-table td { text-align: left; padding: var(--space-3) var(--space-2); border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
 .admin-table th { white-space: nowrap; vertical-align: bottom; }
