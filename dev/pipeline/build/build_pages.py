@@ -19,6 +19,7 @@ from pathlib import Path
 
 from build_security import secure_page
 import build_discovery
+import reader_panel
 
 ROOT = Path(__file__).resolve().parents[3]
 PUBLIC = ROOT / "dev" / "web"
@@ -225,6 +226,7 @@ def home_page(template: str, issue: dict, index: dict) -> str:
     merged = list(dict.fromkeys(BASE_KEYWORDS + keywords(issue)))[:KEYWORD_MAX]
     page = set_attr(page, r'(<meta name="keywords" content=")[^"]*(">)', ", ".join(merged))
     page = with_discovery_links(page, issue, index)
+    page = with_reader_tools(page)
     return secure_page(embed_data(with_article(page, issue, SITE, desc), issue, index))
 
 
@@ -249,6 +251,7 @@ def issue_page(template: str, issue: dict, index: dict) -> str:
     page = page.replace('<link rel="canonical"', extra + '<link rel="canonical"', 1)
     page = DIGEST.sub(lambda _: digest(issue), page, count=1)
     page = with_discovery_links(page, issue, index)
+    page = with_reader_tools(page)
     return secure_page(embed_data(with_article(page, issue, url, desc), issue, index))
 
 
@@ -268,9 +271,21 @@ def with_discovery_links(page: str, issue: dict, index: dict) -> str:
     return DISCOVERY.sub(lambda _: block, page, count=1)
 
 
+def with_reader_tools(page: str) -> str:
+    pattern = r'<aside\b[^>]*data-reader-tools\b[^>]*>.*?</aside>'
+    block = reader_panel.markup(SITE)
+    if re.search(pattern, page, flags=re.S):
+        return re.sub(pattern, lambda _: block, page, count=1, flags=re.S)
+    anchor = '<div class="kj-wrap kj-loading" id="pageLoading"'
+    if anchor not in page:
+        raise ValueError('독자 안내를 넣을 위치가 없습니다')
+    return page.replace(anchor, block + '\n\n' + anchor, 1)
+
+
 def discovery_page(template: str, item: dict) -> str:
     path = item["path"].removesuffix("index.html")
     url = SITE + path
+    body = item['body'].replace('</header>', '</header>\n' + reader_panel.markup(SITE, contained=True), 1)
     match = LDJSON.search(template)
     graph = json.loads(match.group(1))["@graph"] if match else []
     graph = [node for node in graph if node.get("@type") in ("WebSite", "NewsMediaOrganization")]
@@ -337,6 +352,7 @@ def discovery_page(template: str, item: dict) -> str:
 <link rel="stylesheet" href="/src/styles/kj.css">
 <link rel="stylesheet" href="/src/components/header/header.css">
 <link rel="stylesheet" href="/src/styles/discovery.css">
+<link rel="stylesheet" href="/src/components/reader/reader.css">
 <script type="application/ld+json">
 {data}
 </script>
@@ -344,18 +360,19 @@ def discovery_page(template: str, item: dict) -> str:
 <script src="/src/core/theme.js" defer></script>
 <script src="/src/core/metrics.js" defer></script>
 <script src="/src/core/discovery.js" defer></script>
+<script type="module" src="/src/core/reader.js"></script>
 </head>
 <body class="discovery-page">
 <a class="skip" href="#main">본문으로 건너뛰기</a>
 <header class="discovery-mast">
   <a href="/" class="discovery-logo">대한민국 조간</a>
-  <nav aria-label="신문 읽기"><a href="/">오늘 뉴스</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/archive/">지난 호</a></nav>
+  <nav aria-label="신문 읽기"><a href="/">오늘 뉴스</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/archive/">지난 호</a><a href="#readerSubscribe" data-reader-subscribe>새 호 받아보기</a></nav>
   <div class="discovery-tools" role="group" aria-label="읽기 설정">
     <button class="reading-switch" id="discoveryBig" type="button" role="switch" aria-checked="false" data-big-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>글자 크게</span><span class="reading-switch__state" data-big-state aria-hidden="true">끔</span></span></button>
     <button class="reading-switch" id="discoveryTheme" type="button" role="switch" aria-checked="false" data-theme-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>어두운 화면</span><span class="reading-switch__state" data-theme-state aria-hidden="true">끔</span></span></button>
   </div>
 </header>
-{item['body']}
+{body}
 <footer class="discovery-footer"><p><a href="/">대한민국 조간</a> · 출처와 기준일을 함께 읽습니다.</p><nav aria-label="운영 안내"><a href="/#limitsH">수집 방법과 한계</a><a href="/#fixH">정정 기록</a><a href="/feed.xml">RSS 구독</a><a href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" rel="noopener">오류 신고</a></nav><p>기획·데이터·디자인·개발 <a href="https://github.com/MinsangKwak" rel="author">MinsangKwak</a> · 코드 MIT · 글 CC BY 4.0</p></footer>
 </body>
 </html>
