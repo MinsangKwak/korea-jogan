@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="/src/styles/kj.css">
   <link rel="stylesheet" href="./admin.css">
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./campaigns.js"></script>
 </head>
 <body>
   <a class="admin-skip" href="#main">본문으로 이동</a>
@@ -60,6 +61,8 @@
       </form>
     </details>
     <noscript><p class="admin-error">통계를 보려면 JavaScript를 사용 설정해 주세요. 위의 GA4 열기로도 확인할 수 있습니다.</p></noscript>
+
+
 
     <div id="privateData" hidden>
       <section aria-labelledby="glanceTitle" class="admin-section" id="reportSection">
@@ -117,6 +120,29 @@
         <p class="admin-muted" id="acquisitionNote">상위 10개 기준입니다. 방문자 수는 여러 항목에 겹칠 수 있어 합산하지 않습니다.</p>
       </section>
     </div>
+
+    <section class="admin-section" aria-labelledby="campaignToolsTitle">
+      <div class="admin-section-head"><div><p class="admin-eyebrow">주제별 소개</p><h2 id="campaignToolsTitle">홍보 글과 추적 링크 만들기</h2></div></div>
+      <p class="admin-muted">주제와 게시할 채널을 고르면 질문형 제목·핵심 3줄·추적 링크가 함께 만들어집니다. 같은 실험은 캠페인 이름을 유지하고 글 구분으로 소개 문구를 나눠 비교하세요.</p>
+      <form id="campaignForm" novalidate>
+        <div class="admin-field-grid">
+          <div class="admin-field"><label for="campaignTopic">소개할 주제</label><select id="campaignTopic"><option value="muan">무안공항 참사 진행 기록</option><option value="exchange">원·달러 환율의 기준일·출처</option><option value="daily">대한민국 조간 전체 소개</option></select></div>
+          <div class="admin-field"><label for="campaignChannel">게시할 채널</label><select id="campaignChannel"><option value="naver_cafe">네이버 카페</option><option value="threads">Threads</option><option value="kakao">카카오 공유</option><option value="blog">블로그</option><option value="newsletter">뉴스레터</option></select></div>
+          <div class="admin-field"><label for="campaignName">캠페인 이름</label><input id="campaignName" type="text" autocomplete="off" spellcheck="false" maxlength="64" required aria-describedby="campaignHelp campaignError"></div>
+          <div class="admin-field"><label for="campaignContent">글 구분</label><input id="campaignContent" type="text" value="timeline_a" autocomplete="off" spellcheck="false" maxlength="64" required aria-describedby="campaignHelp campaignError"></div>
+        </div>
+        <p class="admin-muted" id="campaignHelp">영문 소문자·숫자·밑줄·하이픈으로 64자 이내 입력합니다. 영문 소문자나 숫자로 시작하세요. 예: 202611_readership / timeline_a</p>
+        <p class="admin-error" id="campaignError" role="alert"></p>
+        <button class="kj-btn kj-btn--secondary" type="submit">홍보 글과 링크 만들기</button>
+      </form>
+      <div class="admin-campaign-output">
+        <div class="admin-field"><label for="campaignUrl">홍보용 링크</label><input id="campaignUrl" type="url" readonly></div>
+        <div class="admin-field"><label for="campaignDraft">게시용 초안</label><textarea id="campaignDraft" rows="8" readonly></textarea></div>
+        <div class="admin-actions"><button class="kj-btn kj-btn--primary" id="copyCampaignDraft" type="button" disabled>글과 링크 복사</button><button class="kj-btn kj-btn--secondary" id="copyCampaignLink" type="button" disabled>링크만 복사</button></div>
+        <p class="admin-muted admin-copy-status" id="campaignStatus" role="status"></p>
+      </div>
+      <p class="admin-muted">게시할 채널의 운영 규칙에 맞게 소개하세요. 추적 링크는 외부 소개에 사용하며, 신문 안의 메뉴·내부 링크에는 붙이지 않습니다. 게시 후 GA4의 캠페인·소스/매체에서 실제 유입을 비교할 수 있습니다.</p>
+    </section>
 
     <section class="admin-section" aria-labelledby="publishTitle">
       <div class="admin-section-head"><div><p class="admin-eyebrow">03 / PUBLISHING</p><h2 id="publishTitle">발행 현황</h2></div><a href="https://github.com/MinsangKwak/korea-jogan/actions">배포 기록 ↗</a></div>
