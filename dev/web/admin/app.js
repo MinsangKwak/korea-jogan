@@ -47,11 +47,42 @@ function duration(seconds) {
 }
 const perUser = (total, users) => (users ? total / users : 0);
 
+let activeTrendPoint;
+function hideTrendTooltip() {
+  $('trendTooltip').hidden = true;
+  for (const id of ['trendTooltipDate', 'trendTooltipUsers', 'trendTooltipViews']) $(id).textContent = '';
+  activeTrendPoint?.removeAttribute('data-active');
+  activeTrendPoint = null;
+}
+
+// 양 끝 열과 가로 스크롤 뒤에도 툴팁이 패널 밖으로 넘치지 않게 한다
+function positionTrendTooltip() {
+  if (!activeTrendPoint) return;
+  const plot = $('trendPlot').getBoundingClientRect();
+  const point = activeTrendPoint.getBoundingClientRect();
+  const width = $('trendTooltip').offsetWidth;
+  const left = point.left + point.width / 2 - plot.left - width / 2;
+  $('trendTooltip').style.left = Math.max(0, Math.min(left, plot.width - width)) + 'px';
+}
+
+function showTrendTooltip(point) {
+  hideTrendTooltip();
+  activeTrendPoint = point;
+  point.dataset.active = '';
+  $('trendTooltipDate').textContent = point.dataset.date;
+  $('trendTooltipUsers').textContent = point.dataset.users + '명';
+  $('trendTooltipViews').textContent = point.dataset.views + '회';
+  $('trendTooltip').hidden = false;
+  positionTrendTooltip();
+}
+
 function validClient(value) { return /^[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com$/.test(value); }
 function message(text) { $('authMessage').textContent = text; }
 function connection(text) { $('connection').textContent = text; }
 
 function emptyPanels() {
+  hideTrendTooltip();
+  $('trendViewport').style.removeProperty('--n');
   for (const id of STAT_IDS) $(id).textContent = '—';
   $('todayNote').textContent = NOTES.today;
   $('weekNote').textContent = NOTES.week;
@@ -159,14 +190,17 @@ function sectionStats(data) {
     .sort((a, b) => b.value - a.value || b.readers - a.readers);
 }
 
-// 기간 추이: 날짜(오늘은 시간)별 활성 사용자 막대. 조회수는 막대에 올리면 함께 보인다
+// 기간 추이의 열 전체를 선택해 날짜·방문자·조회수를 마우스·터치·키보드로 읽는다
 function trend(data, hourly) {
   const points = data.map((item) => {
     const key = item.label;
     const text = hourly ? Number(key.slice(8, 10)) + '시' : Number(key.slice(4, 6)) + '/' + Number(key.slice(6, 8));
-    return { key, text, users: item.value, views: item.second };
+    const date = `${key.slice(0, 4)}년 ${Number(key.slice(4, 6))}월 ${Number(key.slice(6, 8))}일` + (hourly ? ` ${Number(key.slice(8, 10))}시` : '');
+    return { key, text, date, users: item.value, views: item.second };
   }).sort((a, b) => a.key.localeCompare(b.key));
   const box = $('trendChart');
+  hideTrendTooltip();
+  $('trendViewport').style.setProperty('--n', Math.max(1, points.length));
   box.replaceChildren();
   $('trendAxis').replaceChildren();
   if (!points.length) {
@@ -178,16 +212,24 @@ function trend(data, hourly) {
     return;
   }
   const max = Math.max(1, ...points.map((point) => point.users));
-  box.style.setProperty('--n', points.length);
+  $('trendViewport').scrollLeft = 0;
   for (const point of points) {
-    const bar = document.createElement('div');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'admin-chart-point';
+    button.dataset.date = point.date;
+    button.dataset.users = number(point.users);
+    button.dataset.views = number(point.views);
+    button.setAttribute('aria-label', `${point.date} · 방문자 ${number(point.users)}명 · 조회수 ${number(point.views)}회`);
+    const bar = document.createElement('span');
     bar.className = 'admin-bar';
-    bar.style.height = Math.max(2, point.users / max * 100) + '%';
-    bar.title = `${point.text} · 방문자 ${number(point.users)}명 · 조회수 ${number(point.views)}`;
+    bar.setAttribute('aria-hidden', 'true');
+    bar.style.setProperty('--h', Math.max(2, point.users / max * 100) + '%');
     if (!point.users) bar.dataset.zero = '';
-    box.append(bar);
+    button.append(bar);
+    box.append(button);
   }
-  box.setAttribute('aria-label', '방문자 추이: ' + points.map((point) => `${point.text} ${point.users}명`).join(', '));
+  box.setAttribute('aria-label', '방문자 추이');
   const peak = points.reduce((a, b) => (b.users > a.users ? b : a));
   for (const text of [points[0].text, '최고 ' + peak.text + ' · ' + number(peak.users) + '명', points.at(-1).text]) {
     const span = document.createElement('span');
@@ -318,12 +360,40 @@ $('disconnect').addEventListener('click', () => {
   $('connect').focus();
 });
 $('refresh').addEventListener('click', () => { paused = false; refresh(); });
+$('trendChart').addEventListener('pointerover', (event) => {
+  if (event.pointerType === 'touch') return;
+  const point = event.target.closest('.admin-chart-point');
+  if (point && !point.contains(event.relatedTarget)) showTrendTooltip(point);
+});
+$('trendChart').addEventListener('focusin', (event) => {
+  const point = event.target.closest('.admin-chart-point');
+  if (point) showTrendTooltip(point);
+});
+$('trendChart').addEventListener('click', (event) => {
+  const point = event.target.closest('.admin-chart-point');
+  if (point) showTrendTooltip(point);
+});
+$('trendChart').addEventListener('focusout', hideTrendTooltip);
+$('trendPlot').addEventListener('pointerleave', () => {
+  if (document.activeElement !== activeTrendPoint) hideTrendTooltip();
+});
+$('trendViewport').addEventListener('scroll', positionTrendTooltip, { passive: true });
+window.addEventListener('resize', positionTrendTooltip);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') hideTrendTooltip();
+});
+document.addEventListener('pointerdown', (event) => {
+  if (!$('trendPlot').contains(event.target)) hideTrendTooltip();
+});
 $('period').addEventListener('change', () => {
+  hideTrendTooltip();
+  $('trendViewport').style.removeProperty('--n');
   epoch += 1;
   controller?.abort();
   busy = false;
   for (const id of ['reportUsers', 'reportViews', 'reportSessions', 'reportTimeAvg']) $(id).textContent = '—';
   for (const id of ['topPages', 'channels', 'sections', 'regions', 'devices', 'trendChart', 'trendAxis']) $(id).replaceChildren();
+  $('trendChart').setAttribute('aria-label', '선택한 기간의 통계를 불러오는 중');
   $('reportTime').textContent = '선택한 기간의 통계를 불러오고 있습니다.';
   paused = false;
   refresh();
