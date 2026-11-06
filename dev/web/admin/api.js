@@ -2,7 +2,7 @@ import { CONFIG } from './config.js';
 
 export class ApiError extends Error {
   constructor(status, code = '') {
-    super('GA4 요청 실패');
+    super('Google 데이터 요청 실패');
     this.status = status;
     this.code = code;
   }
@@ -18,7 +18,7 @@ export async function request(url, { token, body, signal } = {}) {
     const response = await fetch(url, {
       method: body ? 'POST' : 'GET',
       credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer',
-      headers: body ? { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token } : {},
+      headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: 'Bearer ' + token } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}), signal: controller.signal
     });
     let data;
