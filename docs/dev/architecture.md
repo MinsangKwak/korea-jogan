@@ -1,6 +1,6 @@
 # 기술 구조와 설계 판단
 
-**정적 화면과 날짜별 JSON을 중심으로, 수집·검사·페이지 생성을 배포 전 작업으로 분리했습니다.** 상시 서버·DB 없이 발행 단위·확인 상태·변경 이력을 Git 커밋으로 남기는 구조이며, 각 선택의 트레이드오프와 바꿀 때 깨지는 지점을 함께 적습니다. 2026-11-09 저장소 기준입니다.
+**정적 화면과 날짜별 JSON을 중심으로, 수집·검사·페이지 생성을 배포 전 작업으로 분리했습니다.** 상시 서버·DB 없이 발행 단위·확인 상태·변경 이력을 Git 커밋으로 남깁니다. 아래에는 선택 이유와 제약, 변경이 영향을 주는 코드 경로를 정리했습니다. 2026-11-09 저장소 기준입니다.
 
 [문서 안내](../README.md) · [데이터 규격](../planning/data-spec.md) · [브랜치·환경·배포](branches.md) · [디자인 가이드](../../design/guide.md) · [런북](../planning/runbook.md)
 
@@ -18,9 +18,11 @@
 | 생성 | [pipeline/build/](../../dev/pipeline/build/) | 토큰 CSS·호별 HTML·CSP 해시·RSS·사이트맵·고정 주소 페이지·`live.json`·`build-info.json`·개발 미리보기 |
 | 자동 검사 | [dev/tests/](../../dev/tests/) | Python 시험과 Chromium 검사 6개 파일 |
 
+[RSS 수집기](../../dev/pipeline/collect/fetch_rss.py)는 제목·링크·발행일을 모아 전날 날짜 범위로 거르고 URL 중복을 제거합니다. 피드별 실패를 기록하며 나머지 수집은 계속합니다. [ECOS 수집기](../../dev/pipeline/collect/fetch_ecos.py)는 발행일 전날까지의 원자료와 수집 시각을 저장하고, HTTP 응답뿐 아니라 본문의 `RESULT` 오류도 확인합니다. 수집 결과를 기사·수치로 작성하는 일과 JSON의 형식·공개 조건을 검사하는 일은 분리했습니다.
+
 ## 데이터 지도
 
-모든 화면·생성기·검사는 `dev/web/data/` 아래 같은 JSON을 읽습니다. 화면 상태는 데이터로 저장하지 않습니다. 필드별 규격은 [data-spec](../planning/data-spec.md)입니다.
+화면·페이지 생성기·검사기는 `dev/web/data/` 아래 발행 JSON을 함께 읽습니다. 테마·큰 글자·추적 막대 숨김은 브라우저 저장소에서 관리하며 기사 JSON과 분리합니다. 아래 표는 파일을 읽고 쓰는 코드의 관계이고, 필드 정의는 [데이터 규격](../planning/data-spec.md)을 따릅니다.
 
 | 파일 | 역할 | 쓰는 쪽 | 읽는 쪽 |
 | --- | --- | --- | --- |
@@ -31,17 +33,7 @@
 | `live.json` | ECOS 최신 일별 확정값. Git에 없음 | `build_live.py`(배포 시) | `economy.js` 숫자 띠 |
 | `build-info.json` | 실제 배포 소스. Git에 없음 | `build_info.py`(배포 시) | `verify_publication.py`, 관리자, 복구 확인 |
 
-호 JSON에서 운영을 결정하는 필드:
-
-| 필드 | 하위 필드 | 왜 중요한가 |
-| --- | --- | --- |
-| `date`, `status`, `collectedAt`, `late` | — | 파일명=날짜, `draft`/`published`/`prototype` 전이, 06시 수집 마감과 늦은 수집 사유 |
-| `review` | `by`, `at`, `scope[]`, `auto` | 편집자 확인/자동 발행 구분. 헤더·관리자·`/archive/`가 읽음 |
-| `lead` | `headline`, `standfirst`, `facts[]` | 홈 머리기사이자 RSS 제목·`<title>`·구조화 데이터 원천(`lead.headline` 없으면 `headline`) |
-| `nums[]` | `k`, `v`, `dir`, `d`, `ref`, `grade`, `src{name,title,pub,base,url}` | 출처 없는 숫자를 싣지 않는다는 약속의 구현 지점. `/indicators/`의 원천 |
-| `themes[]` | `id`, `summary[]`, `keywords[]`, `articles[]`, `diffs[]` | 기준이 갈린 숫자 비교. 첫 `diffs`가 홈 카드, `assertIssue()`의 필수 조건 |
-| `national`, `regions` | `flow[]`, `items[]{cat,…,body_read,summary}`, `regions.items[].region` | 1면·지역면. 2026-11-08호 기준 전국 19건·지역 32건 |
-| `limits[]` | — | 미열람·대체·누락을 독자에게 공개 |
+호의 필드와 작성 조건은 [최상위 항목](../planning/data-spec.md#호의-최상위-항목)·[중첩 구조 검사](../planning/data-spec.md#중첩-구조와-최소-개수-검사), 공개 상태는 [status·review](../planning/data-spec.md#status--review)에서 관리합니다. 필드 변경 시 함께 확인할 코드는 아래 [변경 영향 범위](#변경-영향-범위)에 모았습니다.
 
 ## 설계 트레이드오프
 
@@ -100,9 +92,9 @@ PC·모바일 배치, 펼침 기본값, 경제 순환, 테마·탐색 동작은 
 
 ## 공개 본문·최신 숫자·관리자·검색의 구분
 
-- 날짜별 조간은 발행 당시의 기록입니다. `live.json`은 평일 09:17~22:17 매시 같은 `deploy` 커밋을 재배포하며 갱신하는 ECOS 최신 일별 확정값으로, 장중 시세가 아니고 Git에 커밋하지 않으며 수집 실패가 조간 배포를 막지 않습니다. 지난 호에서는 추적 상태와 숫자 띠를 숨깁니다(추적 막대 숨김은 `sessionStorage`).
-- `/admin/`은 공개 발행 상태와 권한 있는 계정의 GA4·검색 실적을 보여 줍니다. OAuth 토큰은 메모리에서만 쓰고 조회는 브라우저에서 Google API로 직접 보냅니다. 개발 미리보기의 관리자는 읽기 전용 안내만 제공합니다.
-- [build_pages.py](../../dev/pipeline/build/build_pages.py)는 최신 호와 `/YYYY-MM-DD`에 제목·설명·canonical·요약·구조화 데이터를 만들고 `?d=` 주소를 호별 주소로 옮깁니다. RSS·사이트맵·IndexNow를 갖췄으며 알림 실패는 배포 실패가 아닙니다. [build_security.py](../../dev/pipeline/build/build_security.py)는 메타 CSP를 생성하며 JSON은 실행 코드로 허용하지 않습니다(허용·차단 범위는 [변경 기록 2026.11.03](changelog.md#20261103-지면삽화보안)).
+- 날짜별 조간은 발행 당시의 기록이고, `live.json`은 별도로 생성하는 ECOS 최신 일별 확정값입니다. 장중 시세가 아니며 수집 실패가 조간 배포를 막지 않습니다. 지난 호에서는 현재의 추적 상태와 숫자 띠를 숨깁니다. 갱신 시각과 배포 방식은 [워크플로 표](branches.md#워크플로와-실행-환경)를 따릅니다.
+- `/admin/`의 공개 발행 상태와 권한 있는 계정의 GA4·검색 실적 조회를 구분합니다. OAuth 토큰은 메모리에서만 쓰며 브라우저가 Google API를 직접 호출합니다. 인증·조회 실패 처리는 [관리자 문서](ga4-admin.md), 개발 환경의 읽기 전용 범위는 [개발 미리보기](branches.md#개발-미리보기-vercel)에 있습니다.
+- [build_pages.py](../../dev/pipeline/build/build_pages.py)는 최신 호와 `/YYYY-MM-DD`에 제목·설명·canonical·요약·구조화 데이터를 만들고, [index.html](../../dev/web/index.html)의 초기 스크립트는 기존 `?d=` 주소를 호별 주소로 옮깁니다. [build_security.py](../../dev/pipeline/build/build_security.py)는 실제 인라인 실행 코드의 해시로 메타 CSP를 생성합니다. [IndexNow 알림](../../dev/pipeline/publish/indexnow.py)의 실패는 배포를 중단하지 않습니다. 검색 도착 페이지·RSS·사이트맵의 운영 기준은 [검색·재방문 문서](../planning/growth.md)에 있습니다.
 
 ## 검사 범위 (2026-11-09 기준)
 
@@ -114,4 +106,6 @@ PC·모바일 배치, 펼침 기본값, 경제 순환, 테마·탐색 동작은 
 | 브라우저 | 공개 지면(최신·지난 호·로딩·오류·탐색·반응형·슬라이드), 관리자(모의 인증·API), CSP(허용·차단), 검색 페이지, 개발 미리보기, 일일 후보 — 6개 파일, 엔진 1개 | `cd dev/tests/browser && npm ci && npx playwright install chromium && npm test` |
 | 커밋 제목 | 종류·범위·72자·마침표 | `node dev/tools/check_commit_msg.mjs --range origin/main..HEAD` |
 
-형식 검사와 링크 존재는 원문의 진위·접속 가능성·계산 정확성·지역별 기사 수를 보증하지 않습니다. 숫자는 이 날짜의 저장소에서 센 값이며 다른 날짜 기록의 수와 다르면 시점 차이입니다.
+2026-11-09 기준 커밋 `e0ab6c7`의 [통합 검사](https://github.com/MinsangKwak/korea-jogan/actions/runs/42578253130)에서 위 데이터·Python·브라우저 검사가 통과했습니다. 당시 색인은 22개 호(`published` 21개·`prototype` 1개)이며, 검사 수와 호 수는 해당 커밋의 값입니다.
+
+형식 검사와 링크 존재는 원문의 진위·접속 가능성·계산 정확성·지역별 기사 수를 보증하지 않습니다. 날짜별 검증 이력은 [변경 기록](changelog.md)에 보존합니다.
