@@ -6,6 +6,7 @@
 
 | 날짜 | 범위 | 반영 근거 |
 | --- | --- | --- |
+| 2026.11.09 | 브라우저 검사 대기 조건 수정·지연 발행 복구·문서 통합 | PR #109·#110, `48ef4d4`·`74ca1bf` |
 | 2026.11.05 | 발행 복구·CSP 검사 대기 수정·운영 지면 확인 | PR #99·#100·#101, `d5b493a` |
 | 2026.11.04 | 개발 미리보기(Vercel)와 일일 발행 분리 | PR #91·#92, `f4df437b` |
 | 2026.11.04 | 검색 도착 페이지(`/archive/`·`/topics/`·`/indicators/`)·유입 점검 | PR #91, `6e3a19e` |
@@ -14,6 +15,19 @@
 | 2026.11.03 | 두괄식 문구·라이트/다크 테마 | — |
 | 2026.10.30 | 전국 1면·이슈 추적 2면·신문형 지면 | PR #67~#70, `f89c3f3` |
 | 2026.10.23 | 발행 검사 강화·로딩/오류 경계·모바일 안정화 | `158314f` 기준 확인 |
+
+## 2026.11.09 브라우저 검사 대기 조건 수정과 지연 발행
+
+| 항목 | 확인한 내용 |
+| --- | --- |
+| 증상 | `daily/2026-11-09`의 CI가 `smoke.cjs` `#natList` 1920 폭 짝 읽기 검사에서 실패. 재실행해도 같은 수치 |
+| 범위 확인 | 같은 실패가 `main`(`64ddce4`) 수동 검사에서도 재현, 로컬 Chromium에서는 통과 → 데이터가 아닌 검사 쪽 문제 |
+| 직접 원인 | '더보기' 직후 `pairedSize()`가 `paired-reading.js`의 ResizeObserver → requestAnimationFrame 갱신 전 상태를 측정 |
+| 수정 | 두 열 높이 일치에 더해, 넘치는 열마다 `data-paired-overflow`가 붙을 때까지 기다린 뒤 측정. 단언은 유지 |
+| 반영 | 수정 SHA `48ef4d4`의 전체 검사 통과를 확인한 뒤 운영자 승인으로 `main`에 직접 반영(PR #110은 `dev`용). 일일 브랜치를 그 위로 재배치해 CI 통과 후 `publish.yml`로 `74ca1bf` 자동 발행·Pages 배포 |
+| 함께 반영 | 문서 32개 → 18개 통합(PR #109 내용을 `main`에 적용) |
+
+[실패한 main 검사](https://github.com/MinsangKwak/korea-jogan/actions/runs/42570786738) · [수정 후 main 검사](https://github.com/MinsangKwak/korea-jogan/actions/runs/42573784141) · [PR #110](https://github.com/MinsangKwak/korea-jogan/pull/110)
 
 ## 2026.11.05 발행 복구와 운영 확인
 
