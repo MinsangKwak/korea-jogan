@@ -190,6 +190,43 @@ class ValidateTest(Site):
         self.edit(lambda i: i["themes"].append(i["themes"][0].copy()))
         self.assertEqual(self.run_validate()[0], 1)
 
+    def test_nums_failure_names_the_field_to_fix(self):
+        # 실패 로그만 보고 고칠 필드를 알 수 있어야 한다. 빈 기관 이름은 구조 검사가, 링크 형식·방향은 내용 검사가 각각 필드를 지목한다
+        original = (self.issues / f"{DATE}.json").read_text(encoding="utf-8")
+        self.edit(lambda i: i["nums"][0]["src"].update(name=" "))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("nums[0].src.name", out)
+        (self.issues / f"{DATE}.json").write_text(original, encoding="utf-8")
+        self.edit(lambda i: i["nums"][0]["src"].update(url="http://example.org/plain"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("nums[0]", out)
+        self.assertIn("src.url", out)
+        self.assertIn("http://example.org/plain", out)
+        self.assertNotIn("dir 값은", out)
+        self.edit(lambda i: i["nums"][0].update(dir="rise"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("dir 값은 up/down/flat", out)
+        self.assertIn("'rise'", out)
+
+    def test_debt_rows_must_be_ordered_and_plausible(self):
+        self.edit(lambda i: i.update(debt=[[2026, 1300, 50, "전망"], [2025, 1200, 48, "결산"]]))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("debt 연도 순서", out)
+        self.edit(lambda i: i.update(debt=[[2025, 12000, 48, "결산"]]))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("debt 2025", out)
+
+    def test_regions_only_accept_seventeen_provinces(self):
+        self.edit(lambda i: i["regions"]["items"][0].update(region="수도권"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("regions[0] 시도 이름 오류 '수도권'", out)
+
 
 class ApproveTest(Site):
     def test_draft_becomes_published_and_passes_deploy(self):
