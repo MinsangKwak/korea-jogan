@@ -76,7 +76,9 @@ async function pairedSize(page, selector) {
     const pair = document.querySelector(selector);
     if (!pair?.hasAttribute('data-paired-reading')) return false;
     const panes = [...pair.querySelectorAll(':scope > .paired-pane')];
-    return panes.length === 2 && Math.abs(panes[0].offsetHeight - panes[1].offsetHeight) <= 2;
+    if (panes.length !== 2 || Math.abs(panes[0].offsetHeight - panes[1].offsetHeight) > 2) return false;
+    // 긴 열 표시는 ResizeObserver → requestAnimationFrame 뒤에 갱신되므로, 내용이 넘치는 열에 표시가 붙을 때까지 기다린다
+    return panes.every((pane) => pane.scrollHeight <= pane.clientHeight + 2 || pane.hasAttribute('data-paired-overflow'));
   }, selector);
   const panes = await page.locator(`${selector} > .paired-pane`).evaluateAll((nodes) => nodes.map((node) => ({
     height: node.getBoundingClientRect().height,
