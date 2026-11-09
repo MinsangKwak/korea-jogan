@@ -1,86 +1,100 @@
-# 브랜치 운영과 배포 절차
+# 브랜치·환경·자동 승격·배포
 
-**기능마다 브랜치·PR을 나누고, 배포 준비가 끝난 기능만 `dev`에서 통합 검증한 뒤 `main`으로 승격합니다.** 기능 릴리스에는 검증 커밋의 태그를 남깁니다. 일일 자료는 `main` 기반 `daily/YYYY-MM-DD`에서 데이터만 따로 발행합니다.
+**기능 코드는 `feature` → `dev`(보호된 Vercel) → 정확한 SHA로 `main`·`deploy`(GitHub Pages)에 승격하고, 일일 자료는 `main` 기반 `daily/YYYY-MM-DD`에서 데이터만 선별 반영합니다.** 두 경로를 나눠 미완성 코드가 다음 날 자동 발행에 섞이지 않게 합니다. 일일 발행 절차 자체는 [런북](../planning/runbook.md), 커밋 형식은 [커밋 기준](commits.md)에 있습니다.
 
-[문서 안내](../README.md) · [환경·DNS](environments.md) · [커밋 기준](commits.md) · [발행 런북](../planning/runbook.md) · [환경 변경 상태](changes-2026-11-04-preview.md)
+[문서 안내](../README.md) · [공통 작업 지침](../../AGENTS.md) · [기술 구조](architecture.md) · [변경 기록](changelog.md)
 
-## 브랜치별 역할
+## 브랜치와 환경
 
-| 브랜치 | 역할 | 반영 경로 |
+| 브랜치 | 역할 | 반영 경로 | 공개·접근 |
+| --- | --- | --- | --- |
+| `feature/<기능명>` | 기능 하나의 구현·검증 | 폴더·역할별 커밋, 기능 하나의 PR로 `dev`에 제안 | — |
+| `dev` | 배포 준비가 된 기능의 통합 검증 | 준비된 PR만 병합. 일일 발행의 코드 원본으로 쓰지 않음 | Vercel `korea-jogan-dev`, 모든 배포에 Authentication |
+| `main` | 검토·승격한 안정 코드 + 공개 데이터 | 코드 승격 또는 일일 데이터의 제한된 반영 | — |
+| `deploy` | GitHub Pages 공개 기준 | 검증한 `main`을 반영 | [korea-jogan.com](https://korea-jogan.com/) 공개 |
+| `daily/YYYY-MM-DD` | 그날의 조사·초안·색인·실제 추적 갱신 | `main`에서 생성, 허용 데이터만 가져오기 | — |
+
+`dev/web/`는 브랜치가 아닌 디렉터리이며 모든 브랜치에서 같은 경로를 사용합니다. 미완성·배포 보류 기능은 피처 브랜치에 남깁니다. `dev`를 승격하면 포함된 기능이 모두 올라가므로 대상 목록을 먼저 확인합니다. 운영의 일일 자료가 `main`에 쌓이면 코드 승격 전에 그 이력을 `dev`가 포함하도록 통합하고 다시 검증합니다. 세 브랜치를 매일 같은 커밋으로 맞추지 않으며 공개된 이력을 다시 쓰거나 강제 push하지 않습니다.
+
+```mermaid
+flowchart LR
+    F["feature PR · check.yml"] --> D["dev · 통합 검사 · Vercel 미리보기"]
+    D -->|"정확한 SHA · integration.yml"| M["main"]
+    M --> P["deploy · Pages"]
+    M -->|"00시 생성"| Y["daily/YYYY-MM-DD"]
+    Y -->|"06시 데이터만 · publish.yml"| M
+```
+
+## 코드 승격 순서
+
+1. 원격을 가져와 `main`·`dev` 관계를 확인하고, 새 일일 자료·안정 수정이 있으면 그 `main` 이력을 `dev`에 포함합니다.
+2. 최신 통합 기준에서 `feature/<기능명>`을 만들고 목적·폴더·역할별 커밋을 나눕니다. PR은 기능 하나로 묶습니다.
+3. 기능별 검사·빌드·배포 준비를 마친 PR만 `dev`에 병합합니다. 통합된 `dev`의 **정확한 40자리 SHA**를 고정합니다.
+4. `integration.yml`이 한 실행 환경에서 전체 검사 → `verify-ci` 증거 기록 → 같은 SHA의 Vercel 배포 성공·익명 접근 차단(루트·색인·관리자가 로그인으로 302)·조상 관계 확인 → `release-YYYYMMDD-<SHA 7자리>` 태그와 `main`·`deploy`를 원자적으로 반영 → Pages 호출을 이어 갑니다. 수동 SHA 입력은 필요 없습니다.
+5. 해당 SHA의 Pages 성공과 공개 `build-info.json`의 `sourceSha`·`issueDate`를 확인한 뒤 완료로 기록합니다. 호출 응답·태그 생성만으로 끝내지 않습니다.
+6. 검증 뒤 코드·데이터·기준 브랜치가 바뀌면 승격하지 않고 다시 검사합니다. 다른 SHA의 성공을 쓰거나 검사를 약화하지 않습니다.
+
+태그는 특정 커밋을 가리키며 이동·삭제·덮어쓰기하지 않습니다. 문서만의 PR과 일일 기사·최신 숫자 갱신에는 기능 릴리스 태그를 만들지 않습니다. 통합 실패 뒤에는 `promote.yml`이 이미 통과한 같은 SHA의 검사 증거를 재사용해 누락된 승격·배포만 복구합니다. 이관 전 커밋은 기존 `data`·`browser` 검사 둘 다를 요구하며 새 전체 검사 실패를 과거 성공으로 대체하지 않습니다.
+
+## 워크플로와 실행 환경
+
+| 파일 | 트리거 | 책임 |
 | --- | --- | --- |
-| `feature/<기능명>` | 기능 하나의 구현·검증 | 폴더·역할별 커밋을 나누고 기능 하나의 PR로 `dev`에 제안 |
-| `dev` | 배포 준비가 된 기능의 통합 검증, 보호된 Vercel 미리보기 | 기능 검증·배포 준비가 끝난 PR만 병합하고 정확한 SHA 검토 |
-| `main` | 검토·승격한 안정 코드와 공개 데이터 | 코드 승격 또는 일일 데이터의 제한된 반영 |
-| `deploy` | GitHub Pages 공개 기준 | 검증한 `main`을 반영 |
-| `daily/YYYY-MM-DD` | 그날의 조사·초안·색인·실제 추적 갱신 | `main`에서 생성, 안정 코드에 허용 데이터만 가져오기 |
+| [check.yml](../../.github/workflows/check.yml) | PR(`dev`·`main`·`deploy` 대상), `daily/**` push | 쓰기 권한 없이 [공통 검사 작업](../../.github/actions/verify/action.yml) 실행 = `verify-ci` |
+| [integration.yml](../../.github/workflows/integration.yml) | `dev`·`main` push, 고정 SHA 재검사 | 전체 검사 증거 기록 → 태그·승격·배포 요청 |
+| [promote.yml](../../.github/workflows/promote.yml) | 통합 검사 완료 이벤트, 수동 | 통합 실패 뒤 같은 SHA의 검사 증거로 누락된 승격·배포만 복구 |
+| [publish.yml](../../.github/workflows/publish.yml) | KST 06:00·06:07·06:37·07:17·08:17 (`main` 참조, 15분 제한) | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 준비 → 자동 승인 → `main`·`deploy` 반영 → Pages 호출 |
+| [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `deploy` push, 수동, 평일 KST 09:17~22:17 매시 | `validate --deploy` → RSS·사이트맵·호별 HTML·`live.json`·`build-info.json` 생성 → Pages → 공개 확인. 실패 시 같은 소스로 최대 두 번 재시도 |
+| [daily.yml](../../.github/workflows/daily.yml) | 수동 | RSS·ECOS 원자료 수집. 조사 예약을 대체하지 않음 |
 
-미완성·배포 보류 기능은 피처 브랜치에 남기고 `dev`에 병합하지 않습니다. `dev`를 승격하면 그 안의 기능이 모두 함께 올라가므로 배포 대상 목록을 먼저 확인합니다. 운영의 오늘 자료가 `main`에 추가되면 코드 승격 전에 그 안정 이력을 `dev`가 포함하도록 정리하고 다시 검증합니다. 매일 세 브랜치를 같은 커밋으로 맞추지 않으며 공개된 과거 이력은 다시 쓰거나 강제 push하지 않습니다.
+공통 검사 작업은 데이터 검사·토큰 CSS 일치·Python 시험·PR 커밋 제목·브라우저 검사 6개 파일(`smoke`·`admin`·`security`·`discovery`·`preview`·`daily`)을 한 실행 환경에서 수행합니다. `run.cjs`가 Chromium 엔진 하나를 시작하고 검사 파일이 연결하며(최대 2개 동시), 연결별 컨텍스트·쿠키 격리와 한 연결 종료가 다른 연결을 닫지 않는지도 확인합니다. 검사를 삭제하거나 경로 필터로 건너뛰지 않습니다.
 
-`dev/web/`는 브랜치가 아닌 디렉터리입니다. 모든 브랜치에서 데이터와 화면의 같은 저장 경로를 사용합니다.
+2026.11.05 비교: 기존 PR 검사([41979133754](https://github.com/MinsangKwak/korea-jogan/actions/runs/41979133754))는 브라우저 108초·데이터 12초·커밋 8초의 실행 환경 3개(분 단위 올림 4분), `main` 검사([41979772369](https://github.com/MinsangKwak/korea-jogan/actions/runs/41979772369))는 실행 환경 2개(3분)였습니다. 실행 기록 비교이며 청구 금액이 아닙니다.
 
-## 일반 코드를 승격하는 순서
+`GITHUB_TOKEN` push는 후속 Actions를 자동 시작하지 않으므로 새 데이터를 반영한 뒤 배포를 명시적으로 호출합니다. 시간당 배포는 SHA가 같아도 `builtAt`이 이번 결과와 같아야 공개 완료로 봅니다([verify_publication.py](../../dev/pipeline/publish/verify_publication.py)).
 
-1. 원격을 가져와 `main`·`dev` 관계를 확인합니다. 운영에서 새 일일 자료·안정 수정이 반영됐다면 그 `main` 이력을 `dev`에 포함합니다.
-2. 최신 통합 기준에서 기능 하나의 `feature/<기능명>` 브랜치를 만들고 목적·폴더·역할별 커밋을 나눕니다. PR도 그 기능 하나로 묶으며 문서·검사는 해당 기능과 직접 관련된 범위만 포함합니다.
-3. 기능별 검사·빌드와 배포 준비를 마친 PR만 `dev`에 병합합니다. 이후 통합된 `dev`의 데이터·브라우저·관련 테스트와 개발 빌드를 다시 검사합니다. 승격할 **정확한 40자리 SHA**를 고정하고 같은 SHA의 Vercel 배포·인증 경계·관리자 화면을 확인합니다.
-4. [통합 검사와 자동 승격](../../.github/workflows/integration.yml)이 한 실행 환경에서 모든 검사를 수행하고 같은 SHA의 `verify-ci` 증거를 기록합니다. 별도 수동 입력 없이 Vercel 배포·익명 접근 차단·조상 관계를 확인해 승격합니다. 로그인 후 원격 본문과 CI 지면 검사의 범위는 [자동화 구조](delivery.md)를 따릅니다.
-5. 검증한 코드만 `main`·`deploy`로 빨리 감기합니다. 해당 SHA의 Pages 성공과 공개 `build-info.json`의 실제 소스 SHA·호 날짜를 확인한 뒤 완료로 기록합니다. 호출 성공만으로 끝내지 않습니다. 다른 SHA의 성공·계속 이동하는 `dev` 이름만으로 승인 대상을 바꾸지 않습니다.
-6. 기능 릴리스의 고정 SHA에 고유한 태그를 붙이고 태그가 같은 커밋을 가리키는지 확인합니다. 태그 이름·SHA·포함 기능·검사·배포 결과를 함께 남깁니다. 검증 도중 코드·데이터·기준 브랜치가 바뀌면 승격하지 않고 다시 검사합니다.
+## 개발 미리보기 (Vercel)
 
-## 태그 정책과 자동화 범위
+2026.11.04 확인 기준. 설정 등록·실제 배포·DNS 연결·사용자 네트워크 접속은 서로 다른 확인 항목입니다.
 
-태그는 브랜치 이름이 아닌 특정 커밋을 가리킵니다. 새 기능 릴리스의 태그는 `release-YYYYMMDD-<SHA 앞 7자리>` 형식을 기본으로 사용하고 이미 같은 이름이 있으면 대상 SHA를 확인합니다. 다른 SHA를 가리키는 태그는 이동·삭제·덮어쓰기하지 않습니다. 태그 생성은 배포 성공의 증거가 아니며 실패한 배포도 결과를 그대로 기록합니다.
-
-`auto_release.py`가 같은 SHA의 완료된 전체 검사와 개발 배포를 확인하고 태그·main·deploy를 원자적으로 반영합니다. 정상 경로는 통합 검사 실행 환경을 이어 쓰며 별도 승격 부팅을 하지 않습니다. `promote.yml`은 실패 복구용입니다. [실행 환경·엔진 재사용과 자동 복구](delivery.md)를 따릅니다.
-
-문서만 정리하는 PR은 기능 코드 배포와 구분합니다. 일일 기사·최신 숫자 갱신에 기능 릴리스 태그를 매번 만들지 않습니다. 각 조사·감독 예약의 권한도 이 정책으로 확대하지 않습니다.
-
-승격 워크플로의 원격 반영과 첫 실제 실행은 [최신 환경 변경](changes-2026-11-04-preview.md)에서 확인합니다. 초기 `f4df437b`는 개발 배포를 검증한 뒤 전환 중 기존 예약 발행으로 운영에 반영됐습니다. 새 승격 워크플로 실행 기록과 구분합니다. 워크플로 파일이 있다는 사실만으로 실행·배포 성공을 뜻하지 않습니다.
-
-커밋 보존·squash 여부는 해당 작업의 요청을 따릅니다. 이전 [PR #86](https://github.com/MinsangKwak/korea-jogan/pull/86)·[PR #87](https://github.com/MinsangKwak/korea-jogan/pull/87)의 squash·빨리 감기 방식은 당시 처리 기록이며 이 새 환경 분리의 실행 증거는 아닙니다.
-
-## 일일 발행
-
-**00시에는 안정 코드에서 오늘 자료를 만들고, 06시에는 데이터만 가져와 공개합니다.** 시간은 한국 시간입니다.
-
-| 단계 | 시각·조건 | 동작 |
-| --- | --- | --- |
-| 조사·초안·문장 편집 | 00:00 Codex | `main`의 SHA에서 `daily/YYYY-MM-DD` 생성. 오늘 JSON·색인·실제 추적 갱신만 저장 |
-| 일일 CI | 해당 `daily` SHA | 데이터·브라우저 검사. 사실 확인과는 구분 |
-| 첫 자동 발행 | 06:00 GitHub | 오늘 일일 브랜치의 고정 SHA와 전체 CI 성공 확인, 사용자 검토 없이 발행 |
-| 공개 감독·자동 복구 | 06:05 Codex | 미공개면 진행 중 실행·현재 버전을 확인하고 안정 발행 실행·재시도 |
-| 기존 재시도 | 06:07·06:37·07:17·08:17 | 같은 정책으로 누락·지연 재확인 |
-| 데이터 준비 | 안정 `main` 작업본 | 허용 JSON만 가져오기, 기존 날짜·동시 변경·추적 근거 검사 |
-| 자동 공개·배포 | 검사 통과 | 미확인 초안이면 `review.auto: true`, 안정 코드에 데이터 커밋 후 `main`·`deploy` 반영 |
-
-일일 브랜치는 `dev`에서 만들지 않으며 통째로 `main`에 병합하지 않습니다. [prepare_daily.py](../../dev/pipeline/publish/prepare_daily.py)는 안정 코드에서 고정한 소스 SHA의 오늘 JSON·색인·추적 자료만 가져옵니다. 코드·과거 호·검사 스크립트가 섞였으면 중단합니다. 일일 브랜치의 소스 코드를 실행하지 않습니다.
-
-새 색인은 `main`의 기존 공개 날짜를 보존하고 오늘만 더합니다. 오늘 호·추적 자료가 조사 시작 뒤 운영에서 바뀌었다면 덮어쓰지 않습니다. 추적 자료는 `updated`만 오늘로 바꾼 변경을 새 근거로 취급하지 않습니다. 같은 날짜가 이미 공개됐다면 중복 발행하지 않습니다.
-
-`publish.yml`은 `main` 참조에서만 실행하고 실행 제한 시간은 15분으로 둡니다. 공개 복구 확인은 날짜와 배포 소스 SHA를 함께 봅니다. 아침 발행의 `GITHUB_TOKEN` push만으로 후속 워크플로가 실행되지 않으므로, 새 데이터를 반영한 경우 배포 워크플로를 명시적으로 호출합니다. GitHub 예약의 실제 실행은 지연될 수 있습니다. 06:05 Codex는 사용자가 승인한 안정 발행 실행·재시도를 수행합니다. 같은 소스가 진행 중이면 중복 요청하지 않습니다.
-
-## 워크플로별 확인 지점
-
-| 파일·기능 | 책임 |
+| 항목 | 값 |
 | --- | --- |
-| [check.yml](../../.github/workflows/check.yml) | PR·일일 후보의 전체 검사를 한 실행 환경에서 수행 |
-| [integration.yml](../../.github/workflows/integration.yml) | dev·main의 전체 검사 증거를 기록하고 같은 실행 환경에서 자동 태그·승격·배포 요청 |
-| [publish.yml](../../.github/workflows/publish.yml) | 안정 `main` 코드로 고정 일일 SHA의 CI·허용 데이터 검사, 오늘 호 공개·배포 |
-| [promote.yml](../../.github/workflows/promote.yml) | 통합 실패 뒤 같은 SHA의 완료된 검사 증거를 재사용하는 자동 복구 |
-| [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `deploy` 기준 공개 파일 생성과 Pages 배포 |
-| [daily.yml](../../.github/workflows/daily.yml) | 수동 RSS·ECOS 원자료 수집, 전체 조사 예약은 아님 |
+| 팀·프로젝트 | `minsangkwaks-projects`(Hobby) · `korea-jogan-dev` · Git `MinsangKwak/korea-jogan` · OWNER 1명 |
+| 배포 대상 | [vercel.json](../../vercel.json): `dev` 브랜치만, `buildCommand` = [build_preview.py](../../dev/pipeline/build/build_preview.py), 출력 `dist-preview` |
+| 보호 | 모든 배포에 Vercel Authentication. 로그인과 프로젝트 접근 권한은 별개 |
+| 주소 | [보호된 기본 주소](https://korea-jogan-dev-git-dev-minsangkwaks-projects.vercel.app) · `dev.korea-jogan.com` |
+| DNS | Gabia `CNAME dev → 7e4c24757c5a10ba.vercel-dns-017.com.`(TTL 600). 루트 A 레코드 유지, `cname.vercel-dns.com.` 중복 추가 금지. Vercel HTTPS 확인 이력 있음, 사용자 PC NXDOMAIN은 별도 확인 |
 
-평일 09:17~22:17에는 같은 운영 `deploy` 소스로 ECOS 최신 일별 확정 통계를 받아 다시 배포합니다. 키가 없으면 예약 갱신을 건너뛰며 새 Git 커밋을 만들지 않습니다. 조간 본문과 별도의 숫자 띠 갱신입니다.
+| 항목 | 개발 미리보기 | 운영 |
+| --- | --- | --- |
+| 접근 | Vercel Authentication | 공개 |
+| 검색 | HTML `noindex` + 응답 헤더(`X-Robots-Tag`, `no-store`) | 공개 페이지 검색 허용 |
+| 측정 | GA4 비활성 | 운영자·자동화 제외 후 GA4 |
+| 관리자 | 개발·읽기 전용 안내 | 발행 현황 + 권한 있는 계정의 GA4·검색 조회 |
+| 데이터 | 공개 호만(`preview-build.json`에 브랜치·SHA·포함 호 기록) | 배포 검사 통과 공개 호(`build-info.json`) |
+
+`noindex`는 접근 권한이 아닙니다. 로컬 확인은 `python3 dev/pipeline/build/build_preview.py && python3 -m http.server -d dist-preview 8001`이며 인증은 재현되지 않습니다.
+
+## 일일 발행 경로의 보호 조건
+
+[prepare_daily.py](../../dev/pipeline/publish/prepare_daily.py)가 안정 `main` 작업본에서 고정 소스 SHA의 오늘 JSON·색인·추적 자료만 가져옵니다. 다음이면 중단합니다.
+
+- 변경 파일이 오늘 호·`index.json`·`trackers.json` 밖에 있음(코드·과거 호·검사 스크립트 혼입)
+- 색인이 `main`의 기존 날짜를 보존하지 않거나 `latest`가 오늘이 아님
+- 조사 시작 뒤 `main`의 오늘 호·추적 자료가 바뀜(동시 변경)
+- 추적 자료가 `updated`만 바꿨거나 `updated`가 발행일과 다름
+- 같은 날짜가 이미 `published`로 공개됨(중복 발행 안 함)
+
+`publish.yml`은 확인 중 `main`·`daily`가 바뀌었거나 둘이 조상 관계가 아니면 push하지 않습니다. 일일 브랜치의 소스 코드는 실행하지 않습니다.
 
 ## 실패와 복구
 
 | 증상 | 먼저 확인할 내용 |
 | --- | --- |
-| 오늘 호가 없음 | 오늘 `daily` 브랜치·JSON·색인과 00시 예약 실행 |
-| 오늘 자료가 있는데 공개 안 됨 | 고정 SHA의 CI, 허용 파일, 운영 동시 변경, 아침 발행 로그 |
-| 개발 코드가 승격 안 됨 | 정확한 SHA의 CI·Vercel 배포 상태와 조상 관계 |
+| 개발 코드가 승격 안 됨 | 정확한 SHA의 `verify-ci`·Vercel 배포 상태·조상 관계 |
 | 개발 주소가 안 열림 | Gabia DNS·Vercel 도메인 확인·배포 보호 권한 |
-| 브랜치 반영 뒤 화면이 그대로임 | Pages 실행·배포 대상 SHA·공개 색인 |
-| 자동 실행 이력이 갈라짐 | `main`·`deploy` 및 대상 코드의 관계. 필요한 이력을 보존해 정리 |
+| 브랜치 반영 뒤 화면이 그대로임 | Pages 실행·배포 대상 SHA·공개 색인·`build-info.json` |
+| 자동 실행 이력이 갈라짐 | `main`·`deploy`·대상 코드의 관계. 필요한 이력을 보존해 정리 |
+| 오늘 호가 없거나 공개 안 됨 | [런북의 장애 추적 순서](../planning/runbook.md#장애-추적-순서) |
 
-강제 push·전체 개발 브랜치 병합·빈 커밋으로 검사를 우회하지 않습니다. 06:05 감독 작업은 안정 발행을 실행·재시도하고 공개까지 확인합니다. 해결하지 못한 검사·데이터·충돌 오류는 근거와 함께 보고하며 코드를 임의 수정하지 않습니다. 데이터 오류·정정은 [런북](../planning/runbook.md), 환경 설정은 [환경 안내](environments.md)를 따릅니다.
+강제 push·전체 개발 브랜치 병합·빈 커밋으로 검사를 우회하지 않습니다.
