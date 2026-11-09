@@ -1,138 +1,117 @@
 # 기술 구조와 설계 판단
 
-**정적 화면과 날짜별 JSON을 중심으로, 수집·검사·페이지 생성을 배포 전 작업으로 분리했습니다.** 상시 애플리케이션 서버와 DB를 운영하지 않으면서 발행 단위·확인 상태·변경 이력을 남기는 구조입니다.
+**정적 화면과 날짜별 JSON을 중심으로, 수집·검사·페이지 생성을 배포 전 작업으로 분리했습니다.** 상시 서버·DB 없이 발행 단위·확인 상태·변경 이력을 Git 커밋으로 남기는 구조이며, 각 선택의 트레이드오프와 바꿀 때 깨지는 지점을 함께 적습니다. 2026-11-09 저장소 기준입니다.
 
-2026.11.05 운영 기준입니다. 지면·브랜드 개편과 개발/일일 발행 경로 분리는 기존 정적 구조 위에 적용했습니다. [최신 발행 복구](changes-2026-11-05.md) · [환경 안내](environments.md) · [문서 안내](../README.md) · [데이터 규격](../planning/data-spec.md)
+[문서 안내](../README.md) · [데이터 규격](../planning/data-spec.md) · [브랜치·환경·배포](branches.md) · [디자인 가이드](../../design/guide.md) · [런북](../planning/runbook.md)
 
 ## 전체 구조
 
 | 영역 | 위치 | 책임 |
 | --- | --- | --- |
-| 정적 지면 | [dev/web/](../../dev/web/) | HTML·CSS·바닐라 JavaScript, 원본 발행 데이터 |
-| 공통 로직 | [src/core/](../../dev/web/src/core/) | 데이터·서식·출처 UI·반응형 펼침·테마·측정·주소 |
-| 섹션 렌더링 | [src/components/](../../dev/web/src/components/) | 헤더·탐색·전국·추적·언론·지역·정치·경제·산업·재정 |
-| 날짜별 발행 | [data/issues/](../../dev/web/data/issues/) | 호별 JSON과 최신 호 색인 |
-| 별도 운영 데이터 | [data/](../../dev/web/data/) | 장기 추적·정정·수집 설정·최신 숫자 |
-| 수집 | [pipeline/collect/](../../dev/pipeline/collect/) | RSS 목록과 ECOS 원자료 수집·변환 |
-| 검사·공개 | [pipeline/publish/](../../dev/pipeline/publish/) | 형식·공개 조건 검사, 확인 기록, IndexNow 알림 |
-| 생성 | [pipeline/build/](../../dev/pipeline/build/) | 토큰 CSS·호별 HTML·CSP·RSS·사이트맵·최신 숫자 |
-| 자동 검사 | [dev/tests/](../../dev/tests/) | Python과 공개 지면·관리자·CSP Chromium 검사 |
+| 정적 지면 | [dev/web/](../../dev/web/) | HTML·CSS·바닐라 JS, 원본 발행 데이터 |
+| 공통 로직 | [src/core/](../../dev/web/src/core/) | 데이터 로딩(`data.js`)·서식·출처 UI(`ui.js`)·반응형 펼침·테마·측정(`metrics.js`)·주소(`seo.js`) |
+| 섹션 렌더링 | [src/components/](../../dev/web/src/components/) | 헤더·탐색·전국·추적·언론·지역·정치·경제·산업·재정·바닥글. 모듈마다 첫 줄 주석이 책임을 적음 |
+| 관리자 | [dev/web/admin/](../../dev/web/admin/) | 공개 발행 현황, Google OAuth로 GA4·검색 실적 조회 ([연결 안내](ga4-admin.md)) |
+| 발행 데이터 | [dev/web/data/](../../dev/web/data/) | 호별 JSON·색인·추적·정정 |
+| 수집 | [pipeline/collect/](../../dev/pipeline/collect/) | RSS 목록·ECOS 원자료 수집·변환 |
+| 검사·공개 | [pipeline/publish/](../../dev/pipeline/publish/) | 형식·공개 조건 검사, 승인, 일일 데이터 선별, 공개 확인, 자동 승격, IndexNow |
+| 생성 | [pipeline/build/](../../dev/pipeline/build/) | 토큰 CSS·호별 HTML·CSP 해시·RSS·사이트맵·고정 주소 페이지·`live.json`·`build-info.json`·개발 미리보기 |
+| 자동 검사 | [dev/tests/](../../dev/tests/) | Python 시험과 Chromium 검사 6개 파일 |
 
-화면은 프레임워크·번들러 없이 실행합니다. 경제 슬라이드용 Swiper는 버전·라이선스·원본 해시를 기록해 [로컬 vendor](../../dev/web/assets/vendor/swiper/README.md)에 보관합니다. 이 선택은 빌드 환경을 줄이는 대신 스크립트 순서·전역 이름·의존성 갱신을 직접 관리해야 하는 비용이 있습니다.
+## 데이터 지도
 
-## 개발 코드와 일일 데이터의 분리
+모든 화면·생성기·검사는 `dev/web/data/` 아래 같은 JSON을 읽습니다. 화면 상태는 데이터로 저장하지 않습니다. 필드별 규격은 [data-spec](../planning/data-spec.md)입니다.
 
-| 경로 | 입력 | 검사·반영 | 공개 기준 |
+| 파일 | 역할 | 쓰는 쪽 | 읽는 쪽 |
 | --- | --- | --- | --- |
-| 코드 변경 | 기능별 `feature` → 준비된 기능만 통합한 `dev` | 기능 PR 검사 후 통합 SHA의 전체 검사·Vercel 배포·익명 차단·조상 관계 자동 확인 | 안정 `main` → `deploy`, 기능 릴리스 태그 확인 |
-| 일일 조사 | `main`에서 만든 `daily/YYYY-MM-DD` | 고정 일일 SHA의 CI와 허용 파일만 확인·선별 반영 | `main`의 안정 코드 + 오늘 데이터 |
-| 운영 웹 | `deploy` | 공개 조건·HTML·CSP·RSS·사이트맵 생성 | GitHub Pages |
+| `issues/YYYY-MM-DD.json` | 하루 한 호 | 00시 조사 초안, `approve.py` | 화면 전 섹션, `build_pages`·`build_feed`·`build_discovery`, 관리자, `validate.py` |
+| `issues/index.json` | `{latest, issues[]}` | 조사, `prepare_daily.py` | `data.js`, 관리자, `build_*`, `verify_publication.py` |
+| `trackers.json` | 장기 사안. 최신 호에서만 표시 | 조사(근거가 바뀐 날만, `updated` = 발행일) | `track.js`, `build_discovery`(`/topics/`), `validate.py` |
+| `corrections.json` | 전체 호의 정정 이력 | 운영자 | `footer.js`, `validate.py` |
+| `live.json` | ECOS 최신 일별 확정값. Git에 없음 | `build_live.py`(배포 시) | `economy.js` 숫자 띠 |
+| `build-info.json` | 실제 배포 소스. Git에 없음 | `build_info.py`(배포 시) | `verify_publication.py`, 관리자, 복구 확인 |
 
-[환경 안내](environments.md)에 코드와 데이터의 분리 흐름, 개발 주소·접근 권한·DNS 상태를 정리했습니다. `dev/web/`는 디렉터리 이름이며 개발 브랜치만의 자료 경로가 아닙니다.
+호 JSON에서 운영을 결정하는 필드:
 
-## 발행과 배포 흐름
+| 필드 | 하위 필드 | 왜 중요한가 |
+| --- | --- | --- |
+| `date`, `status`, `collectedAt`, `late` | — | 파일명=날짜, `draft`/`published`/`prototype` 전이, 06시 수집 마감과 늦은 수집 사유 |
+| `review` | `by`, `at`, `scope[]`, `auto` | 편집자 확인/자동 발행 구분. 헤더·관리자·`/archive/`가 읽음 |
+| `lead` | `headline`, `standfirst`, `facts[]` | 홈 머리기사이자 RSS 제목·`<title>`·구조화 데이터 원천(`lead.headline` 없으면 `headline`) |
+| `nums[]` | `k`, `v`, `dir`, `d`, `ref`, `grade`, `src{name,title,pub,base,url}` | 출처 없는 숫자를 싣지 않는다는 약속의 구현 지점. `/indicators/`의 원천 |
+| `themes[]` | `id`, `summary[]`, `keywords[]`, `articles[]`, `diffs[]` | 기준이 갈린 숫자 비교. 첫 `diffs`가 홈 카드, `assertIssue()`의 필수 조건 |
+| `national`, `regions` | `flow[]`, `items[]{cat,…,body_read,summary}`, `regions.items[].region` | 1면·지역면. 2026-11-08호 기준 전국 19건·지역 32건 |
+| `limits[]` | — | 미열람·대체·누락을 독자에게 공개 |
 
-00시 Codex는 안정 `main`의 SHA에서 오늘 `daily` 브랜치를 만들고 조사·사실 초안·문장 편집·검사를 수행합니다. 11/05 첫 초안 저장과 공개 확인이 실행됐으며 검사 복구 후 운영자가 오늘 호를 반영했습니다. 뒤늦게 실행된 예약은 이미 공개된 호의 배포 상태 확인에 성공했습니다. [자동화 상태](publish-automation.md#현재-상태)에서 정시 최초 발행과 복구 결과를 구분합니다. `daily.yml`은 RSS·ECOS 수동 수집기이며 전체 조사 예약을 대체하지 않습니다.
+## 설계 트레이드오프
 
-아침 `publish.yml`은 안정 `main`의 코드로 실행합니다. 고정한 일일 SHA의 CI를 확인하고 [prepare_daily.py](../../dev/pipeline/publish/prepare_daily.py)로 오늘 JSON·색인·실제 추적 갱신만 가져옵니다. 일일 브랜치 전체·그 안의 코드·미검증 `dev`는 병합하거나 실행하지 않습니다. 데이터·상태·동시 변경 검사 뒤 미확인 초안을 자동 공개하고 `main`·`deploy`에 반영합니다. `main` 참조에서만 실행하며 제한 시간은 15분입니다. 배포 결과물의 `build-info.json`에 실제 체크아웃한 소스 SHA와 호 날짜를 남기고, 복구 확인에서도 둘을 함께 대조합니다.
+| 선택 | 대안 | 얻은 것 | 치르는 비용 | 바뀔 조건 |
+| --- | --- | --- | --- | --- |
+| 정적 HTML + JSON (GitHub Pages) | 상시 서버·DB | 서버·DB 운영 없음, 발행 단위가 커밋으로 남음, 배포 SHA로 공개본 식별 | 응답 헤더 불가 → 메타 CSP만, HSTS·`frame-ancestors`·`nosniff` 미설정. 호가 쌓이면 색인 분할·전체 검색 재설계 | 로그인·댓글·전체 호 검색 요구 |
+| 배포 전 Python 검사 | 브라우저 런타임 검증만 | 잘못된 데이터가 공개되기 전에 멈춤. 실패 로그가 파일·필드·현재 값을 지목 | 검사 규칙을 직접 유지. 필드 추가마다 validator·`assertIssue()`·회귀 검사 함께 갱신 | JSON Schema 등 도구 도입 시 규칙 이관 |
+| 바닐라 JS, 전역 스크립트 | 프레임워크·번들러 | 빌드 환경 없음, 소스 그대로 디버깅, vendor는 Swiper 하나 | 스크립트 순서·전역 이름·의존성 갱신 수동 관리 | 컴포넌트 수·상태 공유가 늘어 전역 관리가 실수의 원인이 될 때 |
+| 운영=Pages, 개발=보호된 Vercel | 한 호스팅에 환경 두 개 | 미완성 코드가 자동 발행에 섞이지 않음. 개발은 인증 뒤 | `deploy-pages.yml`과 `vercel.json`/`build_preview.py` 두 설정 유지. 개발·운영 SHA가 달라 승격 전 이력 통합 필요 | 운영에도 응답 헤더·인증이 필요할 때 |
+| 06시 자동 발행 + `review.auto` | 사람 승인 전 공개 금지 | 사람이 없어도 매일 발행. 확인 여부를 숨기지 않음 | 자동 호는 사실 확인 전 공개 → 정정 절차 필수 | 검토 인력이 생기면 자동 경로를 보조로 |
+| `daily/*`에서 데이터만 선별 반영 | 일일 브랜치 전체 병합 | 코드·과거 호·워크플로가 데이터 발행에 섞이지 않음 | `prepare_daily.py`의 허용 경로·색인·동시 변경 검사 유지 | — |
 
-사람 확인과 자동 발행은 모두 `published`이며 `review.auto`로 구분합니다. `draft`는 공개 배포에서 차단하고, 미리보기 결과물에도 포함하지 않습니다. 확인자·시각을 만들어 사람 대조로 표시하지 않습니다. 06:00 자동 발행과 기존 06:07·06:37·07:17·08:17 재시도를 유지합니다. 06:05 Codex도 미공개면 같은 안정 워크플로의 실행·재시도로 복구하고 실제 공개를 확인합니다. GitHub 예약은 지연될 수 있습니다. [발행·정정·복구](../planning/runbook.md)
+## 변경 영향 범위
 
-## 보호된 개발 미리보기
+### 호 JSON 필드를 추가·이름 변경·삭제할 때
 
-Vercel의 `korea-jogan-dev`는 모든 배포에 Authentication을 적용한 개발 프로젝트입니다. 개발 전용 `dist-preview`는 운영 결과물과 분리하며 공개 호만 포함합니다. 검색 제외 HTML·응답 헤더·robots, GA4 비활성화와 관리자 읽기 전용 안내를 개발 기준으로 사용합니다. 보호 설정·실제 배포·DNS 연결 완료는 서로 다른 확인 항목입니다.
+| 지점 | 파일 | 무엇이 깨지나 |
+| --- | --- | --- |
+| 구조 검사 | `validate.py` `check_structure()`·`REQUIRED` | 새 필드를 안 넣으면 검사가 통과해도 화면이 비고, 이름을 바꾸면 모든 과거 호가 실패 |
+| 시험 | `dev/tests/test_scripts.py`(기준 호 `2026-10-19.json` 복사·변형) | 기준 호에 필드가 없으면 시험 자체가 깨짐 |
+| 브라우저 방어 | `core/data.js` `assertIssue()` | `themes[].id/articles/keywords/summary`·`date`를 바꾸면 전체 로딩 실패 화면 |
+| 화면 | `lead.js`(`lead`,`briefs`,`themes`), `economy.js`(`nums`), `splits.js`·`media.js`(`themes`), `national.js`, `regions.js`, `politics.js`(`agenda`,`agendaSrc`), `industry.js`(`industries`,`items`,`trade`), `fiscal.js`(`debt`,`fiscal`,`nps`), `header.js`(`status`,`review`,`collectedAt`,`late`), `footer.js`(`limits`) | 해당 섹션만 깨지지만 `main.js`는 한 `try/catch`라 예외가 나면 **전체** 오류 화면 |
+| 검색·RSS | `build_pages.py`(`lead`, `nums`, `themes[].diffs[].q`, `national.items[].cat`, `review`), `build_feed.py`(`lead`, `diffs.q`, `status`), `build_discovery.py`(`nums`, `review.scope`, `status`) | `/YYYY-MM-DD`, `feed.xml`, `/archive/`·`/topics/`·`/indicators/` |
+| 관리자 | `admin/app.js`(`index.latest`, `status`, `review.by/at/auto`) | 공개 상태 표시 |
+| 발행·검증 | `prepare_daily.py`(`index`, `status`, `trackers.updated/items`), `build_info.py`·`verify_publication.py`(`index.latest`, `status`, `date`) | 아침 발행 중단 또는 공개 확인 실패 |
+| 문서 | `docs/planning/data-spec.md`, 이 문서 | 규격과 코드 불일치 |
 
-`dev.korea-jogan.com`은 `dev` 브랜치에 연결했고 가비아 CNAME도 등록됐습니다. Vercel의 도메인·HTTPS 확인 이력과 사용자 네트워크의 접속 완료는 구분합니다. 실제 값과 확인 범위는 [환경 안내](environments.md#개발-도메인-연결과-접속-확인)를 따릅니다. 승격에 수동 확인 입력은 필요하지 않습니다. 전체 CI 뒤 같은 SHA의 개발 배포와 익명 차단을 자동 확인합니다. 한 엔진에서 격리한 브라우저 검사와 원격 로그인 본문의 차이는 [자동화 구조](delivery.md)를 따릅니다. 해당 SHA의 Pages 배포 성공과 공개 빌드 정보를 확인한 뒤 운영 완료로 기록합니다.
+### 그 밖의 변경
+
+| 바꾸는 것 | 함께 봐야 하는 곳 |
+| --- | --- |
+| `index.html`·`admin/index.html`의 인라인 스크립트 | `build_security.py`가 배포 시 CSP 해시 재계산(수동 해시 유지 금지). `security.cjs` 통과 확인 |
+| `trackers.json` 구조 | `validate.py check_trackers()`, `track.js`, `build_discovery.py`, `prepare_daily.py`의 `updated` 규칙 |
+| 발행 시각·cron | `publish.yml` cron 5개, `validate.py` `COLLECT_DEADLINE`(06:00), 런북·AGENTS.md의 시각 서술, Codex 예약 |
+| `design/tokens.json` | `build_tokens.py`로 CSS 재생성. CI `--check`가 불일치를 막음 |
+| 허용 데이터 경로 | `prepare_daily.py`의 `permitted`와 `publish.yml`의 `git add` 목록 |
+| 관리자 외부 연결(로그인·API) | `build_security.py` 허용 목록과 관리자 브라우저 검사 |
 
 ## 브라우저의 로딩과 오류 경계
 
-배포 HTML에는 공개된 호의 `issue-data`와 `issue-index`를 넣습니다. 브라우저는 내장 데이터를 우선 사용하고, 없으면 색인과 날짜별 JSON을 요청합니다. 저장소 색인에는 공개 전 초안이 포함될 수 있어 생성 페이지의 공개 목록과 구분합니다.
+배포 HTML에는 공개된 호의 `issue-data`와 `issue-index`를 내장합니다. 브라우저는 내장 데이터를 우선 쓰고 없으면 색인과 날짜별 JSON을 요청합니다. 저장소 색인에는 초안이 포함될 수 있어 생성 페이지의 공개 목록과 구분합니다.
 
-[main.js](../../dev/web/src/main.js)는 필수 초기화와 섹션 렌더링을 같은 `try/catch`에서 처리합니다. 모두 성공한 뒤에 정적 검색 요약을 제거하고 `ready`로 전환합니다. 실패하면 요약을 남기고 재시도 화면을 표시합니다. 보조 데이터는 본문 준비 뒤에 별도로 읽습니다.
+[main.js](../../dev/web/src/main.js)는 초기화와 섹션 렌더링을 같은 `try/catch`에서 처리하고, 모두 성공한 뒤에만 정적 검색 요약을 제거합니다. 실패하면 요약을 남기고 재시도 화면을 표시합니다. 보조 데이터는 본문 준비 뒤에 읽습니다.
 
-| 데이터·자원 | 실패하거나 늦게 준비될 때 |
+| 자원 | 실패·지연 시 |
 | --- | --- |
-| 호 본문 | 네트워크 요청 12초 제한, 요약 보존·오류·재시도 |
-| 메인 스크립트 | 초기 20초 타이머가 지연 안내·정적 요약·재시도를 남김 |
-| 추적 데이터 | 해당 영역을 숨기며 일일 본문의 성공은 유지 |
-| 정정 데이터 | 정정 영역에 다시 확인할 안내 표시 |
-| 최신 숫자 | 파일을 읽지 못하면 숫자 띠 숨김 |
-| 외부 글꼴 | 첫 지면을 막지 않고 비동기 적용, 기본 글꼴로 읽기 가능 |
-| 경제 슬라이더 | 해당 영역 800px 전에서 지연 로드, 실패·늦은 읽기 전환 시 전체 격자 유지 |
+| 호 본문 | 요청 12초 제한, 요약 보존·오류·재시도 |
+| 메인 스크립트 | 20초 타이머가 지연 안내·정적 요약·재시도 표시 |
+| 추적 데이터 | 영역 숨김, 본문 성공은 유지 |
+| 정정 데이터 | 다시 확인 안내 |
+| 최신 숫자 | 숫자 띠 숨김 |
+| 외부 글꼴 | 비동기 적용, 기본 글꼴로 읽기 가능 |
+| 경제 슬라이더 | 영역 800px 전 지연 로드, 실패·늦은 전환 시 전체 격자 유지 |
 
-구현 근거: [data.js](../../dev/web/src/core/data.js) · [main.js](../../dev/web/src/main.js) · [fonts.js](../../dev/web/src/core/fonts.js) · [경제 렌더링](../../dev/web/src/components/economy/economy.js)
+PC·모바일 배치, 펼침 기본값, 경제 순환, 테마·탐색 동작은 [디자인 가이드](../../design/guide.md)가 단일 기준입니다. 데이터 문자열은 [ui.js](../../dev/web/src/core/ui.js)의 `textContent`로 삽입합니다.
 
-## PC와 모바일에서 정보를 나누는 방법
+## 공개 본문·최신 숫자·관리자·검색의 구분
 
-| 구현 | 현재 동작·판단 |
-| --- | --- |
-| 공통 `SECTIONS` | 전국·추적·홈·지역·언론·정치·경제·산업·재정 순서를 탐색과 본문에서 공유 |
-| `collapse()` | 긴 목록은 일부를 먼저 표시하고 더보기 제공. 대상 이동 시 필요한 목록을 펼침 |
-| `responsiveDisclosure()` | 900px 경계로 PC 기본 펼침·모바일 기본 접힘을 적용하고 화면 폭별 사용자 선택을 기억 |
-| 지역 선택 | 17개 시도를 6개 권역으로 묶고 좁은 화면 안에서 줄바꿈 |
-| 전국 뉴스 | 선택한 본문 한 편과 제목 목록. 기사 선택 시 본문·출처 갱신과 제목 포커스 이동 |
-| 두 열 높이 | `paired-reading.js`가 짧은 열의 자연 높이에 맞추고 넘치는 열에만 스크롤·포커스 제공. 모바일은 자연 높이 |
-| PC 비교 배치 | 사안 카드 두 열, 제목 옆 검색. 임기·D-Day와 주간 일정, 국가채무 그래프와 예산·연금 분리 |
-| 경제 순환 | 로컬 Swiper·이전/다음·좌우 키·재생 제어. 호버·포커스·숨김·화면 밖·직접 읽기에서 정지 |
-| 비교 목록의 상세 | 경제·주력산업은 목록 아래에서 선택한 항목 한 개의 설명·전체 수치·원문 표시. 카드 안 스크롤 없음 |
-| 테마·큰 글자 | 라이트 기본, 선택 시 검정 계열 다크·글자 확대. 같은 스위치 사용·설정 저장, 관리자와 테마 공유 |
-| 전체 메뉴·추적 모달 | 포커스 제한·복귀, Esc 닫기, 내부 스크롤. 닫힌 목적지로 메뉴 이동 시 먼저 펼침 |
+- 날짜별 조간은 발행 당시의 기록입니다. `live.json`은 평일 09:17~22:17 매시 같은 `deploy` 커밋을 재배포하며 갱신하는 ECOS 최신 일별 확정값으로, 장중 시세가 아니고 Git에 커밋하지 않으며 수집 실패가 조간 배포를 막지 않습니다. 지난 호에서는 추적 상태와 숫자 띠를 숨깁니다(추적 막대 숨김은 `sessionStorage`).
+- `/admin/`은 공개 발행 상태와 권한 있는 계정의 GA4·검색 실적을 보여 줍니다. OAuth 토큰은 메모리에서만 쓰고 조회는 브라우저에서 Google API로 직접 보냅니다. 개발 미리보기의 관리자는 읽기 전용 안내만 제공합니다.
+- [build_pages.py](../../dev/pipeline/build/build_pages.py)는 최신 호와 `/YYYY-MM-DD`에 제목·설명·canonical·요약·구조화 데이터를 만들고 `?d=` 주소를 호별 주소로 옮깁니다. RSS·사이트맵·IndexNow를 갖췄으며 알림 실패는 배포 실패가 아닙니다. [build_security.py](../../dev/pipeline/build/build_security.py)는 메타 CSP를 생성하며 JSON은 실행 코드로 허용하지 않습니다(허용·차단 범위는 [변경 기록 2026.11.03](changelog.md#20261103-지면삽화보안)).
 
-요약·현재 단계·다음 확인·주의사항·숫자·기준일·검색은 항상 표시합니다. 긴 근거 표는 건수를 보여 주고 필요한 때 펼칩니다. 세부 분기와 간격은 [디자인 가이드](../../design/guide.md)를 따릅니다.
+## 검사 범위 (2026-11-09 기준)
 
-## 장기 추적과 날짜별 호의 구분
+| 검사 | 범위 | 명령 |
+| --- | --- | --- |
+| 데이터·배포 규칙 | 색인의 모든 호 + `corrections.json` + `trackers.json`: 필수값·하위 구조·허용 상태·링크 형식·수치 범위·미확정 기간 모순. `--deploy`는 초안 차단 | `python3 dev/pipeline/publish/validate.py [--deploy]` |
+| 토큰 | `design/tokens.json` ↔ `tokens.css` | `python3 dev/pipeline/build/build_tokens.py --check` |
+| Python | `dev/tests/test_*.py` 14개 파일, 166개 | `python3 -m unittest discover -s dev/tests` |
+| 브라우저 | 공개 지면(최신·지난 호·로딩·오류·탐색·반응형·슬라이드), 관리자(모의 인증·API), CSP(허용·차단), 검색 페이지, 개발 미리보기, 일일 후보 — 6개 파일, 엔진 1개 | `cd dev/tests/browser && npm ci && npx playwright install chromium && npm test` |
+| 커밋 제목 | 종류·범위·72자·마침표 | `node dev/tools/check_commit_msg.mjs --range origin/main..HEAD` |
 
-[trackers.json](../../dev/web/data/trackers.json)은 날짜별 조간과 별도로 읽고, 지난 호에서는 숨깁니다. 추적 막대를 숨긴 상태는 `sessionStorage`에 저장하며 저장 불가 환경도 처리합니다.
-
-| 정보 | 해석 기준 |
-| --- | --- |
-| `phases`·`phaseIndex` | 보도에 따른 편집상 진행 단계이며 공식 완료율 아님 |
-| `start`·`end` | 기한이 알려진 사안의 기간 경과. 해결률 아님 |
-| `periodUnknown` | 최종 기한이 미확정이면 날짜·기간 백분율을 생략 |
-| 기사 표 | 보도일·매체·원문·요약·확인 범위 유지 |
-
-PC에서 카드 본문을 제한된 높이로 스크롤하고, 모바일에서는 진행 정보 뒤에 일정·근거를 펼쳐 읽습니다. 표가 있는 경우 중복된 최근 기사 목록은 표로 통합합니다. 계획과 완료, 송치와 유죄 확정을 같은 단계로 취급하지 않습니다.
-
-## 공개 본문과 최신 숫자·관리자의 구분
-
-날짜별 조간은 발행 당시의 기록입니다. ECOS `live.json`은 장중 시세가 아닌 최신 일별 확정 통계이며, 자동 갱신·사람 확인 전임을 표시합니다. 과거 호의 값을 덮어쓰지 않습니다.
-
-평일 09:17~22:17 매시 예약은 같은 `deploy` 커밋에서 값을 받아 다시 배포합니다. 갱신 파일은 Git에 커밋하지 않고, 키가 없으면 예약 배포를 건너뜁니다. 수집 실패는 조간 배포를 막지 않습니다. [build_live.py](../../dev/pipeline/build/build_live.py)
-
-운영 `/admin/`은 공개 발행 상태와 권한이 있는 계정의 GA4 통계를 나눠 보여 줍니다. 개발 미리보기의 관리자는 개발·읽기 전용 안내를 제공하고 운영 통계를 조회하지 않습니다. Google OAuth 토큰은 메모리에서만 사용하고 조회는 브라우저에서 Google API로 직접 보냅니다. 계정 권한·실제 지표 값은 자동 검사의 모의 응답과 다릅니다. [연결 설정·오류 대응](ga4-admin.md)
-
-## 검색·공유와 정적 보안
-
-[build_pages.py](../../dev/pipeline/build/build_pages.py)는 최신 호와 `/YYYY-MM-DD`에 제목·설명·대표 주소·본문 요약·구조화 데이터를 생성합니다. 기존 `?d=YYYY-MM-DD`는 존재하는 호별 주소로 옮깁니다. RSS·사이트맵 생성과 IndexNow 알림을 갖췄으며, 알림 실패는 배포 실패로 처리하지 않습니다. 검색 순위 개선을 보장하는 기능은 아닙니다.
-
-[build_security.py](../../dev/pipeline/build/build_security.py)는 최종 HTML의 인라인 실행 코드에 SHA-256 해시를 계산해 메타 CSP를 갱신합니다. JSON 데이터는 실행 코드로 허용하지 않습니다. 공개면과 관리자면의 Google 연결 범위를 나누고, 자체 스크립트와 명시한 출처만 허용합니다.
-
-임의 인라인 코드·이벤트 속성·eval·object·base·worker를 차단하며 referrer의 외부 경로 전달을 제한합니다. 동적 그래프 때문에 인라인 스타일은 허용합니다. GitHub Pages의 메타 방식으로 `frame-ancestors`·HSTS·`nosniff` 같은 응답 헤더를 설정한 것은 아닙니다. [적용 범위·제약](changes-2026-11-03-layout.md#정적-페이지의-보안)
-
-데이터 문자열은 [ui.js](../../dev/web/src/core/ui.js)의 `textContent`로 삽입합니다. [tokens.json](../../design/tokens.json)에서 생성한 CSS와 원본의 일치는 CI로 확인하며, 모든 스타일의 토큰 사용이나 접근성 적합성까지 보증하지는 않습니다.
-
-## 검사와 운영자의 확인 범위
-
-| 검사 | 확인하는 범위 |
-| --- | --- |
-| 데이터·배포 규칙 | 필수값과 하위 필드·허용 상태·링크 형식·수치 범위·미확정 기간의 모순 |
-| Python | 데이터·발행·생성 스크립트와 보안 정책 |
-| 공개 Chromium | 최신/지난 호, 로딩·오류, 탐색·반응형·펼침·키보드·슬라이드 |
-| 관리자 Chromium | 모의 인증/API 응답, 오류·만료·중복 조회·연결 해제·테마 |
-| CSP Chromium | 정상 동작·허용 출처와 코드·이벤트·외부 연결 주입 차단 |
-
-11/05 보안 검사에서는 공개 호만 담은 임시 HTML과 관리자가 읽는 JSON 색인을 `published_index()`로 맞추고 최신 공개 날짜도 검증합니다. 원본에 초안이 남아 있는 일일 후보에서도 공개면 검사가 실행되며, 초안 자체의 검사·발행 차단 조건은 유지합니다. 일일 후보 `2627e7f`와 운영 발행본 `d5b493a`의 데이터·브라우저 CI 성공을 확인했습니다. [실패 원인과 복구 근거](changes-2026-11-05.md)
-
-형식 검사와 링크 존재는 원문의 진위·접속 가능성·계산 정확성·지역별 기사 수 충족을 보증하지 않습니다. 원문 대조와 정정은 [런북](../planning/runbook.md), 필드별 검사 범위는 [데이터 규격](../planning/data-spec.md)을 따릅니다.
-
-## 변경 보호와 후속 과제
-
-미완성 기능은 피처 브랜치에 두고 `dev`는 배포 준비가 된 기능의 통합 검증, `main`은 안정본, `deploy`는 운영 기준으로 사용합니다. 일일 `daily` 자료는 안정 코드에 데이터만 선별 반영합니다. 코드 승격은 정확한 SHA·빌드·CI·Vercel 보호 배포·조상 관계를 검사하며 기능 태그도 확인합니다. 일일 반영은 허용 경로와 운영 동시 변경을 검사합니다. 두 경로 모두 강제 덮어쓰기를 하지 않으며 새 운영 반영 후 Pages를 명시적으로 호출합니다. [브랜치 절차](branches.md)
-
-| 선택 | 후속 관리가 필요한 부분 |
-| --- | --- |
-| 정적 파일·전역 스크립트 | 로딩 순서, 이름 충돌, 라이브러리 버전·라이선스 |
-| 날짜별 JSON | 장기 누적 시 색인 분할, 전체 호 검색의 별도 설계 |
-| 직접 유지하는 검사 규칙 | 필드 추가 시 validator·브라우저 방어·회귀 검사 함께 갱신 |
-| AI 조사·초안 | 원문 대조·누락 공개·정정의 지속 운영 |
-| 일부 공식 API 수집 | KOSIS·관세청·국회 등 미구현 수집 경로 |
+형식 검사와 링크 존재는 원문의 진위·접속 가능성·계산 정확성·지역별 기사 수를 보증하지 않습니다. 숫자는 이 날짜의 저장소에서 센 값이며 다른 날짜 기록의 수와 다르면 시점 차이입니다.
