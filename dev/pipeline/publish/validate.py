@@ -153,13 +153,15 @@ def check_issue(path: Path) -> list[str]:
 
     errors.extend(check_status(name, issue))
 
-    # 핵심 숫자는 모두 출처 기관과 원문 링크가 있어야 한다
+    # 핵심 숫자는 모두 출처 기관과 원문 링크가 있어야 한다. src.name·src.url이 비어 있지 않은 문자열인지는 check_structure가 먼저 본다
+    # 실패 메시지는 고칠 필드와 현재 값을 바로 가리킨다. '출처 누락' 한마디로는 무엇을 고쳐야 하는지 알 수 없다
     for i, m in enumerate(issue["nums"]):
-        src = m.get("src") or {}
-        if not src.get("name") or not str(src.get("url", "")).startswith("https://"):
-            errors.append(f"{name}: nums[{i}] '{m.get('k')}' 출처 누락")
+        where = f"{name}: nums[{i}] '{m.get('k')}'"
+        url = str(m["src"].get("url", ""))
+        if not url.startswith("https://"):
+            errors.append(f"{where} src.url은 https:// 원문 링크여야 함 (현재 '{url}')")
         if m.get("dir") not in ("up", "down", "flat"):
-            errors.append(f"{name}: nums[{i}] 방향 값은 up/down/flat만 허용")
+            errors.append(f"{where} dir 값은 up/down/flat만 허용 (현재 '{m.get('dir')}')")
 
     # 주제마다 AI 요약과 기사 링크가 있어야 한다
     for t in issue["themes"]:
