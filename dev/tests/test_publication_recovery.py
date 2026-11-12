@@ -111,6 +111,13 @@ class RecoveryPublicationIntegrationTest(unittest.TestCase):
             git('config', 'user.name', '검사')
             git('config', 'user.email', 'test@example.com')
             shutil.copytree(REPO / 'dev/web/data', root / 'dev/web/data')
+            fixture_directory = root / 'dev/web/data/issues'
+            fixture_index = json.loads((fixture_directory / 'index.json').read_text())
+            fixture_index.update(latest='2026-11-09', issues=[day for day in fixture_index['issues'] if day <= '2026-11-09'])
+            (fixture_directory / 'index.json').write_text(json.dumps(fixture_index))
+            for path in fixture_directory.glob('*.json'):
+                if path.stem != 'index' and path.stem > '2026-11-09':
+                    path.unlink()
             scripts = root / 'dev/pipeline/publish'
             scripts.mkdir(parents=True)
             for name in ('validate.py', 'approve.py'):
