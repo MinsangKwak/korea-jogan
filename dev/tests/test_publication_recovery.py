@@ -2,9 +2,12 @@
 import copy
 import datetime as dt
 import json
+import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -93,3 +96,68 @@ class RecoveryProofTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, '검사 실패'):
                 publish_pending.verify_source('a' * 40)
             self.assertEqual(writer.call_args.args[1]['conclusion'], 'failure')
+
+
+class RecoveryPublicationIntegrationTest(unittest.TestCase):
+    def test_three_missing_days_are_validated_and_pushed_atomically(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / 'work'
+            remote = Path(folder) / 'remote.git'
+            root.mkdir()
+            def git(*args):
+                return subprocess.check_output(['git', *args], cwd=root, text=True, stderr=subprocess.DEVNULL).strip()
+            subprocess.run(['git', 'init', '--bare', str(remote)], check=True, capture_output=True)
+            git('init', '-b', 'main')
+            git('config', 'user.name', '검사')
+            git('config', 'user.email', 'test@example.com')
+            shutil.copytree(REPO / 'dev/web/data', root / 'dev/web/data')
+            scripts = root / 'dev/pipeline/publish'
+            scripts.mkdir(parents=True)
+            for name in ('validate.py', 'approve.py'):
+                shutil.copy2(REPO / 'dev/pipeline/publish' / name, scripts / name)
+            git('add', '.')
+            git('commit', '-m', '안정 기준')
+            base = git('rev-parse', 'HEAD')
+            git('remote', 'add', 'origin', str(remote))
+            git('push', 'origin', 'HEAD:main', 'HEAD:deploy', 'HEAD:dev')
+            directory = root / 'dev/web/data/issues'
+            index = json.loads((directory / 'index.json').read_text())
+            template = json.loads((directory / (index['latest'] + '.json')).read_text())
+            expected = []
+            for day in ('2026-11-10', '2026-11-11', '2026-11-12'):
+                git('switch', '-c', 'daily/' + day, base)
+                issue = copy.deepcopy(template)
+                issue.update(date=day, status='draft', collectedAt=day + 'T04:00:00+09:00')
+                issue.pop('review', None)
+                issue.pop('late', None)
+                (directory / (day + '.json')).write_text(json.dumps(issue, ensure_ascii=False))
+                (directory / 'index.json').write_text(json.dumps({'latest': day, 'issues': [day, *index['issues']]}))
+                git('add', '.')
+                git('commit', '-m', '검사용 초안')
+                expected.append(git('rev-parse', 'HEAD'))
+                git('push', 'origin', 'HEAD:refs/heads/daily/' + day)
+            git('switch', 'main')
+            real_run = publish_pending.run
+            real_fetch = publish_pending.auto_release.fetch_refs
+            real_ancestor = publish_pending.auto_release.ancestor
+            class FixedDateTime(dt.datetime):
+                @classmethod
+                def now(cls, tz=None):
+                    return cls(2026, 11, 12, 9, tzinfo=compose_issue.fetch_rss.KST)
+            def bound_run(*args, root=root, timeout=180):
+                return real_run(*args, root=root, timeout=timeout)
+            with patch.object(publish_pending, 'ROOT', root), patch.object(publish_pending, 'run', side_effect=bound_run), patch.object(publish_pending.dt, 'datetime', FixedDateTime), patch.object(publish_pending.auto_release, 'fetch_refs', side_effect=lambda: real_fetch(root)), patch.object(publish_pending.auto_release, 'ancestor', side_effect=lambda a, b: real_ancestor(a, b, root)), patch.object(publish_pending, 'verify_source') as proof, patch.object(publish_pending.auto_release, 'ensure_deployment') as deploy, patch.dict(os.environ, {'GITHUB_REPOSITORY': 'MinsangKwak/korea-jogan', 'GITHUB_REF': 'refs/heads/main'}):
+                self.assertEqual(publish_pending.main(), 0)
+            self.assertEqual([call.args[0] for call in proof.call_args_list], expected)
+            refs = real_fetch(root)
+            self.assertEqual(refs['main'], refs['deploy'])
+            self.assertEqual(refs['dev'], base)
+            deploy.assert_called_once_with(refs['main'])
+            self.assertEqual(json.loads((directory / 'index.json').read_text())['issues'][:3], ['2026-11-12', '2026-11-11', '2026-11-10'])
+            for day in ('2026-11-10', '2026-11-11', '2026-11-12'):
+                issue = json.loads((directory / (day + '.json')).read_text())
+                self.assertEqual(issue['status'], 'published')
+                self.assertTrue(issue['review']['auto'])
+                self.assertEqual(issue['collectedAt'], day + 'T04:00:00+09:00')
+                if day < '2026-11-12':
+                    self.assertEqual(issue['publicationRecovery']['at'][:10], '2026-11-12')
