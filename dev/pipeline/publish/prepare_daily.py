@@ -133,7 +133,7 @@ def published_build_matches(index: object, info: object, date: str, source_ref: 
     )
 
 
-def prepare(root: Path, date: str, source_ref: str, main_ref: str) -> dict:
+def prepare(root: Path, date: str, source_ref: str, main_ref: str, allow_archive: bool = False) -> dict:
     if not valid_date(date):
         raise PreparationError("유효한 발행일이 필요합니다")
     source_ref = validate_sha(root, source_ref)
@@ -142,13 +142,13 @@ def prepare(root: Path, date: str, source_ref: str, main_ref: str) -> dict:
         raise PreparationError("변경 없는 main 작업본에서만 데이터를 준비할 수 있습니다")
     current_index = read_json(root, main_ref, INDEX)
     current_dates = dates(current_index, "main")
-    if any(day > date for day in current_dates):
+    if not allow_archive and any(day > date for day in current_dates):
         raise PreparationError("main 발행 목록에 오늘 이후 날짜가 있습니다")
     issue_path = f"dev/web/data/issues/{date}.json"
     current_issue = blob(root, main_ref, issue_path, required=False)
     if current_issue is not None:
         issue = decode(current_issue, issue_path)
-        if issue.get("date") == date and issue.get("status") == "published" and current_index["latest"] == date:
+        if issue.get("date") == date and issue.get("status") == "published" and (allow_archive or current_index["latest"] == date):
             return {"changed": False, "date": date, "source_sha": source_ref, "paths": []}
     base = git(root, "merge-base", main_ref, source_ref)
     permitted = {issue_path, INDEX, TRACKERS}
@@ -168,7 +168,7 @@ def prepare(root: Path, date: str, source_ref: str, main_ref: str) -> dict:
     if blob(root, base, issue_path, required=False) != current_issue:
         raise PreparationError("main의 오늘 호가 조사 시작 이후 바뀌었습니다")
     replacements = {issue_path: source_issue_text + "\n"}
-    if TRACKERS in changed:
+    if TRACKERS in changed and (not allow_archive or date >= current_index['latest']):
         before = blob(root, base, TRACKERS)
         if before != blob(root, main_ref, TRACKERS):
             raise PreparationError("main의 추적 자료가 조사 시작 이후 바뀌었습니다")
@@ -181,7 +181,8 @@ def prepare(root: Path, date: str, source_ref: str, main_ref: str) -> dict:
             raise PreparationError("새 추적 기록의 대조일은 발행일과 같아야 합니다")
         replacements[TRACKERS] = tracker_text + "\n"
     updated_index = dict(current_index)
-    updated_index.update(latest=date, issues=sorted(set(current_dates) | {date}, reverse=True))
+    updated_dates = sorted(set(current_dates) | {date}, reverse=True)
+    updated_index.update(latest=updated_dates[0], issues=updated_dates)
     replacements[INDEX] = json.dumps(updated_index, ensure_ascii=False, indent=2) + "\n"
     for path, text in replacements.items():
         target = root / path
