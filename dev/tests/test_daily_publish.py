@@ -134,6 +134,25 @@ class DailyPublicationTest(unittest.TestCase):
         self.assertEqual(self.read(ISSUE)["headline"], "공개된 최종 기록")
         self.assertEqual(self.git("status", "--porcelain"), "")
 
+    def test_missing_past_issue_does_not_roll_back_latest_or_current_trackers(self):
+        newer = '2026-11-06'
+        self.write(f'dev/web/data/issues/{newer}.json', {'date': newer, 'status': 'published'})
+        self.write(prepare_daily.INDEX, {'latest': newer, 'issues': [newer, PREVIOUS]})
+        self.write(prepare_daily.TRACKERS, {'updated': newer, 'items': [{'id': 'case', 'summary': '더 최근 근거'}]})
+        self.main_ref = self.commit('더 최근 운영 기록')
+        result = prepare_daily.prepare(self.root, DATE, self.source, self.main_ref, allow_archive=True)
+        self.assertTrue(result['changed'])
+        self.assertEqual(self.read(prepare_daily.INDEX), {'latest': newer, 'issues': [newer, DATE, PREVIOUS]})
+        self.assertEqual(self.read(prepare_daily.TRACKERS)['updated'], newer)
+
+    def test_published_past_issue_is_never_rewritten_during_recovery(self):
+        self.write(ISSUE, {'date': DATE, 'status': 'published', 'headline': '공개 보존'})
+        self.write('dev/web/data/issues/2026-11-06.json', {'date': '2026-11-06', 'status': 'published'})
+        self.write(prepare_daily.INDEX, {'latest': '2026-11-06', 'issues': ['2026-11-06', DATE, PREVIOUS]})
+        self.main_ref = self.commit('이미 공개된 과거 호')
+        self.assertFalse(prepare_daily.prepare(self.root, DATE, self.source, self.main_ref, allow_archive=True)['changed'])
+        self.assertEqual(self.read(ISSUE)['headline'], '공개 보존')
+
     def test_symlink_json_is_not_followed(self):
         def symlink():
             path = self.root / ISSUE

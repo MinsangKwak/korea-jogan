@@ -30,10 +30,10 @@ runs:
       shell: bash
       working-directory: dev/tests/browser
       run: npm ci
-    - name: 실제 사용하는 Chromium Headless Shell 설치
+    - name: 준비된 Chromium 사용 또는 제한된 재시도 설치
       shell: bash
       working-directory: dev/tests/browser
-      run: npx playwright install --with-deps --only-shell chromium
+      run: python3 ../../tools/install_browser.py
     - name: 최신·지난 호·관리자·보안·검색·개발·일일 후보 전체 검사
       shell: bash
       working-directory: dev/tests/browser
