@@ -272,6 +272,8 @@ def with_discovery_links(page: str, issue: dict, index: dict) -> str:
     position = dates.index(issue["date"])
     links = [('<a href="/topics/">이슈별 진행 상황</a>'),
              ('<a href="/indicators/">경제 지표와 지난 기록</a>'),
+             ('<a href="/regions/">시도별 지역 뉴스</a>'),
+             ('<a href="/compare/">매체마다 갈린 숫자</a>'),
              ('<a href="/archive/">날짜별 뉴스 모아보기</a>')]
     if position + 1 < len(dates):
         date = dates[position + 1]
@@ -303,12 +305,12 @@ def discovery_page(template: str, item: dict) -> str:
     graph = [node for node in graph if node.get("@type") in ("WebSite", "NewsMediaOrganization")]
     crumbs = [{"@type": "ListItem", "position": 1, "name": "대한민국 조간", "item": SITE}]
     parent = path.split("/")[0]
-    labels = {"topics": "이슈 추적", "indicators": "경제 지표", "archive": "지난 호"}
+    labels = {"topics": "이슈 추적", "indicators": "경제 지표", "archive": "지난 호", "regions": "지역 뉴스", "compare": "보도 비교"}
     if len(path.strip("/").split("/")) > 1:
         crumbs.append({"@type": "ListItem", "position": 2, "name": labels[parent], "item": SITE + parent + "/"})
     crumbs.append({"@type": "ListItem", "position": len(crumbs) + 1, "name": item["title"].removesuffix(" | 대한민국 조간"), "item": url})
     graph += [{"@type": "BreadcrumbList", "@id": url + "#breadcrumb", "itemListElement": crumbs},
-              {"@type": "CollectionPage" if item["kind"] in ("archive", "topics", "indicators") else "WebPage",
+              {"@type": "CollectionPage" if item["kind"] in ("archive", "topics", "indicators", "regions", "compare") else "WebPage",
                "@id": url + "#page", "url": url, "name": item["title"], "description": item["description"],
                "inLanguage": "ko-KR", "dateModified": item["modified"], "isAccessibleForFree": True,
                "isPartOf": {"@id": SITE + "#website"}, "breadcrumb": {"@id": url + "#breadcrumb"},
@@ -378,7 +380,7 @@ def discovery_page(template: str, item: dict) -> str:
 <a class="skip" href="#main">본문으로 건너뛰기</a>
 <header class="discovery-mast">
   <a href="/" class="discovery-logo">대한민국 조간</a>
-  <nav aria-label="신문 읽기"><a href="/">오늘 뉴스</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/archive/">지난 호</a><a href="#readerSubscribe" data-reader-subscribe>새 호 받아보기</a></nav>
+  <nav aria-label="신문 읽기"><a href="/">오늘 뉴스</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/regions/">지역 뉴스</a><a href="/compare/">보도 비교</a><a href="/archive/">지난 호</a><a href="#readerSubscribe" data-reader-subscribe>새 호 받아보기</a></nav>
   <div class="discovery-tools" role="group" aria-label="읽기 설정">
     <button class="reading-switch" id="discoveryBig" type="button" role="switch" aria-checked="false" data-big-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>글자 크게</span><span class="reading-switch__state" data-big-state aria-hidden="true">끔</span></span></button>
     <button class="reading-switch" id="discoveryTheme" type="button" role="switch" aria-checked="false" data-theme-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>어두운 화면</span><span class="reading-switch__state" data-theme-state aria-hidden="true">끔</span></span></button>
@@ -421,7 +423,7 @@ def build() -> list[Path]:
     trackers = json.loads(trackers_file.read_text(encoding="utf-8")) if trackers_file.exists() else {"items": []}
     extra = build_discovery.pages(issues, trackers)
     expected = {PUBLIC / item["path"] for item in extra}
-    for folder in ("archive", "topics", "indicators"):
+    for folder in build_discovery.FOLDERS:
         for stale in (PUBLIC / folder).rglob("*.html"):
             if stale not in expected and '<meta name="kj-generated" content="discovery">' in stale.read_text(encoding="utf-8"):
                 stale.unlink()

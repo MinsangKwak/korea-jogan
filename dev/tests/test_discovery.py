@@ -84,7 +84,7 @@ class DiscoveryTest(unittest.TestCase):
         shutil.copytree(REPO / "dev/web", self.public)
         for path in self.public.glob("20??-??-??.html"):
             path.unlink()
-        for directory in ("archive", "topics", "indicators"):
+        for directory in build_discovery.FOLDERS:
             shutil.rmtree(self.public / directory, ignore_errors=True)
         self.issues_path = self.public / "data/issues"
         self.issues = [json.loads((self.issues_path / f"{date}.json").read_text()) for date in DATES]
@@ -203,11 +203,111 @@ class DiscoveryTest(unittest.TestCase):
                 self.assertIn(str(text), doc.visible)
             self.assertIn(item["src"]["url"], doc.links)
 
+    def test_region_pages_keep_each_article_with_outlet_link_and_read_scope(self):
+        pages = {spec["path"]: spec for spec in self.page_specs()}
+        self.assertIn("regions/index.html", pages)
+        for slug, name in build_discovery.REGIONS:
+            items = [(issue, item) for issue in self.issues for item in issue["regions"]["items"] if item["region"] == name]
+            if not items:
+                self.assertNotIn(f"regions/{slug}/index.html", pages)
+                continue
+            with self.subTest(region=name):
+                doc = Document(pages[f"regions/{slug}/index.html"]["body"])
+                self.assertIn(f"/regions/{slug}/", Document(pages["regions/index.html"]["body"]).links)
+                for issue, item in items:
+                    self.assertIn(item["title"], doc.visible)
+                    self.assertIn(item["summary"], doc.visible)
+                    self.assertIn(item["outlet"], doc.visible)
+                    self.assertIn(item["url"], doc.links)
+                    self.assertIn("/" + issue["date"], doc.links)
+                other = next(item for issue in self.issues for item in issue["regions"]["items"] if item["region"] != name)
+                self.assertNotIn(other["title"], doc.visible)
+
+    def test_region_page_marks_unread_articles_and_limits_history(self):
+        issues = copy.deepcopy(self.issues)
+        name = issues[-1]["regions"]["items"][0]["region"]
+        slug = dict((n, s) for s, n in build_discovery.REGIONS)[name]
+        issues[-1]["regions"]["items"][0]["body_read"] = False
+        old = []
+        for day in range(1, build_discovery.REGION_ISSUES + 3):
+            extra = copy.deepcopy(self.issues[0])
+            extra["date"] = f"2026-09-{day:02d}"
+            for item in extra["regions"]["items"]:
+                item["title"] = f"OLD_{day:02d}_" + item["title"]
+            old.append(extra)
+        pages = {spec["path"]: spec for spec in build_discovery.pages(issues + old, self.trackers)}
+        doc = Document(pages[f"regions/{slug}/index.html"]["body"])
+        self.assertIn("제목·링크만 확인", doc.visible)
+        self.assertIn("본문 확인", doc.visible)
+        self.assertNotIn("OLD_01_", doc.visible)
+        self.assertEqual(len(re.findall(r"<section aria-labelledby=\"d20", pages[f"regions/{slug}/index.html"]["body"])), build_discovery.REGION_ISSUES)
+
+    def test_compare_pages_keep_summary_tables_and_article_scope(self):
+        pages = {spec["path"]: spec for spec in self.page_specs()}
+        index = Document(pages["compare/index.html"]["body"])
+        for issue in self.issues:
+            for theme in issue["themes"]:
+                path = f"compare/{issue['date']}-{theme['id']}/index.html"
+                with self.subTest(page=path):
+                    self.assertIn("/" + path.removesuffix("index.html"), index.links)
+                    doc = Document(pages[path]["body"])
+                    self.assertEqual(doc.h1, [theme["title"]])
+                    for text in theme["summary"]:
+                        self.assertIn(text, doc.visible)
+                    for diff in theme.get("diffs", []):
+                        self.assertIn(diff["q"], doc.visible)
+                        self.assertIn(diff["a"], doc.visible)
+                        for row in diff["rows"]:
+                            for cell in row:
+                                self.assertIn(str(cell), doc.visible)
+                    for article in theme["articles"]:
+                        self.assertIn(article["url"], doc.links)
+                        self.assertIn(article["outlet"], doc.visible)
+                    if any(article["read"] is False for article in theme["articles"]):
+                        self.assertIn("제목·링크만 확인", doc.visible)
+                    self.assertIn("/" + issue["date"], doc.links)
+
+    def test_compare_pages_skip_unsafe_ids_and_separate_repeated_ids_by_date(self):
+        issues = copy.deepcopy(self.issues)
+        issues[0]["themes"][0]["id"] = "../admin"
+        issues[1]["themes"][0]["id"] = issues[0]["themes"][1]["id"] if len(issues[0]["themes"]) > 1 else "same-id"
+        if len(issues[0]["themes"]) < 2:
+            issues[0]["themes"].append({**copy.deepcopy(issues[0]["themes"][0]), "id": "same-id"})
+        paths = [spec["path"] for spec in build_discovery.pages(issues, self.trackers) if spec["path"].startswith("compare/")]
+        self.assertEqual(len(paths), len(set(paths)))
+        self.assertFalse([path for path in paths if ".." in path or "admin" in path])
+        shared = issues[1]["themes"][0]["id"]
+        self.assertIn(f"compare/{issues[0]['date']}-{shared}/index.html", paths)
+        self.assertIn(f"compare/{issues[1]['date']}-{shared}/index.html", paths)
+
+    def test_region_and_compare_text_cannot_inject_markup_or_unsafe_links(self):
+        attack = '</h1><script>window.bad=true</script><img src=x onerror="window.bad=true">'
+        issues = copy.deepcopy(self.issues)
+        theme = issues[0]["themes"][0]
+        theme["title"] = theme["summary"][0] = attack
+        theme["articles"][0]["url"] = "javascript:alert(1)"
+        if theme.get("diffs"):
+            theme["diffs"][0]["rows"][0][0] = attack
+        item = issues[0]["regions"]["items"][0]
+        item["title"] = item["summary"] = attack
+        item["url"] = "javascript:alert(1)"
+        for spec in build_discovery.pages(issues, self.trackers):
+            self.assertNotIn("<script>window.bad", spec["body"])
+            self.assertNotIn('<img src=x onerror=', spec["body"])
+            self.assertNotIn("javascript:alert(1)", Document(spec["body"]).links)
+            if spec["path"].startswith(("compare/", "regions/")):
+                # 제목은 원문 그대로 넘기고, 페이지를 조립할 때 head와 구조화 데이터에서 이스케이프한다
+                html_page = build_pages.discovery_page((self.public / "index.html").read_text(), spec)
+                self.assertNotIn("<script>window.bad", html_page)
+                self.assertNotIn('<img src=x onerror=', html_page)
+
     def test_draft_is_excluded_from_histories_archive_and_sitemap(self):
         draft = copy.deepcopy(self.issues[-1])
         draft.update(date=DRAFT, status="draft")
         draft["lead"]["headline"] = "DRAFT_ONLY_HEADLINE_4D64"
         draft["nums"][0]["v"] = "DRAFT_ONLY_VALUE_4D64"
+        draft["regions"]["items"][0]["title"] = "DRAFT_ONLY_REGION_4D64"
+        draft["themes"][0]["title"] = "DRAFT_ONLY_THEME_4D64"
         (self.issues_path / f"{DRAFT}.json").write_text(json.dumps(draft, ensure_ascii=False))
         self.write_index((*DATES, DRAFT))
         specs = build_discovery.pages([*self.issues, draft], self.trackers)
@@ -215,6 +315,7 @@ class DiscoveryTest(unittest.TestCase):
             self.assertNotIn("DRAFT_ONLY_", spec["body"])
         build_pages.build()
         self.assertFalse((self.public / f"{DRAFT}.html").exists())
+        self.assertFalse(list((self.public / "compare").glob(f"{DRAFT}-*")))
         self.assertNotIn(SITE + "/" + DRAFT, build_feed.build_sitemap())
         home = Document(build_pages.DIGEST.sub("", (self.public / "index.html").read_text()))
         self.assertNotIn("/" + DRAFT, home.links)
