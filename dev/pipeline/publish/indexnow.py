@@ -34,7 +34,7 @@ def payload(key: str, issues: list[dict], discovery_urls: list[str] | None = Non
     # 첫 화면과 최근 호 페이지만 알린다. 지난 호는 사이트맵으로 충분하다
     urls = [build_feed.SITE] + [build_feed.SITE + i["date"] for i in issues[:2]]
     urls += [url for url in (discovery_urls or [])
-             if url.startswith(tuple(build_feed.SITE + path for path in ("archive/", "topics/", "indicators/")))]
+             if url.startswith(tuple(build_feed.SITE + path for path in ("archive/", "topics/", "indicators/", "regions/", "compare/")))]
     urls = list(dict.fromkeys(urls))
     return {"host": HOST, "key": key, "keyLocation": f"{build_feed.SITE}{key}.txt", "urlList": urls}
 
