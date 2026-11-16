@@ -1,4 +1,4 @@
-"""공개 호와 추적 기록을 지난 호·사안·지표별 정적 본문으로 묶는다."""
+"""공개 호와 추적 기록을 지난 호·사안·지표·지역·보도 비교별 정적 본문으로 묶는다."""
 from __future__ import annotations
 
 import datetime as dt
@@ -16,6 +16,17 @@ INDICATORS = (
     ("base-rate", "한국은행 기준금리", "한국은행 기준금리"),
 )
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
+# 시도 이름은 호 JSON의 regions.items[].region 표기 그대로, 주소는 로마자 표기
+REGIONS = (
+    ("seoul", "서울"), ("incheon", "인천"), ("gyeonggi", "경기"), ("gangwon", "강원"),
+    ("daejeon", "대전"), ("sejong", "세종"), ("chungbuk", "충북"), ("chungnam", "충남"),
+    ("busan", "부산"), ("daegu", "대구"), ("gwangju", "광주"), ("ulsan", "울산"),
+    ("jeonbuk", "전북"), ("jeonnam", "전남"), ("gyeongbuk", "경북"), ("gyeongnam", "경남"), ("jeju", "제주"),
+)
+# build_pages.py가 지난 생성물을 정리하는 폴더
+FOLDERS = ("archive", "topics", "indicators", "regions", "compare")
+# 지역 페이지 하나에 싣는 호의 수. 오래된 기록은 지난 호에서 읽는다
+REGION_ISSUES = 14
 
 
 def esc(value) -> str:
@@ -242,6 +253,155 @@ def indicator(slug: str, title: str, rows: list[tuple[dict, dict]]) -> dict:
     return page(f"indicators/{slug}/index.html", f"{title} 기록 · 기준일·변동·출처", lead, content, latest["date"], "indicator")
 
 
+def read_text(flag) -> str:
+    return "본문 확인" if flag is True else "제목·링크만 확인"
+
+
+def region_rows(issues: list[dict], name: str) -> list[tuple[dict, list[dict]]]:
+    """그 시도의 기사가 있는 호와 기사 목록을 최신 호부터 돌려준다."""
+    rows = []
+    for issue in issues:
+        items = [item for item in ((issue.get("regions") or {}).get("items") or [])
+                 if isinstance(item, dict) and item.get("region") == name and item.get("title")]
+        if items:
+            rows.append((issue, items))
+    return rows
+
+
+def region_cards(series: list[tuple[str, str, list]], modified: str) -> dict:
+    lead = "17개 시도의 소식을 지역별로 모아 날짜순으로 읽습니다. 기사마다 매체와 원문 링크, 본문 확인 여부를 함께 적습니다."
+    content = heading("지역 뉴스", "시도별로 읽는 지역 소식", lead, f'{len(series)}개 시도 · 최신 호 {date_html(modified)}')
+    cards = []
+    for slug, name, rows in series:
+        issue, items = rows[0]
+        line = ((issue.get("regions") or {}).get("summary") or {}).get(name) or items[0]["title"]
+        cards.append(
+            f'<li class="discovery-card"><h2><a href="/regions/{slug}/">{esc(name)} 뉴스</a></h2>'
+            f'<p>{esc(line)}</p>'
+            f'<p class="discovery-meta">{date_html(issue["date"])}호 기준 · {sum(len(group) for _, group in rows)}건 기록</p></li>'
+        )
+    content += '<ul class="discovery-grid">' + "".join(cards) + "</ul>"
+    return page("regions/index.html", "지역 뉴스 · 17개 시도별 주요 소식", lead, content, modified, "regions")
+
+
+def region(slug: str, name: str, rows: list[tuple[dict, list[dict]]]) -> dict:
+    latest, items = rows[0]
+    line = ((latest.get("regions") or {}).get("summary") or {}).get(name) or ""
+    lead = line or f'{latest["date"]}호에 실린 {name} 소식 {len(items)}건을 포함해 최근 기록을 날짜순으로 정리했습니다.'
+    shown = rows[:REGION_ISSUES]
+    content = heading("지역 뉴스", f"{name} 뉴스 · 날짜별 주요 소식", lead,
+                      f'{len(shown)}개 호 · {date_html(shown[-1][0]["date"])} ~ {date_html(latest["date"])} 발행 기록')
+    content += '<p class="discovery-note">각 호는 발행 전날까지 보도된 기사를 요약한 기록입니다. 요약은 원문을 대신하지 않으며, 본문을 읽지 못한 기사는 제목에서 확인되는 내용만 적었습니다.</p>'
+    for issue, group in shown:
+        date = issue["date"]
+        summary = ((issue.get("regions") or {}).get("summary") or {}).get(name)
+        content += f'<section aria-labelledby="d{date}"><h2 id="d{date}"><a href="/{date}">{date_html(date)}호</a>에 실린 {esc(name)} 소식</h2>'
+        if summary and issue is not latest:
+            content += f'<p>{esc(summary)}</p>'
+        entries = []
+        for item in group:
+            figures = [str(f) for f in (item.get("figures") or []) if str(f).strip()]
+            entries.append(
+                '<li><h3>' + source_link(item.get("url"), item["title"]) + '</h3>'
+                + f'<p class="discovery-meta">{esc(item.get("cat") or "분류 미기록")} · {esc(item.get("outlet") or "매체 미기록")} · 보도 {date_html(item.get("date"))} · {read_text(item.get("body_read"))}</p>'
+                + (f'<p>{esc(item["summary"])}</p>' if item.get("summary") else "")
+                + (f'<p class="discovery-meta">기사에 실린 숫자: {esc(" / ".join(figures))}</p>' if figures else "")
+                + '</li>'
+            )
+        content += '<ul class="discovery-timeline">' + "".join(entries) + '</ul><p class="discovery-meta">' + esc(review_text(issue)) + '</p></section>'
+    content += '<p class="discovery-links"><a href="/regions/">다른 시도 읽기</a> · <a href="/archive/">지난 호 모아보기</a> · <a href="/">오늘의 조간 읽기</a></p>'
+    return page(f"regions/{slug}/index.html", f"{name} 뉴스 · 날짜별 주요 소식과 원문 링크", lead, content, latest["date"], "region")
+
+
+def theme_rows(issues: list[dict]) -> list[tuple[dict, dict, str]]:
+    """공개 호의 언론 주제를 (호, 주제, 주소 조각)으로 최신 호부터 돌려준다. 주소는 발행일과 주제 ID로 만든다."""
+    rows, seen = [], set()
+    for issue in issues:
+        for theme in issue.get("themes") or []:
+            if not isinstance(theme, dict) or not theme.get("title"):
+                continue
+            ident = theme.get("id")
+            if not isinstance(ident, str) or not SLUG.fullmatch(ident):
+                continue
+            slug = f'{issue["date"]}-{ident}'
+            if slug in seen:
+                continue
+            seen.add(slug)
+            rows.append((issue, theme, slug))
+    return rows
+
+
+def diff_tables(theme: dict) -> str:
+    out = ""
+    for number, diff in enumerate(theme.get("diffs") or []):
+        if not isinstance(diff, dict) or not diff.get("q"):
+            continue
+        cols = [col for col in (diff.get("cols") or [])]
+        rows = [row for row in (diff.get("rows") or []) if isinstance(row, list) and len(row) == len(cols)]
+        out += f'<section aria-labelledby="q{number}"><h3 id="q{number}">{esc(diff["q"])}</h3>'
+        if diff.get("a"):
+            out += f'<p>{esc(diff["a"])}</p>'
+        if cols and rows:
+            head = "".join(f'<th scope="col">{esc(col)}</th>' for col in cols)
+            body = "".join(
+                "<tr>" + "".join(
+                    (f'<th scope="row" data-label="{esc(cols[i])}">{esc(cell)}</th>' if i == 0 else f'<td data-label="{esc(cols[i])}">{esc(cell)}</td>')
+                    for i, cell in enumerate(row)) + "</tr>"
+                for row in rows)
+            out += ('<div class="discovery-table-wrap"><table class="discovery-table"><caption>' + esc(diff["q"])
+                    + f'</caption><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>')
+        out += "</section>"
+    return out
+
+
+def compare_cards(rows: list[tuple[dict, dict, str]]) -> dict:
+    lead = "같은 사안을 여러 매체가 어떻게 전했는지, 숫자의 기준이 어디서 갈렸는지 주제별로 읽습니다."
+    content = heading("보도 비교", "매체마다 갈린 숫자와 기준", lead, f'주제 {len(rows)}건 · 최신 호 {date_html(rows[0][0]["date"])}')
+    cards = []
+    for issue, theme, slug in rows:
+        questions = [diff["q"] for diff in (theme.get("diffs") or []) if isinstance(diff, dict) and diff.get("q")]
+        first = (theme.get("summary") or [""])[0]
+        cards.append(
+            '<li class="discovery-card">'
+            f'<p class="discovery-meta">{date_html(issue["date"])}호 · 기사 {len(theme.get("articles") or [])}건</p>'
+            f'<h2><a href="/compare/{slug}/">{esc(theme["title"])}</a></h2>'
+            f'<p>{esc(description(first))}</p>'
+            + (f'<p class="discovery-meta">기준이 갈린 숫자: {esc(" / ".join(questions))}</p>' if questions else "")
+            + '</li>'
+        )
+    content += '<ol class="discovery-grid discovery-archive">' + "".join(cards) + "</ol>"
+    return page("compare/index.html", "언론 보도 비교 · 매체마다 다른 숫자와 기준", lead, content, rows[0][0]["date"], "compare")
+
+
+def compare(issue: dict, theme: dict, slug: str) -> dict:
+    date = issue["date"]
+    paragraphs = [text for text in (theme.get("summary") or []) if str(text).strip()]
+    lead = paragraphs[0] if paragraphs else theme["title"]
+    articles = [a for a in (theme.get("articles") or []) if isinstance(a, dict) and a.get("title")]
+    meta = f'<a href="/{date}">{date_html(date)}호</a> 수록 · {esc(theme.get("period") or "기간 미기록")} · {esc(review_text(issue))}'
+    content = heading("보도 비교", theme["title"], lead, meta)
+    content += '<p class="discovery-note">발행 전날까지의 보도를 정리한 당시 기록입니다. 이후 달라진 사실은 반영하지 않았으며, 주장·추정·전망과 확인된 사실의 구분은 본문 표기를 따릅니다.</p>'
+    if len(paragraphs) > 1:
+        content += '<section aria-labelledby="summary"><h2 id="summary">정리</h2>' + "".join(f"<p>{esc(text)}</p>" for text in paragraphs[1:]) + "</section>"
+    tables = diff_tables(theme)
+    if tables:
+        content += '<section aria-labelledby="diffs"><h2 id="diffs">기준이 갈린 숫자</h2>' + tables + "</section>"
+    if articles:
+        rows = "".join(
+            f'<tr><td data-label="매체">{esc(a.get("outlet") or "매체 미기록")}<p class="discovery-meta">{esc(a.get("region") or "")}</p></td>'
+            f'<th scope="row" data-label="기사·원문">{source_link(a.get("url"), a["title"])}</th>'
+            f'<td data-label="보도일·확인 범위">{date_html(a.get("date"))}<p class="discovery-meta">{read_text(a.get("read"))}</p></td></tr>'
+            for a in articles)
+        content += ('<section aria-labelledby="articles"><h2 id="articles">이 주제를 다룬 기사</h2><div class="discovery-table-wrap"><table class="discovery-table">'
+                    f'<caption>{len(articles)}개 기사 · 제목과 링크만 싣습니다</caption><thead><tr><th scope="col">매체</th><th scope="col">기사·원문</th><th scope="col">보도일·확인 범위</th></tr></thead><tbody>'
+                    + rows + "</tbody></table></div></section>")
+    keywords = [str(word) for word in (theme.get("keywords") or []) if str(word).strip()]
+    if keywords:
+        content += f'<p class="discovery-meta">관련 검색어: {esc(" · ".join(keywords))}</p>'
+    content += f'<p class="discovery-links"><a href="/compare/">다른 보도 비교 읽기</a> · <a href="/{date}">{date}호 전체 읽기</a></p>'
+    return page(f"compare/{slug}/index.html", f'{theme["title"]} · {date} 보도 비교', lead, content, date, "theme")
+
+
 def pages(issues: list[dict], trackers: dict) -> list[dict]:
     """발행 자료만 받아 파일 저장 없이 페이지의 메타 정보와 본문을 돌려준다."""
     published = sorted(
@@ -278,4 +438,16 @@ def pages(issues: list[dict], trackers: dict) -> list[dict]:
         modified = max(rows[0][0]["date"] for _, _, rows in series)
         result.append(indicator_cards(series, modified))
         result.extend(indicator(slug, title, rows) for slug, title, rows in series)
+    areas = []
+    for slug, name in REGIONS:
+        rows = region_rows(published, name)
+        if rows:
+            areas.append((slug, name, rows))
+    if areas:
+        result.append(region_cards(areas, max(rows[0][0]["date"] for _, _, rows in areas)))
+        result.extend(region(slug, name, rows) for slug, name, rows in areas)
+    themes = theme_rows(published)
+    if themes:
+        result.append(compare_cards(themes))
+        result.extend(compare(issue, theme, slug) for issue, theme, slug in themes)
     return result
