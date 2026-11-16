@@ -31,6 +31,7 @@ ICON_VERSION = "first-light-20261104"
 DIGEST = re.compile(r"<!-- kj:digest -->.*?<!-- /kj:digest -->", re.S)
 LDJSON = re.compile(r'<script type="application/ld\+json">\n(.*?)\n</script>', re.S)
 DISCOVERY = re.compile(r"<!-- kj:discovery -->.*?<!-- /kj:discovery -->", re.S)
+LEAD_H1 = re.compile(r'(<h1 id="leadH">).*?(</h1>)', re.S)
 # 요약에 넣을 목록 길이. 검색 로봇이 읽기에 충분하고 페이지가 지나치게 길지 않게
 NEWS_MAX = 12
 REGION_MAX = 17
@@ -212,6 +213,17 @@ def with_article(page: str, issue: dict, url: str, desc: str) -> str:
     return page[: m.start()] + block + page[m.end():]
 
 
+def with_lead_heading(page: str, issue: dict | None) -> str:
+    """머리기사 제목을 h1에 미리 넣는다. 화면 스크립트가 같은 제목으로 다시 채운다.
+
+    JavaScript를 실행하지 않는 검색 로봇에게도 페이지의 h1이 비어 있지 않게 한다.
+    """
+    if not LEAD_H1.search(page):
+        raise ValueError('index.html에서 머리기사 제목(h1#leadH)을 찾지 못함')
+    headline = ((issue or {}).get("lead") or {}).get("headline") or (issue or {}).get("headline") or ""
+    return LEAD_H1.sub(lambda m: m.group(1) + esc(headline) + m.group(2), page, count=1)
+
+
 def embed_data(page: str, issue: dict, index: dict) -> str:
     for element_id, data in (("issue-data", issue), ("issue-index", index)):
         body = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
@@ -222,7 +234,7 @@ def embed_data(page: str, issue: dict, index: dict) -> str:
 
 def home_page(template: str, issue: dict, index: dict) -> str:
     desc = clip(re.search(r'<meta name="description" content="([^"]*)">', template).group(1))
-    page = DIGEST.sub(lambda _: digest(issue), template, count=1)
+    page = with_lead_heading(DIGEST.sub(lambda _: digest(issue), template, count=1), issue)
     merged = list(dict.fromkeys(BASE_KEYWORDS + keywords(issue)))[:KEYWORD_MAX]
     page = set_attr(page, r'(<meta name="keywords" content=")[^"]*(">)', ", ".join(merged))
     page = with_discovery_links(page, issue, index)
@@ -249,7 +261,7 @@ def issue_page(template: str, issue: dict, index: dict) -> str:
     # 화면 스크립트가 이 날짜의 호를 열게 하고, 기사 발행 시각을 알린다
     extra = f'<meta name="kj-date" content="{esc(date)}">\n<meta property="article:published_time" content="{esc(published_at(issue))}">\n'
     page = page.replace('<link rel="canonical"', extra + '<link rel="canonical"', 1)
-    page = DIGEST.sub(lambda _: digest(issue), page, count=1)
+    page = with_lead_heading(DIGEST.sub(lambda _: digest(issue), page, count=1), issue)
     page = with_discovery_links(page, issue, index)
     page = with_reader_tools(page)
     return secure_page(embed_data(with_article(page, issue, url, desc), issue, index))
@@ -421,6 +433,7 @@ def build() -> list[Path]:
     if not issues:
         template = DIGEST.sub("<!-- kj:digest -->\n<!-- /kj:digest -->", template, count=1)
         template = DISCOVERY.sub("<!-- kj:discovery -->\n<!-- /kj:discovery -->", template, count=1)
+        template = with_lead_heading(template, None)
         data = json.loads(LDJSON.search(template).group(1))
         data["@graph"] = [node for node in data["@graph"] if node.get("@type") != "NewsArticle"]
         template = LDJSON.sub(lambda _: '<script type="application/ld+json">\n' + json.dumps(data, ensure_ascii=False, indent=2).replace("<", "\\u003c") + '\n</script>', template, count=1)
