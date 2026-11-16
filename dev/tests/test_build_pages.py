@@ -57,6 +57,23 @@ class PagesTest(unittest.TestCase):
             self.assertIn('id="readerFeedCopy" disabled', page)
         self.assertEqual(build_pages.with_reader_tools(home), home)
 
+    def test_lead_heading_is_static_single_and_escaped(self):
+        self.issue["lead"]["headline"] = '코스피 <b>5,000</b> & "환율"'
+        (self.issues / f"{DATE}.json").write_text(json.dumps(self.issue, ensure_ascii=False), encoding="utf-8")
+        build_pages.build()
+        build_pages.build()
+        for name in ("index.html", f"{DATE}.html"):
+            page = (build_pages.PUBLIC / name).read_text(encoding="utf-8")
+            self.assertEqual(len(re.findall(r"<h1\b", page)), 1, name)
+            self.assertIn('<h1 id="leadH">코스피 &lt;b&gt;5,000&lt;/b&gt; &amp; &quot;환율&quot;</h1>', page)
+
+    def test_lead_heading_is_emptied_when_nothing_is_published(self):
+        build_pages.build()
+        self.issue["status"] = "draft"
+        (self.issues / f"{DATE}.json").write_text(json.dumps(self.issue, ensure_ascii=False), encoding="utf-8")
+        build_pages.build()
+        self.assertIn('<h1 id="leadH"></h1>', (build_pages.PUBLIC / "index.html").read_text(encoding="utf-8"))
+
     def test_issue_page_has_own_head_and_digest(self):
         build_pages.build()
         page = (self.tmp / "dev" / "web" / f"{DATE}.html").read_text(encoding="utf-8")
