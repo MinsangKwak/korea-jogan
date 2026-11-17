@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import sys
+import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -39,6 +40,17 @@ def payload(key: str, issues: list[dict], discovery_urls: list[str] | None = Non
     return {"host": HOST, "key": key, "keyLocation": f"{build_feed.SITE}{key}.txt", "urlList": urls}
 
 
+def notify_hub(opener=urllib.request.urlopen) -> str:
+    """피드가 바뀌었다고 WebSub 허브에 알린다. 허브가 구독한 검색·리더 서비스에 새 호를 전한다."""
+    feed = build_feed.SITE + "feed.xml"
+    data = urllib.parse.urlencode({"hub.mode": "publish", "hub.url": feed}).encode("utf-8")
+    try:
+        with opener(urllib.request.Request(build_feed.HUB, data=data), timeout=20) as res:
+            return f"WebSub {res.status}: {feed}"
+    except Exception as e:  # 알림 실패는 배포를 되돌릴 이유가 아니다
+        return f"WebSub 알림 실패: {e}"
+
+
 def main() -> int:
     sitemap = PUBLIC / "sitemap.xml"
     urls = []
@@ -53,6 +65,7 @@ def main() -> int:
             print(f"IndexNow {res.status}: {', '.join(body['urlList'])}")
     except Exception as e:  # 알림 실패는 배포를 되돌릴 이유가 아니다
         print(f"IndexNow 알림 실패: {e}")
+    print(notify_hub())
     return 0
 
 

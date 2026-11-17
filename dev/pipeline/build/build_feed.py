@@ -1,7 +1,8 @@
-"""발행 목록으로 RSS 2.0(dev/web/feed.xml)과 사이트맵(dev/web/sitemap.xml)을 만든다. 배포 워크플로가 올리기 직전에 돌린다.
+"""발행 목록으로 RSS 2.0(dev/web/feed.xml), 사이트맵(sitemap.xml), 뉴스 사이트맵(news-sitemap.xml)을 만든다. 배포 워크플로가 올리기 직전에 돌린다.
 
 승인 전 초안(draft)은 넣지 않는다. RSS는 호마다 머리기사, 요약, 그날 갈린 숫자의 질문을 담는다.
 사이트맵은 첫 화면과 호별 페이지 주소(/YYYY-MM-DD, build_pages.py가 만든다)를 담는다.
+뉴스 사이트맵은 구글 뉴스 규격대로 최근 이틀 안에 공개한 호만 담아 새 호를 빨리 찾게 한다.
 """
 from __future__ import annotations
 
@@ -19,6 +20,10 @@ ISSUES = PUBLIC / "data" / "issues"
 SITE = "https://korea-jogan.com/"
 KST = dt.timezone(dt.timedelta(hours=9))
 LIMIT = 30
+# 피드가 바뀌면 알려 주는 공개 허브(WebSub). 배포 뒤 indexnow.py가 이 허브에 새 피드를 알린다
+HUB = "https://pubsubhubbub.appspot.com/"
+# 구글 뉴스 사이트맵은 최근 이틀 안에 게시한 기사만 받는다
+NEWS_WINDOW = dt.timedelta(days=2)
 
 
 def item_xml(issue: dict) -> str:
@@ -79,6 +84,47 @@ def build_sitemap() -> str:
     )
 
 
+def published_time(issue: dict) -> dt.datetime:
+    """그 호를 실제로 공개한 시각. 기록이 없으면 발행일 06시로 본다."""
+    stamp = (issue.get("review") or {}).get("at")
+    if isinstance(stamp, str):
+        try:
+            value = dt.datetime.fromisoformat(stamp)
+            return value if value.tzinfo else value.replace(tzinfo=KST)
+        except ValueError:
+            pass
+    return dt.datetime.combine(dt.date.fromisoformat(issue["date"]), dt.time(6, 0), KST)
+
+
+def build_news_sitemap(now: dt.datetime | None = None) -> str:
+    now = now or dt.datetime.now(KST)
+    rows = ""
+    for issue in published():
+        at = published_time(issue)
+        if not now - NEWS_WINDOW <= at <= now:
+            continue
+        title = (issue.get("lead") or {}).get("headline") or issue.get("headline") or issue["date"] + "호"
+        rows += (
+            "  <url>\n"
+            f"    <loc>{escape(SITE + issue['date'])}</loc>\n"
+            "    <news:news>\n"
+            "      <news:publication>\n"
+            "        <news:name>대한민국 조간</news:name>\n"
+            "        <news:language>ko</news:language>\n"
+            "      </news:publication>\n"
+            f"      <news:publication_date>{at.isoformat(timespec='seconds')}</news:publication_date>\n"
+            f"      <news:title>{escape(title)}</news:title>\n"
+            "    </news:news>\n"
+            "  </url>\n"
+        )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n'
+        f"{rows}"
+        "</urlset>\n"
+    )
+
+
 def build() -> str:
     issues = published()
     items = "".join(item_xml(i) for i in issues[:LIMIT])
@@ -93,6 +139,7 @@ def build() -> str:
         "    <language>ko</language>\n"
         f"    <lastBuildDate>{built}</lastBuildDate>\n"
         f'    <atom:link href="{SITE}feed.xml" rel="self" type="application/rss+xml"/>\n'
+        f'    <atom:link href="{HUB}" rel="hub"/>\n'
         f"{items}"
         "  </channel>\n"
         "</rss>\n"
@@ -100,7 +147,7 @@ def build() -> str:
 
 
 def main() -> int:
-    for name, text in (("feed.xml", build()), ("sitemap.xml", build_sitemap())):
+    for name, text in (("feed.xml", build()), ("sitemap.xml", build_sitemap()), ("news-sitemap.xml", build_news_sitemap())):
         out = PUBLIC / name
         out.write_text(text, encoding="utf-8")
         print(f"저장: {out.relative_to(ROOT)}")
