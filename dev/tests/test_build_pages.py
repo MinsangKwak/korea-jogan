@@ -177,6 +177,31 @@ class IndexNowTest(unittest.TestCase):
         self.assertEqual(body["urlList"], [site, site + "2026-10-22", site + "2026-10-21"])
         self.assertEqual(body["keyLocation"], site + "abc12345.txt")
 
+    def test_hub_notification_names_only_our_feed_and_never_raises(self):
+        seen = []
+
+        class Response:
+            status = 204
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+        def opener(request, timeout=0):
+            seen.append(request)
+            return Response()
+
+        self.assertEqual(indexnow.notify_hub(opener), "WebSub 204: https://korea-jogan.com/feed.xml")
+        self.assertEqual(seen[0].full_url, indexnow.build_feed.HUB)
+        self.assertEqual(seen[0].data.decode("utf-8"), "hub.mode=publish&hub.url=https%3A%2F%2Fkorea-jogan.com%2Ffeed.xml")
+
+        def broken(request, timeout=0):
+            raise OSError("down")
+
+        self.assertIn("WebSub 알림 실패", indexnow.notify_hub(broken))
+
     def test_key_file_is_published(self):
         key = indexnow.find_key()
         self.assertEqual((REPO / "dev" / "web" / f"{key}.txt").read_text(encoding="utf-8").strip(), key)

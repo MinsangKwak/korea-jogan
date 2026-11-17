@@ -274,6 +274,38 @@ class FeedTest(Site):
         doc = xml.dom.minidom.parseString(build_feed.build_sitemap().encode("utf-8"))
         self.assertEqual(len(doc.getElementsByTagName("lastmod")), 0)
 
+    def test_feed_names_the_update_hub(self):
+        self.assertIn(f'<atom:link href="{build_feed.HUB}" rel="hub"/>', build_feed.build())
+
+    def test_news_sitemap_lists_only_issues_public_within_two_days(self):
+        day = dt.date.fromisoformat(DATE)
+        self.edit(lambda i: i.update(status="published", review={"by": "자동 발행", "at": f"{DATE}T09:04+09:00", "scope": [], "auto": True}))
+
+        def locs(now):
+            doc = xml.dom.minidom.parseString(build_feed.build_news_sitemap(now).encode("utf-8"))
+            return doc, [n.firstChild.data for n in doc.getElementsByTagName("loc")]
+
+        doc, found = locs(dt.datetime.combine(day, dt.time(12, 0), build_feed.KST))
+        self.assertEqual(found, [build_feed.SITE + DATE])
+        self.assertEqual(doc.getElementsByTagName("news:publication_date")[0].firstChild.data, f"{DATE}T09:04:00+09:00")
+        self.assertEqual(doc.getElementsByTagName("news:name")[0].firstChild.data, "대한민국 조간")
+        self.assertEqual(doc.getElementsByTagName("news:language")[0].firstChild.data, "ko")
+        self.assertTrue(doc.getElementsByTagName("news:title")[0].firstChild.data.strip())
+        # 공개 전 시각과 이틀이 지난 뒤에는 싣지 않는다
+        self.assertEqual(locs(dt.datetime.combine(day, dt.time(8, 0), build_feed.KST))[1], [])
+        self.assertEqual(locs(dt.datetime.combine(day + dt.timedelta(days=3), dt.time(12, 0), build_feed.KST))[1], [])
+        self.edit(lambda i: i.update(status="draft"))
+        self.assertEqual(locs(dt.datetime.combine(day, dt.time(12, 0), build_feed.KST))[1], [])
+
+    def test_news_sitemap_escapes_titles(self):
+        def change(issue):
+            issue.update(status="published", review={"at": f"{DATE}T06:00+09:00", "auto": True})
+            issue["lead"]["headline"] = "A & B <c>"
+
+        self.edit(change)
+        text = build_feed.build_news_sitemap(dt.datetime.combine(dt.date.fromisoformat(DATE), dt.time(12, 0), build_feed.KST))
+        self.assertIn("<news:title>A &amp; B &lt;c&gt;</news:title>", text)
+
 
 def ecos(*pairs):
     return {"StatisticSearch": {"list_total_count": len(pairs), "row": [{"TIME": t, "DATA_VALUE": v} for t, v in pairs]}}

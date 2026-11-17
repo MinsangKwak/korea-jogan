@@ -41,6 +41,7 @@ class RobotsTest(unittest.TestCase):
         for path in ("/admin/", "/data/issues/index.json", "/src/main.js"):
             self.assertFalse(self.rp.can_fetch("SomeBot", SITE + path), path)
         self.assertIn("Sitemap: https://korea-jogan.com/sitemap.xml", ROBOTS.read_text(encoding="utf-8"))
+        self.assertIn("Sitemap: https://korea-jogan.com/news-sitemap.xml", ROBOTS.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
