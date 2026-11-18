@@ -10,6 +10,8 @@ function renderLead() {
   $('issueDate').setAttribute('datetime', D.date);
   $('leadSkel').remove();
   $('leadBox').removeAttribute('aria-busy');
+  // 최신 호는 '오늘', 지난 호는 그 날짜로 적는다
+  $('leadToday').textContent = (VIEWING_PAST ? '' : '오늘의 한국 뉴스 요약 · ') + (ISSUE.getUTCMonth() + 1) + '월 ' + ISSUE.getUTCDate() + '일' + (VIEWING_PAST ? ' 한국 뉴스 요약' : '');
   $('leadKicker').textContent = L.kicker;
   $('leadH').textContent = L.headline;
   $('leadStand').replaceChildren(...readingText(L.standfirst).childNodes);

@@ -104,15 +104,24 @@ class PagesTest(unittest.TestCase):
         self.assertNotIn("<", body)
         self.assertEqual(json.loads(body)["lead"]["headline"], self.issue["lead"]["headline"])
 
-    def test_home_keeps_search_title_and_is_idempotent(self):
-        before = (self.tmp / "dev" / "web" / "index.html").read_text(encoding="utf-8")
-        title = re.search(r"<title>.*?</title>", before).group(0)
+    def test_home_title_names_today_summary_and_is_idempotent(self):
         build_pages.build()
         once = (self.tmp / "dev" / "web" / "index.html").read_text(encoding="utf-8")
         build_pages.build()
         twice = (self.tmp / "dev" / "web" / "index.html").read_text(encoding="utf-8")
         self.assertEqual(once, twice)
-        self.assertIn(title, once)
+        # 2026-10-19는 월요일. 매체 이름 없이 치는 말과 그날 날짜를 제목·설명·보이는 한 줄에 함께 둔다
+        self.assertIn("<title>오늘 뉴스 요약 · 10월 19일(월) 한국 주요 뉴스와 경제 숫자 | 대한민국 조간</title>", once)
+        desc = re.search(r'<meta name="description" content="([^"]*)">', once).group(1)
+        self.assertTrue(desc.startswith("10월 19일 오늘의 한국 뉴스 요약. "))
+        self.assertLessEqual(len(desc), 160)
+        self.assertIn('<p class="kj-lead__today" id="leadToday">오늘의 한국 뉴스 요약 · 10월 19일</p>', once)
+        self.assertIn("오늘 우리나라 주요 뉴스와 경제 숫자를 한 페이지로 요약합니다", once)
+        self.assertIn("오늘 우리나라 뉴스", re.search(r'<meta name="keywords" content="([^"]*)">', once).group(1))
+        self.assertIn("오늘 뉴스 요약", self.ld(once)["@graph"][0]["alternateName"])
+        past = (self.tmp / "dev" / "web" / f"{DATE}.html").read_text(encoding="utf-8")
+        self.assertIn('<p class="kj-lead__today" id="leadToday">10월 19일 한국 뉴스 요약</p>', past)
+        self.assertNotIn("<title>오늘 뉴스 요약", past)
         self.assertEqual(once.count('id="seoDigest"'), 1)
         self.assertEqual(sum(g["@type"] == "NewsArticle" for g in self.ld(once)["@graph"]), 1)
 

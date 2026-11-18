@@ -5,8 +5,8 @@
 <meta http-equiv="Content-Security-Policy" content="default-src &#x27;self&#x27;; base-uri &#x27;none&#x27;; object-src &#x27;none&#x27;; script-src &#x27;self&#x27; &#x27;sha256-Qdinrw/DhMZqJX33brQgCbze8QhJ8S95Kagf3Du8gRY=&#x27; &#x27;sha256-8aNzJ0xIS9cuLfyRr5M+4fwoNVkOQMC4eCSqdZc/P8g=&#x27; https://www.googletagmanager.com https://gc.zgo.at; script-src-attr &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com; font-src &#x27;self&#x27; https://fonts.gstatic.com; img-src &#x27;self&#x27; data: https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com https://*.google.co.kr https://*.g.doubleclick.net; connect-src &#x27;self&#x27; https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.google.com https://*.google.co.kr https://*.g.doubleclick.net https://pagead2.googlesyndication.com; frame-src https://www.googletagmanager.com; form-action &#x27;self&#x27;; manifest-src &#x27;self&#x27;; worker-src &#x27;none&#x27;">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>대한민국 조간 | 오늘의 코스피·환율·국가채무와 뉴스 요약</title>
-<meta name="description" content="광고 없이 숫자로 보는 데이터 기반 뉴스. 매일 아침 6시, 코스피·환율·기준금리·국가채무 같은 공식 숫자와 전국·17개 시도 뉴스를 출처와 기준일까지 정리하고, 언론사마다 숫자가 왜 다른지 나란히 비교합니다.">
+<title>오늘 뉴스 요약 · 한국 주요 뉴스와 경제 숫자 | 대한민국 조간</title>
+<meta name="description" content="오늘 우리나라 주요 뉴스를 한 페이지로 요약합니다. 매일 아침 6시, 전국·17개 시도 뉴스와 코스피·환율·기준금리 같은 경제 숫자를 출처와 기준일까지 정리하고, 언론사마다 숫자가 왜 다른지 나란히 비교합니다.">
 <meta name="keywords" content="대한민국 조간, 오늘의 뉴스, 오늘 뉴스 요약, 아침 뉴스, 경제 뉴스 요약, 오늘 코스피, 코스피 종가, 원달러 환율, 오늘 환율, 기준금리, 국가채무, 국민연금, 수출입 동향, 지역 뉴스, 17개 시도 뉴스, 언론 보도 비교, 숫자 팩트체크, 오늘의 주요 뉴스, 조간 신문, 아침 신문, 모닝 브리핑, 뉴스 브리핑, 오늘 경제 지표, 국가부채, 나라빚, 시도별 뉴스, 오늘 뉴스, 오늘 주요 뉴스, 오늘 아침 뉴스, 오늘 경제 뉴스, 오늘의 경제 뉴스, 오늘 신문, 오늘의 조간, 오늘 헤드라인, 광고 없는 뉴스, 광고없는 뉴스, 데이터 기반 뉴스, 데이터 뉴스, 숫자로 보는 뉴스, 통계로 보는 뉴스, 팩트 기반 뉴스">
 <meta name="author" content="MinsangKwak">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
@@ -100,7 +100,8 @@ window.kjLoadTimer = setTimeout(() => {
       "@id": "https://korea-jogan.com/#website",
       "url": "https://korea-jogan.com/",
       "name": "대한민국 조간",
-      "description": "공식 통계와 공개 자료로 읽는 오늘의 대한민국. 수치의 출처와 기준을 함께 보여 줍니다.",
+      "alternateName": ["오늘 뉴스 요약", "오늘의 한국 뉴스 요약", "한국 조간 뉴스 요약"],
+      "description": "오늘 우리나라 주요 뉴스와 경제 숫자를 한 페이지로 요약합니다. 수치의 출처와 기준을 함께 보여 줍니다.",
       "inLanguage": "ko-KR",
       "publisher": { "@id": "https://korea-jogan.com/#org" }
     },
@@ -270,6 +271,7 @@ window.kjLoadTimer = setTimeout(() => {
           <span class="kj-skel kj-skel--line"></span>
           <span class="kj-skel kj-skel--num"></span>
         </div>
+        <p class="kj-lead__today" id="leadToday">오늘의 한국 뉴스 요약</p>
         <p class="kj-lead__kicker" id="leadKicker"></p>
         <h1 id="leadH"></h1>
         <p class="kj-lead__stand" id="leadStand"></p>
@@ -453,7 +455,7 @@ window.kjLoadTimer = setTimeout(() => {
         <p class="kj-foot__brand">대한민국 조간</p>
         <p class="kj-foot__tagline">데이터로 읽는 오늘의 대한민국</p>
       </div>
-      <p class="kj-foot__guide">출처와 수집 한계를 확인하고, 지난 호와 정정 기록을 함께 읽습니다.</p>
+      <p class="kj-foot__guide">매일 아침 6시, 오늘 우리나라 주요 뉴스와 경제 숫자를 한 페이지로 요약합니다. 출처와 수집 한계를 확인하고, 지난 호와 정정 기록을 함께 읽습니다.</p>
     </div>
     <div class="kj-foot__grid">
       <section class="kj-foot__section kj-foot__section--reading" aria-labelledby="limitsH">

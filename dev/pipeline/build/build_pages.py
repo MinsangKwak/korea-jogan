@@ -69,7 +69,11 @@ BASE_KEYWORDS = [
     # 광고·회원 없이 공식 숫자로 쓰는 신문이라는 점을 찾는 말
     "광고 없는 뉴스", "광고없는 뉴스", "데이터 기반 뉴스", "데이터 뉴스", "숫자로 보는 뉴스", "통계로 보는 뉴스",
     "팩트 기반 뉴스",
+    # 매체 이름이나 주제어 없이 치는 말
+    "오늘 우리나라 뉴스", "오늘 우리나라 요약", "오늘 한국 뉴스", "오늘 한국 뉴스 요약", "우리나라 뉴스 요약", "오늘 뉴스 정리",
+    "오늘 무슨 일", "오늘의 이슈", "하루 뉴스 요약",
 ]
+LEAD_TODAY = re.compile(r'(<p class="kj-lead__today" id="leadToday">).*?(</p>)', re.S)
 WEEKDAYS = "월화수목금토일"
 KEYWORD_MAX = 60
 THEME_KEYWORDS = 5
@@ -213,6 +217,18 @@ def with_article(page: str, issue: dict, url: str, desc: str) -> str:
     return page[: m.start()] + block + page[m.end():]
 
 
+def month_day(date: str, weekday: bool = False) -> str:
+    y, m, d = (int(x) for x in date.split("-"))
+    return f"{m}월 {d}일" + (f"({WEEKDAYS[dt.date(y, m, d).weekday()]})" if weekday else "")
+
+
+def with_today_line(page: str, text: str) -> str:
+    """머리기사 위의 한 줄. 화면 스크립트가 같은 문구로 다시 채운다."""
+    if not LEAD_TODAY.search(page):
+        raise ValueError("index.html에서 오늘 요약 문구(p#leadToday)를 찾지 못함")
+    return LEAD_TODAY.sub(lambda m: m.group(1) + esc(text) + m.group(2), page, count=1)
+
+
 def with_lead_heading(page: str, issue: dict | None) -> str:
     """머리기사 제목을 h1에 미리 넣는다. 화면 스크립트가 같은 제목으로 다시 채운다.
 
@@ -233,8 +249,15 @@ def embed_data(page: str, issue: dict, index: dict) -> str:
 
 
 def home_page(template: str, issue: dict, index: dict) -> str:
-    desc = clip(re.search(r'<meta name="description" content="([^"]*)">', template).group(1))
-    page = with_lead_heading(DIGEST.sub(lambda _: digest(issue), template, count=1), issue)
+    # 사람들이 매체 이름 없이 치는 '오늘 뉴스 요약' 같은 말과 그날 날짜·머리기사를 제목과 설명에 함께 둔다
+    day = month_day(issue["date"], weekday=True)
+    headline = (issue.get("lead") or {}).get("headline") or issue.get("headline", "")
+    title = f"오늘 뉴스 요약 · {day} 한국 주요 뉴스와 경제 숫자 | 대한민국 조간"
+    desc = clip(f"{month_day(issue['date'])} 오늘의 한국 뉴스 요약. {headline}. 전국·17개 시도 주요 뉴스와 코스피·환율 같은 경제 숫자를 출처·기준일과 함께 한 페이지로 정리합니다.", 160)
+    page = re.sub(r"<title>.*?</title>", lambda _: f"<title>{esc(title)}</title>", template, count=1)
+    page = set_attr(page, r'(<meta name="description" content=")[^"]*(">)', desc)
+    page = with_today_line(page, f"오늘의 한국 뉴스 요약 · {month_day(issue['date'])}")
+    page = with_lead_heading(DIGEST.sub(lambda _: digest(issue), page, count=1), issue)
     merged = list(dict.fromkeys(BASE_KEYWORDS + keywords(issue)))[:KEYWORD_MAX]
     page = set_attr(page, r'(<meta name="keywords" content=")[^"]*(">)', ", ".join(merged))
     page = with_discovery_links(page, issue, index)
@@ -261,6 +284,7 @@ def issue_page(template: str, issue: dict, index: dict) -> str:
     # 화면 스크립트가 이 날짜의 호를 열게 하고, 기사 발행 시각을 알린다
     extra = f'<meta name="kj-date" content="{esc(date)}">\n<meta property="article:published_time" content="{esc(published_at(issue))}">\n'
     page = page.replace('<link rel="canonical"', extra + '<link rel="canonical"', 1)
+    page = with_today_line(page, f"{month_day(date)} 한국 뉴스 요약")
     page = with_lead_heading(DIGEST.sub(lambda _: digest(issue), page, count=1), issue)
     page = with_discovery_links(page, issue, index)
     page = with_reader_tools(page)
@@ -436,6 +460,7 @@ def build() -> list[Path]:
         template = DIGEST.sub("<!-- kj:digest -->\n<!-- /kj:digest -->", template, count=1)
         template = DISCOVERY.sub("<!-- kj:discovery -->\n<!-- /kj:discovery -->", template, count=1)
         template = with_lead_heading(template, None)
+        template = with_today_line(template, "오늘의 한국 뉴스 요약")
         data = json.loads(LDJSON.search(template).group(1))
         data["@graph"] = [node for node in data["@graph"] if node.get("@type") != "NewsArticle"]
         template = LDJSON.sub(lambda _: '<script type="application/ld+json">\n' + json.dumps(data, ensure_ascii=False, indent=2).replace("<", "\\u003c") + '\n</script>', template, count=1)
