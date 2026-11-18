@@ -399,6 +399,9 @@ async function check(name, options, fn) {
     assert.equal(await tooltip.isVisible(), true);
     await page.keyboard.press('Escape');
     assert.equal(await tooltip.isVisible(), false);
+    // 툴팁이 사라진 자리에 멈춰 있는 포인터가 아래 점을 다시 열지 않아야 한다
+    await page.waitForTimeout(300);
+    assert.equal(await tooltip.isVisible(), false);
     await points.nth(1).hover({ position: { x: 8, y: 180 } });
     assert.equal(await page.locator('#trendTooltipUsers').innerText(), '0명');
     assert.equal(await page.locator('#trendTooltipViews').innerText(), '0회');
