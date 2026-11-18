@@ -375,8 +375,14 @@ $('disconnect').addEventListener('click', () => {
   $('connect').focus();
 });
 $('refresh').addEventListener('click', () => { paused = false; refresh(); });
+// 화면 배치만 바뀌어 멈춘 포인터 아래로 점이 들어온 경우는 사용자의 이동이 아니다
+let lastPointerX = NaN;
+let lastPointerY = NaN;
+const rememberPointer = (event) => { lastPointerX = event.clientX; lastPointerY = event.clientY; };
+for (const type of ['pointermove', 'pointerdown']) document.addEventListener(type, rememberPointer, { capture: true, passive: true });
 $('trendChart').addEventListener('pointerover', (event) => {
   if (event.pointerType === 'touch') return;
+  if (event.clientX === lastPointerX && event.clientY === lastPointerY) return;
   const point = event.target.closest('.admin-chart-point');
   if (point && !point.contains(event.relatedTarget)) showTrendTooltip(point);
 });
