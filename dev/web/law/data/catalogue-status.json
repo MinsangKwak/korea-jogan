@@ -1,0 +1,172 @@
+{
+  "uniqueCases": 18460,
+  "caseRows": 19634,
+  "caseAsOf": "2026-10",
+  "legislationAsOf": "2026-11-19",
+  "latestDecision": "2026-08-12",
+  "latestProposal": "2026-11-18",
+  "files": [
+    {
+      "file": "precedents.json",
+      "label": "부동산",
+      "kind": "cases",
+      "rows": 2132,
+      "asOf": "2026-10",
+      "sha256": "57f58b67c726de5243328c901e8d7a094c73492a8a597e4768c4b3d6882f16e9",
+      "bytes": 1348133
+    },
+    {
+      "file": "family.json",
+      "label": "가족·상속",
+      "kind": "cases",
+      "rows": 622,
+      "asOf": "2026-10",
+      "sha256": "0b29cbfb325b108c467148a0038d0e4cb8a52af99aec3704c7d78c9ec3dea155",
+      "bytes": 307308
+    },
+    {
+      "file": "traffic.json",
+      "label": "교통사고·운전",
+      "kind": "cases",
+      "rows": 1009,
+      "asOf": "2026-10",
+      "sha256": "af0b23b361148f0296d8e8c6e4453d17eabf2e23a0ddabd793441c9a98917933",
+      "bytes": 557006
+    },
+    {
+      "file": "school.json",
+      "label": "학교·교육",
+      "kind": "cases",
+      "rows": 307,
+      "asOf": "2026-10",
+      "sha256": "8eaadebd693e57bec4d99174bd06caca072715cdeced688b498526f60b90005e",
+      "bytes": 167394
+    },
+    {
+      "file": "environment.json",
+      "label": "환경·이웃분쟁",
+      "kind": "cases",
+      "rows": 192,
+      "asOf": "2026-10",
+      "sha256": "b44d409a119015dc7ca97acc69ae160a09ad0d2636156d739b06df365f2bda20",
+      "bytes": 101079
+    },
+    {
+      "file": "labor.json",
+      "label": "노동·고용",
+      "kind": "cases",
+      "rows": 2270,
+      "asOf": "2026-10",
+      "sha256": "b599fafa5a3fe969c0b3bfcc0f257f1cbe6a554f98813e524bc1b0a285ad4069",
+      "bytes": 1222572
+    },
+    {
+      "file": "debt.json",
+      "label": "금전·채무",
+      "kind": "cases",
+      "rows": 1710,
+      "asOf": "2026-10",
+      "sha256": "581da357f4de7c74c5cbd5ff18d537eaa435fb1a29e5c42f50610e53edf0d45c",
+      "bytes": 901178
+    },
+    {
+      "file": "consumer.json",
+      "label": "소비자·거래",
+      "kind": "cases",
+      "rows": 175,
+      "asOf": "2026-10",
+      "sha256": "9c58432175cc9da3ef49459e67c318dba70fd7f3382e679804df13a93cafb7bd",
+      "bytes": 96231
+    },
+    {
+      "file": "insurance.json",
+      "label": "보험·보상",
+      "kind": "cases",
+      "rows": 762,
+      "asOf": "2026-10",
+      "sha256": "2db8efe572216bff74f65d869a80850fc68ae6529421a39e610bc605bd38d3a9",
+      "bytes": 475206
+    },
+    {
+      "file": "tax.json",
+      "label": "세금·조세",
+      "kind": "cases",
+      "rows": 5566,
+      "asOf": "2026-10",
+      "sha256": "8a9bd064dc6c2a27a62bdc34c242a11501320ac9b35ebea4ded837f062eb1a0f",
+      "bytes": 2705429
+    },
+    {
+      "file": "digital.json",
+      "label": "디지털·개인정보",
+      "kind": "cases",
+      "rows": 170,
+      "asOf": "2026-10",
+      "sha256": "895d7f54dfbf6be14be40167375f7adf14e1d2a2645a00ef3e4220354d2a6e88",
+      "bytes": 124687
+    },
+    {
+      "file": "crime.json",
+      "label": "형사·범죄",
+      "kind": "cases",
+      "rows": 1938,
+      "asOf": "2026-10",
+      "sha256": "4c78494a6ca4bf6148c1a2d3ea0348123ea90147de4c8f826b2643d11a30c1e4",
+      "bytes": 918877
+    },
+    {
+      "file": "medicine.json",
+      "label": "의료·환자권리",
+      "kind": "cases",
+      "rows": 228,
+      "asOf": "2026-10",
+      "sha256": "76f19693f7db76ce1c6f1728dc6ade4d4a52f8bfbb3133f3e12ceb5785e6299b",
+      "bytes": 137662
+    },
+    {
+      "file": "administration.json",
+      "label": "행정·인허가",
+      "kind": "cases",
+      "rows": 756,
+      "asOf": "2026-10",
+      "sha256": "639d0a952e96d6d0456daa70dedb690f37f1a813df959d617b033c025f73903a",
+      "bytes": 397895
+    },
+    {
+      "file": "ip.json",
+      "label": "저작권·지식재산",
+      "kind": "cases",
+      "rows": 1797,
+      "asOf": "2026-10",
+      "sha256": "24251dc74bdb6500f4ca4ea26f4067dc21c58afd781fbf90138a5b1993e9b6b8",
+      "bytes": 908438
+    },
+    {
+      "file": "bills.json",
+      "label": "국회 법률안",
+      "kind": "bills",
+      "rows": 15297,
+      "asOf": "2026-11-19",
+      "sha256": "c4c5ca0723d1a20b1b0156c8bc2ced42d2e21522e8d150caba810afffe79033d",
+      "bytes": 3158171
+    },
+    {
+      "file": "law-calendar.json",
+      "label": "법률 판본",
+      "kind": "laws",
+      "rows": 3305,
+      "asOf": "2026-11-19",
+      "sha256": "035ccf0b3e6647db1e5565b42297fa1a89f0b319cac329a88942a07b2e91e69a",
+      "bytes": 692860
+    },
+    {
+      "file": "gazette-preview.json",
+      "label": "다음 관보 예고 문서",
+      "kind": "gazette",
+      "rows": 1,
+      "asOf": "2026-11-19",
+      "sha256": "48b6edcbba662dc2d18d8dbd499422bf04135f49523493390f2ed3d7e28ebcef",
+      "bytes": 171
+    }
+  ]
+}
