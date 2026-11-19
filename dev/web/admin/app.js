@@ -268,7 +268,7 @@ function renderReports(reports, periodLabel) {
   table($('landings'), acquisitionRows(landings), '처음 들어온 페이지', columns);
   const visitorTypes = { new: '첫 방문', returning: '재방문', '(not set)': '분류되지 않음' };
   table($('returning'), acquisitionRows(returning).map((item) => ({ ...item, label: visitorTypes[item.label] || item.label })), '방문 유형', columns);
-  const actionNames = { reader_feed_copy: 'RSS 주소 복사', reader_feed_open: 'RSS 열기', reader_subscribe_open: '받아보기 안내 열기', reader_topic_open: '이슈 기록으로 이동', reader_indicator_open: '경제 지표로 이동', reader_share: '공유 실행' };
+  const actionNames = { reader_law_open: '신문에서 판례면 열기', reader_feed_copy: 'RSS 주소 복사', reader_feed_open: 'RSS 열기', reader_subscribe_open: '받아보기 안내 열기', reader_topic_open: '이슈 기록으로 이동', reader_indicator_open: '경제 지표로 이동', reader_share: '공유 실행' };
   table($('readerActions'), rows(readerActions).map((item) => ({ ...item, label: actionNames[item.label] || item.label, cells: [number(item.value), number(item.second)] })), '읽기·받아보기 행동', ['횟수', '사용자']);
   $('acquisitionNote').textContent = [sources, campaigns, landings, returning, readerActions].some((report) => report.metadata?.subjectToThresholding)
     ? 'Google의 개인정보 보호 기준으로 일부 소규모 자료가 생략될 수 있습니다. 표시된 항목은 상위 10개이며 전체 합계와 다를 수 있습니다.'
