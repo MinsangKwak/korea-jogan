@@ -24,3 +24,8 @@ if (panel) {
     details.scrollIntoView({ block: 'nearest' });
   }));
 }
+
+document.addEventListener('click', (event) => {
+  const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+  if (link && link.origin === location.origin && link.pathname.startsWith('/law/')) note('law_open');
+});

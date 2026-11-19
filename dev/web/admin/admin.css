@@ -131,3 +131,18 @@
   .admin-auth { padding: var(--space-4); }
 }
 @media (prefers-reduced-motion: reduce) { .kj-btn { transition: none; } }
+
+.operations-nav, .ops-check { display:flex; flex-wrap:wrap; align-items:center; gap:.65rem 1.2rem; }
+.operations-nav a { padding:.5rem .8rem; border:1px solid var(--line-strong); border-radius:var(--radius-sm); }
+.legal-ops { margin-block:2rem; }
+.legal-ops summary { cursor:pointer; padding:.75rem 0; font-weight:700; }
+.legal-ops .admin-stat strong { font-size:clamp(1.4rem,3vw,2.4rem); }
+.ops-check { justify-content:space-between; }
+.ops-check p, .ops-sources { font-size:.9rem; color:var(--ink-3); }
+.ops-sources a { text-decoration:underline; text-underline-offset:.2em; }
+.law-file-table { width:100%; border-collapse:collapse; }
+.law-file-table td, .law-file-table th { padding:.5rem; border-bottom:1px solid var(--line); text-align:start; }
+.law-file-table [data-failed] { font-weight:700; color:var(--danger); }
+
+.admin-visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.law-file-table { overflow-wrap: anywhere; }

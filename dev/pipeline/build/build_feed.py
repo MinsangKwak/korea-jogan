@@ -69,6 +69,8 @@ def build_sitemap() -> str:
     trackers = json.loads(trackers_file.read_text(encoding="utf-8")) if trackers_file.exists() else {"items": []}
     urls += [(SITE + item["path"].removesuffix("index.html"), item["modified"], None)
              for item in build_discovery.pages(issues, trackers)]
+    urls += [(SITE + path, None, None) for path in ("law/", "law/calendar/")
+             if (PUBLIC / path / "index.html").is_file()]
     rows = "".join(
         f"  <url>\n    <loc>{escape(loc)}</loc>\n"
         + (f"    <lastmod>{mod}</lastmod>\n" if mod else "")

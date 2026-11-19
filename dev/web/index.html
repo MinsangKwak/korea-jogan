@@ -147,6 +147,8 @@ window.kjLoadTimer = setTimeout(() => {
 <link rel="stylesheet" href="src/styles/actions.css">
 <link rel="stylesheet" href="src/components/header/header.css">
 <link rel="stylesheet" href="src/components/reader/reader.css">
+<link rel="stylesheet" href="src/styles/press.css">
+<link rel="stylesheet" href="src/styles/front-page.css">
 </head>
 <body class="has-tabbar news-edition">
 <a class="skip" href="#main">본문으로 건너뛰기</a>
@@ -179,22 +181,16 @@ window.kjLoadTimer = setTimeout(() => {
   <div class="kj-notice kj-notice--stale" id="stale" role="status" hidden>
     <div class="kj-wrap kj-notice__in"><p id="staleMsg"></p></div>
   </div>
-  <div class="kj-notice" id="noticeBox" role="note">
-    <div class="kj-wrap kj-notice__in"><p id="notice">오늘 호를 불러오는 중입니다.</p></div>
-  </div>
-  <section class="kj-live" id="live" aria-labelledby="liveH" hidden>
-    <div class="kj-wrap kj-live__in">
-      <p class="kj-live__head"><b id="liveH">최신 공식 숫자</b><span class="kj-live__tag">자동 갱신 · 사람 확인 전</span><span id="liveMeta"></span></p>
-      <ul class="kj-live__list" id="liveList"></ul>
-    </div>
-  </section>
+
 </header>
 
 <div class="news-sticky">
 <nav class="kj-cats" id="cats" aria-label="분야">
   <div class="kj-wrap kj-cats__in">
     <a class="kj-cats__logo" href="#top">대한민국 조간</a>
-    <ul id="catNav"></ul><button id="trackingReopen" type="button" hidden aria-haspopup="dialog" aria-controls="trackingDialog">추적</button>
+    <ul id="catNav"></ul>
+    <a class="front-law-tab" href="/law/">판례 자료실 <span aria-hidden="true">→</span></a>
+    <button id="trackingReopen" type="button" hidden aria-haspopup="dialog" aria-controls="trackingDialog">추적</button>
 
   </div>
 </nav>
@@ -211,17 +207,6 @@ window.kjLoadTimer = setTimeout(() => {
   </div>
 </nav>
 
-<aside class="reader-tools kj-wrap" data-reader-tools aria-label="이어서 읽기와 새 호 받아보기">
-  <div class="reader-tools__inner">
-    <div><p class="reader-tools__lead">이슈의 흐름과 숫자의 기준을 함께.</p><nav class="reader-tools__links" aria-label="기록으로 바로 읽기"><a href="/topics/" data-reader-action="topic_open">이슈 진행 기록</a><a href="/indicators/" data-reader-action="indicator_open">경제 숫자와 기준일</a></nav></div>
-    <details class="reader-tools__subscribe" id="readerSubscribe"><summary>매일 아침 새 호 받아보기</summary><div class="reader-tools__rss">
-      <p>RSS 리더에 아래 주소를 추가하면 새 호가 발행됐을 때 확인할 수 있습니다. 이메일이나 회원가입 없이 이용합니다.</p>
-      <label for="readerFeed">RSS 주소</label><div class="reader-tools__copy"><input type="url" id="readerFeed" value="https://korea-jogan.com/feed.xml" readonly><button class="kj-btn kj-btn--secondary" type="button" id="readerFeedCopy" disabled>주소 복사</button></div>
-      <p class="reader-tools__status" id="readerFeedStatus" role="status"></p><a href="/feed.xml" target="_blank" rel="noopener" data-reader-action="feed_open">RSS 직접 열기</a>
-      <noscript><p>주소를 직접 복사해 사용하거나 RSS 직접 열기를 선택해 주세요.</p></noscript>
-    </div></details>
-  </div>
-</aside>
 
 <div class="kj-wrap kj-loading" id="pageLoading" role="status" aria-live="polite">
   <span class="kj-loading__spinner" aria-hidden="true"></span>
@@ -231,6 +216,63 @@ window.kjLoadTimer = setTimeout(() => {
 <main id="main">
   <!-- kj:digest -->
   <!-- /kj:digest -->
+  <section class="hero" id="home" aria-labelledby="leadH">
+    <div class="kj-wrap" id="loadError" hidden></div>
+    <div class="kj-wrap hero-grid" id="heroGrid">
+      <article class="kj-lead" aria-busy="true" id="leadBox">
+        <div class="lead-skel" id="leadSkel" aria-hidden="true">
+          <span class="kj-skel kj-skel--short"></span>
+          <span class="kj-skel kj-skel--title"></span>
+          <span class="kj-skel kj-skel--title" style="width:55%"></span>
+          <span class="kj-skel kj-skel--line"></span>
+          <span class="kj-skel kj-skel--num"></span>
+        </div>
+        <div class="front-dateline">
+          <p class="kj-lead__today" id="leadToday">오늘의 한국 뉴스 요약</p>
+          <p class="kj-lead__kicker" id="leadKicker"></p>
+        </div>
+        <h1 id="leadH"></h1>
+        <ul class="kj-facts" id="leadFacts" aria-label="머리기사의 핵심 수치"></ul>
+        <p class="kj-lead__stand" id="leadStand"></p>
+        <p class="meta" id="leadMeta"></p>
+      </article>
+      <aside class="briefs-box" aria-label="함께 읽을 자료">
+        <div class="front-law">
+          <div class="front-law__story">
+            <img src="/law/court-archive.webp" width="640" height="400" alt="" decoding="async">
+            <div><h2>판례 자료실</h2><p>생활 속 질문으로 찾아보는 법원의 판단.</p></div>
+          </div>
+          <nav class="front-law__links" aria-label="법률 자료 찾아보기">
+            <a href="/law/">판례 검색 <span aria-hidden="true">→</span></a>
+            <a href="/law/calendar/">입법 캘린더 <span aria-hidden="true">→</span></a>
+          </nav>
+        </div>
+        <h2 id="briefH">오늘 꼭 볼 숫자</h2>
+        <ol class="kj-briefs" id="briefs"></ol>
+      </aside>
+    </div>
+    <div class="kj-wrap"><div id="quickNums" class="news-quick" aria-label="오늘의 주요 경제 지표"></div></div>
+    <div class="kj-wrap split" id="splitBox" hidden>
+      <div class="split-head">
+        <h2 id="splitH">오늘 기준이 갈린 숫자</h2>
+        <p id="splitMeta"></p>
+      </div>
+      <div class="splits" id="splits"></div>
+    </div>
+  </section>
+
+  <div class="front-bulletins">
+    <div class="kj-notice" id="noticeBox" role="note">
+      <div class="kj-wrap kj-notice__in"><p id="notice">오늘 호를 불러오는 중입니다.</p></div>
+    </div>
+    <section class="kj-live" id="live" aria-labelledby="liveH" hidden>
+      <div class="kj-wrap kj-live__in">
+        <p class="kj-live__head"><b id="liveH">최신 공식 숫자</b><span class="kj-live__tag">자동 갱신 · 사람 확인 전</span><span id="liveMeta"></span></p>
+        <ul class="kj-live__list" id="liveList"></ul>
+      </div>
+    </section>
+  </div>
+
   <section class="kj-sec" id="national" aria-labelledby="natH">
     <div class="kj-wrap">
       <header class="kj-sechead nat-heading">
@@ -248,6 +290,18 @@ window.kjLoadTimer = setTimeout(() => {
 <nav class="kj-wrap discovery-links" aria-label="주제와 지난 호"><a href="/topics/">이슈별 진행 상황</a><a href="/indicators/">경제 지표와 지난 기록</a><a href="/archive/">날짜별 뉴스 모아보기</a></nav>
 <!-- /kj:discovery -->
 
+<aside class="reader-tools kj-wrap" data-reader-tools aria-label="이어서 읽기와 새 호 받아보기">
+  <div class="reader-tools__inner">
+    <div><p class="reader-tools__lead">이슈의 흐름과 숫자의 기준을 함께.</p><nav class="reader-tools__links" aria-label="기록으로 바로 읽기"><a href="/topics/" data-reader-action="topic_open">이슈 진행 기록</a><a href="/indicators/" data-reader-action="indicator_open">경제 숫자와 기준일</a></nav></div>
+    <details class="reader-tools__subscribe" id="readerSubscribe"><summary>매일 아침 새 호 받아보기</summary><div class="reader-tools__rss">
+      <p>RSS 리더에 아래 주소를 추가하면 새 호가 발행됐을 때 확인할 수 있습니다. 이메일이나 회원가입 없이 이용합니다.</p>
+      <label for="readerFeed">RSS 주소</label><div class="reader-tools__copy"><input type="url" id="readerFeed" value="https://korea-jogan.com/feed.xml" readonly><button class="kj-btn kj-btn--secondary" type="button" id="readerFeedCopy" disabled>주소 복사</button></div>
+      <p class="reader-tools__status" id="readerFeedStatus" role="status"></p><a href="/feed.xml" target="_blank" rel="noopener" data-reader-action="feed_open">RSS 직접 열기</a>
+      <noscript><p>주소를 직접 복사해 사용하거나 RSS 직접 열기를 선택해 주세요.</p></noscript>
+    </div></details>
+  </div>
+</aside>
+
   <section class="kj-sec" id="track" aria-labelledby="trackH" hidden>
     <div class="kj-wrap">
       <header class="kj-sechead">
@@ -260,38 +314,6 @@ window.kjLoadTimer = setTimeout(() => {
     </div>
   </section>
 
-  <section class="hero" id="home" aria-labelledby="leadH">
-    <div class="kj-wrap" id="loadError" hidden></div>
-    <div class="kj-wrap hero-grid" id="heroGrid">
-      <article class="kj-lead" aria-busy="true" id="leadBox">
-        <div class="lead-skel" id="leadSkel" aria-hidden="true">
-          <span class="kj-skel kj-skel--short"></span>
-          <span class="kj-skel kj-skel--title"></span>
-          <span class="kj-skel kj-skel--title" style="width:55%"></span>
-          <span class="kj-skel kj-skel--line"></span>
-          <span class="kj-skel kj-skel--num"></span>
-        </div>
-        <p class="kj-lead__today" id="leadToday">오늘의 한국 뉴스 요약</p>
-        <p class="kj-lead__kicker" id="leadKicker"></p>
-        <h1 id="leadH"></h1>
-        <p class="kj-lead__stand" id="leadStand"></p>
-        <ul class="kj-facts" id="leadFacts"></ul>
-        <p class="meta" id="leadMeta"></p>
-      </article>
-      <aside class="briefs-box" aria-labelledby="briefH">
-        <h2 id="briefH">오늘 꼭 볼 숫자</h2>
-        <ol class="kj-briefs" id="briefs"></ol>
-      </aside>
-    </div>
-    <div class="kj-wrap"><div id="quickNums" class="news-quick" aria-label="오늘의 주요 경제 지표"></div></div>
-    <div class="kj-wrap split" id="splitBox" hidden>
-      <div class="split-head">
-        <h2 id="splitH">오늘 기준이 갈린 숫자</h2>
-        <p id="splitMeta"></p>
-      </div>
-      <div class="splits" id="splits"></div>
-    </div>
-  </section>
 
 
   <section class="kj-sec" id="regions" aria-labelledby="regH">
@@ -485,7 +507,7 @@ window.kjLoadTimer = setTimeout(() => {
           <button type="submit" class="kj-btn kj-btn--secondary">이 호 보기</button>
         </form>
         <p>매일 아침 받아 보려면 <a href="feed.xml">RSS</a>를 구독하세요.</p>
-        <p><a href="/archive/">전체 지난 호 목록</a> · <a href="/topics/">이슈별 기록</a> · <a href="/indicators/">지표별 기록</a> · <a href="/regions/">시도별 지역 뉴스</a> · <a href="/compare/">보도 비교 기록</a></p>
+        <p><a href="/archive/">전체 지난 호 목록</a> · <a href="/topics/">이슈별 기록</a> · <a href="/indicators/">지표별 기록</a> · <a href="/regions/">시도별 지역 뉴스</a> · <a href="/compare/">보도 비교 기록</a> · <a href="/law/">판례 자료실</a></p>
       </section>
       <section class="kj-foot__section kj-foot__section--corrections" aria-labelledby="fixH">
         <h2 id="fixH">정정 기록</h2>
@@ -521,6 +543,8 @@ window.kjLoadTimer = setTimeout(() => {
       <h3 class="kj-drawer__label">분야별 읽기</h3>
       <nav aria-label="전체 분야"><ul class="kj-drawer__secs" id="drawerNav"></ul></nav>
       <ul class="kj-drawer__links">
+        <li><a href="/law/">판례 자료실</a></li>
+        <li><a href="/law/calendar/">입법 캘린더</a></li>
         <li><a href="#archH" data-jump="archH">지난 호</a></li>
         <li><a href="#limitsH" data-jump="limitsH">수집 방법과 한계</a></li>
         <li><a href="#fixH" data-jump="fixH">정정 기록</a></li>

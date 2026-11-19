@@ -298,7 +298,8 @@ def with_discovery_links(page: str, issue: dict, index: dict) -> str:
              ('<a href="/indicators/">경제 지표와 지난 기록</a>'),
              ('<a href="/regions/">시도별 지역 뉴스</a>'),
              ('<a href="/compare/">매체마다 갈린 숫자</a>'),
-             ('<a href="/archive/">날짜별 뉴스 모아보기</a>')]
+             ('<a href="/archive/">날짜별 뉴스 모아보기</a>'),
+             ('<a href="/law/">판례 자료실</a>')]
     if position + 1 < len(dates):
         date = dates[position + 1]
         links.append(f'<a href="/{esc(date)}" rel="prev">이전 호 · {esc(long_date(date))}</a>')
@@ -404,7 +405,7 @@ def discovery_page(template: str, item: dict) -> str:
 <a class="skip" href="#main">본문으로 건너뛰기</a>
 <header class="discovery-mast">
   <a href="/" class="discovery-logo">대한민국 조간</a>
-  <nav aria-label="신문 읽기"><a href="/">오늘 뉴스</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/regions/">지역 뉴스</a><a href="/compare/">보도 비교</a><a href="/archive/">지난 호</a><a href="#readerSubscribe" data-reader-subscribe>새 호 받아보기</a></nav>
+  <nav aria-label="신문 읽기"><a href="/">오늘 뉴스</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/regions/">지역 뉴스</a><a href="/compare/">보도 비교</a><a href="/archive/">지난 호</a><a href="/law/">판례 자료실</a><a href="#readerSubscribe" data-reader-subscribe>새 호 받아보기</a></nav>
   <div class="discovery-tools" role="group" aria-label="읽기 설정">
     <button class="reading-switch" id="discoveryBig" type="button" role="switch" aria-checked="false" data-big-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>글자 크게</span><span class="reading-switch__state" data-big-state aria-hidden="true">끔</span></span></button>
     <button class="reading-switch" id="discoveryTheme" type="button" role="switch" aria-checked="false" data-theme-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>어두운 화면</span><span class="reading-switch__state" data-theme-state aria-hidden="true">끔</span></span></button>
@@ -456,6 +457,8 @@ def build() -> list[Path]:
         if stale.stem not in dates and '<meta name="kj-date"' in stale.read_text(encoding="utf-8"):
             stale.unlink()
     written = []
+    for law_page in (PUBLIC / "law").rglob("index.html"):
+        law_page.write_text(secure_page(law_page.read_text(encoding="utf-8"), law=True), encoding="utf-8")
     if not issues:
         template = DIGEST.sub("<!-- kj:digest -->\n<!-- /kj:digest -->", template, count=1)
         template = DISCOVERY.sub("<!-- kj:discovery -->\n<!-- /kj:discovery -->", template, count=1)

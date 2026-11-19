@@ -1,0 +1,24 @@
+/* 조간 신문과 법률 자료실의 지면 색과 제호 서체. */
+:root {
+  --press-paper: #f8f6ef;
+  --press-panel: #fffefa;
+  --press-ink: #242420;
+  --press-muted: #605f57;
+  --press-rule: #c9c7ba;
+  --press-accent: #84362f;
+  --press-on-accent: #fffaf0;
+  --press-tint: #ece9de;
+  --press-focus: #07588a;
+  --press-serif: "Noto Serif KR", "Noto Serif CJK KR", Batang, AppleMyungjo, Georgia, serif;
+}
+:root[data-theme="dark"] {
+  --press-paper: #1c1d1b;
+  --press-panel: #262724;
+  --press-ink: #f5f1e6;
+  --press-muted: #ccc8b8;
+  --press-rule: #5e6057;
+  --press-accent: #f4a59a;
+  --press-on-accent: #291b19;
+  --press-tint: #343630;
+  --press-focus: #9dd9ff;
+}

@@ -25,7 +25,7 @@ const { launchOptions } = require('./browser.cjs');
       await second.close();
     }
     console.log('브라우저 엔진 1회 시작 · 검사 연결과 저장소 격리 확인');
-    const files = ['smoke.cjs', 'admin.cjs', 'security.cjs', 'discovery.cjs', 'preview.cjs', 'daily.cjs'].map((file) => path.join(__dirname, file));
+    const files = ['smoke.cjs', 'admin.cjs', 'security.cjs', 'discovery.cjs', 'preview.cjs', 'daily.cjs', 'law.cjs'].map((file) => path.join(__dirname, file));
     const stream = run({ files, concurrency: 2 });
     stream.on('test:fail', () => { process.exitCode = 1; });
     const completed = new Promise((resolve, reject) => { stream.once('end', resolve); stream.once('error', reject); });

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f6ef">
+  <meta name="description" content="대한민국 조간 판례 자료실. 15개 분야의 공개 대법원 판례를 생활 속 표현·사건번호로 찾고, 판시사항과 공식 원문을 확인하세요.">
+  <title>판례 자료실 | 대한민국 조간</title>
+  <link rel="canonical" href="https://korea-jogan.com/law/">
+  <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/src/styles/press.css">
+  <link rel="stylesheet" href="/law/desk.css">
+  <link rel="stylesheet" href="/law/legal-reading.css">
+  <script src="/src/core/theme.js"></script>
+  <script type="module" src="/law/desk.js"></script>
+</head>
+<body class="law-paper">
+  <a class="press-skip" href="#lawMain">본문으로 건너뛰기</a>
+  <header class="press-bar">
+    <div class="press-inner press-mast">
+      <a class="press-brand" href="/"><img src="/assets/images/jogan-symbol.svg" width="36" height="36" alt="">대한민국 조간</a>
+      <div class="press-settings" aria-label="읽기 설정">
+        <button type="button" role="switch" aria-checked="false" data-big-toggle disabled>글자 크게 <span data-big-state>끔</span></button>
+        <button type="button" role="switch" aria-checked="false" data-theme-toggle disabled>어두운 화면 <span data-theme-state>끔</span></button>
+      </div>
+    </div>
+    <nav class="press-inner press-nav" aria-label="지면 이동">
+      <a href="/">오늘의 조간</a><a href="/law/" aria-current="page">판례 검색</a><a href="/law/?view=issues">생활 법률 이슈</a><a href="/law/calendar/">입법 캘린더</a><a href="/law/?view=saved">내 보관함</a>
+    </nav>
+  </header>
+  <main class="press-inner" id="lawMain" tabindex="-1">
+    <div id="lawSearchPage">
+      <header class="desk-lead">
+        <div class="desk-intro">
+          <h1>판례 자료실</h1>
+          <p>판결문에 남은 질문과 판단을 찾아 읽습니다.</p>
+          <div class="desk-stats"><span><strong id="lawUniqueCount">18,460</strong>개 판례</span><span><strong id="lawThemeCount">15</strong>개 분야</span><span id="lawSourceDate">2026.10 공개자료 기준</span></div>
+        </div>
+        <a class="desk-spotlight" href="/law/?issue=rental-deposit">
+          <span>생활 법률 이슈 · 주거</span>
+          <strong>보증금을 받기 전에<br>이사했다면?</strong>
+          <span class="desk-story-link">두 판례로 읽기 <span aria-hidden="true">↗</span></span>
+        </a>
+      </header>
+      <div class="desk-layout">
+        <aside class="desk-sidebar" aria-label="판례 검색 분야">
+          <h2>분야 색인</h2>
+          <div id="lawThemeList" class="desk-theme-list"></div>
+          <label class="desk-mobile-field" for="lawTheme">검색 분야<select id="lawTheme"></select></label>
+        </aside>
+        <div class="desk-work">
+          <form id="lawSearch" role="search" class="desk-search">
+            <h2><label for="lawQuery">판례 검색</label></h2>
+            <p id="lawHelp">사건번호나 생활 속 표현을 입력하세요. 입력한 문장은 이 브라우저에서만 검색합니다.</p>
+            <div class="desk-input"><input id="lawQuery" type="search" placeholder="예: 전세보증금 반환, 2024마8598" autocomplete="off" maxlength="8000" aria-describedby="lawHelp"><button type="submit">검색</button></div>
+            <p id="lawError" role="alert" hidden></p>
+            <div class="desk-chips" aria-label="추천 검색어"><strong>추천어</strong><div id="lawKeywords"></div></div>
+          </form>
+          <section id="lawResults" aria-labelledby="lawResultTitle" class="desk-results">
+            <div class="desk-result-head"><h2 id="lawResultTitle" tabindex="-1">수록 판례</h2><div class="desk-result-tools"><span id="lawCount"></span><button class="desk-link" id="lawReset" type="button" hidden>검색어 지우기</button></div></div>
+            <div class="desk-filters" id="lawTopics" role="group" aria-label="주제 필터" hidden></div>
+            <p role="status" class="desk-status" id="lawStatus"></p>
+            <div id="lawOutput"></div>
+            <button id="lawMemo" type="button" class="desk-link desk-more" hidden>검색 메모 내려받기 (.txt)</button>
+            <nav id="lawPager" class="desk-pager" aria-label="판례 결과 페이지" hidden></nav>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div id="lawSupplement" hidden></div>
+    <noscript><p>판례 검색과 보관함을 사용하려면 자바스크립트를 켜 주세요. <a href="https://www.law.go.kr/precSc.do">국가법령정보센터 판례 검색</a></p></noscript>
+  </main>
+  <footer class="press-inner desk-footer">
+    <strong>대한민국 조간</strong>
+    <p>판시사항은 공개 판례의 발췌문입니다. 판결의 전체 내용은 각 사건의 국가법령정보센터 원문에서 확인하세요. <a href="https://huggingface.co/datasets/joonhok-exo-ai/korean_law_open_data_precedents" rel="noreferrer">원자료 정리 · 김준호</a></p>
+    <a href="/">조간 첫면으로</a>
+  </footer>
+</body>
+</html>

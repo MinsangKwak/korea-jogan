@@ -458,11 +458,13 @@ async function check(name, options, run) {
         const actions = await page.locator('.kj-mast__actions').boundingBox();
         if (width <= 900) assert.ok(actions.y >= meta.y + meta.height - 1);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+        assert.ok(await page.locator('#cats a[href="/law/"]').isVisible(), '판례 자료실 상단 진입점');
+        assert.ok(await page.locator('#home a[href="/law/calendar/"]').isVisible(), '접지 않은 입법 캘린더 진입점');
         await page.locator('#track:not([hidden])').waitFor();
         const panel = page.locator('#track .kj-prog').first();
         assert.ok(await panel.evaluate((p) => parseFloat(getComputedStyle(p).paddingLeft)) >= 20);
         const order = await page.evaluate(() => [...document.querySelectorAll('main > section')].map((s) => s.id));
-        assert.deepEqual(order, ['national', 'track', 'home', 'regions', 'media', 'politics', 'economy', 'industry', 'fiscal']);
+        assert.deepEqual(order, ['home', 'national', 'track', 'regions', 'media', 'politics', 'economy', 'industry', 'fiscal']);
         await page.evaluate(() => window.scrollTo(0, 1200));
         await page.waitForFunction(() => getComputedStyle(document.getElementById('toTop')).opacity === '1');
         const top = page.getByRole('button', { name: '맨 위로', exact: true });
@@ -473,21 +475,45 @@ async function check(name, options, run) {
       });
     }
   }
-  await check('전국 1면·추적 2면·진행 막대', { width: 1280 }, async (page) => {
+  await check('기사의 실제 쟁점으로만 판례 자료실 연결', {
+    width: 1280,
+    transformIssue: (issue) => {
+      issue.national.items = issue.national.items.slice(0, 4);
+      issue.national.items[0].title = '집행정지 신청 접수';
+      issue.national.items[1].title = '이번 주 기온 전망';
+      issue.national.items[2].title = '형집행정지 신청 접수';
+      issue.national.items[3].title = '입찰보증금 반환 분쟁';
+      issue.national.items.forEach((item) => {
+        item.cat = '사회';
+        item.summary = '오늘 발표된 내용을 확인했습니다.';
+      });
+    },
+  }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    const article = page.locator('#natArticle');
+    const link = article.getByRole('link', { name: '같은 주제의 판례 · 집행정지' });
+    assert.equal(await link.getAttribute('href'), '/law/?theme=administration&q=집행정지');
+    for (const index of [1, 2, 3]) {
+      await page.locator('#natHeadlines button').nth(index).click();
+      assert.equal(await article.locator('.article-law-link').count(), 0);
+    }
+  });
+  await check('조간 1면·판례 자료실·전국 뉴스·진행 막대', { width: 1280 }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
     assert.ok(await page.locator('#catNav a').first().evaluate((a) => a.getBoundingClientRect().height >= 44));
     const lead = await page.locator('#leadBox').boundingBox();
     const front = await page.locator('#natH').boundingBox();
     assert.ok(Math.abs(lead.x - front.x) <= 1, '전국 뉴스와 머리기사의 읽기 시작점 정렬');
-    await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="national"]').getAttribute('aria-current') === 'true');
+    await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="home"]').getAttribute('aria-current') === 'true');
     assert.equal(await page.locator('#natFlow').getAttribute('open'), '');
     await page.locator('#natFlow > summary').click();
     assert.equal(await page.locator('#natFlow').getAttribute('open'), null);
     await page.locator('#natFlow > summary').click();
     assert.equal(await page.locator('#natFlow > ol > li').count(), latest.national.flow.length);
     const order = await page.evaluate(() => [...document.querySelectorAll('main > section')].map((s) => s.id));
-    assert.deepEqual(order.slice(0, 4), ['national', 'track', 'home', 'regions']);
+    assert.deepEqual(order.slice(0, 4), ['home', 'national', 'track', 'regions']);
     // 진행 막대는 progress를 적은 주제에만 그린다
     const withProgress = latest.themes.find((t) => t.progress);
     if (withProgress) {

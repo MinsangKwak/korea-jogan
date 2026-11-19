@@ -35,8 +35,6 @@ function renderLead() {
     related.append(a);
   });
   const briefsBox = document.querySelector('.briefs-box');
-  briefsBox.setAttribute('aria-labelledby', 'relatedH briefH');
-  briefsBox.prepend(related);
   D.briefs.forEach((b) => {
     const li = el('li');
     const a = el('a', { href: b.href });
@@ -46,13 +44,13 @@ function renderLead() {
     li.append(a);
     $('briefs').append(li);
   });
-  collapse($('briefs'), { noun: '개', name: '오늘 꼭 볼 숫자' });
   const extras = el('details', { class: 'lead-extras' });
   extras.append(el('summary', {}, '함께 읽을 주제·핵심 숫자'));
   const extrasBody = el('div', { class: 'lead-extras__body' });
-  while (briefsBox.firstChild) extrasBody.append(briefsBox.firstChild);
+  extrasBody.append(related, $('briefH'), $('briefs'));
   extras.append(extrasBody);
   briefsBox.append(extras);
+  collapse($('briefs'), { noun: '개', name: '오늘 꼭 볼 숫자' });
   responsiveDisclosure(extras);
-  matchReadingColumns($('heroGrid'), 901, ['머리기사', '함께 읽을 주제와 핵심 숫자'], extras);
+  matchReadingColumns($('heroGrid'), 901, ['머리기사', '판례 자료실, 함께 읽을 주제와 핵심 숫자'], extras);
 }

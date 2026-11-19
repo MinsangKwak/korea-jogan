@@ -1,6 +1,6 @@
 # 기술 구조와 설계 판단
 
-**정적 화면과 날짜별 JSON을 중심으로, 수집·검사·페이지 생성을 배포 전 작업으로 분리했습니다.** 상시 서버나 DB 없이 운영하며, 발행 단위와 확인 상태, 변경 이력을 Git 커밋으로 관리합니다. 아래에 각 구조를 선택한 이유와 한계, 변경할 때 함께 확인해야 할 코드 경로를 정리했습니다. 2026-11-09 저장소 기준입니다.
+**날짜별 신문과 상설 판례 자료실을 같은 도메인의 정적 페이지로 제공합니다.** 신문은 호 단위로, 판례·입법 자료는 자료원별 수록본 단위로 관리합니다. 각각의 수집·검사·생성은 배포 전에 실행합니다.
 
 [문서 안내](../README.md) · [데이터 규격](../planning/data-spec.md) · [브랜치·환경·배포](branches.md) · [디자인 가이드](../../design/guide.md) · [런북](../planning/runbook.md)
 
@@ -11,12 +11,14 @@
 | 정적 지면 | [dev/web/](../../dev/web/) | HTML·CSS·바닐라 JS, 원본 발행 데이터 |
 | 공통 로직 | [src/core/](../../dev/web/src/core/) | 데이터 로딩(`data.js`)·서식·출처 UI(`ui.js`)·반응형 펼침·테마·측정(`metrics.js`)·주소(`seo.js`) |
 | 섹션 렌더링 | [src/components/](../../dev/web/src/components/) | 헤더·탐색·전국·추적·언론·지역·정치·경제·산업·재정·바닥글. 모듈마다 첫 줄 주석이 책임을 적음 |
-| 관리자 | [dev/web/admin/](../../dev/web/admin/) | 공개 발행 현황, Google OAuth로 GA4·검색 실적 조회 ([연결 안내](ga4-admin.md)) |
+| 판례 자료실 | [dev/web/law/](../../dev/web/law/) | ES 모듈로 검색 규칙·결과 화면·생활 법률 이슈·보관과 비교·입법 캘린더를 분리. 독자 입력은 브라우저에서 처리 |
+| 법률 데이터 | [pipeline/law/](../../dev/pipeline/law/) → [law/data/](../../dev/web/law/data/) | 분야별 판례·의안·법률·관보 수록본과 검수 목록 생성. [자료원·재생성 절차](../planning/law-data.md) |
+| 관리자 | [dev/web/admin/](../../dev/web/admin/) | 공개 발행·판례 수록 현황과 파일 무결성, Google OAuth로 GA4·검색 실적 조회 ([운영 안내](ga4-admin.md)) |
 | 발행 데이터 | [dev/web/data/](../../dev/web/data/) | 호별 JSON·색인·추적·정정 |
 | 수집 | [pipeline/collect/](../../dev/pipeline/collect/) | RSS 목록·ECOS 원자료 수집·변환 |
 | 검사·공개 | [pipeline/publish/](../../dev/pipeline/publish/) | 형식·공개 조건 검사, 승인, 일일 데이터 선별, 공개 확인, 자동 승격, IndexNow |
 | 생성 | [pipeline/build/](../../dev/pipeline/build/) | 토큰 CSS·호별 HTML·CSP 해시·RSS·사이트맵·고정 주소 페이지·`live.json`·`build-info.json`·개발 미리보기 |
-| 자동 검사 | [dev/tests/](../../dev/tests/) | Python 시험과 Chromium 검사 6개 파일 |
+| 자동 검사 | [dev/tests/](../../dev/tests/) | 신문과 법률 데이터 회귀 시험, 검색 규칙·브라우저 검사 |
 
 [RSS 수집기](../../dev/pipeline/collect/fetch_rss.py)는 제목·링크·발행일을 모아 전날 날짜 범위로 거르고 URL 중복을 제거합니다. 피드별 실패 내역을 남기되, 다른 피드의 수집은 계속 진행합니다. [ECOS 수집기](../../dev/pipeline/collect/fetch_ecos.py)는 발행일 전날까지의 원자료와 수집 시각을 저장하고, HTTP 응답뿐 아니라 본문의 `RESULT` 오류도 확인합니다. 수집 자료를 기사·수치로 정리하는 과정과 JSON 형식·공개 조건을 검사하는 과정은 분리했습니다.
 
@@ -33,6 +35,10 @@
 | `live.json` | ECOS 최신 일별 확정값. Git에 없음 | `build_live.py`(배포 시) | `economy.js` 숫자 띠 |
 | `build-info.json` | 실제 배포 소스. Git에 없음 | `build_info.py`(배포 시) | `verify_publication.py`, 관리자, 복구 확인 |
 
+법률 수록본은 별도 경로인 `dev/web/law/data/`에 있습니다. 신문은 독자가 판례면 링크를 열기 전까지 분야별 JSON을 내려받지 않습니다. 판례 검색은 분야·검색 범위에 맞는 파일을, 입법 캘린더는 의안·법률과 관보 자료를 독립적으로 읽습니다. 캘린더에서 한 자료원을 불러오지 못하면 이용 가능한 결과와 누락 안내를 함께 표시합니다. 관리자는 작은 검수 목록을 먼저 읽고 독자가 검사를 요청할 때만 모든 파일을 대조합니다.
+
+판례 보관함은 `library.js`가 현재 원본(origin)의 `localStorage`에 식별번호와 분야를 저장하고 해당 분야 파일에서 내용을 다시 읽습니다. 이전 Casewise 호스트의 저장값을 조간 도메인에서 자동으로 가져올 수 없습니다.
+
 호의 필드와 작성 조건은 [최상위 항목](../planning/data-spec.md#호의-최상위-항목)·[중첩 구조 검사](../planning/data-spec.md#중첩-구조와-최소-개수-검사), 공개 상태는 [status·review](../planning/data-spec.md#status--review)에서 관리합니다. 필드 변경 시 함께 확인할 코드는 아래 [변경 영향 범위](#변경-영향-범위)에 모았습니다.
 
 ## 설계 트레이드오프
@@ -41,7 +47,7 @@
 | --- | --- | --- | --- | --- |
 | 정적 HTML + JSON (GitHub Pages) | 상시 서버·DB | 서버·DB 운영 없음, 발행 단위가 커밋으로 남음, 배포 SHA로 공개본 식별 | 응답 헤더 불가 → 메타 CSP만, HSTS·`frame-ancestors`·`nosniff` 미설정. 호가 쌓이면 색인 분할·전체 검색 재설계 | 로그인·댓글·전체 호 검색 요구 |
 | 배포 전 Python 검사 | 브라우저 런타임 검증만 | 잘못된 데이터가 공개되기 전에 멈춤. 실패 로그가 파일·필드·현재 값을 지목 | 검사 규칙을 직접 유지. 필드 추가마다 validator·`assertIssue()`·회귀 검사 함께 갱신 | JSON Schema 등 도구 도입 시 규칙 이관 |
-| 바닐라 JS, 전역 스크립트 | 프레임워크·번들러 | 빌드 환경 없음, 소스 그대로 디버깅, vendor는 Swiper 하나 | 스크립트 순서·전역 이름·의존성 갱신 수동 관리 | 컴포넌트 수·상태 공유가 늘어 전역 관리가 실수의 원인이 될 때 |
+| 바닐라 JS, 신문 공통 스크립트와 판례면 ES 모듈 | 프레임워크·번들러 | 소스 그대로 디버깅, 판례면의 검색·저장·렌더링 독립 검사 | 신문 스크립트의 실행 순서와 전역 의존성 관리 | 상태 공유 증가로 지면 간 의존성 관리가 어려울 때 |
 | 운영=Pages, 개발=보호된 Vercel | 한 호스팅에 환경 두 개 | 미완성 코드가 자동 발행에 섞이지 않음. 개발은 인증 뒤 | `deploy-pages.yml`과 `vercel.json`/`build_preview.py` 두 설정 유지. 개발·운영 SHA가 달라 승격 전 이력 통합 필요 | 운영에도 응답 헤더·인증이 필요할 때 |
 | 06시 자동 발행 + `review.auto` | 사람 승인 전 공개 금지 | 사람이 없어도 매일 발행. 확인 여부를 숨기지 않음 | 자동 호는 사실 확인 전 공개 → 정정 절차 필수 | 검토 인력이 생기면 자동 경로를 보조로 |
 | `daily/*`에서 데이터만 선별 반영 | 일일 브랜치 전체 병합 | 코드·과거 호·워크플로가 데이터 발행에 섞이지 않음 | `prepare_daily.py`의 허용 경로·색인·동시 변경 검사 유지 | — |
@@ -71,6 +77,7 @@
 | `design/tokens.json` | `build_tokens.py`로 CSS 재생성. CI `--check`가 불일치를 막음 |
 | 허용 데이터 경로 | `prepare_daily.py`의 `permitted`와 `publish.yml`의 `git add` 목록 |
 | 관리자 외부 연결(로그인·API) | `build_security.py` 허용 목록과 관리자 브라우저 검사 |
+| 판례·입법 원자료나 집계 변경 | [자료 갱신 절차](../planning/law-data.md), 검색·캘린더의 중복 제거 기준, 검수 목록과 [관리자 검사](ga4-admin.md#판례-자료의-건수와-무결성) |
 
 ## 브라우저의 로딩과 오류 경계
 
@@ -93,7 +100,7 @@ PC·모바일 배치, 펼침 기본값, 경제 순환, 테마·탐색 동작은 
 ## 공개 본문·최신 숫자·관리자·검색의 구분
 
 - 날짜별 조간은 발행 당시의 기록이고, `live.json`은 별도로 생성하는 ECOS 최신 일별 확정값입니다. 장중 시세가 아니며 수집 실패가 조간 배포를 막지 않습니다. 지난 호에서는 현재의 추적 상태와 숫자 띠를 숨깁니다. 갱신 시각과 배포 방식은 [워크플로 표](branches.md#워크플로와-실행-환경)를 따릅니다.
-- `/admin/`의 공개 발행 상태와 권한 있는 계정의 GA4·검색 실적 조회를 구분합니다. OAuth 토큰은 메모리에서만 쓰며 브라우저가 Google API를 직접 호출합니다. 인증·조회 실패 처리는 [관리자 문서](ga4-admin.md), 개발 환경의 읽기 전용 범위는 [개발 미리보기](branches.md#개발-미리보기-vercel)에 있습니다.
+- `/admin/`에서 공개 발행 상태와 법률 수록 파일을 확인할 수 있습니다. GA4·검색 실적은 권한 있는 계정이 별도로 연결합니다. OAuth 토큰은 메모리에서만 쓰며 브라우저가 Google API를 직접 호출합니다. 인증·조회 실패 처리는 [관리자 문서](ga4-admin.md), 개발 환경의 읽기 전용 범위는 [개발 미리보기](branches.md#개발-미리보기-vercel)에 있습니다.
 - [build_pages.py](../../dev/pipeline/build/build_pages.py)는 최신 호와 `/YYYY-MM-DD`에 제목·설명·canonical·요약·구조화 데이터를 만들고, [index.html](../../dev/web/index.html)의 초기 스크립트는 기존 `?d=` 주소를 호별 주소로 옮깁니다. [build_security.py](../../dev/pipeline/build/build_security.py)는 실제 인라인 실행 코드의 해시로 메타 CSP를 생성합니다. [IndexNow 알림](../../dev/pipeline/publish/indexnow.py)의 실패는 배포를 중단하지 않습니다. 검색 도착 페이지·RSS·사이트맵의 운영 기준은 [검색·재방문 문서](../planning/growth.md)에 있습니다.
 
 ## 검사 범위 (2026-11-09 기준)

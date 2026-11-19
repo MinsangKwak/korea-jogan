@@ -143,6 +143,17 @@ function gradeBadge(g) {
   return s;
 }
 
+// 기사에 등장한 구체적인 쟁점만 자료실의 공개 주제나 검색 결과와 잇는다.
+const ARTICLE_LAW_TOPICS = [
+  { words: /전세\s*보증금|임차권\s*등기|(?:임대|임차|월세|전세|세입자).{0,24}보증금\s*반환|보증금\s*반환.{0,24}(?:임대|임차|월세|전세|세입자)/, label: '임대차 보증금', route: '?issue=rental-deposit' },
+  { words: /퇴직금|평균\s*임금/, label: '퇴직금 산정', route: '?issue=retirement-pay' },
+  { words: /휴대폰.{0,22}청약\s*철회|통신.{0,22}청약\s*철회/, label: '통신계약 청약철회', route: '?issue=mobile-contract' },
+  { words: /개인\s*정보.{0,12}유출|CCTV.{0,8}열람/i, label: '개인정보 제공·유출', route: '?issue=personal-information' },
+  { words: /수술.{0,8}동의|의사.{0,8}설명\s*의무/, label: '환자 설명과 동의', route: '?issue=medical-consent' },
+  { words: /직무\s*발명/, label: '직무발명 보상', route: '?issue=employee-invention' },
+  { words: /집행\s*정지/, exclude: /(?:형|강제|민사)\s*집행\s*정지/, label: '집행정지', route: '?theme=administration&q=집행정지' },
+];
+
 function newsItem(it, label) {
   const a = el('article', { class: 'kj-newscard' });
   const cat = el('span', { class: 'kj-newscard__cat' }, label);
@@ -160,5 +171,10 @@ function newsItem(it, label) {
   src.append(el('span', {}, it.outlet + ' · ' + it.date.slice(5).replace('-', '/')));
   if (it.figure_source) src.append(el('span', {}, '수치 출처 ' + it.figure_source));
   a.append(src);
+  const material = [it.title, it.summary].join(' ');
+  const topic = ARTICLE_LAW_TOPICS.find((item) => item.words.test(material) && !item.exclude?.test(material));
+  if (topic) {
+    a.append(el('a', { class: 'article-law-link', href: '/law/' + topic.route }, '같은 주제의 판례 · ' + topic.label));
+  }
   return a;
 }
