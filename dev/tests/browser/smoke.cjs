@@ -478,9 +478,11 @@ async function check(name, options, run) {
   await check('기사의 실제 쟁점으로만 판례 자료실 연결', {
     width: 1280,
     transformIssue: (issue) => {
-      issue.national.items = issue.national.items.slice(0, 2);
+      issue.national.items = issue.national.items.slice(0, 4);
       issue.national.items[0].title = '집행정지 신청 접수';
       issue.national.items[1].title = '이번 주 기온 전망';
+      issue.national.items[2].title = '형집행정지 신청 접수';
+      issue.national.items[3].title = '입찰보증금 반환 분쟁';
       issue.national.items.forEach((item) => {
         item.cat = '사회';
         item.summary = '오늘 발표된 내용을 확인했습니다.';
@@ -492,8 +494,10 @@ async function check(name, options, run) {
     const article = page.locator('#natArticle');
     const link = article.getByRole('link', { name: '같은 주제의 판례 · 집행정지' });
     assert.equal(await link.getAttribute('href'), '/law/?theme=administration&q=집행정지');
-    await page.locator('#natHeadlines button').nth(1).click();
-    assert.equal(await article.locator('.article-law-link').count(), 0);
+    for (const index of [1, 2, 3]) {
+      await page.locator('#natHeadlines button').nth(index).click();
+      assert.equal(await article.locator('.article-law-link').count(), 0);
+    }
   });
   await check('조간 1면·판례 자료실·전국 뉴스·진행 막대', { width: 1280 }, async (page) => {
     await page.goto('http://jogan.test/');
