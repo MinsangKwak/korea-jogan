@@ -50,7 +50,7 @@ class Scripts(HTMLParser):
             self.script = None
 
 
-def policy(page: str, admin: bool = False) -> str:
+def policy(page: str, admin: bool = False, *, law: bool = False) -> str:
     scripts = Scripts()
     scripts.feed(page)
     script_sources = ["'self'", *scripts.hashes]
@@ -66,7 +66,7 @@ def policy(page: str, admin: bool = False) -> str:
         connections += ["https://www.googleapis.com/webmasters/v3/", "https://searchconsole.googleapis.com/v1/"]
         frames = ["https://accounts.google.com/gsi/"]
         forms += ["https://oauth2.googleapis.com/revoke"]
-    else:
+    elif not law:
         script_sources += ["https://www.googletagmanager.com", "https://gc.zgo.at"]
         images += ["https://*.google-analytics.com", "https://*.googletagmanager.com", "https://*.google.com", "https://*.google.co.kr", "https://*.g.doubleclick.net"]
         connections += ["https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googletagmanager.com", "https://*.google.com", "https://*.google.co.kr", "https://*.g.doubleclick.net", "https://pagead2.googlesyndication.com"]
@@ -80,8 +80,8 @@ def policy(page: str, admin: bool = False) -> str:
         "object-src": ["'none'"],
         "script-src": script_sources,
         "script-src-attr": ["'none'"],
-        "style-src": styles,
-        "font-src": ["'self'", "https://fonts.gstatic.com"],
+        "style-src": ["'self'"] if law else styles,
+        "font-src": ["'self'"] if law else ["'self'", "https://fonts.gstatic.com"],
         "img-src": images,
         "connect-src": connections,
         "frame-src": frames,
@@ -92,11 +92,12 @@ def policy(page: str, admin: bool = False) -> str:
     return "; ".join(name + " " + " ".join(values) for name, values in directives.items())
 
 
-def secure_page(page: str, admin: bool = False) -> str:
+def secure_page(page: str, admin: bool = False, *, law: bool = False) -> str:
     page = CSP_META.sub("", page)
     page = REFERRER_META.sub("", page)
-    tags = ('\n<meta http-equiv="Content-Security-Policy" content="' + html.escape(policy(page, admin), quote=True) + '">'
-            '\n<meta name="referrer" content="strict-origin-when-cross-origin">')
+    referrer = "no-referrer" if law else "strict-origin-when-cross-origin"
+    tags = ('\n<meta http-equiv="Content-Security-Policy" content="' + html.escape(policy(page, admin, law=law), quote=True) + '">'
+            '\n<meta name="referrer" content="' + referrer + '">')
     charset = re.search(r'<meta\s+charset=["\']utf-8["\']\s*/?>', page, re.I)
     if not charset:
         raise ValueError("CSP 앞에 UTF-8 선언이 필요합니다")
@@ -107,7 +108,8 @@ def build(public: Path = PUBLIC) -> list[Path]:
     written = []
     for path in sorted(public.rglob("*.html")):
         page = path.read_text(encoding="utf-8")
-        path.write_text(secure_page(page, "admin" in path.relative_to(public).parts), encoding="utf-8")
+        parts = path.relative_to(public).parts
+        path.write_text(secure_page(page, "admin" in parts, law=parts[0] == "law"), encoding="utf-8")
         written.append(path)
     return written
 
