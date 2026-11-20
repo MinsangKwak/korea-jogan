@@ -14,8 +14,8 @@ const privateMarker = 'local-only-reader-7341';
 const source = id => 'https://www.law.go.kr/LSW/precInfoP.do?precSeq=' + id;
 const types = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.png': 'image/png', '.webp': 'image/webp' };
 
-async function surface(browser, web, width) {
-  const context = await browser.newContext({ viewport: { width, height: 880 }, reducedMotion: 'reduce' });
+async function surface(browser, web, width, options = {}) {
+  const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce', ...options });
   await context.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
   const page = await context.newPage();
   const requests = [];
@@ -25,7 +25,8 @@ async function surface(browser, web, width) {
   await page.route('**/*', async route => {
     const url = new URL(route.request().url());
     if (url.origin !== origin) return route.fulfill({ body: '', contentType: 'application/javascript' });
-    const filename = path.join(web, url.pathname, url.pathname.endsWith('/') ? 'index.html' : '');
+    const routePath = /^\/\d{4}-\d{2}-\d{2}$/.test(url.pathname) ? url.pathname + '.html' : url.pathname;
+    const filename = path.join(web, routePath, routePath.endsWith('/') ? 'index.html' : '');
     try {
       const body = await fs.promises.readFile(filename);
       return route.fulfill({ body, contentType: types[path.extname(filename)] || 'application/octet-stream' });
@@ -130,6 +131,123 @@ async function readerFlow(browser, web) {
   }
 }
 
+async function coverFlow(browser, web) {
+  const catalogue = JSON.parse(fs.readFileSync(path.join(web, 'data/news-case-pairs.json'), 'utf8')).pairs;
+  const { context, page, requests, errors } = await surface(browser, web, 390);
+  try {
+    await page.goto(origin);
+    await page.waitForFunction(() => document.documentElement.dataset.loadState === 'ready');
+    const issueDate = await page.locator('#issueDate').getAttribute('datetime');
+    const [featured] = catalogue.filter(pair => pair.issueDate <= issueDate).sort((a, b) => b.issueDate.localeCompare(a.issueDate));
+    assert.ok(featured, '운영 호에 함께 읽을 기사가 필요합니다.');
+    const story = page.locator('#caseEditionStory');
+    assert.equal(await story.locator('#casePairArticle').getAttribute('href'), featured.articleUrl);
+    assert.equal(await story.locator('#casePairRuling').getAttribute('href'), source(featured.caseId));
+    assert.match(await story.textContent(), new RegExp(featured.caseNumber));
+    const search = page.locator('#frontCaseQuery');
+    assert.ok(await search.evaluate(input => input.labels.length && input.labels[0].textContent.trim()));
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 844 });
+      const box = await search.boundingBox();
+      assert.ok(box && box.y >= 0 && box.y + box.height <= 844, width + 'px 첫 화면에서 판례 검색이 보여야 합니다.');
+    }
+    const choices = page.locator('#caseEditionChoices');
+    const second = choices.locator('button[data-pair-id]').filter({ hasNotText: featured.question }).first();
+    if (await choices.isVisible()) {
+      await press(choices.locator('summary'));
+      const id = await second.getAttribute('data-pair-id');
+      const next = catalogue.find(pair => pair.id === id);
+      await press(second);
+      assert.equal(await story.locator('#casePairQuestion').innerText(), next.question);
+      assert.equal(await story.locator('#casePairRuling').getAttribute('href'), source(next.caseId));
+    }
+    await search.fill('2024마8598');
+    await search.press('Enter');
+    const original = page.locator('#lawOutput a[href*="precSeq=612117"]');
+    await original.first().waitFor();
+    assert.equal(page.url(), origin + '/law/');
+    assert.equal(await page.locator('#lawQuery').inputValue(), '2024마8598');
+    assert.equal(await page.evaluate(() => sessionStorage.getItem('jg:law-search-once')), null);
+
+    await page.goto(origin);
+    const events = [];
+    await page.exposeFunction('collectCoverAction', (...args) => events.push(args));
+    await page.evaluate(() => { window.track = (...args) => window.collectCoverAction(...args); });
+    await page.locator('#frontCaseQuery').fill(privateMarker);
+    await page.locator('#frontCaseQuery').press('Enter');
+    await page.waitForURL(origin + '/law/');
+    await page.locator('#lawStatus').filter({ hasText: privateMarker }).waitFor();
+    const state = await page.evaluate(() => [location.href, history.state, Object.entries(localStorage), Object.entries(sessionStorage), window.dataLayer]);
+    assert.ok(!JSON.stringify([requests, state, events]).includes(privateMarker), '1면 검색 입력이 요청·리퍼러·저장소·분석에 잔류함');
+    for (const name of ['reader_law_open', 'reader_law_from_search', 'reader_law_edition_entry']) {
+      assert.equal(events.filter(([event]) => event === name).length, 1, '1면 검색 1회 집계 ' + name);
+    }
+    await page.reload();
+    await page.locator('[data-theme-id]').first().waitFor({ state: 'attached' });
+    assert.equal(await page.locator('#lawQuery').inputValue(), '');
+    assert.deepEqual(errors, []);
+    console.log('통과: 첫 화면 기사·공식 판례 연결, PC·모바일 판례 검색, 입력 1회 전달과 폐기');
+  } finally {
+    await context.close();
+  }
+}
+
+async function returnToCoverage(browser, web) {
+  const catalogue = JSON.parse(fs.readFileSync(path.join(web, 'data/news-case-pairs.json'), 'utf8')).pairs;
+  const record = catalogue.find(pair => pair.section === 'national');
+  const { context, page, errors } = await surface(browser, web, 390);
+  try {
+    await page.goto(origin + '/' + record.issueDate + '#national');
+    const headline = page.locator('#natHeadlines button').filter({ hasText: record.articleTitle });
+    await headline.waitFor({ state: 'attached' });
+    if (!await headline.isVisible()) await press(page.locator('button[aria-controls="natHeadlines"]'));
+    await press(headline);
+    const caseLink = page.locator('#natArticle .article-law-link');
+    const target = new URL(await caseLink.getAttribute('href'), origin);
+    assert.equal(target.searchParams.get('q'), record.caseNumber);
+    await press(caseLink);
+    const result = page.locator('.desk-record').filter({ has: page.locator('a[href="' + source(record.caseId) + '"]') });
+    const back = result.locator('.desk-related-news a').filter({ hasText: record.articleTitle });
+    await press(back);
+    assert.equal(new URL(page.url()).pathname, '/' + record.issueDate);
+    assert.equal(new URL(page.url()).searchParams.get('pair'), record.id);
+    assert.equal(new URL(page.url()).hash, '#caseEdition');
+    assert.equal(await page.locator('#casePairQuestion').innerText(), record.question);
+    assert.deepEqual(errors, []);
+    console.log('통과: 전국 기사에서 해당 선례를 찾고 동일한 쟁점과 발행 호로 돌아오기');
+  } finally {
+    await context.close();
+  }
+}
+
+async function staticCover(browser, web) {
+  const catalogue = JSON.parse(fs.readFileSync(path.join(web, 'data/news-case-pairs.json'), 'utf8')).pairs;
+  const { context, page } = await surface(browser, web, 390, { javaScriptEnabled: false });
+  try {
+    await page.goto(origin);
+    const index = JSON.parse(await page.locator('#issue-index').textContent());
+    const dated = catalogue.map(pair => pair.issueDate).sort();
+    const issue = dated[dated.length - 1];
+    const article = catalogue.find(pair => pair.issueDate === issue);
+    await page.goto(origin + '/' + issue);
+    const story = page.locator('#caseEditionStory');
+    assert.ok(await story.isVisible());
+    assert.equal(await story.locator('#casePairArticle').getAttribute('href'), article.articleUrl);
+    assert.equal(await story.locator('#casePairRuling').getAttribute('href'), source(article.caseId));
+    assert.ok(await story.locator('#casePairRuling').isVisible());
+    const before = index.issues.find(date => date < dated[0]);
+    if (before) {
+      await page.goto(origin + '/' + before);
+      assert.ok(await page.locator('#casePairEmpty').isVisible());
+      assert.equal(await story.locator('a[href*="precSeq="]').count(), 0);
+      assert.ok(await page.locator('#caseEdition a[href="/law/"]:visible').count() > 0);
+    }
+    console.log('통과: 자바스크립트 없는 날짜별 지면에서 원문 읽기와 지난 호 검색');
+  } finally {
+    await context.close();
+  }
+}
+
 async function adminIntegrity(browser, web) {
   const { context, page, requests, errors } = await surface(browser, web, 1440);
   const manifest = JSON.parse(fs.readFileSync(path.join(web, manifestPath), 'utf8'));
@@ -185,6 +303,9 @@ async function adminIntegrity(browser, web) {
     ].join('\n');
     execFileSync('python3', ['-c', build, path.join(repo, 'dev/pipeline/build'), web]);
     browser = await openBrowser();
+    await coverFlow(browser, web);
+    await staticCover(browser, web);
+    await returnToCoverage(browser, web);
     await readerFlow(browser, web);
     await adminIntegrity(browser, web);
   } finally {
