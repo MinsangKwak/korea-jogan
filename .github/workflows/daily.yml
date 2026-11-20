@@ -1,10 +1,10 @@
 name: 일일 수집
 
-# 수집기가 다 갖춰지면 schedule 주석을 풀어 매일 04:30 KST(19:30 UTC)에 돌린다
+# 매일 04:30 KST에 전날 RSS와 이슈 추적 후보를 수집한다
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: "30 19 * * *"
+  schedule:
+    - cron: "30 19 * * *"
 
 permissions:
   contents: read
@@ -21,11 +21,13 @@ jobs:
       - name: 언론사 RSS 수집
         run: python dev/pipeline/collect/fetch_rss.py
       - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
         with:
           name: rss-${{ github.run_id }}
           path: dev/pipeline/collect/raw/rss/
 
   collect:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
