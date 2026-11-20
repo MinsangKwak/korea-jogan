@@ -36,7 +36,11 @@ function fake(item, state) {
   if (dimension === 'sessionCampaignName') return report([4, 3, 180], ['202611_readership', 'threads / social']);
   if (dimension === 'landingPage') return report([3, 2, 0], '/topics/muan-airport/');
   if (dimension === 'newVsReturning') return { rows: [row([5, 4, 100], 'new'), row([2, 1, 80], 'returning')] };
-  if (dimension === 'eventName' && item.metrics[0].name === 'eventCount') return report([3, 2], 'reader_feed_copy');
+  if (dimension === 'eventName' && item.metrics[0].name === 'eventCount') return {
+    rows: [row([3, 2], 'reader_feed_copy'), row([4, 3], 'reader_law_edition_view'), row([1, 1], 'reader_law_edition_entry'),
+      row([2, 1], 'reader_law_from_search'), row([2, 1], 'reader_law_official_open'), row([2, 1], 'reader_law_open')],
+    metadata: { subjectToThresholding: !!state.threshold },
+  };
   if (dimension === 'eventName') return { rows: [row([7, 7, 0], 'section_media'), row([5, 9, 600], 'dwell_media'), row([2, 2, 0], 'section_fiscal'), row([2, 2, 90], 'dwell_fiscal')] };
   if (dimension === 'pagePath') return report([22, 10, 1200], '<img src=x onerror=alert(1)> 조간');
   if (dimension === 'sessionDefaultChannelGroup') return report([10], 'Organic Search');
@@ -361,6 +365,42 @@ async function check(name, options, fn) {
       assert.equal(await page.locator('#connect').evaluate((element) => element === document.activeElement), true);
     });
   }
+  await check('신문 기획 지면 노출·경로별 클릭·내부 접속 제외', { width: 390 }, async ({ page }) => {
+    await page.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
+    const loadCover = async (flag) => {
+      await page.goto('http://jogan.test/?d=2026-11-19&kj-internal=' + flag);
+      await page.locator('#casePairRuling[href]').waitFor();
+      await page.locator('#caseEditionTitle').scrollIntoViewIfNeeded();
+      await page.evaluate(() => {
+        document.addEventListener('click', (event) => {
+          if (event.target.closest('a[href]')) event.preventDefault();
+        });
+      });
+    };
+    const eventCount = (name) => page.evaluate((key) =>
+      (window.dataLayer || []).filter((item) => item[0] === 'event' && item[1] === key).length, name);
+    await loadCover(0);
+    await page.waitForFunction(() => window.dataLayer.some((item) => item[1] === 'reader_law_edition_view'));
+    await page.locator('#casePairSearch').click();
+    await page.locator('#casePairSearch').click();
+    await page.locator('#casePairRuling').click();
+    await page.locator('a[href="/law/"]:not([data-law-entry])').first().evaluate((link) => link.click());
+    const headline = page.locator('#natHeadlines button').filter({ hasText: '수능 집행정지' });
+    if (!await headline.isVisible()) await page.locator('button[aria-controls="natHeadlines"]').click();
+    await headline.click();
+    await page.locator('#natArticle .article-law-link').click();
+    assert.equal(await eventCount('reader_law_edition_view'), 1);
+    assert.equal(await eventCount('reader_law_edition_entry'), 1);
+    assert.equal(await eventCount('reader_law_from_edition'), 2);
+    assert.equal(await eventCount('reader_law_from_article'), 1);
+    assert.equal(await eventCount('reader_law_from_navigation'), 1);
+    assert.equal(await eventCount('reader_law_official_open'), 1);
+    assert.equal(await eventCount('reader_law_open'), 4);
+    await loadCover(1);
+    await page.locator('#casePairSearch').click();
+    assert.equal(await eventCount('reader_law_edition_view'), 0);
+    assert.equal(await eventCount('reader_law_open'), 0);
+  });
   await check('유입·캠페인·첫 페이지·재방문의 기간 일치와 실제 단위', { width: 320 }, async ({ page, requests }) => {
     await connect(page); await settled(page);
     assert.match(await page.locator('#sources').innerText(), /naver_cafe \/ referral\s+7\s+5\s+30초/);
@@ -368,23 +408,29 @@ async function check(name, options, fn) {
     assert.match(await page.locator('#landings').innerText(), /\/topics\/muan-airport\/\s+3\s+2\s+0초/);
     assert.match(await page.locator('#returning').innerText(), /재방문\s+2\s+1\s+40초/);
     assert.match(await page.locator('#readerActions').innerText(), /RSS 주소 복사\s+3\s+2/);
+    assert.match(await page.locator('#lawEditionRate').innerText(), /진입률 25% · 노출 4회 중 첫 진입 1회/);
+    assert.match(await page.locator('#lawEntryActions').innerText(), /1면 검색창에서 검색\s+2\s+1/);
+    assert.match(await page.locator('#lawEntryActions').innerText(), /공식 판결문 바로 열기\s+2\s+1/);
+    assert.doesNotMatch(await page.locator('#readerActions').innerText(), /reader_law_|검색창/);
     assert.ok(await page.locator('#sources').evaluate((element) => element.scrollWidth > element.clientWidth));
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth));
     await page.locator('#period').selectOption('28daysAgo'); await settled(page);
     const acquisition = requests.map((item) => item.postDataJSON()).findLast((item) => item.requests[0].dimensions?.[0]?.name === 'sessionSourceMedium');
     assert.equal(acquisition.requests.length, 5);
     assert.ok(acquisition.requests.every((item) => item.dateRanges[0].startDate === '27daysAgo'));
-    assert.ok(acquisition.requests.every((item) => item.limit === '10' || item.limit === '5'));
+    assert.deepEqual(acquisition.requests.map((item) => item.limit), ['10', '10', '10', '5', '40']);
     await page.locator('#disconnect').click();
-    for (const id of ['sources', 'campaigns', 'landings', 'returning', 'readerActions']) assert.equal(await page.locator('#' + id).textContent(), '');
+    for (const id of ['sources', 'campaigns', 'landings', 'returning', 'readerActions', 'lawEntryActions', 'lawEditionRate']) assert.equal(await page.locator('#' + id).textContent(), '');
   });
   await check('Google의 소규모 자료 생략과 빈 유입 보고서를 구분', { threshold: true }, async ({ page, state }) => {
     await connect(page); await settled(page);
     assert.match(await page.locator('#acquisitionNote').innerText(), /일부 소규모 자료가 생략/);
+    assert.match(await page.locator('#lawEditionRate').innerText(), /비율을 표시할 수 없습니다/);
     state.empty = true;
     await page.locator('#refresh').click(); await settled(page);
     assert.match(await page.locator('#sources').innerText(), /집계된 데이터가 없습니다/);
     assert.match(await page.locator('#readerActions').innerText(), /집계된 데이터가 없습니다/);
+    assert.match(await page.locator('#lawEditionRate').innerText(), /지면 노출 기록이 없습니다/);
   });
   await check('추이 툴팁의 실제 수치·0명·호버 유지·Esc 닫기', { width: 1440, trendRows: [row([12, 89], '20261106'), row([1234, 2345], '20261104'), row([0, 0], '20261105')] }, async ({ page, requests }) => {
     await connect(page); await settled(page);

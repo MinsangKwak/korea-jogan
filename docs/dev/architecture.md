@@ -11,6 +11,7 @@
 | 정적 지면 | [dev/web/](../../dev/web/) | HTML·CSS·바닐라 JS, 원본 발행 데이터 |
 | 공통 로직 | [src/core/](../../dev/web/src/core/) | 데이터 로딩(`data.js`)·서식·출처 UI(`ui.js`)·반응형 펼침·테마·측정(`metrics.js`)·주소(`seo.js`) |
 | 섹션 렌더링 | [src/components/](../../dev/web/src/components/) | 헤더·탐색·전국·추적·언론·지역·정치·경제·산업·재정·바닥글. 모듈마다 첫 줄 주석이 책임을 적음 |
+| 기사와 판례 | [공개 조합 목록](../../dev/web/data/news-case-pairs.json) · [1면 컴포넌트](../../dev/web/src/components/news-case/) | 기사의 발행일과 같은 날 또는 앞선 날의 쟁점을 선별해 신문 HTML에 포함. 독자는 보도 원문·공식 판례를 별개 링크로 열거나 다른 쟁점을 선택 |
 | 판례 자료실 | [dev/web/law/](../../dev/web/law/) | ES 모듈로 검색 규칙·결과 화면·생활 법률 이슈·보관과 비교·입법 캘린더를 분리. 독자 입력은 브라우저에서 처리 |
 | 법률 데이터 | [pipeline/law/](../../dev/pipeline/law/) → [law/data/](../../dev/web/law/data/) | 분야별 판례·의안·법률·관보 수록본과 검수 목록 생성. [자료원·재생성 절차](../planning/law-data.md) |
 | 관리자 | [dev/web/admin/](../../dev/web/admin/) | 공개 발행·판례 수록 현황과 파일 무결성, Google OAuth로 GA4·검색 실적 조회 ([운영 안내](ga4-admin.md)) |
@@ -31,11 +32,14 @@
 | `issues/YYYY-MM-DD.json` | 하루 한 호 | 00시 조사 초안, `approve.py` | 화면 전 섹션, `build_pages`·`build_feed`·`build_discovery`, 관리자, `validate.py` |
 | `issues/index.json` | `{latest, issues[]}` | 조사, `prepare_daily.py` | `data.js`, 관리자, `build_*`, `verify_publication.py` |
 | `trackers.json` | 장기 사안. 최신 호에서만 표시 | 조사(근거가 바뀐 날만, `updated` = 발행일) | `track.js`, `build_discovery`(`/topics/`), `validate.py` |
+| `news-case-pairs.json` | 보도와 관련 선례의 출처·사건번호·연결 설명 | 편집자가 [선정 기준](../planning/news-case-pairs.md)에 따라 기록 | 호별 정적 지면 생성기·1면 컴포넌트 |
 | `corrections.json` | 전체 호의 정정 이력 | 운영자 | `footer.js`, `validate.py` |
 | `live.json` | ECOS 최신 일별 확정값. Git에 없음 | `build_live.py`(배포 시) | `economy.js` 숫자 띠 |
 | `build-info.json` | 실제 배포 소스. Git에 없음 | `build_info.py`(배포 시) | `verify_publication.py`, 관리자, 복구 확인 |
 
 법률 수록본은 별도 경로인 `dev/web/law/data/`에 있습니다. 신문은 독자가 판례면 링크를 열기 전까지 분야별 JSON을 내려받지 않습니다. 판례 검색은 분야·검색 범위에 맞는 파일을, 입법 캘린더는 의안·법률과 관보 자료를 독립적으로 읽습니다. 캘린더에서 한 자료원을 불러오지 못하면 이용 가능한 결과와 누락 안내를 함께 표시합니다. 관리자는 작은 검수 목록을 먼저 읽고 독자가 검사를 요청할 때만 모든 파일을 대조합니다.
+
+1면에 직접 입력한 검색어는 주소에 넣지 않고 같은 탭에서 판례면에 한 번 전달합니다. 판례면이 값을 읽으면 전달용 세션 저장 항목을 지우고 브라우저에서 검색합니다. 공개된 쟁점의 고정 키워드와 사건번호는 공유 가능한 링크에 사용합니다.
 
 판례 보관함은 `library.js`가 현재 원본(origin)의 `localStorage`에 식별번호와 분야를 저장하고 해당 분야 파일에서 내용을 다시 읽습니다. 이전 Casewise 호스트의 저장값을 조간 도메인에서 자동으로 가져올 수 없습니다.
 

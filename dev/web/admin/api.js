@@ -73,7 +73,7 @@ export async function loadReports(token, period, signal) {
       { ...common, dimensions: [{ name: 'sessionCampaignName' }, { name: 'sessionSourceMedium' }], metrics: acquisitionMetrics, ...byFirst('sessions'), limit: '10' },
       { ...common, dimensions: [{ name: 'landingPage' }], metrics: acquisitionMetrics, ...byFirst('sessions'), limit: '10' },
       { ...common, dimensions: [{ name: 'newVsReturning' }], metrics: acquisitionMetrics, ...byFirst('sessions'), limit: '5' },
-      { ...common, dimensionFilter: { andGroup: { expressions: [host, prefix('reader_')] } }, dimensions: [{ name: 'eventName' }], metrics: metric('eventCount', 'totalUsers'), ...byFirst('eventCount'), limit: '10' }
+      { ...common, dimensionFilter: { andGroup: { expressions: [host, prefix('reader_')] } }, dimensions: [{ name: 'eventName' }], metrics: metric('eventCount', 'totalUsers'), ...byFirst('eventCount'), limit: '40' }
     ])
   ]);
   if (main.reports?.length !== 5 || more.reports?.length !== 4 || acquisition.reports?.length !== 5) throw new ApiError(502, 'INVALID_RESPONSE');

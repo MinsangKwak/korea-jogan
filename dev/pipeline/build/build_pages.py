@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 from build_security import secure_page
+import build_case_edition
 import build_discovery
 import reader_panel
 
@@ -453,6 +454,7 @@ def build() -> list[Path]:
             if stale not in expected and '<meta name="kj-generated" content="discovery">' in stale.read_text(encoding="utf-8"):
                 stale.unlink()
     dates = {issue["date"] for issue in issues}
+    pairs = build_case_edition.published_pairs(PUBLIC, dates)
     for stale in PUBLIC.glob("20??-??-??.html"):
         if stale.stem not in dates and '<meta name="kj-date"' in stale.read_text(encoding="utf-8"):
             stale.unlink()
@@ -460,6 +462,7 @@ def build() -> list[Path]:
     for law_page in (PUBLIC / "law").rglob("index.html"):
         law_page.write_text(secure_page(law_page.read_text(encoding="utf-8"), law=True), encoding="utf-8")
     if not issues:
+        template = build_case_edition.with_edition(template, "", pairs)
         template = DIGEST.sub("<!-- kj:digest -->\n<!-- /kj:digest -->", template, count=1)
         template = DISCOVERY.sub("<!-- kj:discovery -->\n<!-- /kj:discovery -->", template, count=1)
         template = with_lead_heading(template, None)
@@ -474,9 +477,11 @@ def build() -> list[Path]:
     index = published_index(issues)
     for issue in issues:
         out = PUBLIC / f"{issue['date']}.html"
-        out.write_text(issue_page(template, issue, index), encoding="utf-8")
+        edition = build_case_edition.with_edition(template, issue["date"], pairs)
+        out.write_text(issue_page(edition, issue, index), encoding="utf-8")
         written.append(out)
-    home.write_text(home_page(template, issues[0], index), encoding="utf-8")
+    edition = build_case_edition.with_edition(template, index["latest"], pairs)
+    home.write_text(home_page(edition, issues[0], index), encoding="utf-8")
     written.append(home)
     for item in extra:
         out = PUBLIC / item["path"]

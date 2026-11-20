@@ -25,7 +25,61 @@ if (panel) {
   }));
 }
 
+const edition = document.getElementById('caseEdition');
+let editionSeen = false;
+let editionEntered = false;
+let editionInView = false;
+let editionObserver;
+
+function noteEditionView() {
+  if (!editionObserver || editionSeen || document.hidden) return;
+  editionSeen = true;
+  note('law_edition_view');
+  editionObserver.disconnect();
+  document.removeEventListener('visibilitychange', onVisibility);
+}
+
+function onVisibility() {
+  if (editionInView) noteEditionView();
+}
+
+if (edition && 'IntersectionObserver' in window) {
+  editionObserver = new IntersectionObserver(([entry]) => {
+    editionInView = entry.isIntersecting && entry.intersectionRatio >= 0.5;
+    onVisibility();
+  }, { threshold: 0.5 });
+  editionObserver.observe(document.getElementById('caseEditionTitle') || edition);
+  document.addEventListener('visibilitychange', onVisibility);
+}
+
+function noteLawEntry(source) {
+  note('law_open');
+  note('law_from_' + source);
+  if (source === 'edition' || source === 'search') {
+    noteEditionView();
+    if (editionSeen && !editionEntered) {
+      editionEntered = true;
+      note('law_edition_entry');
+    }
+  }
+}
+
 document.addEventListener('click', (event) => {
   const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
-  if (link && link.origin === location.origin && link.pathname.startsWith('/law/')) note('law_open');
+  if (!link) return;
+  if (edition?.contains(link) && link.dataset.lawEntry === 'ruling' && link.origin === 'https://www.law.go.kr') {
+    noteEditionView();
+    note('law_official_open');
+    return;
+  }
+  if (link.origin !== location.origin || !link.pathname.startsWith('/law/')) return;
+  if (edition?.contains(link) && link.dataset.lawEntry === 'edition') noteLawEntry('edition');
+  else if (link.classList.contains('article-law-link') || link.dataset.lawEntry === 'article') noteLawEntry('article');
+  else noteLawEntry('navigation');
+});
+
+document.addEventListener('jogan:law-search-open', (event) => {
+  if (event.target instanceof HTMLFormElement && event.target.matches('form[data-law-entry="search"]') && edition?.contains(event.target)) {
+    noteLawEntry('search');
+  }
 });
