@@ -71,3 +71,4 @@
 .question-share{max-width:42rem;margin-top:1.25rem}
 .question-share label{display:block;margin-bottom:.3rem;font-size:.88rem;font-weight:700}
 .question-share .reader-tools__status{margin-block:.3rem 0}
+.question-share [hidden]{display:none}
