@@ -187,6 +187,11 @@ class DiscoveryTest(unittest.TestCase):
                 self.assertIn(tracker["next"], doc.visible)
                 self.assertIn(tracker["note"], doc.visible)
                 self.assertIn(self.trackers["updated"], doc.visible)
+                if tracker.get("periodUnknown"):
+                    self.assertIn(tracker["label"], doc.visible)
+                keywords = (tracker.get("trackingKeywords") or {}).get("exact", [])
+                if keywords:
+                    self.assertIn("추적 키워드 " + keywords[0], " ".join(doc.visible.split()))
                 for step in tracker["steps"]:
                     self.assertIn(step["t"], doc.visible)
                 for link in tracker["links"]:

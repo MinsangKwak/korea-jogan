@@ -1,4 +1,4 @@
-import { loadSearch, inspectSearchUrl, searchError } from './search-api.js';
+import { loadSearch, loadInspectionTopics, inspectSearchUrl, searchError } from './search-api.js';
 
 const SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
 const $ = (id) => document.getElementById(id);
@@ -10,6 +10,18 @@ export function initSearch({ getClientId, validClient, prepareGoogle, renderTabl
   if (!$('searchConnect')) return { reset() {} };
   let token = '', site = '', expiry = 0, generation = 0, inspection = 0;
   let controller, inspectController, expiryTimer, pending = false, busy = false;
+
+  async function addInspectionTopics() {
+    let topics;
+    try { topics = await loadInspectionTopics(); }
+    catch { return; }
+    const group = $('searchTopics');
+    const existing = new Set(Array.from(group.children, (option) => option.value));
+    for (const [url, title] of topics) {
+      if (!existing.has(url)) group.append(new Option(title, url));
+    }
+  }
+  addInspectionTopics();
 
   function clearReports() {
     for (const id of ['searchQueries', 'searchPages']) $(id).replaceChildren();

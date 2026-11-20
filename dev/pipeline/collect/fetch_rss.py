@@ -18,6 +18,7 @@ import html
 import json
 import re
 import sys
+import unicodedata
 import urllib.parse
 import urllib.request
 import urllib.robotparser
@@ -27,12 +28,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 FEEDS = ROOT / "dev" / "pipeline" / "collect" / "feeds.json"
+TRACKERS = ROOT / "dev" / "web" / "data" / "trackers.json"
 OUT = ROOT / "dev" / "pipeline" / "collect" / "raw" / "rss"
 KST = dt.timezone(dt.timedelta(hours=9))
 USER_AGENT = "korea-jogan-rss/1.0 (+https://github.com/MinsangKwak/korea-jogan)"
 TIMEOUT = 20
 ATOM = "{http://www.w3.org/2005/Atom}"
 TAG_RE = re.compile(r"<[^>]+>")
+PHRASE_END = r"(?=(?:에서는|에서|에선|에는|까지|부터|으로|은|는|이|가|을|를|의|에|도|로|만|과|와)?(?:\W|$))"
 
 
 def get(url: str) -> bytes:
@@ -130,7 +133,31 @@ def collect(feed: dict, span: tuple[dt.datetime, dt.datetime] | None, fetch=get,
     return status, items
 
 
-def run(feeds: list[dict], issue: dt.date, keep_all: bool = False, fetch=get, allowed=robots_allows) -> dict:
+def normalize_title(value: str) -> str:
+    return " ".join(unicodedata.normalize("NFKC", value).casefold().split())
+
+
+def tracking_candidates(items: list[dict], trackers: list[dict]) -> list[dict]:
+    candidates = []
+    for tracker in trackers:
+        keywords = tracker.get("trackingKeywords")
+        if not keywords:
+            continue
+        groups = {key: [normalize_title(word) for word in words] for key, words in keywords.items()}
+        phrases = [re.compile(re.escape(word) + PHRASE_END) for word in groups.get("exact", [])]
+        for item in items:
+            title = normalize_title(item["title"])
+            if not item["url"].startswith("https://") or any(word in title for word in groups.get("exclude", [])):
+                continue
+            grouped = all(any(word in title for word in groups[key]) for key in ("subject", "case", "procedure"))
+            if grouped or any(phrase.search(title) for phrase in phrases):
+                candidates.append({"trackerId": tracker["id"], "outlet": item["outlet"], "title": item["title"],
+                                   "url": item["url"], "published": item["published"]})
+    return candidates
+
+
+def run(feeds: list[dict], issue: dt.date, keep_all: bool = False, fetch=get, allowed=robots_allows,
+        *, tracker_file: Path = TRACKERS) -> dict:
     span = None if keep_all else window(issue)
     with ThreadPoolExecutor(max_workers=8) as pool:
         results = list(pool.map(lambda f: collect(f, span, fetch, allowed), feeds))
@@ -143,12 +170,14 @@ def run(feeds: list[dict], issue: dt.date, keep_all: bool = False, fetch=get, al
             seen.add(it["url"])
             items.append(it)
     items.sort(key=lambda x: x["published"], reverse=True)
+    trackers = json.loads(tracker_file.read_text(encoding="utf-8"))["items"] if tracker_file.exists() else []
     return {
         "collectedAt": dt.datetime.now(KST).isoformat(timespec="seconds"),
         "issue": issue.isoformat(),
         "window": None if keep_all else [span[0].isoformat(), span[1].isoformat()],
         "feeds": [s for s, _ in results],
         "items": items,
+        "trackingCandidates": tracking_candidates(items, trackers),
     }
 
 
@@ -167,6 +196,12 @@ def main() -> int:
 
     ok = [s for s in result["feeds"] if s["ok"]]
     print(f"저장: {path.relative_to(ROOT)} · 피드 {len(ok)}/{len(feeds)} · 기사 {len(result['items'])}건")
+    if ok:
+        print(f"수집에 성공한 피드의 이슈 추적 편집 후보 {len(result['trackingCandidates'])}건 · RSS 제목 기준, 원문 확인 필요")
+    else:
+        print("수집에 성공한 피드가 없어 이슈 추적 후보를 확인할 수 없습니다.")
+    for candidate in result["trackingCandidates"]:
+        print(f" - [{candidate['trackerId']}] {candidate['outlet']} · {candidate['title']} · {candidate['url']}")
     for s in result["feeds"]:
         if not s["ok"]:
             print(f" - 실패 {s['outlet']}: {s['error']}")

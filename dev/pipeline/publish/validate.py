@@ -273,6 +273,15 @@ def check_trackers() -> list[str]:
         missing = [k for k in TRACKER_KEYS if not str(item.get(k, "")).strip()]
         if missing:
             errors.append(f"{where} {', '.join(missing)} 없음")
+        if "trackingKeywords" in item:
+            groups = item["trackingKeywords"]
+            required = {"subject", "case", "procedure"}
+            if not isinstance(groups, dict) or not required.issubset(groups) or groups.keys() - required - {"exact", "exclude"}:
+                errors.append(f"{where}.trackingKeywords 당사자·사건·절차 키워드 그룹 형식 오류")
+            elif any(not isinstance(words, list) or not words or
+                     any(not isinstance(word, str) or not word.strip() for word in words)
+                     for words in groups.values()):
+                errors.append(f"{where}.trackingKeywords 키워드는 비어 있지 않은 문자열 배열이어야 함")
         for key in (("since",) if item.get("periodUnknown") is True else ("since", "start", "end")):
             if not DATE_RE.match(str(item.get(key, ""))):
                 errors.append(f"{where}.{key} 날짜 형식 오류")

@@ -45,7 +45,7 @@ flowchart LR
 | [promote.yml](../../.github/workflows/promote.yml) | 통합 검사 완료 이벤트, 수동 | 통합 실패 뒤 같은 SHA의 검사 증거로 누락된 승격·배포만 복구 |
 | [publish.yml](../../.github/workflows/publish.yml) | KST 06:00·06:07·06:37·07:17·08:17 (`main` 참조, 15분 제한) | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 준비 → 자동 승인 → `main`·`deploy` 반영 → Pages 호출 |
 | [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `deploy` push, 수동, 평일 KST 09:17~22:17 매시 | `validate --deploy` → RSS·사이트맵·호별 HTML·`live.json`·`build-info.json` 생성 → Pages → 공개 확인. 실패 시 같은 소스로 최대 두 번 재시도 |
-| [daily.yml](../../.github/workflows/daily.yml) | 수동 | RSS·ECOS 원자료 수집. 조사 예약을 대체하지 않음 |
+| [daily.yml](../../.github/workflows/daily.yml) | 매일 04:30 KST·수동 | RSS 원자료·이슈 추적 편집 후보. ECOS는 수동 실행 시 수집 |
 
 공통 검사 작업은 데이터 검사·토큰 CSS 일치·Python 시험·PR 커밋 제목·브라우저 검사 6개 파일(`smoke`·`admin`·`security`·`discovery`·`preview`·`daily`)을 한 실행 환경에서 수행합니다. `run.cjs`가 Chromium 엔진 하나를 시작하고 검사 파일이 연결하며(최대 2개 동시), 연결별 컨텍스트·쿠키 격리와 한 연결 종료가 다른 연결을 닫지 않는지도 확인합니다. 검사를 삭제하거나 경로 필터로 건너뛰지 않습니다.
 

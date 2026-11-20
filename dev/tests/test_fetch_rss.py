@@ -7,6 +7,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -100,6 +101,40 @@ class RunTest(unittest.TestCase):
         twice = FEEDS[:1] + [dict(FEEDS[0], outlet="같은신문 다른 피드")]
         result = self.run_feeds(feeds=twice)
         self.assertEqual(len(result["items"]), len({i["url"] for i in result["items"]}))
+
+    def test_only_eligible_headlines_become_tracker_review_candidates(self):
+        tracker = {
+            "id": "trial",
+            "trackingKeywords": {
+                "subject": ["이재명"], "case": ["공직선거법", "대장동"], "procedure": ["기일", "파기환송"],
+                "exact": ["이재명 대통령 재판"], "exclude": ["김혜경", "재판 정지법"],
+            },
+        }
+        headlines = [
+            "이재명 공직선거법 파기환송심 기일 보도",
+            "이재명  대통령 재판은 언제 열리나",
+            "이재명 대통령 재판부 인선",
+            "김혜경 공직선거법 기일에 이재명 대통령 언급",
+            "이재명 대장동 관련 입장",
+            "대장동 사건 다음 기일 지정",
+            "이재명 대통령 재판 정지법 논평",
+        ]
+        entries = "".join(
+            f"<item><title>{title}</title><link>https://a.example/{i}</link>"
+            "<pubDate>Sun, 18 Oct 2026 09:30:00 +0900</pubDate></item>"
+            for i, title in enumerate(headlines)
+        )
+        feed = f"<rss><channel>{entries}</channel></rss>".encode()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "trackers.json"
+            path.write_text(json.dumps({"items": [{"id": "old"}, tracker]}), encoding="utf-8")
+            result = fetch_rss.run(FEEDS[:1], ISSUE, fetch=lambda _: feed, allowed=lambda _: True, tracker_file=path)
+        candidates = result["trackingCandidates"]
+        self.assertEqual([(row["trackerId"], row["url"]) for row in candidates],
+                         [("trial", "https://a.example/0"), ("trial", "https://a.example/1")])
+        self.assertEqual(candidates[0]["title"], headlines[0])
+        self.assertEqual(candidates[0]["outlet"], "가짜신문")
+        self.assertEqual(len(result["items"]), len(headlines))
 
 
 class FeedListTest(unittest.TestCase):
