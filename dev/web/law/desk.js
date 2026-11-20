@@ -10,12 +10,63 @@ const pageSize = 8;
 const cache = new Map();
 const keywordPicks = ['전세보증금 반환', '퇴직금', '개인정보 유출', '상속포기'];
 let theme = isThemeId(params.get('theme')) ? params.get('theme') : 'all';
-let query = (params.get('q') || '').trim().slice(0, 8000);
+const incomingQuery = takeSearchFromFrontPage();
+let query = (params.get('q') || incomingQuery).trim().slice(0, 8000);
 let topic = '전체';
 let page = 1;
 let revision = 0;
 let results = [];
 let highlightTerms = [];
+
+function takeSearchFromFrontPage() {
+  try {
+    const key = 'jg:law-search-once';
+    const value = sessionStorage.getItem(key);
+    if (value !== null) sessionStorage.removeItem(key);
+    return location.search ? '' : (value || '');
+  } catch {
+    return '';
+  }
+}
+
+let editionRequest;
+function newsByCase() {
+  if (!editionRequest) {
+    editionRequest = fetch('/data/news-case-pairs.json')
+      .then(response => {
+        if (!response.ok) throw new Error('기사 목록을 불러오지 못했습니다.');
+        return response.json();
+      })
+      .then(({ pairs }) => {
+        const grouped = new Map();
+        for (const pair of pairs) {
+          if (!Number.isSafeInteger(pair.caseId) || !/^\d{4}-\d{2}-\d{2}$/.test(pair.issueDate) || !pair.id || !pair.articleTitle) continue;
+          if (!grouped.has(pair.caseId)) grouped.set(pair.caseId, []);
+          grouped.get(pair.caseId).push(pair);
+        }
+        return grouped;
+      })
+      .catch(() => {
+        editionRequest = undefined;
+        return new Map();
+      });
+  }
+  return editionRequest;
+}
+
+function addNewsLinks(row, caseId) {
+  newsByCase().then(grouped => {
+    const matches = grouped.get(caseId);
+    if (!row.isConnected || !matches) return;
+    const links = element('div', 'desk-related-news');
+    links.append(element('strong', '', '이 판례와 함께 읽는 기사'));
+    for (const pair of matches) {
+      const article = link(pair.articleTitle, '/' + pair.issueDate + '?pair=' + encodeURIComponent(pair.id) + '#caseEdition');
+      links.append(element('time', '', pair.issueDate.replaceAll('-', '.')), article);
+    }
+    row.append(links);
+  });
+}
 
 function button(text, action, className) {
   const item = element('button', className, text);
@@ -179,6 +230,7 @@ function recordRow(record) {
   const details = element('details');
   details.append(element('summary', '', '판시사항 읽기'), summaryExcerpt(record.summary));
   row.append(head, details);
+  addNewsLinks(row, record.id);
   return row;
 }
 
@@ -214,7 +266,7 @@ function landing() {
   byId('lawPager').hidden = true;
   byId('lawResultTitle').textContent = '생활 질문에서 시작하기';
   const list = element('ul', 'desk-issue-list');
-  for (const issue of issues.filter(item => item.slug !== 'rental-deposit').slice(0, 3)) {
+  for (const issue of issues.slice(0, 3)) {
     const row = element('li');
     const anchor = link('', '?issue=' + encodeURIComponent(issue.slug));
     anchor.append(element('small', '', themes[issue.theme].label), element('span', '', issue.title));

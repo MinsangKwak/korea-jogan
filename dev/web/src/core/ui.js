@@ -171,6 +171,12 @@ function newsItem(it, label) {
   src.append(el('span', {}, it.outlet + ' · ' + it.date.slice(5).replace('-', '/')));
   if (it.figure_source) src.append(el('span', {}, '수치 출처 ' + it.figure_source));
   a.append(src);
+  const pair = window.newsCaseEdition?.find(it.url, D?.date);
+  if (pair) {
+    const target = new URLSearchParams({ theme: pair.theme, q: pair.caseNumber });
+    a.append(el('a', { class: 'article-law-link', href: '/law/?' + target }, '기사와 함께 읽는 판례 · ' + pair.caseNumber));
+    return a;
+  }
   const material = [it.title, it.summary].join(' ');
   const topic = ARTICLE_LAW_TOPICS.find((item) => item.words.test(material) && !item.exclude?.test(material));
   if (topic) {

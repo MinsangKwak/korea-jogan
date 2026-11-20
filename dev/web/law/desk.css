@@ -138,3 +138,8 @@ button, input, select {color: inherit;}
   .desk-spotlight > span:first-child {color: LinkText;}
   [aria-pressed="true"], .press-nav a[aria-current="page"] {outline: 2px solid Highlight;}
 }
+
+.desk-related-news {display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: .25rem .6rem; margin-block: .35rem; padding: .65rem .9rem; border-inline-start: 2px solid var(--accent); background: var(--tint);}
+.desk-related-news strong {grid-column: 1 / -1; color: var(--accent); font-size: .82rem;}
+.desk-related-news time {color: var(--muted); font-size: .8rem;}
+.desk-related-news a {overflow-wrap: anywhere; text-underline-offset: .18em;}
