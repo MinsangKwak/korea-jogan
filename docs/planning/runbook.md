@@ -20,12 +20,13 @@
 | 시각 | 주체 | 책임 |
 | --- | --- | --- |
 | 00:20 | Codex 예약 | `main` 기준 `daily/YYYY-MM-DD` 생성, 조사·사실 초안·문장 편집·검사, 오늘 JSON·색인·실제 추적 갱신만 저장. 예상 SHA가 같을 때만 반영 |
+| 04:30 | `daily.yml` | 전날 RSS 제목을 등록된 추적 키워드와 대조하고 기사 주소와 추적 사안 ID를 편집 후보로 보관 |
 | 06:00 (+06:07·06:37·07:17·08:17 재확인) | `publish.yml` | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 `main`에 준비 → 미확인 초안 자동 공개 → `main`·`deploy` 반영 → Pages 호출 |
 | 06:00 | Codex 감독 예약 | 공개 대기 없이 안정 `publish.yml`을 바로 실행하고 실제 공개 확인, 실패하면 재시도 (2026.11.05·11.19 사용자 승인) |
 | 운영 반영 뒤 | `deploy-pages.yml` | 배포 규칙 검사, 파일 생성, Pages 배포, 공개 확인 |
 | 사람이 가능할 때 | 운영자 | 원문 대조·승인, 정정 |
 
-Codex 예약에는 별도 모델 API 키가 필요 없지만 GitHub 조회·쓰기 연결이 없으면 실패로 보고합니다. 전체 원문 조사는 Codex 예약이 맡습니다. `publish.yml`은 조사 초안이 없으면 실제 RSS의 제목·주소·게시 시각으로 확인 범위를 밝힌 보조 호를 만들며, 본문을 읽은 기사나 오늘 확인한 지표로 가장하지 않습니다. `daily.yml`은 수집기 수동 실행용입니다. GitHub 예약은 지연될 수 있으므로 실행 로그와 실제 배포 결과를 확인합니다. 이관 경과는 [변경 기록 2026.11.05](../dev/changelog.md#자동화-이관-상태-20261105-기준)에 있습니다.
+Codex 예약에는 별도 모델 API 키가 필요 없지만 GitHub 조회·쓰기 연결이 없으면 실패로 보고합니다. 전체 원문 조사는 Codex 예약이 맡습니다. `publish.yml`은 조사 초안이 없으면 실제 RSS의 제목·주소·게시 시각으로 확인 범위를 밝힌 보조 호를 만들며, 본문을 읽은 기사나 오늘 확인한 지표로 가장하지 않습니다. `daily.yml`을 수동 실행하면 RSS와 ECOS 원자료를 함께 수집합니다. GitHub 예약은 지연될 수 있으므로 실행 로그와 실제 배포 결과를 확인합니다. 이관 경과는 [변경 기록 2026.11.05](../dev/changelog.md#자동화-이관-상태-20261105-기준)에 있습니다.
 
 ## 조사 원칙
 
@@ -41,7 +42,7 @@ Codex 예약에는 별도 모델 API 키가 필요 없지만 GitHub 조회·쓰�
 python3 dev/pipeline/collect/fetch_rss.py --date YYYY-MM-DD
 ```
 
-결과 `dev/pipeline/collect/raw/rss/YYYY-MM-DD.json`에서 기사 후보와 피드별 성공·실패를 확인합니다. 피드 설정은 [feeds.json](../../dev/pipeline/collect/feeds.json)이며, 피드에 제목이 있다는 사실과 본문 접근 허용은 별개입니다.
+GitHub Actions의 **일일 수집 → rss** 실행 로그 또는 실행 아티팩트(`rss-<실행 ID>`)에서 결과를 확인합니다. 원자료 `dev/pipeline/collect/raw/rss/YYYY-MM-DD.json`의 `trackingCandidates`에 사안 ID와 RSS 제목·기사 주소가 있으며 `feeds`에는 피드별 성공·실패가 남습니다. 편집자는 후보 기사 원문에서 당사자·결정일·공개된 절차를 확인한 뒤 새 근거가 있는 사안만 갱신합니다. 피드 설정은 [feeds.json](../../dev/pipeline/collect/feeds.json)이며, 피드에 제목이 있다는 사실과 본문 접근 허용은 별개입니다.
 
 ## 2. 자료 조사
 

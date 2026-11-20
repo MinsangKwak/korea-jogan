@@ -10,6 +10,8 @@
 
 예를 들어 [전세보증금 이슈](https://korea-jogan.com/law/?issue=rental-deposit)에서 두 판례의 쟁점과 원문을 열고, [판례 보관함](https://korea-jogan.com/law/?view=saved)에서 판시사항을 비교할 수 있습니다. [입법 캘린더](https://korea-jogan.com/law/calendar/)는 한국 시간의 현재 달부터 열립니다. 2025년 1월 이후의 법률안 제안·법률 공포·시행을 날짜별로 보고, 앞으로 시행될 일정과 공식 다음 관보 예고도 확인할 수 있습니다.
 
+이슈 추적에서는 사건별 기일, 날짜별 경과, 근거 원문을 함께 읽습니다. 새 기일이 없는 재판은 재개 시점을 미정으로 표시합니다. [이슈 전체](https://korea-jogan.com/topics/) · [이재명 대통령 재판](https://korea-jogan.com/topics/lee-jae-myung-trials/)
+
 개인 프로젝트로 기획부터 정보 구조와 UI, 데이터 규격, 검사·배포 흐름까지 구성했습니다. AI는 자료 조사·초안·삽화에 활용하며, 자동 검사와 사람의 원문 대조를 구분해 기록합니다.
 
 | 담당 영역 | 구현과 판단 | 문서 |
