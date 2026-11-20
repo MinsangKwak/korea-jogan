@@ -1,0 +1,64 @@
+{
+  "pairs": [
+    {
+      "id": "work-before-shift",
+      "issueDate": "2026-11-20",
+      "section": "regions",
+      "articleTitle": "전주 환경관리원 참변⋯핵심은 근무 여부",
+      "articleUrl": "https://www.jjan.kr/article/20261119500505",
+      "question": "정해진 출근 시각 전의 사고도 업무상 재해일까?",
+      "context": "전주 환경관리원 사고를 두고 경찰과 노동 당국이 당시 근무 여부를 조사하고 있습니다. 별개의 토사 운반 사고 판결에서 대법원은 근무시간 밖이라도 통상적인 업무 준비·마무리인지 살핀다는 기준을 설명했습니다.",
+      "caseTitle": "보험급여액징수부과처분취소",
+      "caseNumber": "2006두7669",
+      "caseDate": "2006-10-13",
+      "caseId": 215979,
+      "theme": "labor",
+      "keyword": "업무상 재해"
+    },
+    {
+      "id": "exam-suspension",
+      "issueDate": "2026-11-19",
+      "section": "national",
+      "articleTitle": "[속보] 법원, ‘수능 집행정지’ 신청 기각⋯내일 수능 예정대로",
+      "articleUrl": "https://www.kmib.co.kr/article/20261118501883",
+      "question": "수능 연기 신청에서 법원은 무엇을 먼저 판단했을까?",
+      "context": "수험생이 시험을 미뤄 달라고 신청했지만 법원은 긴급한 필요가 충분히 소명되지 않았다고 봤습니다. 음식점 영업허가 취소를 다룬 대법원 결정에서 집행정지와 본안 판단의 차이를 읽어봅니다.",
+      "caseTitle": "일반음식점영업허가취소처분효력정지",
+      "caseNumber": "95두53",
+      "caseDate": "1995-11-23",
+      "caseId": 198010,
+      "theme": "administration",
+      "keyword": "집행정지"
+    },
+    {
+      "id": "bus-ordinary-wages",
+      "issueDate": "2026-11-18",
+      "section": "regions",
+      "articleTitle": "창원 시내버스 통상임금 정산 갈등 속 신양여객 임금 체불 10억 원 발생",
+      "articleUrl": "https://www.idomin.com/news/articleView.html?idxno=2019845",
+      "question": "버스 기사 임금 정산에서 통상임금이 왜 쟁점이 됐을까?",
+      "context": "창원 버스 기사들이 통상임금 소송의 1심 판결을 토대로 압류에 나섰습니다. 별개의 임금 사건에서 대법원 전원합의체가 재직 조건이 붙은 임금을 어떻게 판단했는지 살펴봅니다.",
+      "caseTitle": "임금",
+      "caseNumber": "2020다247190",
+      "caseDate": "2024-12-19",
+      "caseId": 600537,
+      "theme": "labor",
+      "keyword": "통상임금"
+    },
+    {
+      "id": "university-data-leak",
+      "issueDate": "2026-11-17",
+      "section": "national",
+      "articleTitle": "서울시립대 홈페이지서 개인정보 유출…15명 정보 무단 조회",
+      "articleUrl": "https://www.sedaily.com/article/20115144",
+      "question": "개인정보가 유출되면 법원은 어떤 피해를 살필까?",
+      "context": "서울시립대는 구성원 15명의 정보가 무단 조회됐다고 밝혔습니다. 다른 유출 사건을 다룬 대법원 판결에서 정보의 내용과 제3자의 열람 가능성이 위자료 판단에 어떻게 쓰이는지 읽어봅니다.",
+      "caseTitle": "손해배상(기)",
+      "caseNumber": "2018다214142",
+      "caseDate": "2018-12-28",
+      "caseId": 207581,
+      "theme": "digital",
+      "keyword": "개인정보 유출"
+    }
+  ]
+}
