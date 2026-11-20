@@ -1,0 +1,63 @@
+.question-recall {
+  max-width: var(--measure);
+  margin-block: 2rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  background: var(--surface);
+  border-inline-start: 3px solid var(--brand);
+}
+
+.question-recall h2 {
+  margin: 0 0 1rem;
+}
+
+.question-recall blockquote {
+  margin: 0 0 1rem;
+  color: var(--ink-2);
+  font-family: var(--font-serif);
+}
+
+.question-recall fieldset {
+  min-inline-size: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.question-recall legend {
+  padding: 0;
+  font-weight: 700;
+}
+
+.question-recall label {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  min-height: var(--tap-min);
+  cursor: pointer;
+}
+
+.question-recall input {
+  flex: none;
+  accent-color: var(--brand);
+}
+
+.question-recall button {
+  min-height: var(--tap-min);
+  margin-top: .25rem;
+  padding: .4em 1em;
+  border: 1px solid var(--brand);
+  background: var(--brand);
+  color: var(--on-brand);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.question-recall [role="status"]:empty {
+  margin: 0;
+}
+
+.question-recall details {
+  margin-top: 1rem;
+  padding-bottom: 0;
+}
