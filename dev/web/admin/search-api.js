@@ -1,10 +1,19 @@
 import { request, ApiError } from './api.js';
+import { loadPilotQuestions } from './question-pilot.js';
 
 const ORIGIN = 'https://korea-jogan.com';
 const API = 'https://www.googleapis.com/webmasters/v3/sites/';
 const SITES = [ORIGIN + '/', 'sc-domain:korea-jogan.com'];
-export const SEARCH_TARGETS = [ORIGIN + '/', ORIGIN + '/topics/', ORIGIN + '/topics/muan-airport/', ORIGIN + '/indicators/', ORIGIN + '/indicators/usd-krw/'];
+export const SEARCH_TARGETS = [ORIGIN + '/', ORIGIN + '/politics/', ORIGIN + '/topics/', ORIGIN + '/topics/muan-airport/', ORIGIN + '/indicators/', ORIGIN + '/indicators/usd-krw/'];
+const BRAND_QUERY = '(?i)(대한민국\\s*조간|코리아\\s*조간|korea[-\\s]*jogan|오늘\\s*정치\\s*한\\s*장)';
+let pilotTargets = new Map();
 let inspectionTopics = new Map();
+
+export async function loadInspectionQuestions() {
+  const questions = await loadPilotQuestions();
+  pilotTargets = new Map(questions.map(({ path, label }) => [ORIGIN + path, label]));
+  return Array.from(pilotTargets).filter(([url]) => url.startsWith(ORIGIN + '/politics/'));
+}
 
 export async function loadInspectionTopics() {
   const { items } = await request('/data/trackers.json');
@@ -44,14 +53,34 @@ export async function loadSearch(token, { days, country, site, signal }) {
   const common = { ...range, type: 'web', dataState: 'final', dimensionFilterGroups: [{ groupType: 'and', filters }] };
   const endpoint = API + encodeURIComponent(site);
   const query = (dimensions, rowLimit = 10) => request(endpoint + '/searchAnalytics/query', { token, signal, body: { ...common, dimensions, rowLimit } });
-  const [summary, queries, pages, dates, sitemaps] = await Promise.all([
-    query([]), query(['query']), query(['page']), query(['date'], 31), request(endpoint + '/sitemaps', { token, signal })
+  async function loadPilot() {
+    const questions = await loadPilotQuestions();
+    const pathPattern = '^https://korea-jogan[.]com(' + questions.map(({ path }) => path).join('|') + ')$';
+    const pilotFilters = [
+      { dimension: 'page', operator: 'includingRegex', expression: pathPattern },
+      { dimension: 'query', operator: 'excludingRegex', expression: BRAND_QUERY },
+      ...filters.filter((item) => item.dimension === 'country')
+    ];
+    const report = await request(endpoint + '/searchAnalytics/query', { token, signal, body: {
+      ...common, dimensions: ['page'], rowLimit: questions.length, dimensionFilterGroups: [{ groupType: 'and', filters: pilotFilters }]
+    } });
+    return questions.map(({ label, path }) => {
+      const row = report.rows?.find((item) => item.keys?.[0] === ORIGIN + path);
+      return { label, impressions: row?.impressions || 0, clicks: row?.clicks || 0 };
+    });
+  }
+  const [summary, queries, pages, dates, sitemaps, pilot] = await Promise.all([
+    query([]), query(['query']), query(['page']), query(['date'], 31), request(endpoint + '/sitemaps', { token, signal }),
+    loadPilot().catch((error) => {
+      if (error.status === 401 || error.status === 403) throw error;
+      return null;
+    })
   ]);
-  return { site, range, summary, queries, pages, dates, sitemaps };
+  return { site, range, summary, queries, pages, dates, sitemaps, pilot };
 }
 
 export async function inspectSearchUrl(token, site, url, signal) {
-  if (!SITES.includes(site) || !(SEARCH_TARGETS.includes(url) || inspectionTopics.has(url))) throw new ApiError(400, 'INVALID_TARGET');
+  if (!SITES.includes(site) || !(SEARCH_TARGETS.includes(url) || inspectionTopics.has(url) || pilotTargets.has(url))) throw new ApiError(400, 'INVALID_TARGET');
   const data = await request('https://searchconsole.googleapis.com/v1/urlInspection/index:inspect', { token, signal, body: { inspectionUrl: url, siteUrl: site, languageCode: 'ko-KR' } });
   if (!data.inspectionResult?.indexStatusResult) throw new ApiError(502, 'INVALID_RESPONSE');
   return data.inspectionResult.indexStatusResult;

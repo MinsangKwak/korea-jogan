@@ -42,6 +42,10 @@ function fake(item, state) {
     metadata: { subjectToThresholding: !!state.threshold },
   };
   if (dimension === 'eventName') return { rows: [row([7, 7, 0], 'section_media'), row([5, 9, 600], 'dwell_media'), row([2, 2, 0], 'section_fiscal'), row([2, 2, 90], 'dwell_fiscal')] };
+  if (dimension === 'pagePath' && item.dimensions[1]?.name === 'eventName') return {
+    rows: [row([4], ['/topics/lee-jae-myung-trials/', 'question_source']), row([2], ['/topics/lee-jae-myung-trials/', 'question_term'])],
+    metadata: { subjectToThresholding: !!state.threshold },
+  };
   if (dimension === 'pagePath') return report([22, 10, 1200], '<img src=x onerror=alert(1)> 조간');
   if (dimension === 'sessionDefaultChannelGroup') return report([10], 'Organic Search');
   if (dimension === 'region') return report([5], 'Busan');
@@ -89,6 +93,9 @@ async function fixture(options = {}) {
       assert.equal(route.request().method(), 'POST');
       const body = route.request().postDataJSON();
       if (url.pathname.endsWith('/searchAnalytics/query')) {
+        if (body.dimensionFilterGroups[0].filters.some((item) => item.operator === 'excludingRegex')) {
+          return route.fulfill({ json: state.searchEmpty ? {} : { rows: [{ keys: ['https://korea-jogan.com/topics/lee-jae-myung-trials/'], clicks: 2, impressions: 9 }] } });
+        }
         const keys = { query: ['환율 기준일 <img src=x onerror=alert(1)>'], page: ['https://korea-jogan.com/indicators/usd-krw/'], date: [body.endDate] }[body.dimensions[0]];
         return route.fulfill({ json: state.searchEmpty ? {} : { rows: [{ ...(keys ? { keys } : {}), clicks: 3, impressions: 100, ctr: 0.03, position: 8.5 }] } });
       }
@@ -161,7 +168,21 @@ async function check(name, options, fn) {
     await page.waitForFunction(() => document.getElementById('searchState').textContent === '조회 완료');
     await page.locator('#searchCountry').selectOption('kor');
     await page.waitForFunction(() => document.getElementById('searchState').textContent === '조회 완료');
-    const reports = searchRequests.filter((item) => item.url().endsWith('/searchAnalytics/query')).slice(-4).map((item) => item.postDataJSON());
+    const requested = searchRequests.filter((item) => item.url().endsWith('/searchAnalytics/query')).map((item) => item.postDataJSON());
+    const pilot = requested.findLast((body) => body.dimensionFilterGroups[0].filters.some((item) => item.operator === 'excludingRegex'));
+    assert.deepEqual(pilot.dimensions, ['page']);
+    const filters = pilot.dimensionFilterGroups[0].filters;
+    assert.equal(filters.find((item) => item.dimension === 'country').expression, 'kor');
+    const paths = new RegExp(filters.find((item) => item.dimension === 'page').expression);
+    assert.ok(paths.test('https://korea-jogan.com/topics/lee-jae-myung-trials/'));
+    assert.ok(paths.test('https://korea-jogan.com/politics/regional-student-loan-interest/'));
+    assert.ok(!paths.test('https://korea-jogan.com/topics/other/'));
+    const brand = new RegExp(filters.find((item) => item.dimension === 'query').expression.replace('(?i)', ''), 'i');
+    assert.ok(brand.test('오늘정치한장') && brand.test('Korea-Jogan'));
+    assert.ok(!brand.test('재판 다음 기일'));
+    assert.equal(await page.locator('#searchPilot tbody tr').count(), 3);
+    assert.match(await page.locator('#searchPilot tbody tr').first().innerText(), /9\s+2$/);
+    const reports = requested.filter((body) => !body.dimensionFilterGroups[0].filters.some((item) => item.operator === 'excludingRegex')).slice(-4);
     assert.equal(reports.length, 4);
     assert.ok(reports.every((body) => body.type === 'web' && body.dataState === 'final'));
     assert.ok(reports.every((body) => (new Date(body.endDate) - new Date(body.startDate)) / 86400000 === 6));
@@ -390,6 +411,28 @@ async function check(name, options, fn) {
       assert.equal(await page.locator('#connect').evaluate((element) => element === document.activeElement), true);
     });
   }
+  await check('질문 근거·용어 열기와 내부 접속 제외', {}, async ({ page }) => {
+    await page.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
+    await page.route((url) => url.pathname === '/topics/lee-jae-myung-trials/', (route) => route.fulfill({ contentType: 'text/html', body: `
+      <meta charset="utf-8"><meta name="jg-ga4" content="G-EXAMPLE"><main data-question-id="lee-jae-myung-trials">
+      <a href="#evidence" data-question-action="source">근거</a><a href="#term" data-question-action="term">용어</a>
+      <a href="#private" data-question-action="other">기타</a></main>
+      <script src="/src/core/metrics.js" defer></script><script src="/src/core/discovery.js" defer></script>` }));
+    const open = (internal) => page.goto('http://jogan.test/topics/lee-jae-myung-trials/?q=private-text&utm_source=blog&kj-internal=' + internal);
+    await open(0);
+    await page.getByText('근거').click();
+    await page.getByText('근거').click();
+    await page.getByText('용어').focus();
+    await page.keyboard.press('Enter');
+    await page.getByText('기타').click();
+    const recorded = await page.evaluate(() => window.dataLayer.map((args) => [...args]));
+    assert.deepEqual(recorded.filter((args) => args[1]?.startsWith?.('question_')).map((args) => args[1]), ['question_source', 'question_source', 'question_term']);
+    assert.ok(!JSON.stringify(recorded).includes('private-text'));
+    assert.equal(recorded.find((args) => args[1] === 'page_view')[2].page_location, 'http://jogan.test/topics/lee-jae-myung-trials/?utm_source=blog');
+    await open(1);
+    await page.getByText('근거').click();
+    assert.equal(await page.evaluate(() => (window.dataLayer || []).length), 0);
+  });
   await check('신문 기획 지면 노출·경로별 클릭·내부 접속 제외', { width: 390 }, async ({ page }) => {
     await page.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
     const loadCover = async (flag) => {
@@ -432,6 +475,8 @@ async function check(name, options, fn) {
     assert.match(await page.locator('#campaigns').innerText(), /202611_readership · threads \/ social\s+4\s+3\s+45초/);
     assert.match(await page.locator('#landings').innerText(), /\/topics\/muan-airport\/\s+3\s+2\s+0초/);
     assert.match(await page.locator('#returning').innerText(), /재방문\s+2\s+1\s+40초/);
+    assert.equal(await page.locator('#pilotActions tbody tr').count(), 3);
+    assert.match(await page.locator('#pilotActions tbody tr').first().innerText(), /4\s+2\s+0$/);
     assert.match(await page.locator('#readerActions').innerText(), /RSS 주소 복사\s+3\s+2/);
     assert.match(await page.locator('#lawEditionRate').innerText(), /진입률 25% · 노출 4회 중 첫 진입 1회/);
     assert.match(await page.locator('#lawEntryActions').innerText(), /1면 검색창에서 검색\s+2\s+1/);
@@ -445,17 +490,19 @@ async function check(name, options, fn) {
     assert.ok(acquisition.requests.every((item) => item.dateRanges[0].startDate === '27daysAgo'));
     assert.deepEqual(acquisition.requests.map((item) => item.limit), ['10', '10', '10', '5', '40']);
     await page.locator('#disconnect').click();
-    for (const id of ['sources', 'campaigns', 'landings', 'returning', 'readerActions', 'lawEntryActions', 'lawEditionRate']) assert.equal(await page.locator('#' + id).textContent(), '');
+    for (const id of ['sources', 'campaigns', 'landings', 'returning', 'readerActions', 'pilotActions', 'lawEntryActions', 'lawEditionRate']) assert.equal(await page.locator('#' + id).textContent(), '');
   });
   await check('Google의 소규모 자료 생략과 빈 유입 보고서를 구분', { threshold: true }, async ({ page, state }) => {
     await connect(page); await settled(page);
     assert.match(await page.locator('#acquisitionNote').innerText(), /일부 소규모 자료가 생략/);
+    assert.match(await page.locator('#pilotActions tbody tr').first().innerText(), /4\s+2\s+—$/);
     assert.match(await page.locator('#lawEditionRate').innerText(), /비율을 표시할 수 없습니다/);
     state.empty = true;
     await page.locator('#refresh').click(); await settled(page);
     assert.match(await page.locator('#sources').innerText(), /집계된 데이터가 없습니다/);
     assert.match(await page.locator('#readerActions').innerText(), /집계된 데이터가 없습니다/);
     assert.match(await page.locator('#lawEditionRate').innerText(), /지면 노출 기록이 없습니다/);
+    assert.match(await page.locator('#pilotActions tbody tr').first().innerText(), /0\s+0\s+0$/);
   });
   await check('추이 툴팁의 실제 수치·0명·호버 유지·Esc 닫기', { width: 1440, trendRows: [row([12, 89], '20261106'), row([1234, 2345], '20261104'), row([0, 0], '20261105')] }, async ({ page, requests }) => {
     await connect(page); await settled(page);
