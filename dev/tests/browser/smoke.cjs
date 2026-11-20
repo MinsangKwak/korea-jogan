@@ -310,9 +310,12 @@ async function check(name, options, run) {
     await page.goto('http://jogan.test/?d=' + past + '&kj-internal=1#media');
     await page.waitForURL('http://jogan.test/' + past + '?kj-internal=1#media');
   });
-  await check('느린 접속·로딩 표시·보조 요청 분리', { delay: 700, slowExtras: true }, async (page) => {
+  await check('느린 접속에서도 정치 질문과 근거를 먼저 읽고 보조 요청은 따로 완료', { delay: 700, slowExtras: true }, async (page) => {
     await page.goto('http://jogan.test/', { waitUntil: 'domcontentloaded' });
-    assert.equal(await page.locator('#pageLoading').isVisible(), true);
+    assert.equal(await page.locator('#frontQuestion').isVisible(), true);
+    assert.ok((await page.locator('#frontAnswer').innerText()).trim());
+    assert.match(await page.locator('#frontSource').getAttribute('href'), /^https:\/\//);
+    assert.equal(await page.locator('#pageLoading').isVisible(), false);
     await ready(page);
     assert.equal(await page.locator('#fixes li').count(), 0);
     assert.equal(await page.locator('#main').getAttribute('aria-busy'), 'false');
@@ -363,7 +366,10 @@ async function check(name, options, run) {
     await page.goto('http://jogan.test/');
     await ready(page);
     await page.locator('#track:not([hidden])').waitFor();
-    assert.ok(await page.locator('[data-sec="track"]:visible').count() > 0);
+    assert.equal(await page.locator('#catNav a[href="/topics/"]').isVisible(), true);
+    await page.locator('#menuBtn').click();
+    assert.equal(await page.locator('#drawerNav a[data-sec="track"]').isVisible(), true);
+    await page.keyboard.press('Escape');
     assert.equal(await page.locator('#trackList > article').count(), trackers.items.length);
     for (const topic of trackers.items.filter((entry) => entry.trackingKeywords?.exact?.length)) {
       const card = page.locator('#issue-' + topic.id);
@@ -517,6 +523,8 @@ async function check(name, options, run) {
     const lead = await page.locator('#leadBox').boundingBox();
     const front = await page.locator('#natH').boundingBox();
     assert.ok(Math.abs(lead.x - front.x) <= 1, '전국 뉴스와 머리기사의 읽기 시작점 정렬');
+    const destinations = await page.locator('#catNav a').evaluateAll(links => links.map(link => link.getAttribute('href')));
+    assert.deepEqual(destinations, ['#home', '/politics/', '/topics/', '#national', '/indicators/', '/archive/']);
     await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="home"]').getAttribute('aria-current') === 'true');
     assert.equal(await page.locator('#natFlow').getAttribute('open'), '');
     await page.locator('#natFlow > summary').click();
@@ -571,8 +579,10 @@ async function check(name, options, run) {
     await ready(page);
     const events = (prefix) => page.evaluate((p) => window.dataLayer.filter((entry) => entry[0] === 'event' && String(entry[1]).startsWith(p)).map((entry) => [entry[1], entry[2] && entry[2].value]), prefix);
     // 메뉴로 고른 섹션은 바로 한 번 세고, 지나쳐 간 섹션은 3초를 넘기지 않아 세지 않는다
-    await page.locator('a[data-sec="fiscal"]:visible').first().click();
-    await page.locator('a[data-sec="fiscal"]:visible').first().click();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await page.locator('#menuBtn').click();
+      await page.locator('#drawerNav a[data-sec="fiscal"]').click();
+    }
     assert.deepEqual(await events('section_'), [['section_fiscal', undefined]]);
     await page.waitForTimeout(1600);
     await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });

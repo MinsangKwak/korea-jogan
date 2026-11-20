@@ -6,6 +6,7 @@ const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
 const { openBrowser } = require('./browser.cjs');
+const { checkQuestionRecall } = require('./question-recall.cjs');
 const repo = path.resolve(__dirname, '../../..');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'jogan-discovery-'));
 const web = path.join(temp, 'web');
@@ -57,6 +58,7 @@ async function check(name, options, run) {
   browser = await openBrowser();
   try {
     assert.ok(pages.length >= 3, '검색 도착 페이지가 생성되지 않음');
+    await checkQuestionRecall(check, origin);
     await check('검색 진입 페이지에서 스크립트 없이 RSS 주소와 읽기 안내 제공', { javaScriptEnabled: false, width: 320 }, async ({ page }) => {
       for (const routePath of ['/topics/muan-airport/', '/indicators/usd-krw/']) {
         await page.goto(origin + routePath);
