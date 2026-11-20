@@ -96,6 +96,7 @@ async function fixture(options = {}) {
       return route.fulfill({ json: { inspectionResult: { indexStatusResult: { verdict: 'PASS', coverageState: '색인에 등록됨', googleCanonical: body.inspectionUrl, userCanonical: body.inspectionUrl, lastCrawlTime: '2026-11-01T00:00:00Z' } } } });
     }
     if (url.hostname !== 'jogan.test') return route.abort();
+    if (url.pathname === '/data/trackers.json' && options.trackerResponse) return route.fulfill(options.trackerResponse);
     if (options.publishFailed && url.pathname === '/data/issues/index.json') return route.fulfill({ status: 404, body: '' });
     // 배포용 기본 클라이언트 ID와 상관없이 미설정 상태부터 검사한다
     // 배포본에는 공개된 호만 올라가므로, 아침 발행 전 dev의 초안은 색인에서 뺀다
@@ -206,6 +207,10 @@ async function check(name, options, fn) {
   });
   await check('색인 조회 대상이 바뀌면 이전 응답을 폐기', {}, async ({ page, state, searchRequests }) => {
     await connectSearch(page);
+    const publishedTopics = JSON.parse(fs.readFileSync(path.join(web, 'data/trackers.json'), 'utf8')).items;
+    for (const { id } of publishedTopics) {
+      await page.locator('#searchTopics option[value="https://korea-jogan.com/topics/' + id + '/"]').waitFor({ state: 'attached' });
+    }
     state.searchDelay = true;
     await page.locator('#searchInspect').click();
     await page.locator('#searchTarget').selectOption('https://korea-jogan.com/indicators/usd-krw/');
@@ -217,6 +222,26 @@ async function check(name, options, fn) {
     assert.match(await page.locator('#searchInspectData').innerText(), /https:\/\/korea-jogan.com\/indicators\/usd-krw\//);
     assert.equal(searchRequests.at(-1).postDataJSON().inspectionUrl, 'https://korea-jogan.com/indicators/usd-krw/');
     assert.equal(searchRequests.at(-1).postDataJSON().languageCode, 'ko-KR');
+  });
+  const topicRecord = { id: 'new-trial', title: '새로 등록한 재판 기록', summary: '다음 기일 확인', steps: [{ t: '기일 미정' }] };
+  await check('새 추적 이슈를 한 번만 표시하고 발행 경로로 색인 조회', { trackerResponse: { json: { items: [
+    topicRecord, topicRecord, { ...topicRecord, id: '../unpublished' }, { ...topicRecord, id: 'missing-records', steps: [] },
+  ] } } }, async ({ page, searchRequests }) => {
+    await connectSearch(page);
+    const target = 'https://korea-jogan.com/topics/new-trial/';
+    await page.locator('#searchTarget').selectOption(target);
+    assert.deepEqual(await page.locator('#searchTopics option').allTextContents(), ['무안공항 참사 기록', topicRecord.title]);
+    await page.locator('#searchInspect').click();
+    await page.waitForFunction(() => document.getElementById('searchInspectMessage').textContent.includes('통과'));
+    assert.equal(searchRequests.at(-1).postDataJSON().inspectionUrl, target);
+  });
+  await check('추적 자료를 읽지 못해도 기존 색인 조회 유지', { trackerResponse: { status: 503, body: '' } }, async ({ page, searchRequests }) => {
+    await connectSearch(page);
+    const target = 'https://korea-jogan.com/topics/muan-airport/';
+    await page.locator('#searchTarget').selectOption(target);
+    await page.locator('#searchInspect').click();
+    await page.waitForFunction(() => document.getElementById('searchInspectMessage').textContent.includes('통과'));
+    assert.equal(searchRequests.at(-1).postDataJSON().inspectionUrl, target);
   });
   await check('Google 연결 해제 시 검색·GA4 자료와 늦은 응답 정리', {}, async ({ page, state }) => {
     await connect(page); await settled(page); await connectSearch(page);

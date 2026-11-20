@@ -4,6 +4,20 @@ const ORIGIN = 'https://korea-jogan.com';
 const API = 'https://www.googleapis.com/webmasters/v3/sites/';
 const SITES = [ORIGIN + '/', 'sc-domain:korea-jogan.com'];
 export const SEARCH_TARGETS = [ORIGIN + '/', ORIGIN + '/topics/', ORIGIN + '/topics/muan-airport/', ORIGIN + '/indicators/', ORIGIN + '/indicators/usd-krw/'];
+let inspectionTopics = new Map();
+
+export async function loadInspectionTopics() {
+  const { items } = await request('/data/trackers.json');
+  const topics = new Map();
+  for (const item of Array.isArray(items) ? items : []) {
+    if (typeof item?.id !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id)) continue;
+    if (typeof item.title !== 'string' || !item.title.trim() || !item.summary || !(item.steps?.length || item.links?.length)) continue;
+    const url = ORIGIN + '/topics/' + item.id + '/';
+    if (!topics.has(url)) topics.set(url, item.shortTitle || item.title);
+  }
+  inspectionTopics = topics;
+  return Array.from(topics);
+}
 
 // Search Console의 날짜는 태평양 시간으로 계산하고 처리 지연을 고려해 3일 전까지 조회한다
 export function searchRange(days, now = new Date()) {
@@ -37,7 +51,7 @@ export async function loadSearch(token, { days, country, site, signal }) {
 }
 
 export async function inspectSearchUrl(token, site, url, signal) {
-  if (!SITES.includes(site) || !SEARCH_TARGETS.includes(url)) throw new ApiError(400, 'INVALID_TARGET');
+  if (!SITES.includes(site) || !(SEARCH_TARGETS.includes(url) || inspectionTopics.has(url))) throw new ApiError(400, 'INVALID_TARGET');
   const data = await request('https://searchconsole.googleapis.com/v1/urlInspection/index:inspect', { token, signal, body: { inspectionUrl: url, siteUrl: site, languageCode: 'ko-KR' } });
   if (!data.inspectionResult?.indexStatusResult) throw new ApiError(502, 'INVALID_RESPONSE');
   return data.inspectionResult.indexStatusResult;
