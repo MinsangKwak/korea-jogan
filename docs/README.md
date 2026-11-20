@@ -23,4 +23,4 @@
 
 원문 접근 여부·사람의 대조·AI 형식 검사는 서로 다른 일이며, 데이터 검사 통과와 실제 이용자 성과도 구분해 기록합니다.
 
-공통 편집 원칙과 제품 결정은 [통합 기획·편집 기준 Notion](https://app.notion.com/p/3decbbdd109b812e8a90f88de1c66a33)에서 관리합니다. 그 하위의 [판례 독자 과제와 자료 선정](https://app.notion.com/p/41bcbbdd109b819b9710ebe874373b55)과 [검색 품질과 운영 기록](https://app.notion.com/p/41bcbbdd109b81b08154ccf3b0f7f2a3)에 이전 Casewise 결정의 근거도 보존합니다.
+판례 선정과 검색의 제품 결정은 [조간 통합 기획·편집 기준](https://app.notion.com/p/3decbbdd109b812e8a90f88de1c66a33), 자료 갱신과 검증 이력은 [조간 개발·운영 기록](https://app.notion.com/p/40ecbbdd109b8192be79d2ad87e1b95d)에서 확인합니다. 기사와 선례의 연결 근거는 [편집 데이터 기준](planning/news-case-pairs.md)에 기록합니다.
