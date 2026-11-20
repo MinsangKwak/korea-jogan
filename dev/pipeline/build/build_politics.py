@@ -175,7 +175,7 @@ def with_front(markup: str, issue: dict, questions: list[dict], cutoff: str) -> 
         nodes["frontDetail"].set("href", route(lead))
         nodes["frontSource"].set("href", lead["sources"][0]["url"])
         nodes["frontSource"].text = "근거 원문 보기"
-        nodes["frontSource"].set("aria-label", lead["sources"][0]["label"] + " 원문 보기")
+        nodes["frontSource"].set("aria-label", "근거 원문 보기 · " + lead["sources"][0]["label"])
         story = edition_story(issue)
         if story:
             day = dt.date.fromisoformat(issue["date"])
