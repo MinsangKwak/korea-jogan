@@ -2,11 +2,7 @@
 // 분야 메뉴, 하단 탭바, 오른쪽 세로 메뉴, 전체 메뉴 서랍, 맨 위로 단추
 
 function renderNav() {
-  SECTIONS.forEach(([sid, name]) => {
-    const li = el('li');
-    li.append(el('a', { href: '#' + sid, 'data-sec': sid, 'data-group': sid }, name));
-    $('catNav').append(li);
-  });
+  $('catNav').querySelectorAll('[data-sec]').forEach((link) => { link.setAttribute('href', '#' + link.dataset.sec); });
   TABS.forEach(([name, secs, icon]) => {
     const li = el('li');
     const a = el('a', { href: '#' + secs[0], 'data-sec': secs[0], 'data-group': secs.join(' ') });
@@ -147,10 +143,13 @@ function setupNav() {
   const targets = Array.from(document.querySelectorAll('main > section')).filter((section) => SECTIONS.some(([id]) => id === section.id));
   const cats = $('cats');
   links.forEach((a) => a.addEventListener('click', (e) => {
-    // 해시 이동 대신 직접 스크롤해 미리보기 틀 안에서도 확실히 움직이게 한다
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
     closeDrawer(false);
-    $(a.dataset.sec).scrollIntoView({ block: 'start' });
+    const section = $(a.dataset.sec);
+    section.tabIndex = -1;
+    section.focus({ preventScroll: true });
+    section.scrollIntoView({ block: 'start' });
     // 메뉴로 고른 섹션은 머문 시간과 상관없이 읽은 섹션으로 센다
     noteSection(a.dataset.sec);
   }));

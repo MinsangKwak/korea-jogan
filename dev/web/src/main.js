@@ -43,6 +43,7 @@ async function boot() {
     D = await loadIssue();
     ISSUE = parseDate(D.date);
     window.newsCaseEdition?.showIssue(D.date, INDEX.issues);
+    showPoliticsFront(D).catch(() => { $('politicsFront').hidden = true; });
     renderHead();
     renderStale();
     renderNotice();
