@@ -337,6 +337,13 @@ def discovery_page(template: str, item: dict) -> str:
     body = item["body"]
     if item.get("questionId"):
         query = urlencode({"subject": item["title"], "body": url}, quote_via=quote)
+        copy_link = (
+            '<div class="question-share"><label for="questionPermalink">이 질문의 고정 주소</label>'
+            f'<div class="reader-tools__copy"><input id="questionPermalink" type="text" inputmode="url" value="{esc(url)}" readonly>'
+            '<button class="kj-btn kj-btn--secondary" type="button" id="questionLinkCopy" hidden>질문 링크 복사</button></div>'
+            '<p class="reader-tools__status" id="questionCopyStatus" role="status"></p></div>'
+        )
+        body = body.replace("</header>", copy_link + "</header>", 1)
         share = f'<nav class="discovery-links" aria-label="질문 공유와 구독"><a href="mailto:?{esc(query)}">이 질문 메일로 공유</a><a href="/feed.xml">매일 새 호 RSS</a></nav>'
         body = body.replace("</main>", share + panel + "</main>", 1)
     else:

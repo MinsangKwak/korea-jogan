@@ -59,6 +59,36 @@ async function check(name, options, run) {
   try {
     assert.ok(pages.length >= 3, '검색 도착 페이지가 생성되지 않음');
     await checkQuestionRecall(check, origin);
+    const questionPaths = ['/topics/lee-jae-myung-trials/', '/politics/regional-student-loan-interest/', '/politics/reversal-and-remand/'];
+    await check('세 질문에 자바스크립트 없이 사용 가능한 고정 주소 제공', { javaScriptEnabled: false, width: 320 }, async ({ page }) => {
+      for (const routePath of questionPaths) {
+        await page.goto(origin + routePath + '?utm_source=test#main');
+        const field = page.getByLabel('이 질문의 고정 주소');
+        assert.equal(await field.isVisible(), true);
+        assert.equal(await field.getAttribute('readonly'), '');
+        assert.equal(await field.inputValue(), 'https://korea-jogan.com' + routePath);
+        assert.equal(await page.locator('#questionLinkCopy').isHidden(), true);
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth));
+      }
+    });
+    await check('질문 링크는 추적 매개변수 없이 복사하며 차단된 환경에서 직접 선택', { width: 390 }, async ({ page }) => {
+      const routePath = questionPaths[1];
+      await page.goto(origin + routePath + '?utm_source=test&private=value#main');
+      const button = page.getByRole('button', { name: '질문 링크 복사' });
+      const field = page.getByLabel('이 질문의 고정 주소');
+      await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', {
+        configurable: true, value: { writeText: async (text) => { window.copiedPermalink = text; } },
+      }));
+      await button.focus();
+      await button.press('Enter');
+      await page.waitForFunction(() => document.getElementById('questionCopyStatus').textContent === '복사했습니다.');
+      assert.equal(await page.evaluate(() => window.copiedPermalink), 'https://korea-jogan.com' + routePath);
+      await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined }));
+      await button.press('Space');
+      await page.waitForFunction(() => document.getElementById('questionCopyStatus').textContent.includes('직접 복사'));
+      assert.ok(await field.evaluate((input) => document.activeElement === input && input.selectionStart === 0 && input.selectionEnd === input.value.length));
+      assert.equal(await page.locator('#questionCopyStatus').getAttribute('role'), 'status');
+    });
     await check('검색 진입 페이지에서 스크립트 없이 RSS 주소와 읽기 안내 제공', { javaScriptEnabled: false, width: 320 }, async ({ page }) => {
       for (const routePath of ['/topics/muan-airport/', '/indicators/usd-krw/']) {
         await page.goto(origin + routePath);

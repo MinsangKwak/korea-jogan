@@ -67,3 +67,7 @@
 .discovery-main[data-question-id] .question-related{padding:1rem 1.4rem;background:var(--surface);border-inline-start:3px solid var(--brand);margin-block:2rem}
 .discovery-main[data-question-id] .question-related h2{margin-top:0}
 .discovery-main[data-question-id] li a[data-question-action],.question-related a{display:inline-block;padding-block:.4rem}
+
+.question-share{max-width:42rem;margin-top:1.25rem}
+.question-share label{display:block;margin-bottom:.3rem;font-size:.88rem;font-weight:700}
+.question-share .reader-tools__status{margin-block:.3rem 0}
