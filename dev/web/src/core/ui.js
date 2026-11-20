@@ -154,6 +154,24 @@ const ARTICLE_LAW_TOPICS = [
   { words: /집행\s*정지/, exclude: /(?:형|강제|민사)\s*집행\s*정지/, label: '집행정지', route: '?theme=administration&q=집행정지' },
 ];
 
+function attachEditionLink(article, articleUrl) {
+  const pair = window.newsCaseEdition?.find(articleUrl, D?.date);
+  if (!pair) return false;
+  const target = new URLSearchParams({ theme: pair.theme, q: pair.caseNumber });
+  const anchor = article.querySelector('.article-law-link') || el('a', { class: 'article-law-link' });
+  anchor.href = '/law/?' + target;
+  anchor.textContent = '기사와 함께 읽는 판례 · ' + pair.caseNumber;
+  if (!anchor.parentNode) article.append(anchor);
+  return true;
+}
+
+window.addEventListener('news-case-ready', () => {
+  document.querySelectorAll('.kj-newscard').forEach(article => {
+    const source = article.querySelector('.nat-original, h3 a');
+    if (source) attachEditionLink(article, source.getAttribute('href'));
+  });
+});
+
 function newsItem(it, label) {
   const a = el('article', { class: 'kj-newscard' });
   const cat = el('span', { class: 'kj-newscard__cat' }, label);
@@ -171,12 +189,7 @@ function newsItem(it, label) {
   src.append(el('span', {}, it.outlet + ' · ' + it.date.slice(5).replace('-', '/')));
   if (it.figure_source) src.append(el('span', {}, '수치 출처 ' + it.figure_source));
   a.append(src);
-  const pair = window.newsCaseEdition?.find(it.url, D?.date);
-  if (pair) {
-    const target = new URLSearchParams({ theme: pair.theme, q: pair.caseNumber });
-    a.append(el('a', { class: 'article-law-link', href: '/law/?' + target }, '기사와 함께 읽는 판례 · ' + pair.caseNumber));
-    return a;
-  }
+  if (attachEditionLink(a, it.url)) return a;
   const material = [it.title, it.summary].join(' ');
   const topic = ARTICLE_LAW_TOPICS.find((item) => item.words.test(material) && !item.exclude?.test(material));
   if (topic) {

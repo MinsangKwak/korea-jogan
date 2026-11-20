@@ -218,6 +218,51 @@ window.kjLoadTimer = setTimeout(() => {
   <!-- /kj:digest -->
   <section class="hero" id="home" aria-labelledby="leadH">
     <div class="kj-wrap" id="loadError" hidden></div>
+    <section class="case-edition kj-wrap" id="caseEdition" aria-labelledby="caseEditionTitle">
+      <div class="case-edition__mast">
+        <h2 id="caseEditionTitle">기사와 판례</h2>
+        <a href="#leadH">머리기사로 이동 <span aria-hidden="true">↓</span></a>
+      </div>
+      <div class="case-edition__spread">
+        <aside class="case-edition__lookup" aria-labelledby="editionSearchTitle">
+          <div class="case-edition__search-head">
+            <h3 id="editionSearchTitle">판례 검색</h3>
+            <a href="/law/" data-law-entry="edition">자료실 전체 <span aria-hidden="true">→</span></a>
+          </div>
+          <form id="frontCaseSearch" role="search" aria-labelledby="editionSearchTitle" action="/law/" data-law-entry="search" hidden>
+            <label for="frontCaseQuery">생활 속 키워드 또는 사건번호</label>
+            <div class="case-edition__field">
+              <input id="frontCaseQuery" type="search" maxlength="8000" enterkeyhint="search" autocomplete="off" placeholder="예: 전세보증금, 2024마8598" required>
+              <button type="submit">검색</button>
+            </div>
+            <p id="frontCaseError" role="status" hidden></p>
+          </form>
+          <nav class="case-edition__shortcuts" aria-label="법률 자료 찾아보기">
+            <a href="/law/?view=issues" data-law-entry="edition">생활 법률 이슈</a>
+            <a href="/law/calendar/" data-law-entry="edition">입법 캘린더</a>
+          </nav>
+        </aside>
+        <div class="case-edition__story" id="caseEditionStory">
+          <!-- kj:case-edition -->
+          <article class="case-pair" id="casePair" aria-labelledby="casePairQuestion" data-issue-date="" hidden="hidden">
+            <p class="case-pair__meta" id="casePairDate"></p>
+            <h3 class="case-pair__question" id="casePairQuestion" tabindex="-1"></h3>
+            <p class="case-pair__context" id="casePairContext"></p>
+            <div class="case-pair__sources">
+              <a class="case-pair__source" id="casePairArticle" data-case-action="article" rel="noreferrer"><span>기사 원문</span><strong></strong></a>
+              <a class="case-pair__source" id="casePairRuling" data-case-action="ruling" data-law-entry="ruling" rel="noreferrer"><span>대법원</span><strong></strong></a>
+            </div>
+            <a class="case-pair__more" id="casePairSearch" data-case-action="related" data-law-entry="edition"></a>
+          </article>
+          <p id="casePairEmpty">이 호까지 연결된 기사·판례가 없습니다. 검색에서 원하는 판례를 찾아보세요.</p>
+          <!-- /kj:case-edition -->
+          <details id="caseEditionChoices" class="case-edition__choices" hidden>
+            <summary>다른 쟁점 읽기</summary>
+            <ul id="caseEditionList"></ul>
+          </details>
+        </div>
+      </div>
+    </section>
     <div class="kj-wrap hero-grid" id="heroGrid">
       <article class="kj-lead" aria-busy="true" id="leadBox">
         <div class="lead-skel" id="leadSkel" aria-hidden="true">
@@ -237,16 +282,6 @@ window.kjLoadTimer = setTimeout(() => {
         <p class="meta" id="leadMeta"></p>
       </article>
       <aside class="briefs-box" aria-label="함께 읽을 자료">
-        <div class="front-law">
-          <div class="front-law__story">
-            <img src="/law/court-archive.webp" width="640" height="400" alt="" decoding="async">
-            <div><h2>판례 자료실</h2><p>생활 속 질문으로 찾아보는 법원의 판단.</p></div>
-          </div>
-          <nav class="front-law__links" aria-label="법률 자료 찾아보기">
-            <a href="/law/">판례 검색 <span aria-hidden="true">→</span></a>
-            <a href="/law/calendar/">입법 캘린더 <span aria-hidden="true">→</span></a>
-          </nav>
-        </div>
         <h2 id="briefH">오늘 꼭 볼 숫자</h2>
         <ol class="kj-briefs" id="briefs"></ol>
       </aside>
@@ -567,6 +602,7 @@ window.kjLoadTimer = setTimeout(() => {
 <p class="reading-toast" id="shareStatus" role="status"></p>
 
 <!-- 화면 스크립트. 공통(core) → 컴포넌트 → 진입점(main) 순서로 읽는다 -->
+<script type="application/json" id="news-case-data">null</script>
 <script type="application/json" id="issue-data">null</script>
 <script src="src/core/config.js" defer></script>
 <script src="src/core/format.js" defer></script>
@@ -577,6 +613,7 @@ window.kjLoadTimer = setTimeout(() => {
 <script src="src/core/ui.js" defer></script>
 <script src="src/core/paired-reading.js" defer></script>
 <script src="src/core/data.js" defer></script>
+<script src="src/components/news-case/edition.js" defer></script>
 <script src="src/components/nav/nav.js" defer></script>
 <script src="src/components/lead/lead.js" defer></script>
 <script src="src/components/economy/economy.js" defer></script>

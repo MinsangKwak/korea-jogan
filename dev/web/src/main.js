@@ -42,6 +42,7 @@ async function boot() {
     setupNav();
     D = await loadIssue();
     ISSUE = parseDate(D.date);
+    window.newsCaseEdition?.showIssue(D.date, INDEX.issues);
     renderHead();
     renderStale();
     renderNotice();
