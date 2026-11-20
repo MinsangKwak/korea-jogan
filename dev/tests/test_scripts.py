@@ -60,7 +60,7 @@ class Site(unittest.TestCase):
     def test_tracker_unknown_period_and_phase_validation(self):
         path = self.tmp / "dev/web/data/trackers.json"
         data = json.loads(path.read_text())
-        item = data["items"][-1]
+        item = next(item for item in data["items"] if item.get("periodUnknown") and item.get("phases"))
         self.assertTrue(item["periodUnknown"])
         self.assertEqual(validate.check_trackers(), [])
         item["end"] = "2027-03-22"
@@ -78,6 +78,19 @@ class Site(unittest.TestCase):
 
 
 class ValidateTest(Site):
+    def test_tracker_rejects_incomplete_or_empty_keyword_groups(self):
+        path = self.tmp / "dev/web/data/trackers.json"
+        data = json.loads(path.read_text())
+        for keywords in (
+            {"subject": ["인물"], "procedure": ["기일"]},
+            {"subject": ["인물"], "case": "사건", "procedure": ["기일"]},
+            {"subject": ["인물"], "case": ["사건"], "procedure": [""]},
+        ):
+            with self.subTest(keywords=keywords):
+                data["items"][0]["trackingKeywords"] = keywords
+                path.write_text(json.dumps(data), encoding="utf-8")
+                self.assertTrue(any("trackingKeywords" in error for error in validate.check_trackers()))
+
     def test_current_issue_passes(self):
         self.assertEqual(self.run_validate()[0], 0)
         self.assertEqual(self.run_validate("--deploy")[0], 0)

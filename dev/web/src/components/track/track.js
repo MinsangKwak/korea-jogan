@@ -14,9 +14,21 @@ function renderTrack(data) {
     const card = el('article', { class: 'kj-track' });
     const head = el('div', { class: 'kj-track__head' });
     head.append(el('h3', {}, item.title), el('span', { class: 'kj-badge' }, item.status));
-    if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id)) head.append(el('a', { href: '/topics/' + item.id + '/', class: 'kj-track__permalink' }, '이 이슈의 전체 기록'));
+    if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id)) {
+      head.append(el('a', {
+        href: '/topics/' + item.id + '/',
+        class: 'kj-track__permalink',
+        'aria-label': '이 이슈의 전체 기록 · ' + item.title,
+      }, '이 이슈의 전체 기록'));
+    }
     card.id = 'issue-' + item.id;
     card.append(head, readingText(item.summary, 'kj-track__sum'));
+    const keyword = item.trackingKeywords?.exact?.[0];
+    if (keyword) {
+      const line = el('p', { class: 'kj-track__keywords' });
+      line.append(el('strong', {}, '추적 키워드'), ' ' + keyword);
+      card.append(line);
+    }
     if (item.phases) card.append(trackingPhases(item));
 
     const body = el('div', { class: 'kj-track__body' });
@@ -29,7 +41,8 @@ function renderTrack(data) {
     const ol = el('ol', { class: 'kj-timeline' });
     item.steps.forEach((st) => {
       const li = el('li', st.done ? { class: 'is-done' } : {});
-      li.append(el('b', {}, st.d ? longDate(st.d) : '예정'), el('span', {}, st.t));
+      const when = st.d ? longDate(st.d) : (item.periodUnknown ? '일정 미확정' : '예정');
+      li.append(el('b', {}, when), el('span', {}, st.t));
       ol.append(li);
     });
     const timeline = el('details', { class: 'kj-track__timeline' });
@@ -141,6 +154,8 @@ function setupTrackingPanel(data) {
       details.append(el('summary', {}, '기사·타임라인 자세히 보기'));
       const card = $('issue-' + item.id).cloneNode(true);
       card.removeAttribute('id');
+      const permalink = card.querySelector('.kj-track__permalink');
+      if (permalink) article.append(permalink);
       card.querySelectorAll('.kj-track__sources').forEach((sources) => sources.replaceWith(sources.querySelector('.tracking-articles')));
       card.querySelectorAll('.kj-track__timeline').forEach((timeline) => timeline.replaceWith(timeline.querySelector('.kj-timeline')));
       card.querySelectorAll('.kj-track__head, .kj-track__sum, .tracking-phases, .kj-prog__next').forEach((node) => node.remove());

@@ -253,7 +253,7 @@ async function check(name, options, run) {
       assert.equal(await page.locator('#leadStand').textContent(), latest.lead.standfirst);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
       await page.locator('#trackingExpand').click();
-      assert.equal(await page.locator('#trackingContent .tracking-summary > .tracking-phases').count(), trackers.items.length);
+      assert.equal(await page.locator('#trackingContent .tracking-summary > .tracking-phases').count(), trackers.items.filter((item) => item.phases).length);
       assert.equal(await page.locator('#trackingContent details .tracking-phases').count(), 0);
       await page.locator('#trackingContent details > summary').first().click();
       await page.locator('#trackingDialog').evaluate((d) => { d.scrollTop = d.scrollHeight; });
@@ -364,6 +364,16 @@ async function check(name, options, run) {
     await ready(page);
     await page.locator('#track:not([hidden])').waitFor();
     assert.ok(await page.locator('[data-sec="track"]:visible').count() > 0);
+    assert.equal(await page.locator('#trackList > article').count(), trackers.items.length);
+    for (const topic of trackers.items.filter((entry) => entry.trackingKeywords?.exact?.length)) {
+      const card = page.locator('#issue-' + topic.id);
+      assert.equal(await card.locator('.kj-track__keywords').innerText(), '추적 키워드 ' + topic.trackingKeywords.exact[0]);
+      assert.equal(await card.locator('.kj-track__permalink').getAttribute('href'), '/topics/' + topic.id + '/');
+      if (topic.periodUnknown) {
+        assert.equal(await card.locator('[role="progressbar"]').count(), 0);
+        assert.equal(await card.locator('.kj-prog__label').innerText(), topic.label);
+      }
+    }
     const item = trackers.items[0];
     const firstIssue = page.locator(`#issue-${item.id}`);
     assert.equal(await firstIssue.locator('.kj-timeline li').count(), item.steps.length);
@@ -389,6 +399,7 @@ async function check(name, options, run) {
     await sources.locator('> summary').click();
     await page.locator('#trackingExpand').click();
     assert.equal(await page.locator('#trackingDialog').evaluate((d) => d.open), true);
+    assert.deepEqual(await page.locator('#trackingDialog .kj-track__permalink').evaluateAll((links) => links.map((link) => link.getAttribute('href'))), trackers.items.map((item) => '/topics/' + item.id + '/'));
     await page.locator('#trackingContent details').last().locator('summary').click();
     const allLinks = trackers.items.reduce((n, t) => n + t.links.length, 0);
     assert.equal(await page.locator('#trackingDialog .tracking-articles tbody tr').count(), allLinks);
@@ -691,6 +702,7 @@ async function check(name, options, run) {
     });
   }
   await check('PC 이슈 카드 두 열·내부 스크롤·키보드 접근', { width: 1920 }, async (page) => {
+    await page.route('**/data/trackers.json', (route) => route.fulfill({ json: { ...trackers, items: trackers.items.slice(0, 2) } }));
     await page.goto('http://jogan.test/');
     await ready(page);
     const cards = page.locator('#trackList .kj-track');

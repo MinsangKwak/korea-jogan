@@ -222,6 +222,7 @@
 .news-edition #trackList .kj-track__head { flex-direction: column; align-items: flex-start; gap: 8px; }
 .news-edition #trackList .kj-track__head h3 { font-size: 1.2rem; line-height: 1.65; }
 .news-edition #trackList .kj-track__sum { margin-bottom: 20px; font-size: .94rem; line-height: 1.85; }
+.news-edition .kj-track__keywords { margin-block: 0 1rem; color: var(--ink-2); font-size: .875rem; line-height: 1.6; }
 .news-edition #trackList .tracking-phases { margin-block: 20px 24px; }
 .news-edition #trackList .kj-track__grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
 .news-edition .kj-track__body { min-width: 0; }

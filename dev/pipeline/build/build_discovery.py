@@ -145,6 +145,9 @@ def topic_cards(items: list[dict], updated: str) -> dict:
 def topic(item: dict, updated: str) -> dict:
     name = item.get("shortTitle") or item["title"]
     content = heading("이슈 추적", item["title"], item["summary"], f'{esc(item.get("status", ""))} · 기록 갱신 {date_html(updated)}')
+    keywords = (item.get("trackingKeywords") or {}).get("exact", [])
+    if keywords:
+        content += f'<p class="discovery-meta"><strong>추적 키워드</strong> {esc(keywords[0])}</p>'
     content += '<p class="discovery-note">보도에 따른 정리입니다. 주장·혐의·예정과 확인된 사실은 아래 근거와 확인 범위를 함께 읽어 주세요.</p>'
     phases = item.get("phases") or []
     index = item.get("phaseIndex")
