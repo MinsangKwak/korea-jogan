@@ -148,9 +148,21 @@ async function coverFlow(browser, web) {
     assert.ok(await search.evaluate(input => input.labels.length && input.labels[0].textContent.trim()));
     for (const width of [390, 1440]) {
       await page.setViewportSize({ width, height: 844 });
-      const box = await search.boundingBox();
-      assert.ok(box && box.y >= 0 && box.y + box.height <= 844, width + 'px 첫 화면에서 판례 검색이 보여야 합니다.');
+      const lawEntry = page.locator('#cats a[href="/law/"]');
+      for (const element of [page.locator('#frontQuestion'), lawEntry]) {
+        const box = await element.boundingBox();
+        assert.ok(box && box.y >= 0 && box.y + box.height <= 844, width + 'px 첫 화면에 오늘의 질문과 판례 자료실이 보여야 합니다.');
+      }
+      await press(lawEntry);
+      assert.equal(page.url(), origin + '/law/');
+      await page.goBack();
+      await page.waitForFunction(() => document.documentElement.dataset.loadState === 'ready');
     }
+    await press(page.locator('#politicsFront a[href="#caseEdition"]'));
+    await page.waitForURL(origin + '/#caseEdition');
+    assert.equal(await search.isVisible(), true);
+    const searchBox = await search.boundingBox();
+    assert.ok(searchBox && searchBox.y >= 0 && searchBox.y < 844, '기사와 판례 바로가기를 누르면 판례 검색으로 이동합니다.');
     const choices = page.locator('#caseEditionChoices');
     const second = choices.locator('button[data-pair-id]').filter({ hasNotText: featured.question }).first();
     if (await choices.isVisible()) {
@@ -186,7 +198,7 @@ async function coverFlow(browser, web) {
     await page.locator('[data-theme-id]').first().waitFor({ state: 'attached' });
     assert.equal(await page.locator('#lawQuery').inputValue(), '');
     assert.deepEqual(errors, []);
-    console.log('통과: 첫 화면 기사·공식 판례 연결, PC·모바일 판례 검색, 입력 1회 전달과 폐기');
+    console.log('통과: 정치 질문에서 기사·판례로 이동, PC·모바일 판례 검색, 입력 1회 전달과 폐기');
   } finally {
     await context.close();
   }

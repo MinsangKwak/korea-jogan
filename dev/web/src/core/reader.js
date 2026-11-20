@@ -25,6 +25,14 @@ if (panel) {
   }));
 }
 
+const questionCopy = document.getElementById('questionLinkCopy');
+if (questionCopy) {
+  const permalink = document.getElementById('questionPermalink');
+  const status = document.getElementById('questionCopyStatus');
+  questionCopy.addEventListener('click', () => copyField(permalink, questionCopy, status));
+  questionCopy.hidden = false;
+}
+
 const edition = document.getElementById('caseEdition');
 let editionSeen = false;
 let editionEntered = false;

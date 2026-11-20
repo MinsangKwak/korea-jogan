@@ -5,7 +5,7 @@ const DAY = 86400000;
 const REPO = 'https://github.com/MinsangKwak/korea-jogan';
 // [id, 이름, 전체 메뉴에 보일 한 줄 설명]
 const SECTIONS = [
-  ['home', '1면', '머리기사, 오늘 꼭 볼 숫자, 기준이 갈린 숫자'],
+  ['home', '1면', '오늘 정치 한 장, 기사와 판례, 오늘 꼭 볼 숫자'],
   ['national', '전국', '분야별 전국 뉴스와 오늘의 흐름'],
   ['track', '추적', '결론이 날 때까지 보는 사안의 타임라인'],
   ['regions', '지역', '17개 시도 소식'],

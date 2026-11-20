@@ -133,6 +133,32 @@ async function check(name, options, run) {
 }
 (async () => {
   browser = await openBrowser();
+  await check('실제 변경한 이슈만 재방문 표시하고 같은 날 새로고침·과거 호에서 기준을 보존', {}, async (page) => {
+    await page.clock.setFixedTime(new Date(index.latest + 'T15:30:00Z'));
+    await page.goto('http://jogan.test/');
+    const strip = page.locator('#changeStrip[data-enhanced]');
+    await strip.waitFor();
+    const today = new Date(Date.parse(index.latest) + 86400000).toISOString().slice(0, 10);
+    const marker = strip.locator('.change-strip__since');
+    assert.equal(await strip.locator('h2').textContent(), '최근 달라진 이슈');
+    assert.equal(await marker.count(), 0);
+    assert.equal(await page.evaluate(() => localStorage.getItem('jogan-last-home-visit')), today);
+    const dates = await strip.locator('time').evaluateAll((nodes) => nodes.map((node) => node.dateTime));
+    const previous = new Date(Date.parse(dates[0]) - 86400000).toISOString().slice(0, 10);
+    await page.evaluate((d) => localStorage.setItem('jogan-last-home-visit', d), previous);
+    for (const url of ['politics/index.html', index.latest]) {
+      await page.goto('http://jogan.test/' + url);
+      assert.equal(await page.evaluate(() => localStorage.getItem('jogan-last-home-visit')), previous);
+    }
+    await page.goto('http://jogan.test/');
+    const changed = dates.filter((date) => date > previous);
+    for (let view = 0; view < 2; view++) {
+      if (view) await page.reload();
+      await strip.waitFor();
+      const visible = await marker.evaluateAll((nodes) => nodes.map((node) => node.closest('a').querySelector('time').dateTime));
+      assert.deepEqual(visible, changed);
+    }
+  });
   for (const width of [320, 360, 390, 430, 768, 900, 1440]) {
     await check('최신 호·전체 폭 ' + width, { width }, async (page) => {
       await page.goto('http://jogan.test/');
@@ -310,9 +336,12 @@ async function check(name, options, run) {
     await page.goto('http://jogan.test/?d=' + past + '&kj-internal=1#media');
     await page.waitForURL('http://jogan.test/' + past + '?kj-internal=1#media');
   });
-  await check('느린 접속·로딩 표시·보조 요청 분리', { delay: 700, slowExtras: true }, async (page) => {
+  await check('느린 접속에서도 정치 질문과 근거를 먼저 읽고 보조 요청은 따로 완료', { delay: 700, slowExtras: true }, async (page) => {
     await page.goto('http://jogan.test/', { waitUntil: 'domcontentloaded' });
-    assert.equal(await page.locator('#pageLoading').isVisible(), true);
+    assert.equal(await page.locator('#frontQuestion').isVisible(), true);
+    assert.ok((await page.locator('#frontAnswer').innerText()).trim());
+    assert.match(await page.locator('#frontSource').getAttribute('href'), /^https:\/\//);
+    assert.equal(await page.locator('#pageLoading').isVisible(), false);
     await ready(page);
     assert.equal(await page.locator('#fixes li').count(), 0);
     assert.equal(await page.locator('#main').getAttribute('aria-busy'), 'false');
@@ -363,7 +392,10 @@ async function check(name, options, run) {
     await page.goto('http://jogan.test/');
     await ready(page);
     await page.locator('#track:not([hidden])').waitFor();
-    assert.ok(await page.locator('[data-sec="track"]:visible').count() > 0);
+    assert.equal(await page.locator('#catNav a[href="/topics/"]').isVisible(), true);
+    await page.locator('#menuBtn').click();
+    assert.equal(await page.locator('#drawerNav a[data-sec="track"]').isVisible(), true);
+    await page.keyboard.press('Escape');
     assert.equal(await page.locator('#trackList > article').count(), trackers.items.length);
     for (const topic of trackers.items.filter((entry) => entry.trackingKeywords?.exact?.length)) {
       const card = page.locator('#issue-' + topic.id);
@@ -425,14 +457,16 @@ async function check(name, options, run) {
     await ready(page);
     await page.locator('#trackingExpand').waitFor();
     await page.locator('#bigBtn').click();
-    await page.evaluate(() => window.scrollTo(0, 900));
+    const opener = page.locator('#trackingExpand');
+    await opener.evaluate((button) => button.scrollIntoView({ block: 'center', behavior: 'instant' }));
     const before = await page.evaluate(() => window.scrollY);
-    await page.locator('#trackingExpand').click();
+    assert.ok(before > 0);
+    await opener.click();
     await page.locator('#trackingContent details').last().locator('summary').click();
     assert.equal(await page.locator('#trackingDialog').evaluate((d) => d.scrollWidth <= d.clientWidth + 1), true);
     assert.equal(await page.locator('#trackingDialog table').count(), trackers.items.filter((t) => t.links && t.links.length).length);
     await page.keyboard.press('Escape');
-    await page.waitForFunction(() => !document.getElementById('trackingDialog').open);
+    await page.waitForFunction(() => !document.getElementById('trackingDialog').open && document.activeElement.id === 'trackingExpand');
     assert.ok(Math.abs(await page.evaluate(() => window.scrollY) - before) < 2);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
   });
@@ -517,6 +551,8 @@ async function check(name, options, run) {
     const lead = await page.locator('#leadBox').boundingBox();
     const front = await page.locator('#natH').boundingBox();
     assert.ok(Math.abs(lead.x - front.x) <= 1, '전국 뉴스와 머리기사의 읽기 시작점 정렬');
+    const destinations = await page.locator('#catNav a').evaluateAll(links => links.map(link => link.getAttribute('href')));
+    assert.deepEqual(destinations, ['#home', '/politics/', '/topics/', '#national', '/indicators/', '/archive/']);
     await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="home"]').getAttribute('aria-current') === 'true');
     assert.equal(await page.locator('#natFlow').getAttribute('open'), '');
     await page.locator('#natFlow > summary').click();
@@ -571,8 +607,10 @@ async function check(name, options, run) {
     await ready(page);
     const events = (prefix) => page.evaluate((p) => window.dataLayer.filter((entry) => entry[0] === 'event' && String(entry[1]).startsWith(p)).map((entry) => [entry[1], entry[2] && entry[2].value]), prefix);
     // 메뉴로 고른 섹션은 바로 한 번 세고, 지나쳐 간 섹션은 3초를 넘기지 않아 세지 않는다
-    await page.locator('a[data-sec="fiscal"]:visible').first().click();
-    await page.locator('a[data-sec="fiscal"]:visible').first().click();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await page.locator('#menuBtn').click();
+      await page.locator('#drawerNav a[data-sec="fiscal"]').click();
+    }
     assert.deepEqual(await events('section_'), [['section_fiscal', undefined]]);
     await page.waitForTimeout(1600);
     await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });

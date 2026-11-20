@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { request, loadReports, values, rows, explain } from './api.js';
+import { loadPilotQuestions } from './question-pilot.js';
 import { initSearch } from './search.js';
 
 const $ = (id) => document.getElementById(id);
@@ -25,7 +26,7 @@ let searchController;
 
 // 신문 화면의 섹션 id → 메뉴 이름. 이벤트 이름은 section_<id>로 들어온다
 const SECTION_NAMES = { home: '홈', media: '언론', national: '전국', regions: '지역', politics: '정치', economy: '경제', industry: '산업', fiscal: '재정' };
-const LIST_IDS = ['devices', 'topPages', 'channels', 'sections', 'regions', 'sources', 'campaigns', 'landings', 'returning', 'readerActions', 'lawEntryActions', 'lawEditionRate'];
+const LIST_IDS = ['devices', 'topPages', 'channels', 'sections', 'regions', 'sources', 'campaigns', 'landings', 'returning', 'readerActions', 'pilotActions', 'lawEntryActions', 'lawEditionRate'];
 // 오늘·최근 7일 칸의 기본 설명. 조회 뒤에는 '고유 사용자' 자리에 조회수가 들어간다
 const NOTES = { today: '오늘 0시부터 · 고유 사용자', week: '오늘 포함 7일 · 고유 사용자' };
 const STAT_IDS = ['todayUsers', 'todayTime', 'weekUsers', 'weekTime', 'reportUsers', 'reportViews', 'reportSessions', 'reportTimeAvg'];
@@ -241,8 +242,8 @@ function trend(data, hourly) {
   }
 }
 
-function renderReports(reports, periodLabel) {
-  const [summary, today, week, trendReport, sections, pages, channels, regions, devices, sources, campaigns, landings, returning, readerActions] = reports;
+function renderReports(reports, periodLabel, questions) {
+  const [summary, today, week, trendReport, sections, pages, channels, regions, devices, questionActions, sources, campaigns, landings, returning, readerActions] = reports;
   const totals = values(summary);
   $('reportUsers').textContent = number(totals[0] || 0);
   $('reportViews').textContent = number(totals[1] || 0);
@@ -268,6 +269,17 @@ function renderReports(reports, periodLabel) {
   table($('landings'), acquisitionRows(landings), '처음 들어온 페이지', columns);
   const visitorTypes = { new: '첫 방문', returning: '재방문', '(not set)': '분류되지 않음' };
   table($('returning'), acquisitionRows(returning).map((item) => ({ ...item, label: visitorTypes[item.label] || item.label })), '방문 유형', columns);
+  if (questions) {
+    const actionRows = rows(questionActions);
+    const incomplete = questionActions.metadata?.subjectToThresholding || questionActions.metadata?.dataLossFromOtherRow || questionActions.rowCount > actionRows.length;
+    const questionRows = questions.map(({ label, path }) => {
+      const counts = ['question_source', 'question_term', 'question_calendar'].map((name) => actionRows.find((item) => item.label === path && item.dimensions[1] === name)?.value);
+      return { label, value: counts[0] || 0, cells: counts.map((count) => count == null && incomplete ? '—' : number(count || 0)) };
+    });
+    table($('pilotActions'), questionRows, '질문', ['근거 원문', '용어 풀이', '캘린더']);
+  } else {
+    $('pilotActions').textContent = '질문 목록을 불러오지 못했습니다. 새로고침으로 다시 조회해 주세요.';
+  }
   const actionNames = { reader_law_open: '신문에서 법률면 열기 · 전체', reader_feed_copy: 'RSS 주소 복사', reader_feed_open: 'RSS 열기', reader_subscribe_open: '받아보기 안내 열기', reader_topic_open: '이슈 기록으로 이동', reader_indicator_open: '경제 지표로 이동', reader_share: '공유 실행' };
   const actions = rows(readerActions);
   renderLawEntry(readerActions, actions);
@@ -327,9 +339,9 @@ async function refresh() {
   const period = $('period').value;
   const label = $('period').selectedOptions[0].textContent;
   try {
-    const data = await loadReports(token, period, signal);
+    const [data, questions] = await Promise.all([loadReports(token, period, signal), loadPilotQuestions().catch(() => null)]);
     if (currentEpoch !== epoch) return;
-    renderReports(data, label);
+    renderReports(data, label, questions);
     $('reportError').textContent = '';
   } catch (error) {
     if (currentEpoch !== epoch) return;

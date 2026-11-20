@@ -131,6 +131,7 @@
           <article class="admin-panel"><h3>처음 들어온 페이지</h3><p class="admin-muted">첫 페이지가 어떤 읽기로 이어졌는지 비교합니다.</p><div class="admin-table-scroll" id="landings"></div></article>
           <article class="admin-panel"><h3>첫 방문과 재방문</h3><p class="admin-muted">같은 사람이 기간 안에 두 유형에 포함될 수 있습니다. 재방문율을 계산한 표는 아닙니다.</p><div class="admin-table-scroll" id="returning"></div></article>
           <article class="admin-panel"><h3>1면에서 법률면으로</h3><p id="lawEditionRate"></p><p class="admin-muted">‘기사와 판례’ 제목이 절반 이상 보였거나 법률 링크·검색을 사용한 지면 중, 이 코너에서 자료실이나 입법 캘린더를 연 비율입니다. 노출과 첫 진입은 지면당 한 번 셉니다.</p><div id="lawEntryActions"></div><p class="admin-muted">경로별 행은 실제 클릭·검색 제출 횟수입니다. 공식 판결문은 외부로 바로 가므로 따로 셉니다. 검색어와 개인 보관 내역은 이 집계에 포함하지 않습니다.</p></article>
+          <article class="admin-panel"><h3>정치 질문을 읽고 연 자료</h3><p class="admin-muted">질문별로 근거 원문·용어 풀이·입법 캘린더를 연 횟수입니다. 같은 독자의 반복 클릭을 포함합니다. GA4 기간에서 28일을 선택하면 최근 4주를 살펴볼 수 있습니다. — 표시는 일부 집계가 생략되어 횟수를 확인할 수 없는 경우입니다.</p><div id="pilotActions" class="admin-table-scroll" tabindex="0" role="region" aria-label="질문별 자료 열기 횟수"></div></article>
           <article class="admin-panel"><h3>읽기·받아보기 행동</h3><p class="admin-muted">전체 지면의 법률면 이동과 RSS 열기·주소 복사를 확인합니다. 법률면 전체 이동에는 경로별 집계를 시작하기 전의 클릭도 포함됩니다.</p><div id="readerActions"></div></article>
         </div>
         <p class="admin-muted" id="acquisitionNote">상위 10개 기준입니다. 방문자 수는 여러 항목에 겹칠 수 있어 합산하지 않습니다.</p>
@@ -150,6 +151,7 @@
         <p class="admin-muted"><code id="searchProperty"></code><br><span id="searchRange"></span></p>
         <div class="admin-summary"><div class="admin-stat"><span>검색 클릭</span><strong id="searchClicks">—</strong></div><div class="admin-stat"><span>검색 노출</span><strong id="searchImpressions">—</strong></div><div class="admin-stat"><span>클릭률</span><strong id="searchCtr">—</strong></div><div class="admin-stat"><span>평균 게재순위</span><strong id="searchPosition">—</strong></div></div>
         <p class="admin-muted" id="searchTableHelp">좁은 화면에서는 표를 좌우로 움직여 클릭·노출 수치를 확인하세요.</p>
+        <article class="admin-panel"><h3>4주 실험 · 어떤 정치 질문이 검색에서 읽혔나요</h3><p class="admin-muted">선택한 기간·국가에서 세 질문의 노출과 클릭을 집계합니다. 매체명(대한민국 조간·코리아 조간·Korea Jogan)과 코너명(오늘 정치 한 장)을 포함하는 검색어, Google이 익명 처리한 검색어는 빠집니다. 0은 이 조건에서 보고된 실적이 없다는 뜻입니다.</p><div class="admin-table-scroll" id="searchPilot" tabindex="0" role="region" aria-label="비브랜드 검색의 질문별 노출과 클릭"></div></article>
         <div class="admin-grid admin-grid--search">
           <article class="admin-panel"><h3>어떤 검색어로 발견됐나요</h3><p class="admin-muted">클릭 기준 상위 10개 · 이름이 생략된 검색어는 표에 포함되지 않을 수 있습니다.</p><div class="admin-table-scroll admin-table-scroll--search" id="searchQueries" tabindex="0" role="region" aria-label="검색어별 실적 표" aria-describedby="searchTableHelp"></div></article>
           <article class="admin-panel"><h3>어떤 페이지가 검색됐나요</h3><p class="admin-muted">클릭 기준 상위 10개 · 표의 행을 더해 전체 요약으로 사용하지 않습니다.</p><div class="admin-table-scroll admin-table-scroll--search" id="searchPages" tabindex="0" role="region" aria-label="검색 페이지별 실적 표" aria-describedby="searchTableHelp"></div></article>
@@ -162,6 +164,8 @@
             <label for="searchTarget">확인할 페이지</label>
             <select id="searchTarget">
               <option value="https://korea-jogan.com/">첫 화면</option>
+              <option value="https://korea-jogan.com/politics/">오늘 정치 한 장 질문 목록</option>
+              <optgroup id="searchQuestions" label="정치 질문 해설"></optgroup>
               <option value="https://korea-jogan.com/topics/">이슈 목록</option>
               <optgroup id="searchTopics" label="추적 이슈">
                 <option value="https://korea-jogan.com/topics/muan-airport/">무안공항 참사 기록</option>

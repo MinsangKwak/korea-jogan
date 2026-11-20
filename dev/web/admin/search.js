@@ -1,4 +1,4 @@
-import { loadSearch, loadInspectionTopics, inspectSearchUrl, searchError } from './search-api.js';
+import { loadSearch, loadInspectionQuestions, loadInspectionTopics, inspectSearchUrl, searchError } from './search-api.js';
 
 const SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
 const $ = (id) => document.getElementById(id);
@@ -11,20 +11,21 @@ export function initSearch({ getClientId, validClient, prepareGoogle, renderTabl
   let token = '', site = '', expiry = 0, generation = 0, inspection = 0;
   let controller, inspectController, expiryTimer, pending = false, busy = false;
 
-  async function addInspectionTopics() {
+  async function addInspectionOptions(load, groupId) {
     let topics;
-    try { topics = await loadInspectionTopics(); }
+    try { topics = await load(); }
     catch { return; }
-    const group = $('searchTopics');
+    const group = $(groupId);
     const existing = new Set(Array.from(group.children, (option) => option.value));
     for (const [url, title] of topics) {
       if (!existing.has(url)) group.append(new Option(title, url));
     }
   }
-  addInspectionTopics();
+  addInspectionOptions(loadInspectionTopics, 'searchTopics');
+  addInspectionOptions(loadInspectionQuestions, 'searchQuestions');
 
   function clearReports() {
-    for (const id of ['searchQueries', 'searchPages']) $(id).replaceChildren();
+    for (const id of ['searchQueries', 'searchPages', 'searchPilot']) $(id).replaceChildren();
     for (const id of ['searchClicks', 'searchImpressions', 'searchCtr', 'searchPosition']) $(id).textContent = '—';
   }
   function reset(text = '검색 연결을 해제했습니다.') {
@@ -58,6 +59,12 @@ export function initSearch({ getClientId, validClient, prepareGoogle, renderTabl
     $('searchPosition').textContent = total.impressions ? decimal(total.position || 0) : '—';
     renderTable($('searchQueries'), formattedRows(data.queries), '검색어', ['클릭', '노출', 'CTR', '평균 순위']);
     renderTable($('searchPages'), formattedRows(data.pages), '검색 결과의 페이지', ['클릭', '노출', 'CTR', '평균 순위']);
+    if (data.pilot) {
+      const questions = data.pilot.map((item) => ({ label: item.label, value: item.clicks, cells: [number(item.impressions), number(item.clicks)] }));
+      renderTable($('searchPilot'), questions, '질문', ['노출', '클릭']);
+    } else {
+      $('searchPilot').textContent = '질문별 검색 자료를 불러오지 못했습니다. 검색 새로고침으로 다시 조회해 주세요.';
+    }
     const dates = reportRows(data.dates).map((row) => row.keys?.[0]).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date || '')).sort();
     $('searchRange').textContent = `${data.range.startDate} ~ ${data.range.endDate} · 미국 태평양 시간 · 확정 자료 중 노출 기록 ${dates.length}일` + (dates.length ? ` · 마지막 기록 ${dates.at(-1)}` : '');
     $('searchProperty').textContent = site;

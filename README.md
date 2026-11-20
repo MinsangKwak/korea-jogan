@@ -1,10 +1,17 @@
 # 대한민국 조간
 
-**대한민국 조간은 오늘의 뉴스와 수치를 읽고, 같은 주제의 판례와 입법 원문까지 확인할 수 있는 광고 없는 데이터 신문입니다.** 신문에는 수치의 출처·기준일과 편집자 확인 여부를, 상설 판례 자료실에는 사건번호·선고일과 공식 원문을 표시합니다.
+**대한민국 조간은 정치 뉴스가 낯선 독자를 위한 광고 없는 데이터 신문입니다.** 1면 ‘오늘 정치 한 장’은 독자가 검색할 만한 질문에 한 문장으로 답합니다. 마지막 확인일, 실제로 달라진 일, 보도와 판결문 등 답의 근거를 함께 읽을 수 있습니다.
 
-[오늘의 조간](https://korea-jogan.com/) · [판례 검색](https://korea-jogan.com/law/) · [입법 캘린더](https://korea-jogan.com/law/calendar/) · [운영 화면](https://korea-jogan.com/admin/) · [문서 안내](docs/README.md) · [통합 기획·편집 기준 Notion](https://app.notion.com/p/3decbbdd109b812e8a90f88de1c66a33) · [Figma](https://www.figma.com/design/Eep2qLjiPT9jhDUyLU8Zjx)
+[오늘 정치 한 장](https://korea-jogan.com/) · [질문 모아보기](https://korea-jogan.com/politics/) · [판례 검색](https://korea-jogan.com/law/) · [입법 캘린더](https://korea-jogan.com/law/calendar/) · [운영 화면](https://korea-jogan.com/admin/) · [문서 안내](docs/README.md) · [통합 기획·편집 기준 Notion](https://app.notion.com/p/3decbbdd109b812e8a90f88de1c66a33) · [Figma](https://www.figma.com/design/Eep2qLjiPT9jhDUyLU8Zjx)
+
+<table>
+<tr><th>PC 1면</th><th>모바일 1면</th></tr>
+<tr><td><img src="docs/assets/politics-desktop-20261120.webp" alt="대표 질문 옆에 학자금 정책과 파기환송 질문이 놓인 오늘 정치 한 장" width="760"></td><td><img src="docs/assets/politics-mobile-20261120.webp" alt="확인일과 근거 원문을 한 줄 답 아래에서 읽는 모바일 지면" width="250"></td></tr>
+</table>
 
 ## 어떤 문제를 풀었는가
+
+예를 들어 재판 뉴스를 검색한 독자는 [다음 기일이 정해졌는지](https://korea-jogan.com/topics/lee-jae-myung-trials/) 먼저 읽고, 낯선 판결 용어는 [파기환송 해설](https://korea-jogan.com/politics/reversal-and-remand/)에서 실제 판결 주문과 대조합니다. [학자금대출 이자 면제](https://korea-jogan.com/politics/regional-student-loan-interest/)처럼 적용 대상과 시점이 중요한 생활 정책도 질문별로 고정 주소를 갖습니다.
 
 같은 사건을 다뤄도 집계 기간이나 비교 시점에 따라 수치가 달라질 수 있습니다. 1면의 **기사와 판례**에서는 한 보도에서 나온 질문을 이전 대법원 판단과 함께 읽습니다. 예를 들어 수능 집행정지 신청 보도와 집행정지 요건을 다룬 별개 사건을 각 원문으로 엽니다. 생활어·사건번호로 바로 검색하거나, 오늘의 머리기사와 핵심 수치로 이동할 수 있습니다. [기사와 판례](https://korea-jogan.com/#caseEdition) · [선정 기준과 출처](docs/planning/news-case-pairs.md)
 

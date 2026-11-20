@@ -18,12 +18,12 @@ function renderRegions() {
     map.append(r);
   };
   const chip = (name, n, pressed, onPick) => {
-    const attrs = { class: 'kj-rtile', type: 'button', 'aria-label': name + ' ' + n + '건' };
+    const attrs = { class: 'kj-rtile', type: 'button' };
     // 기사가 없는 시도는 고를 수 없게 하고 점선으로 표시한다
     if (n) attrs['aria-pressed'] = String(pressed);
     else attrs['aria-disabled'] = 'true';
     const t = el('button', attrs, name);
-    t.append(el('small', { 'aria-hidden': 'true' }, String(n)));
+    t.append(' ', el('small', {}, n + '건'));
     if (n) t.addEventListener('click', onPick);
     return t;
   };

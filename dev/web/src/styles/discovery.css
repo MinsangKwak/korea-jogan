@@ -59,3 +59,16 @@
 @media(max-width:900px){.discovery-mast,.discovery-main,.discovery-footer{width:calc(100% - 40px)}.discovery-mast{grid-template-columns:minmax(0,1fr);grid-template-areas:"logo" "tools" "nav";gap:8px}.discovery-mast nav{gap:0 14px}.discovery-tools{gap:0 .25rem}.discovery-main{padding-top:24px}.discovery-grid{grid-template-columns:1fr}.discovery-card{padding:20px}.discovery-phases{grid-template-columns:repeat(2,minmax(0,1fr))}.discovery-note{padding:16px 20px}.discovery-table th,.discovery-table td{padding:12px}.discovery-links{gap:4px 20px}}
 @media print{.discovery-tools,.discovery-footer nav{display:none}.discovery-mast,.discovery-main,.discovery-footer{width:100%}.discovery-table-wrap{overflow:visible}.discovery-page{font-size:11pt}.discovery-grid{display:block}.discovery-card{break-inside:avoid;margin-block:12px}}
 @media(max-width:600px){.discovery-facts{grid-template-columns:1fr}}
+
+/* 질문을 끝까지 읽을 수 있는 본문 폭과 출처 간격 */
+.discovery-main[data-question-id]{max-width:68rem}
+.discovery-main[data-question-id] .discovery-head{border-bottom:2px solid var(--brand)}
+.discovery-main[data-question-id] .discovery-lead{max-width:54ch;font-size:clamp(1.15rem,2vw,1.45rem);font-weight:700}
+.discovery-main[data-question-id] .question-related{padding:1rem 1.4rem;background:var(--surface);border-inline-start:3px solid var(--brand);margin-block:2rem}
+.discovery-main[data-question-id] .question-related h2{margin-top:0}
+.discovery-main[data-question-id] li a[data-question-action],.question-related a{display:inline-block;padding-block:.4rem}
+
+.question-share{max-width:42rem;margin-top:1.25rem}
+.question-share label{display:block;margin-bottom:.3rem;font-size:.88rem;font-weight:700}
+.question-share .reader-tools__status{margin-block:.3rem 0}
+.question-share [hidden]{display:none}

@@ -16,7 +16,7 @@ function progressBox(p, base) {
   box.append(big, el('p', { class: 'kj-prog__since' }, p.sinceLabel));
 
   const bar = el('div', {
-    class: 'kj-prog__bar', role: 'progressbar',
+    class: 'kj-prog__bar', role: 'progressbar', 'aria-label': p.label,
     'aria-valuemin': '0', 'aria-valuemax': String(span), 'aria-valuenow': String(gone),
     'aria-valuetext': p.label + ' ' + span + '일 중 ' + gone + '일 지남'
   });

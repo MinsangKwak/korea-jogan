@@ -3,6 +3,7 @@
 
 // 지난 호는 그날의 기록이라 지금 상황을 덧붙이지 않는다. 최신 호에서만 보인다
 function renderTrack(data) {
+  renderChangeStrip(data);
   const list = (data && data.items) || [];
   if (!list.length || VIEWING_PAST) { $('track').hidden = true; toggleSectionNav('track', false); return; }
   const today = parseDate(todayKST());
@@ -93,6 +94,115 @@ async function loadTrackers() {
     const data = await fetchJSON('data/trackers.json');
     return data && Array.isArray(data.items) ? data : { items: [] };
   } catch { return { items: [] }; }
+}
+
+function renderChangeStrip(data) {
+  const section = $('changeStrip');
+  if (!section) return;
+  if (VIEWING_PAST || section.hasAttribute('data-change-archive')) {
+    section.hidden = true;
+    return;
+  }
+  const list = $('changeList');
+  if (section.dataset.changeEdition !== D.date) {
+    list.replaceChildren(...changeCards(data, D.date));
+  }
+  section.hidden = list.children.length === 0;
+  if (section.hidden || section.dataset.enhanced) return;
+  section.dataset.enhanced = 'true';
+  markChangesSinceVisit(list);
+
+  const controls = $('changeControls');
+  const previous = $('changePrev');
+  const next = $('changeNext');
+  const position = $('changePosition');
+
+  function offsets() {
+    const start = list.firstElementChild.offsetLeft;
+    const limit = list.scrollWidth - list.clientWidth;
+    return Array.from(list.children, (card) => Math.min(card.offsetLeft - start, limit));
+  }
+
+  function active(stops) {
+    return stops.reduce((best, stop, i) =>
+      Math.abs(stop - list.scrollLeft) < Math.abs(stops[best] - list.scrollLeft) ? i : best, 0);
+  }
+
+  function update() {
+    controls.hidden = list.scrollWidth <= list.clientWidth + 1;
+    if (controls.hidden) return;
+    const stops = offsets();
+    const index = active(stops);
+    previous.setAttribute('aria-disabled', String(index === 0));
+    next.setAttribute('aria-disabled', String(index === stops.length - 1));
+    const label = stops.length + '개 중 ' + (index + 1) + '번째';
+    if (position.textContent !== label) position.textContent = label;
+  }
+
+  function move(direction) {
+    const stops = offsets();
+    const target = stops[active(stops) + direction];
+    if (target !== undefined) list.scrollTo({ left: target, behavior: 'instant' });
+  }
+
+  previous.addEventListener('click', () => move(-1));
+  next.addEventListener('click', () => move(1));
+  list.addEventListener('scroll', update, { passive: true });
+  if (typeof ResizeObserver === 'function') new ResizeObserver(update).observe(list);
+  else window.addEventListener('resize', update);
+  update();
+}
+
+function markChangesSinceVisit(list) {
+  if (!['/', '/index.html'].includes(location.pathname) || new URLSearchParams(location.search).has('d')) return;
+  const today = todayKST();
+  let baseline = '';
+  try {
+    const lastVisit = localStorage.getItem('jogan-last-home-visit');
+    if (lastVisit === today) {
+      const [visitDay, beforeDay] = (sessionStorage.getItem('jogan-home-visit-baseline') || '').split('/');
+      if (visitDay === today) baseline = beforeDay;
+    } else {
+      baseline = lastVisit || '';
+      sessionStorage.setItem('jogan-home-visit-baseline', today + '/' + baseline);
+      localStorage.setItem('jogan-last-home-visit', today);
+    }
+  } catch { return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(baseline) || baseline >= today) return;
+  const parsed = new Date(baseline + 'T00:00:00Z');
+  if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== baseline) return;
+  for (const when of list.querySelectorAll('time[datetime]')) {
+    if (when.dateTime > baseline && when.dateTime <= today) when.after(el('span', { class: 'change-strip__since' }, '지난 방문 뒤 변경'));
+  }
+}
+
+// 빌드 전 원본 지면도 동일한 사건 날짜와 링크를 보여 준다
+function changeCards(data, issueDate) {
+  const changes = [];
+  const seen = new Set();
+  for (const item of data?.items || []) {
+    if (!item || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id || '') || seen.has(item.id)) continue;
+    if (!item.title || !item.summary) continue;
+    seen.add(item.id);
+    let latest;
+    for (const step of item.steps || []) {
+      if (step?.done !== true || step.contextOnly || !step.t) continue;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(step.d) || step.d > issueDate) continue;
+      const day = new Date(step.d + 'T00:00:00Z');
+      if (!Number.isFinite(day.getTime()) || day.toISOString().slice(0, 10) !== step.d) continue;
+      if (!latest || step.d >= latest.d) latest = step;
+    }
+    if (latest) changes.push({ item, step: latest });
+  }
+  changes.sort((a, b) => b.step.d.localeCompare(a.step.d));
+  return changes.slice(0, 3).map(({ item, step }) => {
+    const li = el('li');
+    const link = el('a', { class: 'change-strip__card', href: '/topics/' + item.id + '/' });
+    link.append(el('time', { datetime: step.d }, '변경일 ' + step.d.replaceAll('-', '.')),
+      el('h3', {}, item.shortTitle || item.title), el('p', {}, step.brief || step.t));
+    li.append(link);
+    return li;
+  });
 }
 
 // 진행 단계는 편집상 정리이며 경과일로 계산한 해결률이 아니다

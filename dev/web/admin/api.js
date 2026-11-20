@@ -41,7 +41,7 @@ const sectionFilter = { orGroup: { expressions: [prefix('section_'), prefix('dwe
 const metric = (...names) => names.map((name) => ({ name }));
 const byFirst = (name) => ({ orderBys: [{ metric: { metricName: name }, desc: true }] });
 
-// 기간·고정 지표·유입 보고서를 5개·4개·5개로 나눠 같은 기간에 조회한다
+// 기간·고정 지표·유입 보고서를 5개씩 나눠 같은 기간에 조회한다
 export async function loadReports(token, period, signal) {
   const startDate = { today: 'today', '7daysAgo': '6daysAgo', '28daysAgo': '27daysAgo' }[period];
   if (!startDate) throw new ApiError(400, 'INVALID_PERIOD');
@@ -66,7 +66,8 @@ export async function loadReports(token, period, signal) {
       { ...common, dimensions: [{ name: 'pagePath' }], metrics: metric('screenPageViews', 'activeUsers', 'userEngagementDuration'), ...byFirst('screenPageViews'), limit: '10' },
       { ...common, dimensions: [{ name: 'sessionDefaultChannelGroup' }], metrics: metric('sessions'), ...byFirst('sessions'), limit: '10' },
       { ...common, dimensions: [{ name: 'region' }], metrics: metric('activeUsers'), ...byFirst('activeUsers'), limit: '10' },
-      { ...common, dimensions: [{ name: 'deviceCategory' }], metrics: metric('activeUsers'), ...byFirst('activeUsers'), limit: '10' }
+      { ...common, dimensions: [{ name: 'deviceCategory' }], metrics: metric('activeUsers'), ...byFirst('activeUsers'), limit: '10' },
+      { ...common, dimensionFilter: { andGroup: { expressions: [host, prefix('question_')] } }, dimensions: [{ name: 'pagePath' }, { name: 'eventName' }], metrics: metric('eventCount'), limit: '1000' }
     ]),
     batch([
       { ...common, dimensions: [{ name: 'sessionSourceMedium' }], metrics: acquisitionMetrics, ...byFirst('sessions'), limit: '10' },
@@ -76,7 +77,7 @@ export async function loadReports(token, period, signal) {
       { ...common, dimensionFilter: { andGroup: { expressions: [host, prefix('reader_')] } }, dimensions: [{ name: 'eventName' }], metrics: metric('eventCount', 'totalUsers'), ...byFirst('eventCount'), limit: '40' }
     ])
   ]);
-  if (main.reports?.length !== 5 || more.reports?.length !== 4 || acquisition.reports?.length !== 5) throw new ApiError(502, 'INVALID_RESPONSE');
+  if (main.reports?.length !== 5 || more.reports?.length !== 5 || acquisition.reports?.length !== 5) throw new ApiError(502, 'INVALID_RESPONSE');
   return [...main.reports, ...more.reports, ...acquisition.reports];
 }
 
