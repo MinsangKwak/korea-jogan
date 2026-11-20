@@ -12,7 +12,7 @@ import json
 import sys
 from pathlib import Path
 from xml.sax.saxutils import escape
-import build_discovery
+import build_politics
 
 ROOT = Path(__file__).resolve().parents[3]
 PUBLIC = ROOT / "dev" / "web"
@@ -68,7 +68,7 @@ def build_sitemap() -> str:
     trackers_file = PUBLIC / "data" / "trackers.json"
     trackers = json.loads(trackers_file.read_text(encoding="utf-8")) if trackers_file.exists() else {"items": []}
     urls += [(SITE + item["path"].removesuffix("index.html"), item["modified"], None)
-             for item in build_discovery.pages(issues, trackers)]
+             for item in build_politics.pages(issues, trackers, build_politics.load(PUBLIC))]
     urls += [(SITE + path, None, None) for path in ("law/", "law/calendar/")
              if (PUBLIC / path / "index.html").is_file()]
     rows = "".join(
@@ -137,7 +137,7 @@ def build() -> str:
         "  <channel>\n"
         "    <title>대한민국 조간</title>\n"
         f"    <link>{SITE}</link>\n"
-        "    <description>공식 통계로 읽는 오늘의 대한민국. 수치의 출처와 기준을 함께 보여 줍니다.</description>\n"
+        "    <description>정치와 생활 정책을 질문으로 읽는 광고 없는 신문. 매일 아침 주요 뉴스와 경제 숫자를 원문·기준일과 함께 전합니다.</description>\n"
         "    <language>ko</language>\n"
         f"    <lastBuildDate>{built}</lastBuildDate>\n"
         f'    <atom:link href="{SITE}feed.xml" rel="self" type="application/rss+xml"/>\n'

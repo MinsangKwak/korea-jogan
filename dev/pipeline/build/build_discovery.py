@@ -24,7 +24,7 @@ REGIONS = (
     ("jeonbuk", "전북"), ("jeonnam", "전남"), ("gyeongbuk", "경북"), ("gyeongnam", "경남"), ("jeju", "제주"),
 )
 # build_pages.py가 지난 생성물을 정리하는 폴더
-FOLDERS = ("archive", "topics", "indicators", "regions", "compare")
+FOLDERS = ("archive", "politics", "topics", "indicators", "regions", "compare")
 # 지역 페이지 하나에 싣는 호의 수. 오래된 기록은 지난 호에서 읽는다
 REGION_ISSUES = 14
 
@@ -145,6 +145,13 @@ def topic_cards(items: list[dict], updated: str) -> dict:
 def topic(item: dict, updated: str) -> dict:
     name = item.get("shortTitle") or item["title"]
     content = heading("이슈 추적", item["title"], item["summary"], f'{esc(item.get("status", ""))} · 기록 갱신 {date_html(updated)}')
+    content += topic_records(item)
+    content += '<p class="discovery-links"><a href="/topics/">다른 이슈 읽기</a> · <a href="/">오늘의 조간 읽기</a></p>'
+    return page(f'topics/{item["id"]}/index.html', f"{name} 진행 상황·일정·관련 기사", item["summary"], content, updated, "topic")
+
+
+def topic_records(item: dict) -> str:
+    content = ""
     keywords = (item.get("trackingKeywords") or {}).get("exact", [])
     if keywords:
         content += f'<p class="discovery-meta"><strong>추적 키워드</strong> {esc(keywords[0])}</p>'
@@ -187,8 +194,7 @@ def topic(item: dict, updated: str) -> dict:
                 + f'<p class="discovery-meta">{esc(link.get("verification") or "확인 범위 미기록")}</p></td></tr>'
             )
         content += '<section aria-labelledby="sources"><h2 id="sources">관련 기사와 확인 범위</h2><div class="discovery-table-wrap"><table class="discovery-table"><caption>최신 보도부터 정리한 근거 기사</caption><thead><tr><th scope="col">보도일·매체</th><th scope="col">기사·원문</th><th scope="col">핵심 내용·확인 범위</th></tr></thead><tbody>' + "".join(rows) + "</tbody></table></div></section>"
-    content += '<p class="discovery-links"><a href="/topics/">다른 이슈 읽기</a> · <a href="/">오늘의 조간 읽기</a></p>'
-    return page(f'topics/{item["id"]}/index.html', f"{name} 진행 상황·일정·관련 기사", item["summary"], content, updated, "topic")
+    return content
 
 
 def indicator_rows(issues: list[dict], key: str) -> list[tuple[dict, dict]]:

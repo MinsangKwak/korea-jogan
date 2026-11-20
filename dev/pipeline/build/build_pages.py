@@ -16,8 +16,11 @@ import json
 import re
 import sys
 from pathlib import Path
+from urllib.parse import quote, urlencode
 
 from build_security import secure_page
+import build_change_strip
+import build_politics
 import build_case_edition
 import build_discovery
 import reader_panel
@@ -253,10 +256,14 @@ def home_page(template: str, issue: dict, index: dict) -> str:
     # 사람들이 매체 이름 없이 치는 '오늘 뉴스 요약' 같은 말과 그날 날짜·머리기사를 제목과 설명에 함께 둔다
     day = month_day(issue["date"], weekday=True)
     headline = (issue.get("lead") or {}).get("headline") or issue.get("headline", "")
-    title = f"오늘 뉴스 요약 · {day} 한국 주요 뉴스와 경제 숫자 | 대한민국 조간"
-    desc = clip(f"{month_day(issue['date'])} 오늘의 한국 뉴스 요약. {headline}. 전국·17개 시도 주요 뉴스와 코스피·환율 같은 경제 숫자를 출처·기준일과 함께 한 페이지로 정리합니다.", 160)
+    title = f"오늘 정치 한 장 · {day} 광고 없는 뉴스 요약 | 대한민국 조간"
+    desc = clip(f"{month_day(issue['date'])} 오늘 뉴스 요약. 정치 이슈와 생활 정책을 한 줄 답과 근거 원문으로 읽습니다. 이번 호 머리기사는 {headline}입니다.", 160)
     page = re.sub(r"<title>.*?</title>", lambda _: f"<title>{esc(title)}</title>", template, count=1)
     page = set_attr(page, r'(<meta name="description" content=")[^"]*(">)', desc)
+    for prop, value in (("og:title", title), ("og:description", desc)):
+        page = set_attr(page, rf'(<meta property="{prop}" content=")[^"]*(">)', value)
+    for name, value in (("twitter:title", title), ("twitter:description", desc)):
+        page = set_attr(page, rf'(<meta name="{name}" content=")[^"]*(">)', value)
     page = with_today_line(page, f"오늘의 한국 뉴스 요약 · {month_day(issue['date'])}")
     page = with_lead_heading(DIGEST.sub(lambda _: digest(issue), page, count=1), issue)
     merged = list(dict.fromkeys(BASE_KEYWORDS + keywords(issue)))[:KEYWORD_MAX]
@@ -295,7 +302,8 @@ def issue_page(template: str, issue: dict, index: dict) -> str:
 def with_discovery_links(page: str, issue: dict, index: dict) -> str:
     dates = index["issues"]
     position = dates.index(issue["date"])
-    links = [('<a href="/topics/">이슈별 진행 상황</a>'),
+    links = [('<a href="/politics/">질문으로 읽는 정치 뉴스</a>'),
+             ('<a href="/topics/">이슈별 진행 상황</a>'),
              ('<a href="/indicators/">경제 지표와 지난 기록</a>'),
              ('<a href="/regions/">시도별 지역 뉴스</a>'),
              ('<a href="/compare/">매체마다 갈린 숫자</a>'),
@@ -325,18 +333,25 @@ def with_reader_tools(page: str) -> str:
 def discovery_page(template: str, item: dict) -> str:
     path = item["path"].removesuffix("index.html")
     url = SITE + path
-    body = item['body'].replace('</header>', '</header>\n' + reader_panel.markup(SITE, contained=True), 1)
+    panel = reader_panel.markup(SITE, contained=True)
+    body = item["body"]
+    if item.get("questionId"):
+        query = urlencode({"subject": item["title"], "body": url}, quote_via=quote)
+        share = f'<nav class="discovery-links" aria-label="질문 공유와 구독"><a href="mailto:?{esc(query)}">이 질문 메일로 공유</a><a href="/feed.xml">매일 새 호 RSS</a></nav>'
+        body = body.replace("</main>", share + panel + "</main>", 1)
+    else:
+        body = body.replace("</header>", "</header>\n" + panel, 1)
     match = LDJSON.search(template)
     graph = json.loads(match.group(1))["@graph"] if match else []
     graph = [node for node in graph if node.get("@type") in ("WebSite", "NewsMediaOrganization")]
     crumbs = [{"@type": "ListItem", "position": 1, "name": "대한민국 조간", "item": SITE}]
     parent = path.split("/")[0]
-    labels = {"topics": "이슈 추적", "indicators": "경제 지표", "archive": "지난 호", "regions": "지역 뉴스", "compare": "보도 비교"}
+    labels = {"politics": "정치 질문", "topics": "이슈 추적", "indicators": "경제 지표", "archive": "지난 호", "regions": "지역 뉴스", "compare": "보도 비교"}
     if len(path.strip("/").split("/")) > 1:
         crumbs.append({"@type": "ListItem", "position": 2, "name": labels[parent], "item": SITE + parent + "/"})
     crumbs.append({"@type": "ListItem", "position": len(crumbs) + 1, "name": item["title"].removesuffix(" | 대한민국 조간"), "item": url})
     graph += [{"@type": "BreadcrumbList", "@id": url + "#breadcrumb", "itemListElement": crumbs},
-              {"@type": "CollectionPage" if item["kind"] in ("archive", "topics", "indicators", "regions", "compare") else "WebPage",
+              {"@type": "CollectionPage" if item["kind"] in ("archive", "politics", "topics", "indicators", "regions", "compare") else "WebPage",
                "@id": url + "#page", "url": url, "name": item["title"], "description": item["description"],
                "inLanguage": "ko-KR", "dateModified": item["modified"], "isAccessibleForFree": True,
                "isPartOf": {"@id": SITE + "#website"}, "breadcrumb": {"@id": url + "#breadcrumb"},
@@ -347,6 +362,9 @@ def discovery_page(template: str, item: dict) -> str:
     verification = "\n".join(re.findall(r'<meta name="(?:google|naver)-site-verification" content="[^"]*">', template))
     theme = next((script for script in re.findall(r'<script>.*?</script>', template, re.S) if "jogan-theme" in script), "")
     title, desc = esc(item["title"]), esc(item["description"])
+    recall_assets = ""
+    if item.get("questionId") == "reversal-and-remand":
+        recall_assets = '<link rel="stylesheet" href="/src/components/question-recall/recall.css">\n<script src="/src/components/question-recall/recall.js" defer></script>'
     page = f'''<!doctype html>
 <html lang="ko">
 <head>
@@ -393,6 +411,7 @@ def discovery_page(template: str, item: dict) -> str:
 <link rel="stylesheet" href="/src/components/header/header.css">
 <link rel="stylesheet" href="/src/styles/discovery.css">
 <link rel="stylesheet" href="/src/components/reader/reader.css">
+{recall_assets}
 <script type="application/ld+json">
 {data}
 </script>
@@ -406,7 +425,7 @@ def discovery_page(template: str, item: dict) -> str:
 <a class="skip" href="#main">본문으로 건너뛰기</a>
 <header class="discovery-mast">
   <a href="/" class="discovery-logo">대한민국 조간</a>
-  <nav aria-label="신문 읽기"><a href="/">오늘 뉴스</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/regions/">지역 뉴스</a><a href="/compare/">보도 비교</a><a href="/archive/">지난 호</a><a href="/law/">판례 자료실</a><a href="#readerSubscribe" data-reader-subscribe>새 호 받아보기</a></nav>
+  <nav aria-label="신문 읽기"><a href="/">오늘 정치 한 장</a><a href="/politics/">정치 질문</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/regions/">지역 뉴스</a><a href="/compare/">보도 비교</a><a href="/archive/">지난 호</a><a href="/law/">판례 자료실</a><a href="#readerSubscribe" data-reader-subscribe>새 호 받아보기</a></nav>
   <div class="discovery-tools" role="group" aria-label="읽기 설정">
     <button class="reading-switch" id="discoveryBig" type="button" role="switch" aria-checked="false" data-big-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>글자 크게</span><span class="reading-switch__state" data-big-state aria-hidden="true">끔</span></span></button>
     <button class="reading-switch" id="discoveryTheme" type="button" role="switch" aria-checked="false" data-theme-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>어두운 화면</span><span class="reading-switch__state" data-theme-state aria-hidden="true">끔</span></span></button>
@@ -447,7 +466,10 @@ def build() -> list[Path]:
     issues = published()
     trackers_file = PUBLIC / "data" / "trackers.json"
     trackers = json.loads(trackers_file.read_text(encoding="utf-8")) if trackers_file.exists() else {"items": []}
-    extra = build_discovery.pages(issues, trackers)
+    questions = build_politics.load(PUBLIC)
+    extra = build_politics.pages(issues, trackers, questions)
+    public_ids = {item.get("questionId") for item in extra}
+    questions = [q for q in questions if q["id"] in public_ids]
     expected = {PUBLIC / item["path"] for item in extra}
     for folder in build_discovery.FOLDERS:
         for stale in (PUBLIC / folder).rglob("*.html"):
@@ -462,6 +484,8 @@ def build() -> list[Path]:
     for law_page in (PUBLIC / "law").rglob("index.html"):
         law_page.write_text(secure_page(law_page.read_text(encoding="utf-8"), law=True), encoding="utf-8")
     if not issues:
+        template = build_politics.with_front(template, {}, [], "")
+        template = build_change_strip.inject_change_strip(template, trackers, "", current=False)
         template = build_case_edition.with_edition(template, "", pairs)
         template = DIGEST.sub("<!-- kj:digest -->\n<!-- /kj:digest -->", template, count=1)
         template = DISCOVERY.sub("<!-- kj:discovery -->\n<!-- /kj:discovery -->", template, count=1)
@@ -478,9 +502,13 @@ def build() -> list[Path]:
     for issue in issues:
         out = PUBLIC / f"{issue['date']}.html"
         edition = build_case_edition.with_edition(template, issue["date"], pairs)
+        edition = build_politics.with_front(edition, issue, questions, issue["date"])
+        edition = build_change_strip.inject_change_strip(edition, trackers, issue["date"], current=False)
         out.write_text(issue_page(edition, issue, index), encoding="utf-8")
         written.append(out)
     edition = build_case_edition.with_edition(template, index["latest"], pairs)
+    edition = build_politics.with_front(edition, issues[0], questions, build_politics.today())
+    edition = build_change_strip.inject_change_strip(edition, trackers, index["latest"], current=True)
     home.write_text(home_page(edition, issues[0], index), encoding="utf-8")
     written.append(home)
     for item in extra:
