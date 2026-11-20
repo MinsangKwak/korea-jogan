@@ -41,7 +41,7 @@ def card(change: dict) -> str:
     date = change["date"]
     return (
         f'<li><a class="change-strip__card" href="/topics/{change["id"]}/">'
-        f'<time datetime="{date}">{date.replace("-", ".")}</time>'
+        f'<time datetime="{date}">변경일 {date.replace("-", ".")}</time>'
         f'<h3>{esc(change["title"])}</h3><p>{esc(change["text"])}</p></a></li>'
     )
 

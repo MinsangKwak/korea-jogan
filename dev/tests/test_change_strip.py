@@ -23,6 +23,9 @@ class ChangeStripTest(unittest.TestCase):
         ]}
         home = inject_change_strip(template, trackers, "2026-11-20", current=True)
         strip = STRIP.search(home)[0]
+        self.assertIn('최근 달라진 이슈', strip)
+        self.assertNotIn('지난 방문 뒤 변경', strip)
+        self.assertEqual(strip.count('변경일 '), 3)
         self.assertEqual(strip.count('class="change-strip__card"'), 3)
         self.assertIn('datetime="2025-07-22"', strip)
         self.assertNotIn('datetime="2026-11-19"', strip)

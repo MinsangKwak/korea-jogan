@@ -45,6 +45,13 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: .035em;
 }
+.change-strip__since {
+  display: inline-block;
+  margin-inline-start: .5rem;
+  color: var(--brand-strong);
+  font-size: .73rem;
+  font-weight: 700;
+}
 .change-strip__card h3 { margin: .27rem 0 .4rem; font-size: 1.1rem; line-height: 1.42; }
 .change-strip__card p {
   margin: 0;

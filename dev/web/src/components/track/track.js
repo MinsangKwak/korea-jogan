@@ -110,6 +110,7 @@ function renderChangeStrip(data) {
   section.hidden = list.children.length === 0;
   if (section.hidden || section.dataset.enhanced) return;
   section.dataset.enhanced = 'true';
+  markChangesSinceVisit(list);
 
   const controls = $('changeControls');
   const previous = $('changePrev');
@@ -152,6 +153,29 @@ function renderChangeStrip(data) {
   update();
 }
 
+function markChangesSinceVisit(list) {
+  if (!['/', '/index.html'].includes(location.pathname) || new URLSearchParams(location.search).has('d')) return;
+  const today = todayKST();
+  let baseline = '';
+  try {
+    const lastVisit = localStorage.getItem('jogan-last-home-visit');
+    if (lastVisit === today) {
+      const [visitDay, beforeDay] = (sessionStorage.getItem('jogan-home-visit-baseline') || '').split('/');
+      if (visitDay === today) baseline = beforeDay;
+    } else {
+      baseline = lastVisit || '';
+      sessionStorage.setItem('jogan-home-visit-baseline', today + '/' + baseline);
+      localStorage.setItem('jogan-last-home-visit', today);
+    }
+  } catch { return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(baseline) || baseline >= today) return;
+  const parsed = new Date(baseline + 'T00:00:00Z');
+  if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== baseline) return;
+  for (const when of list.querySelectorAll('time[datetime]')) {
+    if (when.dateTime > baseline && when.dateTime <= today) when.after(el('span', { class: 'change-strip__since' }, '지난 방문 뒤 변경'));
+  }
+}
+
 // 빌드 전 원본 지면도 동일한 사건 날짜와 링크를 보여 준다
 function changeCards(data, issueDate) {
   const changes = [];
@@ -174,7 +198,7 @@ function changeCards(data, issueDate) {
   return changes.slice(0, 3).map(({ item, step }) => {
     const li = el('li');
     const link = el('a', { class: 'change-strip__card', href: '/topics/' + item.id + '/' });
-    link.append(el('time', { datetime: step.d }, step.d.replaceAll('-', '.')),
+    link.append(el('time', { datetime: step.d }, '변경일 ' + step.d.replaceAll('-', '.')),
       el('h3', {}, item.shortTitle || item.title), el('p', {}, step.brief || step.t));
     li.append(link);
     return li;

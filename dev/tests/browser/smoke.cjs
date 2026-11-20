@@ -133,6 +133,32 @@ async function check(name, options, run) {
 }
 (async () => {
   browser = await openBrowser();
+  await check('실제 변경한 이슈만 재방문 표시하고 같은 날 새로고침·과거 호에서 기준을 보존', {}, async (page) => {
+    await page.clock.setFixedTime(new Date(index.latest + 'T15:30:00Z'));
+    await page.goto('http://jogan.test/');
+    const strip = page.locator('#changeStrip[data-enhanced]');
+    await strip.waitFor();
+    const today = new Date(Date.parse(index.latest) + 86400000).toISOString().slice(0, 10);
+    const marker = strip.locator('.change-strip__since');
+    assert.equal(await strip.locator('h2').textContent(), '최근 달라진 이슈');
+    assert.equal(await marker.count(), 0);
+    assert.equal(await page.evaluate(() => localStorage.getItem('jogan-last-home-visit')), today);
+    const dates = await strip.locator('time').evaluateAll((nodes) => nodes.map((node) => node.dateTime));
+    const previous = new Date(Date.parse(dates[0]) - 86400000).toISOString().slice(0, 10);
+    await page.evaluate((d) => localStorage.setItem('jogan-last-home-visit', d), previous);
+    for (const url of ['politics/index.html', index.latest]) {
+      await page.goto('http://jogan.test/' + url);
+      assert.equal(await page.evaluate(() => localStorage.getItem('jogan-last-home-visit')), previous);
+    }
+    await page.goto('http://jogan.test/');
+    const changed = dates.filter((date) => date > previous);
+    for (let view = 0; view < 2; view++) {
+      if (view) await page.reload();
+      await strip.waitFor();
+      const visible = await marker.evaluateAll((nodes) => nodes.map((node) => node.closest('a').querySelector('time').dateTime));
+      assert.deepEqual(visible, changed);
+    }
+  });
   for (const width of [320, 360, 390, 430, 768, 900, 1440]) {
     await check('최신 호·전체 폭 ' + width, { width }, async (page) => {
       await page.goto('http://jogan.test/');
