@@ -1,6 +1,6 @@
-# 브랜치·환경·자동 승격·배포
+# 브랜치·환경·배포
 
-**기능 코드는 `feature` → `dev`(보호된 Vercel) → 정확한 SHA로 `main`·`deploy`(GitHub Pages)에 승격하고, 일일 자료는 `main` 기반 `daily/YYYY-MM-DD`에서 데이터만 선별 반영합니다.** 두 경로를 나눠 미완성 코드가 다음 날 자동 발행에 섞이지 않게 합니다. 일일 발행 절차 자체는 [런북](../planning/runbook.md), 커밋 형식은 [커밋 기준](commits.md)에 있습니다.
+**장기 브랜치는 `main` 하나입니다. 기능은 작업 브랜치 → `main` 대상 PR → PR마다 보호된 Vercel 미리보기(dev 확인) → `main` 병합 시 GitHub Pages 운영 배포 순서로 나갑니다.** 일일 자료는 `main` 기반 `daily/YYYY-MM-DD`에서 데이터만 선별 반영합니다. 2026.11.21 `dev`·`deploy` 브랜치를 정리하면서 'dev'는 브랜치가 아니라 PR 미리보기 환경으로 바꿨습니다. 일일 발행 절차 자체는 [런북](../planning/runbook.md), 커밋 형식은 [커밋 기준](commits.md)에 있습니다.
 
 [문서 안내](../README.md) · [공통 작업 지침](../../AGENTS.md) · [기술 구조](architecture.md) · [변경 기록](changelog.md)
 
@@ -8,61 +8,57 @@
 
 | 브랜치 | 역할 | 반영 경로 | 공개·접근 |
 | --- | --- | --- | --- |
-| `feature/<기능명>` | 기능 하나의 구현·검증 | 폴더·역할별 커밋, 기능 하나의 PR로 `dev`에 제안 | — |
-| `dev` | 배포 준비가 된 기능의 통합 검증 | 준비된 PR만 병합. 일일 발행의 코드 원본으로 쓰지 않음 | Vercel `korea-jogan-dev`, 모든 배포에 Authentication |
-| `main` | 검토·승격한 안정 코드 + 공개 데이터 | 코드 승격 또는 일일 데이터의 제한된 반영 | — |
-| `deploy` | GitHub Pages 공개 기준 | 검증한 `main`을 반영 | [korea-jogan.com](https://korea-jogan.com/) 공개 |
-| `daily/YYYY-MM-DD` | 그날의 조사·초안·색인·실제 추적 갱신 | `main`에서 생성, 허용 데이터만 가져오기 | — |
+| `feature/<기능명>` 등 작업 브랜치 | 기능 하나의 구현·검증 | 목적별 커밋, 기능 하나의 PR로 `main`에 제안 | PR마다 Vercel `korea-jogan-dev` 미리보기, Vercel Authentication |
+| `main` | 운영 코드 + 공개 데이터 | 검사·미리보기를 확인한 PR 병합, 일일 데이터의 제한된 반영 | push마다 [korea-jogan.com](https://korea-jogan.com/) 배포 |
+| `daily/YYYY-MM-DD` | 그날의 조사·초안·색인·실제 추적 갱신 | `main`에서 생성, 허용 데이터만 가져오기 | 미리보기 없음 |
 
-`dev/web/`는 브랜치가 아닌 디렉터리이며 모든 브랜치에서 같은 경로를 사용합니다. 미완성·배포 보류 기능은 피처 브랜치에 남깁니다. `dev`를 승격하면 포함된 기능이 모두 올라가므로 대상 목록을 먼저 확인합니다. 운영의 일일 자료가 `main`에 쌓이면 코드 승격 전에 그 이력을 `dev`가 포함하도록 통합하고 다시 검증합니다. 세 브랜치를 매일 같은 커밋으로 맞추지 않으며 공개된 이력을 다시 쓰거나 강제 push하지 않습니다.
+`dev/web/`는 브랜치가 아닌 디렉터리이며 모든 브랜치에서 같은 경로를 사용합니다. 미완성·배포 보류 기능은 작업 브랜치에 남기고 PR을 병합하지 않습니다. `main`에 병합하는 순간 운영에 나가므로 PR의 검사와 미리보기가 마지막 확인 단계입니다. 공개된 이력을 다시 쓰거나 강제 push하지 않습니다.
 
 ```mermaid
 flowchart LR
-    F["feature PR · check.yml"] --> D["dev · 통합 검사 · Vercel 미리보기"]
-    D -->|"정확한 SHA · integration.yml"| M["main"]
-    M --> P["deploy · Pages"]
+    F["작업 브랜치"] -->|"PR"| P["check.yml(verify-ci) · Vercel 미리보기(dev)"]
+    P -->|"병합"| M["main"]
+    M -->|"push · 전체 검사 재실행"| G["GitHub Pages 운영"]
     M -->|"00시 생성"| Y["daily/YYYY-MM-DD"]
     Y -->|"06시 데이터만 · publish.yml"| M
 ```
 
-## 코드 승격 순서
+## 기능 반영 순서
 
-1. 원격을 가져와 `main`·`dev` 관계를 확인하고, 새 일일 자료·안정 수정이 있으면 그 `main` 이력을 `dev`에 포함합니다.
-2. 최신 통합 기준에서 `feature/<기능명>`을 만들고 목적·폴더·역할별 커밋을 나눕니다. PR은 기능 하나로 묶습니다.
-3. 기능별 검사·빌드·배포 준비를 마친 PR만 `dev`에 병합합니다. 통합된 `dev`의 **정확한 40자리 SHA**를 고정합니다.
-4. `integration.yml`이 한 실행 환경에서 전체 검사 → `verify-ci` 증거 기록 → 같은 SHA의 Vercel 배포 성공·익명 접근 차단(루트·색인·관리자가 로그인으로 302)·조상 관계 확인 → `release-YYYYMMDD-<SHA 7자리>` 태그와 `main`·`deploy`를 원자적으로 반영 → Pages 호출을 이어 갑니다. 수동 SHA 입력은 필요 없습니다.
-5. 해당 SHA의 Pages 성공과 공개 `build-info.json`의 `sourceSha`·`issueDate`를 확인한 뒤 완료로 기록합니다. 호출 응답·태그 생성만으로 끝내지 않습니다.
-6. 검증 뒤 코드·데이터·기준 브랜치가 바뀌면 승격하지 않고 다시 검사합니다. 다른 SHA의 성공을 쓰거나 검사를 약화하지 않습니다.
+1. 최신 `main`에서 작업 브랜치를 만들고 목적·폴더·역할별 커밋을 나눕니다. PR은 기능 하나로 묶습니다.
+2. `main` 대상 PR을 엽니다. `check.yml`이 [공통 검사 작업](../../.github/actions/verify/action.yml)(`verify-ci`)을 돌리고, Vercel이 같은 커밋의 보호된 미리보기를 PR 브랜치 주소(`korea-jogan-dev-git-<브랜치>-minsangkwaks-projects.vercel.app`)에 만듭니다. 화면 상단 띠에 브랜치·SHA가 표시됩니다.
+3. 미리보기에서 화면을 확인하고 `verify-ci`·Vercel 상태가 모두 성공이면 병합합니다. 병합 뒤 커밋이 더 쌓이면 다시 확인합니다.
+4. `main` push로 `deploy-pages.yml`이 시작되어 병합 커밋의 전체 검사를 다시 통과한 경우에만 Pages에 배포하고 공개 `build-info.json`의 `sourceSha`·날짜를 대조합니다.
+5. Pages 성공과 공개 `build-info.json`을 확인한 뒤 완료로 기록합니다. 병합만으로 완료라고 하지 않습니다.
 
-태그는 특정 커밋을 가리키며 이동·삭제·덮어쓰기하지 않습니다. 문서만의 PR과 일일 기사·최신 숫자 갱신에는 기능 릴리스 태그를 만들지 않습니다. 통합 실패 뒤에는 `promote.yml`이 이미 통과한 같은 SHA의 검사 증거를 재사용해 누락된 승격·배포만 복구합니다. 이관 전 커밋은 기존 `data`·`browser` 검사 둘 다를 요구하며 새 전체 검사 실패를 과거 성공으로 대체하지 않습니다.
+병합 전 두 상태를 필수로 만들려면 GitHub 저장소 설정의 `main` 보호 규칙(Require status checks)에 `verify-ci`와 `Vercel`을 지정합니다. 이 규칙은 저장소 설정이라 이 문서의 변경으로 켜지지 않습니다.
 
 ## 워크플로와 실행 환경
 
 | 파일 | 트리거 | 책임 |
 | --- | --- | --- |
-| [check.yml](../../.github/workflows/check.yml) | PR(`dev`·`main`·`deploy` 대상), `daily/**` push | 쓰기 권한 없이 [공통 검사 작업](../../.github/actions/verify/action.yml) 실행 = `verify-ci` |
-| [integration.yml](../../.github/workflows/integration.yml) | `dev`·`main` push, 고정 SHA 재검사 | 전체 검사 증거 기록 → 태그·승격·배포 요청 |
-| [promote.yml](../../.github/workflows/promote.yml) | 통합 검사 완료 이벤트, 수동 | 통합 실패 뒤 같은 SHA의 검사 증거로 누락된 승격·배포만 복구 |
-| [publish.yml](../../.github/workflows/publish.yml) | KST 06:00·06:07·06:37·07:17·08:17 (`main` 참조, 15분 제한) | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 준비 → 자동 승인 → `main`·`deploy` 반영 → Pages 호출 |
-| [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `deploy` push, 수동, 평일 KST 09:17~22:17 매시 | `validate --deploy` → RSS·사이트맵·호별 HTML·`live.json`·`build-info.json` 생성 → Pages → 공개 확인. 실패 시 같은 소스로 최대 두 번 재시도 |
+| [check.yml](../../.github/workflows/check.yml) | `main` 대상 PR, `daily/**` push | 쓰기 권한 없이 [공통 검사 작업](../../.github/actions/verify/action.yml) 실행 = `verify-ci` |
+| Vercel Git 연동 | `main`·`daily/*`를 뺀 브랜치 push | [build_preview.py](../../dev/pipeline/build/build_preview.py)로 보호된 미리보기 빌드 |
+| [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `main` push(전체 검사 후), 수동(고정 SHA), 평일 KST 09:17~22:17 매시 | `validate --deploy` → RSS·사이트맵·호별 HTML·`live.json`·`build-info.json` 생성 → Pages → 공개 확인. 실패 시 같은 소스로 최대 두 번 재시도 |
+| [publish.yml](../../.github/workflows/publish.yml) | KST 06:00·06:07·06:37·07:17·08:17 (`main` 참조) | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 준비 → 자동 승인 → `main` 반영 → Pages 호출 |
 | [daily.yml](../../.github/workflows/daily.yml) | 매일 04:30 KST·수동 | RSS 원자료·이슈 추적 편집 후보. ECOS는 수동 실행 시 수집 |
 
-공통 검사 작업은 데이터 검사·토큰 CSS 일치·Python 시험·PR 커밋 제목·브라우저 검사 6개 파일(`smoke`·`admin`·`security`·`discovery`·`preview`·`daily`)을 한 실행 환경에서 수행합니다. `run.cjs`가 Chromium 엔진 하나를 시작하고 검사 파일이 연결하며(최대 2개 동시), 연결별 컨텍스트·쿠키 격리와 한 연결 종료가 다른 연결을 닫지 않는지도 확인합니다. 검사를 삭제하거나 경로 필터로 건너뛰지 않습니다.
+공통 검사 작업은 데이터 검사·토큰 CSS 일치·Python 시험·PR 커밋 제목·브라우저 검사를 한 실행 환경에서 수행합니다. 검사를 삭제하거나 경로 필터로 건너뛰지 않습니다.
 
-2026.11.05 비교: 기존 PR 검사([41979133754](https://github.com/MinsangKwak/korea-jogan/actions/runs/41979133754))는 브라우저 108초·데이터 12초·커밋 8초의 실행 환경 3개(분 단위 올림 4분), `main` 검사([41979772369](https://github.com/MinsangKwak/korea-jogan/actions/runs/41979772369))는 실행 환경 2개(3분)였습니다. 실행 기록 비교이며 청구 금액이 아닙니다.
+`GITHUB_TOKEN` push는 후속 Actions를 자동 시작하지 않으므로 일일 발행은 `main` 반영 뒤 같은 SHA로 `deploy-pages.yml`을 명시적으로 호출합니다([auto_release.py](../../dev/pipeline/publish/auto_release.py)). 이 경로는 `publish_pending.py`가 원본 SHA를 이미 검사했으므로 Pages 워크플로에서 전체 검사를 반복하지 않습니다. 시간당 배포는 SHA가 같아도 `builtAt`이 이번 결과와 같아야 공개 완료로 봅니다([verify_publication.py](../../dev/pipeline/publish/verify_publication.py)).
 
-`GITHUB_TOKEN` push는 후속 Actions를 자동 시작하지 않으므로 새 데이터를 반영한 뒤 배포를 명시적으로 호출합니다. 시간당 배포는 SHA가 같아도 `builtAt`이 이번 결과와 같아야 공개 완료로 봅니다([verify_publication.py](../../dev/pipeline/publish/verify_publication.py)).
+2026.11.21 이전의 `dev` 통합 → `integration.yml`·`promote.yml`의 태그·`main`·`deploy` 자동 승격 경로는 브랜치 정리와 함께 없앴습니다. 기존 `release-*` 태그는 당시 기록으로 남깁니다.
 
 ## 개발 미리보기 (Vercel)
 
-2026.11.04 확인 기준. 설정 등록·실제 배포·DNS 연결·사용자 네트워크 접속은 서로 다른 확인 항목입니다.
+2026.11.04 확인 기준, 배포 대상은 2026.11.21 변경. 설정 등록·실제 배포·DNS 연결·사용자 네트워크 접속은 서로 다른 확인 항목입니다.
 
 | 항목 | 값 |
 | --- | --- |
 | 팀·프로젝트 | `minsangkwaks-projects`(Hobby) · `korea-jogan-dev` · Git `MinsangKwak/korea-jogan` · OWNER 1명 |
-| 배포 대상 | [vercel.json](../../vercel.json): `dev` 브랜치만, `buildCommand` = [build_preview.py](../../dev/pipeline/build/build_preview.py), 출력 `dist-preview` |
+| 배포 대상 | [vercel.json](../../vercel.json): `main`·`daily/*`를 뺀 모든 브랜치(PR 미리보기), `buildCommand` = [build_preview.py](../../dev/pipeline/build/build_preview.py), 출력 `dist-preview` |
 | 보호 | 모든 배포에 Vercel Authentication. 로그인과 프로젝트 접근 권한은 별개 |
-| 주소 | [보호된 기본 주소](https://korea-jogan-dev-git-dev-minsangkwaks-projects.vercel.app) · `dev.korea-jogan.com` |
+| 주소 | PR 브랜치별 `korea-jogan-dev-git-<브랜치>-minsangkwaks-projects.vercel.app`(빌드 시 `VERCEL_BRANCH_URL`을 원점으로 사용) · `dev.korea-jogan.com`은 Vercel에서 연결한 배포만 가리킴 |
 | DNS | Gabia `CNAME dev → 7e4c24757c5a10ba.vercel-dns-017.com.`(TTL 600). 루트 A 레코드 유지, `cname.vercel-dns.com.` 중복 추가 금지. Vercel HTTPS 확인 이력 있음, 사용자 PC NXDOMAIN은 별도 확인 |
 
 | 항목 | 개발 미리보기 | 운영 |
@@ -91,13 +87,14 @@ flowchart LR
 
 | 증상 | 먼저 확인할 내용 |
 | --- | --- |
-| 개발 코드가 승격 안 됨 | 정확한 SHA의 `verify-ci`·Vercel 배포 상태·조상 관계 |
+| PR 미리보기가 Error | Vercel 빌드 로그. `main`·`daily/*`·SHA 없는 빌드는 [build_preview.py](../../dev/pipeline/build/build_preview.py)가 의도적으로 거부 |
+| 병합했는데 배포 안 됨 | `deploy-pages.yml`의 `verify` 작업 실패 여부 → `deploy` 작업 |
 | 개발 주소가 안 열림 | Gabia DNS·Vercel 도메인 확인·배포 보호 권한 |
 | 브랜치 반영 뒤 화면이 그대로임 | Pages 실행·배포 대상 SHA·공개 색인·`build-info.json` |
-| 자동 실행 이력이 갈라짐 | `main`·`deploy`·대상 코드의 관계. 필요한 이력을 보존해 정리 |
+| 배포 소스 불일치로 중단 | 실행 중 `main`이 바뀜. 최신 `main`으로 다시 실행 |
 | 오늘 호가 없거나 공개 안 됨 | [런북의 장애 추적 순서](../planning/runbook.md#장애-추적-순서) |
 
-강제 push·전체 개발 브랜치 병합·빈 커밋으로 검사를 우회하지 않습니다.
+강제 push·일일 브랜치 전체 병합·빈 커밋으로 검사를 우회하지 않습니다.
 
 
 일일 누락 복구는 안정 `publish.yml`의 `publish_pending.py`가 최근 7일에 실제 존재하는 일일 원본만 선별합니다. 기존 과거 호는 덮어쓰지 않으며 최신 날짜·운영 코드·더 최근 추적 기록을 보존합니다. 오늘 원본이 없으면 확인 범위를 밝힌 RSS 보조 초안을 생성하고 같은 원본 SHA의 전체 검사를 거쳐 발행합니다. 상세는 [런북](../planning/runbook.md#자동-발행-누락-복구--20261112)을 따릅니다.
