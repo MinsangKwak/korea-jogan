@@ -43,7 +43,7 @@ flowchart LR
 | [check.yml](../../.github/workflows/check.yml) | PR(`dev`·`main`·`deploy` 대상), `daily/**` push | 쓰기 권한 없이 [공통 검사 작업](../../.github/actions/verify/action.yml) 실행 = `verify-ci` |
 | [integration.yml](../../.github/workflows/integration.yml) | `dev`·`main` push, 고정 SHA 재검사 | 전체 검사 증거 기록 → 태그·승격·배포 요청 |
 | [promote.yml](../../.github/workflows/promote.yml) | 통합 검사 완료 이벤트, 수동 | 통합 실패 뒤 같은 SHA의 검사 증거로 누락된 승격·배포만 복구 |
-| [publish.yml](../../.github/workflows/publish.yml) | KST 06:00·06:07·06:37·07:17·08:17 (`main` 참조, 15분 제한) | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 준비 → 자동 승인 → `main`·`deploy` 반영 → Pages 호출 |
+| [publish.yml](../../.github/workflows/publish.yml) | KST 06:00·06:07·06:37·07:17·08:17 (`main` 참조, 15분 제한) | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 준비 → 자동 승인 → `main`·`deploy` 반영 → Pages 호출 → 공개 `build-info.json` 오늘 호·SHA 대조 |
 | [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `deploy` push, 수동, 평일 KST 09:17~22:17 매시 | `validate --deploy` → RSS·사이트맵·호별 HTML·`live.json`·`build-info.json` 생성 → Pages → 공개 확인. 실패 시 같은 소스로 최대 두 번 재시도 |
 | [daily.yml](../../.github/workflows/daily.yml) | 매일 04:30 KST·수동 | RSS 원자료·이슈 추적 편집 후보. ECOS는 수동 실행 시 수집 |
 
