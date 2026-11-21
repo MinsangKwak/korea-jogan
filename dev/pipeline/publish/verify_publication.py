@@ -70,15 +70,12 @@ def today_kst(now: dt.datetime | None = None) -> tuple[str, bool]:
 
 
 def release_sha(root: Path = ROOT) -> str:
-    # 발행은 main·deploy를 같은 커밋으로 함께 올리므로 둘이 다르면 공개본을 판정하지 않는다
-    output = subprocess.run(["git", "ls-remote", "--exit-code", "origin", "refs/heads/main", "refs/heads/deploy"],
-                            cwd=root, text=True, capture_output=True, check=True, timeout=45).stdout
-    refs = {ref.rsplit("/", 1)[-1]: sha for sha, ref in (line.split() for line in output.splitlines() if line.strip())}
-    if set(refs) != {"main", "deploy"} or not all(SHA.fullmatch(value) for value in refs.values()):
-        raise ValueError("main·deploy 커밋 조회 오류")
-    if refs["main"] != refs["deploy"]:
-        raise ValueError(f"main({refs['main'][:7]})과 deploy({refs['deploy'][:7]})가 다릅니다")
-    return refs["deploy"]
+    # 운영 기준은 main 하나다. 공개본은 원격 main 최신 커밋과 같아야 한다
+    output = subprocess.run(["git", "ls-remote", "--exit-code", "origin", "refs/heads/main"],
+                            cwd=root, text=True, capture_output=True, check=True, timeout=45).stdout.split()
+    if len(output) != 2 or output[1] != "refs/heads/main" or not SHA.fullmatch(output[0]):
+        raise ValueError("main 커밋 조회 오류")
+    return output[0]
 
 
 def public_build_info() -> str:
@@ -112,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=ROOT / "dev/web/build-info.json")
     parser.add_argument("--timeout", type=int, default=120)
-    parser.add_argument("--expect-today", action="store_true", help="오늘(KST) 호와 원격 main·deploy SHA가 공개됐는지 확인")
+    parser.add_argument("--expect-today", action="store_true", help="오늘(KST) 호와 원격 main SHA가 공개됐는지 확인")
     args = parser.parse_args(argv)
     if args.expect_today:
         if not 1 <= args.timeout <= 1200:

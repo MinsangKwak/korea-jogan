@@ -89,7 +89,7 @@ python3 dev/pipeline/publish/validate.py --deploy
 
 ## 5. 반영과 배포 확인
 
-`publish.yml`은 안정 `main` 코드로 오늘 `daily`의 정확한 SHA와 `verify-ci` 성공을 확인하고 [prepare_daily.py](../../dev/pipeline/publish/prepare_daily.py)로 오늘 JSON·색인·실제 추적 변경만 가져옵니다(허용 경로·색인 보존·동시 변경 검사는 [보호 조건](../dev/branches.md#일일-발행-경로의-보호-조건)). 미확인 초안을 자동 공개하고 `main`·`deploy`에 원자적으로 push한 뒤 Pages를 명시적으로 호출합니다. 이어서 [verify_publication.py](../../dev/pipeline/publish/verify_publication.py) `--expect-today`가 최대 15분 동안 공개 색인·호 JSON·홈·`build-info.json`이 오늘(KST) 호와 원격 `main`=`deploy` SHA인지 대조하고, 다르면 실행을 실패시킵니다(06시 전 실행은 건너뜀). 일일 브랜치 전체나 `dev` 코드는 병합·실행하지 않습니다.
+`publish.yml`은 안정 `main` 코드로 오늘 `daily`의 정확한 SHA와 `verify-ci` 성공을 확인하고 [prepare_daily.py](../../dev/pipeline/publish/prepare_daily.py)로 오늘 JSON·색인·실제 추적 변경만 가져옵니다(허용 경로·색인 보존·동시 변경 검사는 [보호 조건](../dev/branches.md#일일-발행-경로의-보호-조건)). 미확인 초안을 자동 공개하고 `main`·`deploy`에 원자적으로 push한 뒤 Pages를 명시적으로 호출합니다. 이어서 [verify_publication.py](../../dev/pipeline/publish/verify_publication.py) `--expect-today`가 최대 15분 동안 공개 색인·호 JSON·홈·`build-info.json`이 오늘(KST) 호와 원격 `main` SHA인지 대조하고, 다르면 실행을 실패시킵니다(06시 전 실행은 건너뜀). 일일 브랜치 전체나 `dev` 코드는 병합·실행하지 않습니다.
 
 `deploy-pages.yml`은 `validate --deploy` → `build_feed.py` → `build_pages.py`(호별 HTML·CSP 해시) → `build_live.py`(실패해도 계속) → `build_info.py` → Pages 순서로 진행하고 공개 색인·호 JSON·홈·`build-info.json`의 날짜·SHA를 대조합니다. 06시를 넘겨 수집했다면 자료 기준은 전날 23:59로 두고 `late.reason`·`late.cutoff`를 남기며 수집 시각을 앞당겨 적지 않습니다.
 

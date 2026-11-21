@@ -50,8 +50,7 @@ class PublicationVerificationTest(unittest.TestCase):
 
 
 class ExpectTodayTest(unittest.TestCase):
-    def refs(self, main=SHA, deploy=SHA):
-        output = f"{main}\trefs/heads/main\n{deploy}\trefs/heads/deploy\n"
+    def refs(self, output=f"{SHA}\trefs/heads/main\n"):
         return mock.patch.object(verify_publication.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, output, ""))
 
     def test_before_six_kst_skips_without_network(self):
@@ -64,11 +63,12 @@ class ExpectTodayTest(unittest.TestCase):
         utc = dt.datetime(2026, 11, 4, 21, 0, tzinfo=dt.timezone.utc)
         self.assertEqual(verify_publication.today_kst(utc), (DATE, True))
 
-    def test_main_and_deploy_must_be_the_same_commit(self):
+    def test_release_sha_is_remote_main(self):
         with self.refs():
             self.assertEqual(verify_publication.release_sha(), SHA)
-        with self.refs(deploy="b" * 40), self.assertRaises(ValueError):
-            verify_publication.release_sha()
+        for output in ("", "main\trefs/heads/main\n", f"{SHA}\trefs/heads/dev\n"):
+            with self.refs(output), self.assertRaises(ValueError):
+                verify_publication.release_sha()
 
     def test_public_today_issue_and_deploy_sha_decide_the_result(self):
         now = dt.datetime(2026, 11, 5, 6, 30, tzinfo=verify_publication.KST)
@@ -79,9 +79,9 @@ class ExpectTodayTest(unittest.TestCase):
                 mock.patch.object(verify_publication, "public_build_info", return_value="2026-11-04호"):
             self.assertEqual(verify_publication.expect_today(60, now), 1)
 
-    def test_ref_mismatch_fails_the_run(self):
+    def test_unreadable_main_fails_the_run(self):
         now = dt.datetime(2026, 11, 5, 6, 30, tzinfo=verify_publication.KST)
-        with self.refs(deploy="b" * 40), mock.patch.object(verify_publication, "wait_until") as wait:
+        with self.refs(""), mock.patch.object(verify_publication, "wait_until") as wait:
             self.assertEqual(verify_publication.expect_today(60, now), 1)
         wait.assert_not_called()
 

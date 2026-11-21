@@ -56,7 +56,7 @@ jobs:
       - name: 초안 복구·같은 SHA 검사·최근 누락 호 선별 발행
         run: python3 dev/pipeline/publish/publish_pending.py
       # 사람이 하던 공개 build-info.json 대조를 자동화한다. 06시 전에는 건너뛰고 불일치면 실행을 실패시킨다
-      - name: 공개 build-info의 오늘 호·main·deploy SHA 일치 확인
+      - name: 공개 build-info의 오늘 호·main SHA 일치 확인
         run: python3 dev/pipeline/publish/verify_publication.py --expect-today --timeout 900
       # 알림은 발행 결과를 바꾸지 않는다. 설정이 없거나 실패해도 발행은 성공으로 남는다
       - name: 새로 공개한 최신 호를 텔레그램 채널에 알리기
