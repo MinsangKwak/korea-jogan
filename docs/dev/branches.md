@@ -40,7 +40,7 @@ flowchart LR
 | [check.yml](../../.github/workflows/check.yml) | `main` 대상 PR, `daily/**` push | 쓰기 권한 없이 [공통 검사 작업](../../.github/actions/verify/action.yml) 실행 = `verify-ci` |
 | Vercel Git 연동 | `main`·`daily/*`를 뺀 브랜치 push | [build_preview.py](../../dev/pipeline/build/build_preview.py)로 보호된 미리보기 빌드 |
 | [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `main` push, 수동(고정 SHA), 평일 KST 09:17~22:17 매시 | 배포 SHA 고정 → 같은 SHA의 전체 검사 성공 증거가 없으면 전체 검사 → `validate --deploy` → RSS·사이트맵·호별 HTML·`live.json`·`build-info.json` 생성 → Pages → 공개 확인. 실패 시 같은 소스로 최대 두 번 재시도 |
-| [publish.yml](../../.github/workflows/publish.yml) | KST 06:00·06:07·06:37·07:17·08:17 (`main` 참조) | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 준비 → 자동 승인 → `main` 반영 → Pages 호출 |
+| [publish.yml](../../.github/workflows/publish.yml) | KST 06:00·06:07·06:37·07:17·08:17 (`main` 참조) | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 준비 → 자동 승인 → `main` 반영 → Pages 호출 → 공개 `build-info.json` 오늘 호·SHA 대조 |
 | [daily.yml](../../.github/workflows/daily.yml) | 매일 04:30 KST·수동 | RSS 원자료·이슈 추적 편집 후보. ECOS는 수동 실행 시 수집 |
 
 공통 검사 작업은 데이터 검사·토큰 CSS 일치·Python 시험·PR 커밋 제목·브라우저 검사를 한 실행 환경에서 수행합니다. 검사를 삭제하거나 경로 필터로 건너뛰지 않습니다.
