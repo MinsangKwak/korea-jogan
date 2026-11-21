@@ -21,7 +21,7 @@
 | --- | --- | --- |
 | 00:20 | Codex 예약 | `main` 기준 `daily/YYYY-MM-DD` 생성, 조사·사실 초안·문장 편집·검사, 오늘 JSON·색인·실제 추적 갱신만 저장. 예상 SHA가 같을 때만 반영 |
 | 04:30 | `daily.yml` | 전날 RSS 제목을 등록된 추적 키워드와 대조하고 기사 주소와 추적 사안 ID를 편집 후보로 보관 |
-| 06:00 (+06:07·06:37·07:17·08:17 재확인) | `publish.yml` | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 `main`에 준비 → 미확인 초안 자동 공개 → `main`·`deploy` 반영 → Pages 호출 |
+| 06:00 (+06:07·06:37·07:17·08:17 재확인) | `publish.yml` | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 `main`에 준비 → 미확인 초안 자동 공개 → `main`·`deploy` 반영 → Pages 호출 → 공개 `build-info.json` 오늘 호·SHA 대조 |
 | 06:00 | Codex 감독 예약 | 공개 대기 없이 안정 `publish.yml`을 바로 실행하고 실제 공개 확인, 실패하면 재시도 (2026.11.05·11.19 사용자 승인) |
 | 운영 반영 뒤 | `deploy-pages.yml` | 배포 규칙 검사, 파일 생성, Pages 배포, 공개 확인 |
 | 사람이 가능할 때 | 운영자 | 원문 대조·승인, 정정 |
@@ -89,7 +89,7 @@ python3 dev/pipeline/publish/validate.py --deploy
 
 ## 5. 반영과 배포 확인
 
-`publish.yml`은 안정 `main` 코드로 오늘 `daily`의 정확한 SHA와 `verify-ci` 성공을 확인하고 [prepare_daily.py](../../dev/pipeline/publish/prepare_daily.py)로 오늘 JSON·색인·실제 추적 변경만 가져옵니다(허용 경로·색인 보존·동시 변경 검사는 [보호 조건](../dev/branches.md#일일-발행-경로의-보호-조건)). 미확인 초안을 자동 공개하고 `main`·`deploy`에 원자적으로 push한 뒤 Pages를 명시적으로 호출합니다. 일일 브랜치 전체나 `dev` 코드는 병합·실행하지 않습니다.
+`publish.yml`은 안정 `main` 코드로 오늘 `daily`의 정확한 SHA와 `verify-ci` 성공을 확인하고 [prepare_daily.py](../../dev/pipeline/publish/prepare_daily.py)로 오늘 JSON·색인·실제 추적 변경만 가져옵니다(허용 경로·색인 보존·동시 변경 검사는 [보호 조건](../dev/branches.md#일일-발행-경로의-보호-조건)). 미확인 초안을 자동 공개하고 `main`·`deploy`에 원자적으로 push한 뒤 Pages를 명시적으로 호출합니다. 이어서 [verify_publication.py](../../dev/pipeline/publish/verify_publication.py) `--expect-today`가 최대 15분 동안 공개 색인·호 JSON·홈·`build-info.json`이 오늘(KST) 호와 원격 `main`=`deploy` SHA인지 대조하고, 다르면 실행을 실패시킵니다(06시 전 실행은 건너뜀). 일일 브랜치 전체나 `dev` 코드는 병합·실행하지 않습니다.
 
 `deploy-pages.yml`은 `validate --deploy` → `build_feed.py` → `build_pages.py`(호별 HTML·CSP 해시) → `build_live.py`(실패해도 계속) → `build_info.py` → Pages 순서로 진행하고 공개 색인·호 JSON·홈·`build-info.json`의 날짜·SHA를 대조합니다. 06시를 넘겨 수집했다면 자료 기준은 전날 23:59로 두고 `late.reason`·`late.cutoff`를 남기며 수집 시각을 앞당겨 적지 않습니다.
 
