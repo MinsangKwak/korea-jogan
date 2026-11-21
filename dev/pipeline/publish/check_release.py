@@ -110,7 +110,7 @@ def deployment_state(sha: str, runs: dict, previous: dict, started_after: str) -
     for item in runs["workflow_runs"]:
         if not isinstance(item, dict) or not isinstance(item.get("id"), int) or item["id"] in prior_ids:
             continue
-        if item.get("head_sha") != sha or item.get("head_branch") != "deploy" or item.get("event") != "workflow_dispatch":
+        if item.get("head_sha") != sha or item.get("head_branch") != "main" or item.get("event") != "workflow_dispatch":
             continue
         if not isinstance(item.get("created_at"), str):
             continue

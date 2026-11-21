@@ -161,7 +161,7 @@ class ReleaseTest(unittest.TestCase):
 class DeploymentResultTest(unittest.TestCase):
     def setUp(self):
         self.start = "2026-11-04T01:00:00Z"
-        self.run = {"id": 12, "head_sha": SHA, "head_branch": "deploy", "event": "workflow_dispatch", "created_at": "2026-11-04T01:00:01Z", "status": "completed", "conclusion": "success"}
+        self.run = {"id": 12, "head_sha": SHA, "head_branch": "main", "event": "workflow_dispatch", "created_at": "2026-11-04T01:00:01Z", "status": "completed", "conclusion": "success"}
         self.previous = {"workflow_runs": [{**self.run, "id": 11}]}
 
     def state(self, runs):
@@ -169,7 +169,7 @@ class DeploymentResultTest(unittest.TestCase):
 
     def test_new_same_sha_dispatch_is_the_only_success(self):
         self.assertEqual(self.state([self.run]), ("success", 12))
-        for change in ({"id": 11}, {"head_sha": OTHER}, {"head_branch": "main"}, {"event": "schedule"}, {"created_at": "2026-11-04T00:59:59Z"}):
+        for change in ({"id": 11}, {"head_sha": OTHER}, {"head_branch": "deploy"}, {"event": "schedule"}, {"created_at": "2026-11-04T00:59:59Z"}):
             with self.subTest(change=change):
                 self.assertEqual(self.state([{**self.run, **change}]), ("pending", None))
 
