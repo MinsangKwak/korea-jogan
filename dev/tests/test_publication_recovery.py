@@ -126,7 +126,7 @@ class RecoveryPublicationIntegrationTest(unittest.TestCase):
             git('commit', '-m', '안정 기준')
             base = git('rev-parse', 'HEAD')
             git('remote', 'add', 'origin', str(remote))
-            git('push', 'origin', 'HEAD:main', 'HEAD:deploy', 'HEAD:dev')
+            git('push', 'origin', 'HEAD:main')
             directory = root / 'dev/web/data/issues'
             index = json.loads((directory / 'index.json').read_text())
             template = json.loads((directory / (index['latest'] + '.json')).read_text())
@@ -157,8 +157,8 @@ class RecoveryPublicationIntegrationTest(unittest.TestCase):
                 self.assertEqual(publish_pending.main(), 0)
             self.assertEqual([call.args[0] for call in proof.call_args_list], expected)
             refs = real_fetch(root)
-            self.assertEqual(refs['main'], refs['deploy'])
-            self.assertEqual(refs['dev'], base)
+            self.assertEqual(set(refs), {'main'})
+            self.assertTrue(real_ancestor(base, refs['main'], root))
             deploy.assert_called_once_with(refs['main'])
             self.assertEqual(json.loads((directory / 'index.json').read_text())['issues'][:3], ['2026-11-12', '2026-11-11', '2026-11-10'])
             for day in ('2026-11-10', '2026-11-11', '2026-11-12'):

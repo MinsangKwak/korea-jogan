@@ -157,10 +157,10 @@ def main() -> int:
     for target, source in sources.items():
         if remote_day(target) != source:
             raise RuntimeError('반영 전 일일 원본이 변경됐습니다')
-    if not auto_release.ancestor(refs['deploy'], candidate):
+    if not auto_release.ancestor(refs['main'], candidate):
         raise RuntimeError('기존 운영 이력을 포함하지 않습니다')
-    if candidate != refs['main'] or candidate != refs['deploy']:
-        run('git', 'push', '--atomic', 'origin', candidate + ':refs/heads/main', candidate + ':refs/heads/deploy')
+    if candidate != refs['main']:
+        run('git', 'push', 'origin', candidate + ':refs/heads/main')
     auto_release.ensure_deployment(candidate)
     print(json.dumps({'action': '검증한 누락 호 반영·배포 요청', 'dates': sorted(sources), 'latest': latest, 'sha': candidate}, ensure_ascii=False))
     return 0
