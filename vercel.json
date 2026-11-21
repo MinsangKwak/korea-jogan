@@ -7,8 +7,8 @@
   "cleanUrls": true,
   "git": {
     "deploymentEnabled": {
-      "*": false,
-      "dev": true
+      "main": false,
+      "daily/*": false
     }
   },
   "headers": [

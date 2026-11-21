@@ -180,13 +180,27 @@ def build(source: Path = PUBLIC, output: Path = OUTPUT, origin: str = ORIGIN, co
             shutil.rmtree(temporary)
 
 
+def preview_branch(branch: str) -> bool:
+    # main은 GitHub Pages 운영, daily/*는 일일 데이터라 Vercel 미리보기 대상이 아니다
+    return bool(branch) and branch != "main" and not branch.startswith("daily/")
+
+
+def origin_from_environment(environment) -> str:
+    # 직접 지정한 주소 → PR 브랜치 고정 별칭(VERCEL_BRANCH_URL) → 기본 개발 주소 순서
+    if environment.get("KJ_PREVIEW_ORIGIN"):
+        return environment["KJ_PREVIEW_ORIGIN"]
+    if environment.get("VERCEL_BRANCH_URL"):
+        return "https://" + environment["VERCEL_BRANCH_URL"]
+    return ORIGIN
+
+
 def main() -> int:
     try:
         commit = os.environ.get("VERCEL_GIT_COMMIT_SHA") or None
         branch = os.environ.get("VERCEL_GIT_COMMIT_REF") or "local"
-        if os.environ.get("VERCEL") == "1" and (not commit or branch != "dev"):
-            raise ValueError("Vercel 개발 배포에는 dev 브랜치와 정확한 커밋 SHA가 필요합니다")
-        result = build(origin=os.environ.get("KJ_PREVIEW_ORIGIN", ORIGIN), commit=commit, branch=branch)
+        if os.environ.get("VERCEL") == "1" and (not commit or not preview_branch(branch)):
+            raise ValueError("Vercel 미리보기는 main·daily를 뺀 작업 브랜치와 정확한 커밋 SHA가 필요합니다")
+        result = build(origin=origin_from_environment(os.environ), commit=commit, branch=branch)
     except (OSError, ValueError) as exc:
         print(f"개발 빌드 실패: {exc}")
         return 1
