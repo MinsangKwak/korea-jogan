@@ -157,22 +157,29 @@ class PreviewTest(unittest.TestCase):
         self.assertEqual(saved, (build_pages.PUBLIC, build_pages.ISSUES, build_pages.SITE))
         self.assertEqual((self.output / "index.html").read_text().count('id="previewBanner"'), 1)
 
-    def test_vercel_configuration_covers_every_path_and_deploys_only_dev(self):
+    def test_vercel_configuration_covers_every_path_and_previews_work_branches(self):
         config = json.loads((ROOT / "vercel.json").read_text())
         self.assertEqual(config["outputDirectory"], "dist-preview")
-        self.assertEqual(config["git"]["deploymentEnabled"], {"*": False, "dev": True})
+        self.assertEqual(config["git"]["deploymentEnabled"], {"main": False, "daily/*": False})
         self.assertEqual(config["headers"][0]["source"], "/(.*)")
         headers = {row["key"]: row["value"] for row in config["headers"][0]["headers"]}
         self.assertIn("noindex", headers["X-Robots-Tag"])
         self.assertIn("no-store", headers["Cache-Control"])
         self.assertIn("no-store", headers["Vercel-CDN-Cache-Control"])
 
-    def test_vercel_cli_requires_dev_and_exact_commit_before_build(self):
-        for environment in ({"VERCEL": "1"}, {"VERCEL": "1", "VERCEL_GIT_COMMIT_SHA": COMMIT, "VERCEL_GIT_COMMIT_REF": "main"}):
+    def test_vercel_cli_rejects_production_daily_and_unpinned_builds(self):
+        for environment in ({"VERCEL": "1"}, {"VERCEL": "1", "VERCEL_GIT_COMMIT_SHA": COMMIT, "VERCEL_GIT_COMMIT_REF": "main"}, {"VERCEL": "1", "VERCEL_GIT_COMMIT_SHA": COMMIT, "VERCEL_GIT_COMMIT_REF": "daily/2026-11-22"}, {"VERCEL": "1", "VERCEL_GIT_COMMIT_REF": "feature/sample"}):
             with self.subTest(environment=environment), patch.dict(os.environ, environment, clear=True), patch.object(build_preview, "build") as build:
                 self.assertEqual(build_preview.main(), 1)
                 build.assert_not_called()
 
+    def test_pull_request_branch_builds_on_its_own_vercel_alias(self):
+        environment = {"VERCEL": "1", "VERCEL_GIT_COMMIT_SHA": COMMIT, "VERCEL_GIT_COMMIT_REF": "feature/sample", "VERCEL_BRANCH_URL": "korea-jogan-dev-git-feature-sample-minsangkwaks-projects.vercel.app"}
+        with patch.dict(os.environ, environment, clear=True), patch.object(build_preview, "build", return_value={"origin": "o", "branch": "b", "commit": COMMIT}) as build:
+            self.assertEqual(build_preview.main(), 0)
+            self.assertEqual(build.call_args.kwargs, {"origin": "https://" + environment["VERCEL_BRANCH_URL"], "commit": COMMIT, "branch": "feature/sample"})
+        self.assertEqual(build_preview.origin_from_environment({}), build_preview.ORIGIN)
+        self.assertEqual(build_preview.origin_from_environment({"KJ_PREVIEW_ORIGIN": "https://dev.korea-jogan.com", "VERCEL_BRANCH_URL": "x.vercel.app"}), "https://dev.korea-jogan.com")
 
 if __name__ == "__main__":
     unittest.main()

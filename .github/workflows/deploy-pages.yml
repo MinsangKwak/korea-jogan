@@ -1,14 +1,15 @@
-# deploy 브랜치에 올라온 것만 GitHub Pages로 배포한다. 개발(dev)·최종본(main)은 여기서 배포하지 않는다
-# 평일 낮에는 1시간마다 같은 deploy 커밋을 다시 배포하면서 ECOS 최신 숫자(live.json)만 새로 만든다. 커밋은 하지 않는다
+# main이 곧 운영이다. 배포할 main SHA는 전체 검사 성공 증거가 있거나 이 실행에서 다시 검사를 통과해야 Pages로 나간다
+# 일일 발행은 GITHUB_TOKEN push라 push 이벤트가 생기지 않아 publish_pending.py가 같은 SHA로 수동 실행을 요청한다
+# 평일 낮에는 1시간마다 같은 main 커밋을 다시 배포하면서 ECOS 최신 숫자(live.json)만 새로 만든다. 커밋은 하지 않는다
 name: 사이트 배포
 
 on:
   push:
-    branches: [deploy]
+    branches: [main]
   workflow_dispatch:
     inputs:
       source_sha:
-        description: 배포할 deploy 커밋의 고정 SHA
+        description: 배포할 main 커밋의 고정 SHA
         required: false
         type: string
       retry_attempt:
@@ -30,13 +31,75 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # 배포할 main SHA를 먼저 고정하고, 그 SHA에 성공한 전체 검사(verify·verify-ci)가 있는지 확인한다
+  # 예약·수동 실행도 검사 증거가 없으면 아래 verify 작업이 같은 SHA를 다시 검사한 뒤에만 배포한다
+  plan:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read
+    outputs:
+      sha: ${{ steps.plan.outputs.sha }}
+      proven: ${{ steps.plan.outputs.proven }}
+      run: ${{ steps.plan.outputs.run }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+      EVENT_NAME: ${{ github.event_name }}
+      PUSH_SHA: ${{ github.event_name == 'push' && github.sha || '' }}
+      REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
+    steps:
+      - id: plan
+        name: 배포 SHA 고정과 같은 SHA의 전체 검사 증거 확인
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          def api(path):
+              return json.loads(subprocess.run(["gh", "api", f"repos/{os.environ['GH_REPO']}/{path}"], text=True, capture_output=True, check=True).stdout)
+          def output(**values):
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
+                  stream.writelines(f"{key}={value}\n" for key, value in values.items())
+          event = os.environ["EVENT_NAME"]
+          if event == "schedule" and not os.environ.get("ECOS_API_KEY"):
+              print("ECOS_API_KEY가 없어 예약 배포를 건너뜁니다.")
+              output(sha="", proven="false", run="false")
+              raise SystemExit(0)
+          sha = os.environ.get("PUSH_SHA") or os.environ.get("REQUESTED_SOURCE_SHA") or api("git/ref/heads/main")["object"]["sha"]
+          if not re.fullmatch(r"[0-9a-f]{40}", sha):
+              raise SystemExit("source_sha에는 40자리 소문자 커밋 SHA가 필요합니다")
+          runs = api(f"commits/{sha}/check-runs?filter=latest&per_page=100").get("check_runs", [])
+          proofs = [item for item in runs if item.get("name") in ("verify", "verify-ci") and item.get("head_sha") == sha
+                    and (item.get("app") or {}).get("slug") == "github-actions" and item.get("status") == "completed"]
+          proven = event != "push" and bool(proofs) and all(item.get("conclusion") == "success" for item in proofs)
+          print(f"배포 SHA {sha} · 기존 전체 검사 증거 {'있음' if proven else '없음, 다시 검사'}")
+          output(sha=sha, proven=str(proven).lower(), run="true")
+          PY
+
+  # 증거가 없는 SHA(병합 push, 일일 발행 커밋, 새 main의 첫 예약 실행)는 전체 검사를 통과해야 배포한다
+  verify:
+    needs: plan
+    if: needs.plan.outputs.run == 'true' && needs.plan.outputs.proven != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/verify
+
   deploy:
+    needs: [plan, verify]
     outputs:
       source_sha: ${{ steps.source.outputs.sha }}
     if: >-
-      (github.event_name == 'push' && github.ref == 'refs/heads/deploy') ||
-      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/deploy') ||
-      (github.event_name == 'schedule' && github.ref == 'refs/heads/main')
+      always() && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' &&
+      (needs.verify.result == 'success' || (needs.verify.result == 'skipped' && needs.plan.outputs.proven == 'true'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -47,7 +110,7 @@ jobs:
     steps:
       - name: 고정 배포 입력 확인
         env:
-          REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
+          REQUESTED_SOURCE_SHA: ${{ needs.plan.outputs.sha }}
         run: |
           python3 - <<'PY'
           import os, re
@@ -55,24 +118,24 @@ jobs:
           if source and not re.fullmatch(r"[0-9a-f]{40}", source):
               raise SystemExit("source_sha에는 40자리 소문자 커밋 SHA가 필요합니다")
           PY
-      # push는 이벤트 커밋, 수동 실행은 지정한 SHA, 예약은 deploy 최신 소스를 받는다
+      # 검사한 바로 그 SHA를 받는다
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'push' && github.sha || inputs.source_sha || 'deploy' }}
+          ref: ${{ needs.plan.outputs.sha }}
           fetch-depth: 0
       - id: source
-        name: 실제 배포 소스와 deploy 일치 확인
+        name: 실제 배포 소스와 main 일치 확인
         env:
-          EXPECTED_SOURCE_SHA: ${{ github.event_name == 'push' && github.sha || inputs.source_sha || '' }}
+          EXPECTED_SOURCE_SHA: ${{ needs.plan.outputs.sha }}
         run: |
           ACTUAL_SOURCE_SHA="$(git rev-parse HEAD)"
-          git fetch origin refs/heads/deploy:refs/remotes/origin/deploy
+          git fetch origin refs/heads/main:refs/remotes/origin/main
           if [ -n "$EXPECTED_SOURCE_SHA" ] && [ "$ACTUAL_SOURCE_SHA" != "$EXPECTED_SOURCE_SHA" ]; then
             echo "::error::요청한 커밋과 실제 체크아웃한 커밋이 다릅니다"
             exit 1
           fi
-          if [ "$ACTUAL_SOURCE_SHA" != "$(git rev-parse origin/deploy)" ]; then
-            echo "::error::deploy가 변경되어 오래된 소스로 덮어쓰지 않습니다"
+          if [ "$ACTUAL_SOURCE_SHA" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::main이 변경되어 오래된 소스로 덮어쓰지 않습니다"
             exit 1
           fi
           printf 'sha=%s\n' "$ACTUAL_SOURCE_SHA" >> "$GITHUB_OUTPUT"
@@ -147,10 +210,10 @@ jobs:
     steps:
       - name: 같은 소스의 배포·검사를 최대 두 번 자동 재시도
         run: |
-          CURRENT_SHA="$(gh api "repos/$GH_REPO/git/ref/heads/deploy" --jq '.object.sha')"
+          CURRENT_SHA="$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq '.object.sha')"
           if [ "$CURRENT_SHA" != "$SOURCE_SHA" ]; then
             echo "새 배포 소스가 있어 이전 소스의 재시도를 중단합니다"
             exit 0
           fi
           NEXT_ATTEMPT="$(( PREVIOUS_ATTEMPT + 1 ))"
-          gh workflow run deploy-pages.yml --ref deploy -f source_sha="$SOURCE_SHA" -f retry_attempt="$NEXT_ATTEMPT"
+          gh workflow run deploy-pages.yml --ref main -f source_sha="$SOURCE_SHA" -f retry_attempt="$NEXT_ATTEMPT"
