@@ -28,7 +28,7 @@ flowchart LR
 1. 최신 `main`에서 작업 브랜치를 만들고 목적·폴더·역할별 커밋을 나눕니다. PR은 기능 하나로 묶습니다.
 2. `main` 대상 PR을 엽니다. `check.yml`이 [공통 검사 작업](../../.github/actions/verify/action.yml)(`verify-ci`)을 돌리고, Vercel이 같은 커밋의 보호된 미리보기를 PR 브랜치 주소(`korea-jogan-dev-git-<브랜치>-minsangkwaks-projects.vercel.app`)에 만듭니다. 화면 상단 띠에 브랜치·SHA가 표시됩니다.
 3. 미리보기에서 화면을 확인하고 `verify-ci`·Vercel 상태가 모두 성공이면 병합합니다. 병합 뒤 커밋이 더 쌓이면 다시 확인합니다.
-4. `main` push로 `deploy-pages.yml`이 시작되어 병합 커밋의 전체 검사를 다시 통과한 경우에만 Pages에 배포하고 공개 `build-info.json`의 `sourceSha`·날짜를 대조합니다.
+4. `main` push로 `deploy-pages.yml`이 시작되어 병합 커밋의 전체 검사를 통과한 경우에만 Pages에 배포하고 공개 `build-info.json`의 `sourceSha`·날짜를 대조합니다.
 5. Pages 성공과 공개 `build-info.json`을 확인한 뒤 완료로 기록합니다. 병합만으로 완료라고 하지 않습니다.
 
 병합 전 두 상태를 필수로 만들려면 GitHub 저장소 설정의 `main` 보호 규칙(Require status checks)에 `verify-ci`와 `Vercel`을 지정합니다. 이 규칙은 저장소 설정이라 이 문서의 변경으로 켜지지 않습니다.
@@ -39,13 +39,13 @@ flowchart LR
 | --- | --- | --- |
 | [check.yml](../../.github/workflows/check.yml) | `main` 대상 PR, `daily/**` push | 쓰기 권한 없이 [공통 검사 작업](../../.github/actions/verify/action.yml) 실행 = `verify-ci` |
 | Vercel Git 연동 | `main`·`daily/*`를 뺀 브랜치 push | [build_preview.py](../../dev/pipeline/build/build_preview.py)로 보호된 미리보기 빌드 |
-| [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `main` push(전체 검사 후), 수동(고정 SHA), 평일 KST 09:17~22:17 매시 | `validate --deploy` → RSS·사이트맵·호별 HTML·`live.json`·`build-info.json` 생성 → Pages → 공개 확인. 실패 시 같은 소스로 최대 두 번 재시도 |
+| [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `main` push, 수동(고정 SHA), 평일 KST 09:17~22:17 매시 | 배포 SHA 고정 → 같은 SHA의 전체 검사 성공 증거가 없으면 전체 검사 → `validate --deploy` → RSS·사이트맵·호별 HTML·`live.json`·`build-info.json` 생성 → Pages → 공개 확인. 실패 시 같은 소스로 최대 두 번 재시도 |
 | [publish.yml](../../.github/workflows/publish.yml) | KST 06:00·06:07·06:37·07:17·08:17 (`main` 참조) | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 준비 → 자동 승인 → `main` 반영 → Pages 호출 |
 | [daily.yml](../../.github/workflows/daily.yml) | 매일 04:30 KST·수동 | RSS 원자료·이슈 추적 편집 후보. ECOS는 수동 실행 시 수집 |
 
 공통 검사 작업은 데이터 검사·토큰 CSS 일치·Python 시험·PR 커밋 제목·브라우저 검사를 한 실행 환경에서 수행합니다. 검사를 삭제하거나 경로 필터로 건너뛰지 않습니다.
 
-`GITHUB_TOKEN` push는 후속 Actions를 자동 시작하지 않으므로 일일 발행은 `main` 반영 뒤 같은 SHA로 `deploy-pages.yml`을 명시적으로 호출합니다([auto_release.py](../../dev/pipeline/publish/auto_release.py)). 이 경로는 `publish_pending.py`가 원본 SHA를 이미 검사했으므로 Pages 워크플로에서 전체 검사를 반복하지 않습니다. 시간당 배포는 SHA가 같아도 `builtAt`이 이번 결과와 같아야 공개 완료로 봅니다([verify_publication.py](../../dev/pipeline/publish/verify_publication.py)).
+`GITHUB_TOKEN` push는 후속 Actions를 자동 시작하지 않으므로 일일 발행은 `main` 반영 뒤 같은 SHA로 `deploy-pages.yml`을 명시적으로 호출합니다([auto_release.py](../../dev/pipeline/publish/auto_release.py)). `deploy-pages.yml`은 이벤트 종류와 상관없이 배포할 `main` SHA에 성공한 `verify`·`verify-ci`가 없으면 그 SHA를 다시 전체 검사한 뒤에만 배포합니다. 그래서 병합 push의 검사가 실패한 코드가 다음 매시 예약이나 수동 실행으로 공개되지 않고, 일일 발행 커밋도 배포 전에 한 번 검사합니다(약 3분 추가). 시간당 배포는 SHA가 같아도 `builtAt`이 이번 결과와 같아야 공개 완료로 봅니다([verify_publication.py](../../dev/pipeline/publish/verify_publication.py)).
 
 2026.11.21 이전의 `dev` 통합 → `integration.yml`·`promote.yml`의 태그·`main`·`deploy` 자동 승격 경로는 브랜치 정리와 함께 없앴습니다. 기존 `release-*` 태그는 당시 기록으로 남깁니다.
 

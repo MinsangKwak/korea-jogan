@@ -90,6 +90,10 @@ class WorkflowShapeTest(unittest.TestCase):
         pages = (workflows / "deploy-pages.yml").read_text(encoding="utf-8")
         self.assertIn("branches: [main]", pages)
         self.assertIn("uses: ./.github/actions/verify", pages)
+        # 예약·수동 실행도 검사 증거 없는 SHA는 verify를 거쳐야 deploy가 열린다
+        self.assertIn("needs.plan.outputs.proven != 'true'", pages)
+        self.assertIn("needs.verify.result == 'skipped' && needs.plan.outputs.proven == 'true'", pages)
+        self.assertIn("ref: ${{ needs.plan.outputs.sha }}", pages)
         self.assertIn("branches: [main]", (workflows / "check.yml").read_text(encoding="utf-8"))
         publisher = (REPO / "dev/pipeline/publish/publish_pending.py").read_text(encoding="utf-8")
         self.assertNotIn("refs/heads/deploy", publisher)
