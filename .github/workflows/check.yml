@@ -4,7 +4,7 @@ on:
   push:
     branches: ['daily/**']
   pull_request:
-    branches: [dev, main, deploy]
+    branches: [main]
   workflow_dispatch:
     inputs:
       source_sha:
