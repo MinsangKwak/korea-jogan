@@ -94,6 +94,9 @@ class WorkflowShapeTest(unittest.TestCase):
         self.assertIn("needs.plan.outputs.proven != 'true'", pages)
         self.assertIn("needs.verify.result == 'skipped' && needs.plan.outputs.proven == 'true'", pages)
         self.assertIn("ref: ${{ needs.plan.outputs.sha }}", pages)
+        # 건너뛴 검사는 증거로 세지 않고, 아티팩트 조회 지연은 같은 실행에서 한 번 더 배포한다
+        self.assertIn('not in ("skipped", "neutral", None)', pages)
+        self.assertIn("id: deployment_retry", pages)
         self.assertIn("branches: [main]", (workflows / "check.yml").read_text(encoding="utf-8"))
         publisher = (REPO / "dev/pipeline/publish/publish_pending.py").read_text(encoding="utf-8")
         self.assertNotIn("refs/heads/deploy", publisher)
