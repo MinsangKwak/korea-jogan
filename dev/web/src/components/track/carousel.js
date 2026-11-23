@@ -79,8 +79,8 @@ function setupTrackCarousel(list) {
     }
     const reading = document.activeElement.closest('.kj-track') || targetCard();
     const step = cards[1].offsetLeft - cards[0].offsetLeft;
-    const index = reading ? cards.indexOf(reading) : Math.round(list.scrollLeft / step);
-    const first = Math.max(0, Math.min(index || 0, cards.length - 2));
+    const nativeIndex = step > 0 ? Math.round(list.scrollLeft / step) : 0;
+    const first = Math.max(0, Math.min(reading ? cards.indexOf(reading) : nativeIndex, cards.length - 2));
     list.scrollLeft = 0;
     viewport.classList.add('swiper');
     viewport.tabIndex = 0;
