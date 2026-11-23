@@ -61,12 +61,14 @@ function renderNational() {
     title.tabIndex = -1;
     article.setAttribute('aria-labelledby', title.id);
     const link = title.querySelector('a');
-    title.textContent = link.textContent;
-    link.className = 'nat-original';
-    link.textContent = '기사 원문 보기';
-    link.setAttribute('aria-label', item.title + ' 기사 원문 보기');
-    link.append(svgIcon('M13 5h6v6M19 5l-9 9M11 5H5v14h14v-6'));
-    article.append(link);
+    if (link) {
+      title.textContent = item.title;
+      link.className = 'nat-original';
+      link.textContent = '기사 원문 보기';
+      link.setAttribute('aria-label', item.title + ' 기사 원문 보기');
+      link.append(svgIcon('M13 5h6v6M19 5l-9 9M11 5H5v14h14v-6'));
+      article.append(link);
+    }
     reading.replaceChildren(article);
     buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
     if (move) {
@@ -112,15 +114,15 @@ async function showEditionWeather(issue) {
   const report = editions[issueDate];
   if (!report || !issue.national?.items?.some((item) => item.url === report.url)) return;
 
-  const url = new URL(report.url);
-  if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return;
+  const url = safeSourceHref(report.url);
+  if (!url) return;
   const field = (name) => section.querySelector('.weather-spread__' + name);
   const date = el('time', { datetime: issueDate }, longDate(issueDate) + '호');
   field('meta').replaceChildren(date, report.region ? ' · ' + report.region : '');
   field('summary').textContent = report.headline;
   field('facts').replaceChildren(...report.facts.map((fact) => el('li', {}, fact)));
   const source = field('source');
-  source.href = url.href;
+  source.href = url;
   const sourceDate = el('time', { datetime: report.sourceDate }, longDate(report.sourceDate) + ' 보도');
   source.replaceChildren(report.outlet + ' 원문 · ', sourceDate);
   section.dataset.issueDate = issueDate;

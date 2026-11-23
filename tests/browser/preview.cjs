@@ -78,6 +78,19 @@ async function identity(page) {
 (async () => {
   try {
     browser = await openBrowser();
+    await check('Swagger UI에서 실제 발행 색인 조회', {}, async ({ page }) => {
+      await page.goto(origin + '/api/docs/');
+      await identity(page);
+      const op = page.locator('.opblock').filter({ has: page.getByText('발행 호 목록', { exact: true }) });
+      await op.locator('.opblock-summary-control').click();
+      await op.getByRole('button', { name: 'Try it out', exact: true }).click();
+      const returned = page.waitForResponse(origin + '/api/v1/index.json');
+      await op.getByRole('button', { name: 'Execute', exact: true }).click();
+      const response = await returned;
+      assert.equal(response.status(), 200);
+      assert.equal((await response.json()).latest, index.latest);
+      assert.equal((await op.locator('.live-responses-table tbody td.response-col_status').innerText()).trim(), '200');
+    });
     await check('개발 첫 화면의 초기화·CSP·운영 측정 제외', {}, async ({ page }) => {
       await page.goto(origin + '/');
       await ready(page);

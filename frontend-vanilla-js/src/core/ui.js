@@ -8,6 +8,23 @@ function el(tag, attrs, text) {
   return n;
 }
 
+// 기사 데이터의 원문 주소는 절대 HTTP(S) 주소로만 연결한다
+function safeSourceHref(value) {
+  if (typeof value !== 'string' || !/^https?:\/\/[^/?#]/i.test(value) || /[\\\u0000-\u0020\u007f]/.test(value)) return '';
+  try {
+    const url = new URL(value);
+    return url.hostname && !url.username && !url.password ? value : '';
+  } catch {
+    return '';
+  }
+}
+
+function newsSourceLink(value, title, attributes = {}) {
+  const href = safeSourceHref(value);
+  if (!href) return el('span', attributes.lang ? { lang: attributes.lang } : {}, title);
+  return el('a', { ...attributes, href, ...(attributes.target === '_blank' ? { rel: 'noopener noreferrer' } : {}) }, title);
+}
+
 // 화면 크기별 기본 펼침과 사용자가 고른 상태를 따로 기억한다
 const responsiveDisclosures = new WeakSet();
 function responsiveDisclosure(details, options = {}) {
@@ -124,7 +141,7 @@ function srcDisclosure(s, where) {
   [['기관', s.name], ['확인 자료', s.title], ['발표일', s.pub], ['기준', s.base]].forEach(([a, b]) => dl.append(el('dt', {}, a), el('dd', {}, b || '미확인')));
   dl.append(el('dt', {}, '링크'));
   const dd = el('dd');
-  dd.append(el('a', { href: s.url, target: '_blank', rel: 'noopener' }, '원문 열기'));
+  dd.append(safeSourceHref(s.url) ? newsSourceLink(s.url, '원문 열기', { target: '_blank' }) : el('span', {}, '원문 주소 미확인'));
   dl.append(dd);
   panel.append(dl);
   if (where) {
@@ -178,7 +195,7 @@ function newsItem(it, label) {
   if (!it.body_read) cat.append(el('span', { class: 'kj-badge kj-badge--muted' }, '본문 미확인'));
   a.append(cat);
   const h = el('h3');
-  h.append(el('a', { href: it.url, target: '_blank', rel: 'noopener' }, it.title));
+  h.append(newsSourceLink(it.url, it.title, { target: '_blank' }));
   a.append(h, readingText(it.summary));
   if (it.figures && it.figures.length) {
     const f = el('ul', { class: 'kj-figs', 'aria-label': '기사 속 수치' });

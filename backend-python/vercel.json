@@ -1,0 +1,32 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "python3 build_runtime.py",
+  "outputDirectory": "public",
+  "functions": {
+    "api/articles.py": {
+      "includeFiles": "var/articles.sqlite3",
+      "excludeFiles": "{tests/**,pipeline/**,public/**}"
+    }
+  },
+  "git": { "deploymentEnabled": { "daily/*": false } },
+  "redirects": [
+    { "source": "/", "destination": "/api/docs/", "permanent": false },
+    { "source": "/docs", "destination": "/api/docs/", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/api/v1/:resource*", "destination": "/api/articles?resource=:resource*" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    }
+  ]
+}

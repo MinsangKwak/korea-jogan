@@ -8,7 +8,19 @@ export class ApiError extends Error {
   }
 }
 
+const reportUrl = 'https://analyticsdata.googleapis.com/v1beta/properties/' + CONFIG.propertyId + ':batchRunReports';
+export const sitesUrl = 'https://www.googleapis.com/webmasters/v3/sites';
+export const inspectionUrl = 'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect';
+export const searchProperties = ['https://' + CONFIG.hostname + '/', 'sc-domain:' + CONFIG.hostname];
+const tokenDestinations = new Set([reportUrl, sitesUrl, inspectionUrl]);
+for (const property of searchProperties) {
+  const root = sitesUrl + '/' + encodeURIComponent(property);
+  tokenDestinations.add(root + '/searchAnalytics/query');
+  tokenDestinations.add(root + '/sitemaps');
+}
+
 export async function request(url, { token, body, signal } = {}) {
+  if (token && !tokenDestinations.has(url)) throw new ApiError(400, 'INVALID_REPORT_URL');
   const controller = new AbortController();
   const abort = () => controller.abort();
   if (signal?.aborted) abort();
@@ -18,6 +30,7 @@ export async function request(url, { token, body, signal } = {}) {
     const response = await fetch(url, {
       method: body ? 'POST' : 'GET',
       credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer',
+      ...(token ? { redirect: 'error' } : {}),
       headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: 'Bearer ' + token } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}), signal: controller.signal
     });
@@ -51,8 +64,7 @@ export async function loadReports(token, period, signal) {
   // 오늘은 시간대별, 그 밖의 기간은 날짜별로 추이를 그린다
   const step = period === 'today' ? 'dateHour' : 'date';
   const glance = metric('activeUsers', 'userEngagementDuration', 'screenPageViews');
-  const url = `https://analyticsdata.googleapis.com/v1beta/properties/${CONFIG.propertyId}:batchRunReports`;
-  const batch = (requests) => request(url, { token, signal, body: { requests } });
+  const batch = (requests) => request(reportUrl, { token, signal, body: { requests } });
   const acquisitionMetrics = metric('sessions', 'activeUsers', 'userEngagementDuration');
   const [main, more, acquisition] = await Promise.all([
     batch([

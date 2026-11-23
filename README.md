@@ -6,7 +6,7 @@
 
 HTML·CSS·바닐라 JavaScript로 접근 가능한 지면을 만들고, Python·SQLite로 전국·지역 기사를 정제해 제공합니다.
 
-[운영 서비스](https://korea-jogan.com/) · [파기환송 직접 읽기](https://korea-jogan.com/politics/reversal-and-remand/) · [Notion 프로젝트 소개](https://app.notion.com/p/3ffcbbdd109b8167a28dd65769e55676)
+[운영 서비스](https://korea-jogan.com/) · [Python API 실습 · Swagger UI](https://korea-jogan-backend.vercel.app/api/docs/) · [파기환송 직접 읽기](https://korea-jogan.com/politics/reversal-and-remand/) · [Notion 프로젝트 소개](https://app.notion.com/p/3ffcbbdd109b8167a28dd65769e55676)
 
 ## 기술 스택과 코드 위치
 
@@ -49,6 +49,10 @@ HTML·CSS·바닐라 JavaScript로 접근 가능한 지면을 만들고, Python�
 - **AI를 어디에 사용했나.** 조사·초안·삽화 제작에 활용했습니다. 자동 검사를 통과한 호와 사람이 원문을 대조한 호를 지면에서 구별하고, 공개 뒤 발견한 오류는 변경 전후와 이유를 기록합니다. [편집 기준](docs/planning/editorial.md) · [정정 기록](https://korea-jogan.com/#fixH)
 - **발행 성공을 어떻게 확인하나.** 운영 도메인에서 해당 호가 열리고, 공개된 빌드의 커밋이 배포 대상으로 지정한 커밋과 일치하는지 확인합니다. [공개 빌드 기록](https://korea-jogan.com/build-info.json) · [발행·복구 절차](docs/planning/runbook.md)
 - **첫 독자를 어떻게 찾을 것인가.** 첫 4주간 외부 방문자 100명을 목표로 삼았습니다. 질문별로 검색 노출·클릭과 원문 열람을 살펴봅니다. 방문자와 반복 가능한 클릭 횟수는 별도로 집계합니다. [독자 유입 검증 계획](docs/planning/growth.md) · [관리자 화면](https://korea-jogan.com/admin/)
+
+## 프런트엔드와 백엔드 보안
+
+기사 제목·요약은 화면에 텍스트로 넣고, 관리자 통계는 Google 읽기 권한으로 분리했습니다. 기사 API는 공개 호의 지정 필드만 제공하며 SQLite를 읽기 전용으로 조회합니다. 화면·API·발행 단계별로 적용한 조치와 회귀 검사를 확인할 수 있습니다. [보안 설계와 검증](docs/dev/security.md)
 
 ## 로컬 실행과 검증
 

@@ -72,9 +72,16 @@ window.newsCaseEdition = (() => {
     byId('casePairDate').textContent = dateText(entry.issueDate) + ' 기사와 함께 읽는 판례';
     byId('casePairQuestion').textContent = entry.question;
     byId('casePairContext').textContent = entry.context;
-    article.href = entry.articleUrl;
+    const href = safeSourceHref(entry.articleUrl);
+    if (href) article.href = href;
+    else article.removeAttribute('href');
+    article.querySelector('span').textContent = href ? '기사 원문' : '기사 원문 주소 미확인';
     article.querySelector('strong').textContent = entry.articleTitle;
-    ruling.href = 'https://www.law.go.kr/LSW/precInfoP.do?precSeq=' + entry.caseId;
+    if (Number.isSafeInteger(entry.caseId) && entry.caseId > 0) {
+      ruling.href = 'https://www.law.go.kr/LSW/precInfoP.do?precSeq=' + entry.caseId;
+    } else {
+      ruling.removeAttribute('href');
+    }
     ruling.querySelector('span').textContent = '대법원 · ' + dateText(entry.caseDate) + '.';
     ruling.querySelector('strong').textContent = entry.caseNumber + ' · ' + entry.caseTitle;
     search.href = '/law/?' + new URLSearchParams({ theme: entry.theme, q: entry.keyword });

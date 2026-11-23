@@ -105,7 +105,7 @@ function industryDetailContent(industry) {
     facts.append(row);
   });
   const related = el('p', { class: 'industry-detail__article' });
-  related.append(el('b', {}, '관련 기사'), el('span', {}, industry.news[0]), el('a', { href: industry.news[2], target: '_blank', rel: 'noopener' }, industry.news[1]));
+  related.append(el('b', {}, '관련 기사'), el('span', {}, industry.news[0]), newsSourceLink(industry.news[2], industry.news[1], { target: '_blank' }));
   content.append(readingText(industry.sum, 'industry-detail__summary'), facts, related);
   return content;
 }

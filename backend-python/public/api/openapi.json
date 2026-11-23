@@ -1,0 +1,318 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "대한민국 조간 기사 API",
+    "version": "1.0.0",
+    "description": "공개 발행호의 전국·지역 기사를 조회하는 읽기 전용 API입니다. 로그인이나 API 키 없이 이용할 수 있습니다. 발행 호 목록 → 날짜별 기사 → 기사 한 건 순서로 조회해 보세요."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "현재 사이트의 기사 API"
+    }
+  ],
+  "tags": [
+    {
+      "name": "기사 조회"
+    }
+  ],
+  "paths": {
+    "/index.json": {
+      "get": {
+        "operationId": "listEditions",
+        "tags": [
+          "기사 조회"
+        ],
+        "summary": "발행 호 목록",
+        "description": "최신 호부터 발행일과 기사 건수를 확인합니다. 날짜별 응답의 articles 배열에서 개별 기사의 id를 찾을 수 있습니다.",
+        "responses": {
+          "200": {
+            "description": "발행 호 목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Index"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/editions/{date}.json": {
+      "get": {
+        "operationId": "getEdition",
+        "tags": [
+          "기사 조회"
+        ],
+        "summary": "날짜별 기사",
+        "description": "선택한 조간에 실린 전국·지역 기사를 지면 순서대로 반환합니다. 편집본의 editionDate와 원문 보도일 date를 구분합니다.",
+        "responses": {
+          "200": {
+            "description": "날짜별 기사",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Edition"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "공개 자료에서 해당 항목을 찾을 수 없습니다."
+          }
+        },
+        "parameters": [
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "description": "조간의 발행일(YYYY-MM-DD)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2026-11-23"
+          }
+        ]
+      }
+    },
+    "/articles/{id}.json": {
+      "get": {
+        "operationId": "getArticle",
+        "tags": [
+          "기사 조회"
+        ],
+        "summary": "기사 한 건",
+        "description": "호별 응답에서 얻은 id로 기사 제목, 편집 요약, 출처와 보도일을 조회합니다. 같은 원문이 다른 날의 지면에 다시 실리면 편집본 ID가 다릅니다.",
+        "responses": {
+          "200": {
+            "description": "기사 한 건",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Article"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "공개 자료에서 해당 항목을 찾을 수 없습니다."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "호별 응답의 32자리 기사 ID",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "example": "e2e12f46cf1b26605a6829c6186b32bd"
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EditionSummary": {
+        "type": "object",
+        "required": [
+          "date",
+          "status",
+          "articleCount",
+          "href"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "published",
+              "prototype"
+            ],
+            "description": "정식 발행호(published) 또는 공개 시범호(prototype)"
+          },
+          "articleCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "전국·지역 지면에 실린 편집본 수",
+            "example": 67
+          },
+          "href": {
+            "type": "string",
+            "description": "이 호의 기사 목록을 여는 같은 사이트 안의 경로",
+            "example": "/api/v1/editions/2026-11-23.json"
+          }
+        }
+      },
+      "Index": {
+        "type": "object",
+        "required": [
+          "version",
+          "latest",
+          "editions"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "latest": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "최신 조간 발행일. 공개 호가 없으면 null입니다."
+          },
+          "editions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EditionSummary"
+            }
+          }
+        }
+      },
+      "Edition": {
+        "type": "object",
+        "required": [
+          "version",
+          "date",
+          "status",
+          "articles"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "조간 발행일"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "published",
+              "prototype"
+            ],
+            "description": "정식 발행호(published) 또는 공개 시범호(prototype)"
+          },
+          "articles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Article"
+            }
+          }
+        }
+      },
+      "Article": {
+        "type": "object",
+        "required": [
+          "id",
+          "editionDate",
+          "section",
+          "region",
+          "title",
+          "summary",
+          "cat",
+          "date",
+          "body_read",
+          "outlet",
+          "url",
+          "figures"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{32}$"
+          },
+          "editionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "이 편집본을 실은 대한민국 조간의 발행일"
+          },
+          "section": {
+            "type": "string",
+            "enum": [
+              "national",
+              "regions"
+            ]
+          },
+          "region": {
+            "type": "string",
+            "nullable": true,
+            "description": "원자료에 지역 표기가 없으면 null입니다."
+          },
+          "title": {
+            "type": "string",
+            "description": "해당 호의 기사 제목"
+          },
+          "summary": {
+            "type": "string",
+            "description": "해당 호에서 정리한 기사 요약"
+          },
+          "cat": {
+            "type": "string",
+            "description": "편집 분야"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "원문 보도일. 조간 발행일과 다를 수 있습니다."
+          },
+          "body_read": {
+            "type": "boolean",
+            "description": "자료를 수집할 때 원문 본문을 확인했는지 표시합니다."
+          },
+          "outlet": {
+            "type": "string",
+            "description": "원문 언론사"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "보도 원문 주소"
+          },
+          "figures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "figure_source": {
+            "type": "string",
+            "description": "수치의 출처. 원자료에 기재된 경우에만 표시합니다."
+          }
+        },
+        "example": {
+          "id": "e2e12f46cf1b26605a6829c6186b32bd",
+          "editionDate": "2026-11-23",
+          "section": "national",
+          "region": null,
+          "title": "이 대통령, 최교진 사의 수락…청와대 \"다음 인선 절차대로 진행\"",
+          "summary": "이재명 대통령은 22일 최교진 교육부 장관이 사의를 공개한 지 약 1시간 만에 이를 수락했습니다. 최 장관은 교육부 대변인실을 통해 수능이 마무리된 만큼 책임을 통감한다고 밝혔고, 강유정 청와대 수석대변인은 신임 장관 인선을 절차대로 진행하겠다고 했습니다. 19일 치른 2027학년도 수능을 앞두고 AI 부정행위 대책이 잇따라 바뀌며 혼란이 컸다고 SBS는 전했습니다.",
+          "cat": "사회",
+          "date": "2026-11-22",
+          "body_read": true,
+          "outlet": "SBS",
+          "url": "https://news.sbs.co.kr/news/endPage.do?news_id=N1008857689",
+          "figures": [
+            "사의 공개 약 1시간 만에 수락",
+            "수능 19일 시행"
+          ]
+        }
+      }
+    }
+  }
+}

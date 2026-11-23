@@ -14,6 +14,7 @@ import datetime as dt
 import html
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 from urllib.parse import quote, urlencode
@@ -164,7 +165,7 @@ def digest(issue: dict) -> str:
     if news:
         parts.append(f"  <h3>{esc(md)} 전국 주요 뉴스</h3>")
         parts.append("  <ul>" + "".join(
-            f"<li>[{esc(n.get('cat'))}] <a href=\"{esc(n['url'])}\" rel=\"noopener\">{esc(n['title'])}</a> · {esc(n.get('outlet'))} — {esc(n.get('summary'))}</li>"
+            f"<li>[{esc(n.get('cat'))}] {build_discovery.source_link(n['url'], n['title'], new_window=False)} · {esc(n.get('outlet'))} — {esc(n.get('summary'))}</li>"
             for n in news[:NEWS_MAX]) + "</ul>")
     regions = (issue.get("regions") or {}).get("items", [])
     if regions:
@@ -175,7 +176,7 @@ def digest(issue: dict) -> str:
             if r["region"] in seen:
                 continue
             seen.add(r["region"])
-            rows.append(f"<li>{esc(r['region'])}: <a href=\"{esc(r['url'])}\" rel=\"noopener\">{esc(r['title'])}</a> · {esc(r.get('outlet'))}</li>")
+            rows.append(f"<li>{esc(r['region'])}: {build_discovery.source_link(r['url'], r['title'], new_window=False)} · {esc(r.get('outlet'))}</li>")
         parts.append("  <ul>" + "".join(rows[:REGION_MAX]) + "</ul>")
     parts.append("</section>")
     return "<!-- kj:digest -->\n  " + "\n  ".join(parts) + "\n  <!-- /kj:digest -->"
@@ -468,6 +469,10 @@ def published_index(issues: list[dict]) -> dict:
 
 
 def build() -> list[Path]:
+    api_source = ROOT / "backend-python/public/api"
+    api_output = PUBLIC / "api"
+    shutil.copytree(api_source / "docs", api_output / "docs", dirs_exist_ok=True)
+    shutil.copyfile(api_source / "openapi.json", api_output / "openapi.json")
     home = PUBLIC / "index.html"
     # 이미 한 번 돌린 index.html이어도 요약·기사 정보만 바뀌므로 그대로 틀로 쓴다
     template = home.read_text(encoding="utf-8")

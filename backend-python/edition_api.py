@@ -3,9 +3,9 @@
 import argparse
 from contextlib import closing
 from datetime import date
-from functools import partial
 from hashlib import sha256
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from socketserver import ThreadingMixIn
+from wsgiref.simple_server import WSGIServer, make_server
 import json
 from pathlib import Path
 import re
@@ -230,37 +230,8 @@ def read_resource(connection, path):
     return None
 
 
-class ArticleHandler(BaseHTTPRequestHandler):
-    def __init__(self, *args, database, **kwargs):
-        self.database = database
-        super().__init__(*args, **kwargs)
-
-    def do_HEAD(self):
-        self.send_resource(include_body=False)
-
-    def do_GET(self):
-        self.send_resource(include_body=True)
-
-    def send_resource(self, include_body):
-        try:
-            with closing(sqlite3.connect(self.database, uri=True)) as db:
-                db.row_factory = sqlite3.Row
-                db.execute("BEGIN")
-                record = read_resource(db, self.path.partition("?")[0])
-            status = 200 if record is not None else 404
-            if record is None:
-                record = {"error": "찾을 수 없는 기사 API 경로입니다"}
-        except sqlite3.Error:
-            status, record = 503, {"error": "기사 저장소를 읽을 수 없습니다"}
-        body = (encode(record) + "\n").encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-cache")
-        self.send_header("X-Content-Type-Options", "nosniff")
-        self.end_headers()
-        if include_body:
-            self.wfile.write(body)
+class ThreadedServer(ThreadingMixIn, WSGIServer):
+    daemon_threads = True
 
 
 def main():
@@ -278,8 +249,8 @@ def main():
     if args.command == "serve":
         if not args.database.is_file():
             parser.error("build로 기사 데이터베이스를 먼저 생성해 주세요")
-        handler = partial(ArticleHandler, database=args.database.resolve().as_uri() + "?mode=ro")
-        with ThreadingHTTPServer((args.host, args.port), handler) as server:
+        from article_http import make_app
+        with make_server(args.host, args.port, make_app(args.database), server_class=ThreadedServer) as server:
             print(f"기사 API · http://{args.host}:{server.server_port}{API_ROOT}/index.json", flush=True)
             try:
                 server.serve_forever()

@@ -190,11 +190,17 @@ async function check(name, options, run) {
     await check('사람 방문은 실제 경로와 제목으로 page_view 한 번 기록', { human: true }, async ({ page, external }) => {
       const url = origin + '/indicators/kospi/?utm_source=test';
       assert.ok(pages.includes('/indicators/kospi/'));
-      await page.goto(url);
+      await page.goto(url + '&q=example-text&utm_term=sample&utm_medium=contains+spaces#section', {
+        referer: 'https://referrer.example/visit?q=local-query',
+      });
+      const configuration = await page.evaluate(() => window.dataLayer.find((entry) => entry[0] === 'config')[2]);
+      assert.equal(configuration.page_location, url);
+      assert.equal(configuration.page_referrer, 'https://referrer.example');
       const events = await page.evaluate(() => window.dataLayer.filter((entry) => entry[0] === 'event').map((entry) => ({ name: entry[1], params: entry[2] })));
       const views = events.filter((event) => event.name === 'page_view');
       assert.equal(views.length, 1);
       assert.equal(views[0].params.page_location, url);
+      assert.equal(views[0].params.page_referrer, configuration.page_referrer);
       assert.equal(views[0].params.page_title, await page.title());
       assert.equal(events.filter((event) => event.name === 'discovery_open').length, 1);
       assert.ok(external.some((endpoint) => endpoint.startsWith('https://www.googletagmanager.com/gtag/js?id=')));

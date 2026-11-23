@@ -17,14 +17,14 @@ async function showPoliticsFront(issue) {
   if (!lead) return;
   const path = (entry) => entry.trackerId ? '/topics/' + encodeURIComponent(entry.trackerId) + '/' : '/politics/' + encodeURIComponent(entry.id) + '/';
   const source = lead.sources[0];
-  const isSource = (url) => /^https?:\/\//i.test(url || '');
   $('frontEyebrow').textContent = lead.eyebrow;
   $('frontQuestion').textContent = lead.question;
   $('frontAnswer').textContent = lead.answer;
   $('frontChecked').dateTime = lead.checkedAt;
   $('frontChecked').textContent = lead.checkedAt.replaceAll('-', '.') + '.';
   $('frontDetail').href = path(lead);
-  $('frontSource').hidden = !source || !isSource(source.url);
+  $('frontSource').removeAttribute('href');
+  $('frontSource').hidden = !safeSourceHref(source?.url);
   if (!$('frontSource').hidden) {
     $('frontSource').href = source.url;
     $('frontSource').textContent = '근거 원문 보기';
@@ -39,7 +39,7 @@ async function showPoliticsFront(issue) {
     }
   }
   const article = (issue.national?.items || []).find((item) =>
-    ['정치', '정치·국회', '안보·외교'].includes(item.cat) && item.title && item.date && item.date <= issue.date && isSource(item.url));
+    ['정치', '정치·국회', '안보·외교'].includes(item.cat) && item.title && item.date && item.date <= issue.date && safeSourceHref(item.url));
   $('frontEdition').hidden = !article;
   if (article) {
     $('frontEditionLabel').textContent = longDate(issue.date) + '호 정치·외교';

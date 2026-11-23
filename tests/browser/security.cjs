@@ -91,6 +91,12 @@ const probe = `
           });
         } else {
           await page.waitForFunction(() => document.documentElement.dataset.loadState === 'ready');
+          const original = await page.evaluate(() => {
+            const plain = newsSourceLink('주소 확인 중', '원문 제목');
+            const link = newsSourceLink('https://example.org/news?q=12', '원문 제목', { target: '_blank' });
+            return [plain.tagName, plain.textContent, plain.hasAttribute('href'), link.getAttribute('href'), link.rel, safeSourceHref('https://reader@example.org/news')];
+          });
+          assert.deepEqual(original, ['SPAN', '원문 제목', false, 'https://example.org/news?q=12', 'noopener noreferrer', '']);
           await page.evaluate(async () => {
             const script = document.createElement('script');
             script.src = 'https://www.googletagmanager.com/gtag/js?id=G-TEST';

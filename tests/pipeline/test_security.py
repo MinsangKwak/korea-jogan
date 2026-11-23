@@ -53,6 +53,15 @@ class SecurityTest(unittest.TestCase):
         self.assertNotIn("frame-ancestors", csp(admin))
         self.assertIn('name="referrer" content="strict-origin-when-cross-origin"', admin)
 
+    def test_static_digest_keeps_headlines_without_unverified_destinations(self):
+        source = {"title": "기사 A & B", "url": "https://example.org/news?id=12&edition=4", "region": "서울"}
+        other = {"title": "확인 중인 기사", "url": "주소 확인 중", "region": "경기"}
+        issue = {"date": "2026-11-23", "national": {"items": [source, other]}, "regions": {"items": [other]}}
+        page = build_pages.digest(issue)
+        self.assertIn('href="https://example.org/news?id=12&amp;edition=4">기사 A &amp; B</a>', page)
+        self.assertEqual(page.count("확인 중인 기사"), 2)
+        self.assertNotIn('href="주소 확인 중"', page)
+
     def test_news_content_cannot_add_executable_script_or_csp_hash(self):
         template = (REPO / "frontend-vanilla-js/index.html").read_text()
         issue = json.loads((REPO / "frontend-vanilla-js/data/issues/2026-10-19.json").read_text())
