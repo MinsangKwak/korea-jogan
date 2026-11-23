@@ -58,6 +58,7 @@ const probe = `
       const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
       const page = await context.newPage();
       const errors = [];
+      const fontRequests = [];
       page.on('pageerror', (error) => errors.push(error.message));
       await context.addInitScript(() => {
         window.cspEvents = [];
@@ -66,6 +67,9 @@ const probe = `
       });
       await page.route('**/*', async (route) => {
         const url = new URL(route.request().url());
+        if (route.request().resourceType() === 'font' || ['fonts.googleapis.com', 'fonts.gstatic.com'].includes(url.hostname)) {
+          fontRequests.push(url.href);
+        }
         if (url.pathname === '/security-probe.js' && url.hostname === 'jogan.test') return route.fulfill({ body: probe, contentType: mime['.js'] });
         if (url.hostname === 'accounts.google.com') return route.fulfill({ body: 'window.google={accounts:{oauth2:{}}};window.gsiSecurityLoaded=true;', contentType: mime['.js'] });
         if (url.hostname !== 'jogan.test') {
@@ -111,7 +115,7 @@ const probe = `
             await new Promise((resolve) => { const frame = document.createElement('iframe'); frame.onload = resolve; frame.src = 'https://www.googletagmanager.com/signals-test.html'; document.body.append(frame); });
           });
           await page.waitForFunction(() => !!window.allowedGoogleScript);
-          await page.waitForFunction(() => document.getElementById('fontStyles').media === 'all');
+          assert.deepEqual(fontRequests, [], '기사 첫 방문에 외부 글꼴을 요청함');
         }
         assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'dark');
         assert.deepEqual(await page.evaluate(() => window.cspEvents), [], '정상 화면에서 CSP 위반');

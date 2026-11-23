@@ -908,19 +908,18 @@ async function check(name, options, run) {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
   });
   for (const width of [390, 900, 1100, 1440, 1920]) {
-    await check('섹션 좌우 배치·짧은 열 높이 기준 ' + width, { width }, async (page) => {
+    await check('섹션 배치와 기사 본문의 자연스러운 스크롤 ' + width, { width }, async (page) => {
       await page.goto('http://jogan.test/');
       await ready(page);
       for (const big of [false, true]) {
         if (big) await page.locator('#bigBtn').click();
         const lead = await page.locator('#leadBox').boundingBox();
         const aside = await page.locator('.briefs-box').boundingBox();
-        if (width > 900) {
-          await pairedSize(page, '#heroGrid');
-        } else {
-          assert.ok(aside.y >= lead.y + lead.height);
-          assert.equal(await page.locator('#heroGrid[data-paired-reading]').count(), 0);
-          assert.equal(await page.locator('#heroGrid [data-paired-overflow]').count(), 0);
+        if (width <= 900) assert.ok(aside.y >= lead.y + lead.height);
+        for (const selector of ['#heroGrid', '.industry-overview', '.fiscal-grid']) {
+          const group = page.locator(selector);
+          assert.equal(await group.getAttribute('data-paired-reading'), null);
+          assert.equal(await group.locator('[data-paired-overflow]').count(), 0);
         }
         const title = await page.locator('#media .kj-sechead').boundingBox();
         const search = await page.locator('#tform').boundingBox();
@@ -929,7 +928,7 @@ async function check(name, options, run) {
         if (width >= 1100) {
           assert.ok(search.x >= title.x + title.width && search.y < title.y + title.height);
           assert.ok(chart.x >= summary.x + summary.width && Math.abs(chart.y - summary.y) < 2);
-          for (const selector of ['.politics-grid', '.industry-overview', '.fiscal-grid']) await pairedSize(page, selector);
+          await pairedSize(page, '.politics-grid');
         } else {
           assert.ok(search.y >= title.y + title.height);
           assert.ok(chart.y >= summary.y + summary.height);
@@ -938,27 +937,36 @@ async function check(name, options, run) {
       }
     });
   }
-  await check('긴 재정 열 끝까지 읽기·좁은 창에서는 본문과 함께 스크롤', { width: 1440 }, async (page) => {
+  await check('재정 결산 2개 연도와 이전 연도·전망·정정 기록 키보드 열기', { width: 1440 }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
-    const fiscal = page.locator('.fiscal-grid');
-    await pairedSize(page, '.fiscal-grid');
-    await page.locator('#debtSrc').evaluate((node) => { node.textContent += (' 출처와 수치가 적용되는 범위를 확인합니다.').repeat(180); });
-    const long = fiscal.locator(':scope > .paired-pane[data-paired-overflow]').filter({ has: page.locator('#debtSrc') });
-    await long.waitFor();
-    await pairedSize(page, '.fiscal-grid');
-    await long.focus();
-    await page.keyboard.press('End');
-    await page.waitForFunction(() => { const pane = document.getElementById('debtSrc').closest('.paired-pane'); return pane.scrollTop > 0 && pane.scrollTop + pane.clientHeight >= pane.scrollHeight - 1; });
-    for (const viewport of [{ width: 1440, height: 480 }, { width: 390, height: 844 }]) {
-      await page.setViewportSize(viewport);
-      await page.waitForFunction(() => !document.querySelector('.fiscal-grid').hasAttribute('data-paired-reading'));
-      const panes = await fiscal.locator(':scope > .paired-pane').evaluateAll((nodes) => nodes.map((node) => ({ tabIndex: node.tabIndex, overflowing: node.scrollHeight > node.clientHeight + 2, scrollTop: node.scrollTop })));
-      assert.ok(panes.every((pane) => pane.tabIndex < 0 && !pane.overflowing && pane.scrollTop === 0));
+    const settled = latest.debt.filter((row) => row[3] === '결산').sort((a, b) => b[0] - a[0]);
+    const chart = page.locator('#debtChart');
+    assert.deepEqual(await chart.locator('.kj-bar__lab').allTextContents(), settled.slice(0, 2).map(([year]) => year + '년 결산'));
+    const history = page.locator('#debtHistory');
+    assert.equal(await history.locator('li:visible').count(), 0);
+    await history.locator('summary').focus();
+    await page.keyboard.press('Enter');
+    assert.deepEqual(await history.locator('li:visible .kj-bar__lab').allTextContents(), settled.slice(2).map(([year]) => year + '년 결산'));
+    await page.keyboard.press('Space');
+    assert.equal(await history.locator('li:visible').count(), 0);
+    const plans = page.locator('#debtPlans');
+    await plans.locator('summary').click();
+    assert.equal(await plans.locator('li:visible').count(), latest.debt.length - settled.length);
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      assert.equal(await page.locator('.fiscal-grid [data-paired-overflow]').count(), 0);
+      assert.equal(await page.locator('.fiscal-grid > section').evaluateAll((cards) => cards.every((card) =>
+        card.scrollWidth <= card.clientWidth + 2 && card.scrollHeight <= card.clientHeight + 2)), true);
     }
-    await page.setViewportSize({ width: 1440, height: 844 });
-    await pairedSize(page, '.fiscal-grid');
-    assert.ok(await long.isVisible());
+    const fixes = JSON.parse(fs.readFileSync(path.join(web, 'data/corrections.json'), 'utf8')).items;
+    await page.locator('#fixLabel').filter({ hasText: '정정 ' + fixes.length + '건' }).waitFor();
+    assert.equal(await page.locator('#fixes li:visible').count(), 0);
+    await page.locator('#fixLabel').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#fixes li:visible').count(), fixes.length);
+    await page.keyboard.press('Space');
+    assert.equal(await page.locator('#fixes li:visible').count(), 0);
   });
   const carouselCases = [390, 1440, 1920].flatMap((width) => [{ width, nums: latest.nums }, ...(width >= 1440 ? [{ width, nums: carouselMetrics, fixture: true }] : [])]);
   for (const { width, nums, fixture } of carouselCases) {
