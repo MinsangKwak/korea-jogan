@@ -151,6 +151,8 @@ window.kjLoadTimer = setTimeout(() => {
 <link rel="stylesheet" href="src/styles/front-page.css">
 <link rel="stylesheet" href="src/styles/politics-front.css">
 <link rel="stylesheet" href="src/components/track/change-strip.css">
+<link rel="stylesheet" href="src/styles/edition-rhythm.css" media="screen">
+<link rel="stylesheet" href="src/styles/weather-spread.css">
 </head>
 <body class="has-tabbar news-edition">
 <a class="skip" href="#main">본문으로 건너뛰기</a>
@@ -324,7 +326,10 @@ window.kjLoadTimer = setTimeout(() => {
         <h1 id="leadH"></h1>
         <ul class="kj-facts" id="leadFacts" aria-label="머리기사의 핵심 수치"></ul>
         <p class="kj-lead__stand" id="leadStand"></p>
-        <p class="meta" id="leadMeta"></p>
+        <details class="kj-src lead-provenance" id="leadProvenance" hidden>
+          <summary>머리기사의 취재 근거와 확인 기록</summary>
+          <p class="kj-src__panel" id="leadMeta"></p>
+        </details>
       </article>
       <aside class="briefs-box" aria-label="함께 읽을 자료">
         <h2 id="briefH">오늘 꼭 볼 숫자</h2>
@@ -381,6 +386,19 @@ window.kjLoadTimer = setTimeout(() => {
     </div></details>
   </div>
 </aside>
+
+  <aside id="weatherSpread" class="weather-spread" aria-labelledby="weatherHeading" data-issue-date="" hidden="hidden">
+    <div class="kj-wrap weather-spread__inner">
+      <div class="weather-spread__copy">
+        <h2 id="weatherHeading">지면의 날씨</h2>
+        <p class="weather-spread__meta"><time></time></p>
+        <p class="weather-spread__summary"></p>
+        <ul class="weather-spread__facts"></ul>
+        <a class="weather-spread__source"><time></time></a>
+      </div>
+      <div class="weather-spread__scene" aria-hidden="true"><span class="weather-spread__credit">AI 풍경 삽화</span></div>
+    </div>
+  </aside>
 
   <div class="tracking-bar" id="trackingBar" hidden><div class="kj-wrap"><button id="trackingExpand" type="button" aria-haspopup="dialog" aria-controls="trackingDialog">이슈 추적</button><span>끝까지 확인합니다</span><button id="trackingHide" type="button" aria-label="이슈 추적 막대 숨기기">×</button></div></div>
   <section class="kj-sec" id="track" aria-labelledby="trackH" hidden>

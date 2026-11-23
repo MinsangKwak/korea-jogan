@@ -15,7 +15,10 @@ function renderLead() {
   $('leadKicker').textContent = L.kicker;
   $('leadH').textContent = L.headline;
   $('leadStand').replaceChildren(...readingText(L.standfirst).childNodes);
-  $('leadMeta').textContent = L.meta;
+  if (L.meta) {
+    $('leadMeta').textContent = L.meta;
+    $('leadProvenance').hidden = false;
+  }
   L.facts.forEach((f) => {
     const li = el('li');
     li.append(el('span', { class: 't' }, f.t), el('span', { class: 'v' }, f.v), el('span', { class: 'm' }, f.m));

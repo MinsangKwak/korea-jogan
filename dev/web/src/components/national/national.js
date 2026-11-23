@@ -97,3 +97,31 @@ function renderNational() {
   select(0);
   matchReadingColumns(box, 1000, ['선택한 전국 기사', '전국 기사 제목 목록']);
 }
+
+// 다른 날짜로 여는 예전 주소에도 그 호의 정적 지면과 같은 자료를 쓴다
+async function showEditionWeather(issueDate) {
+  const section = $('weatherSpread');
+  if (!section) return;
+  if (section.dataset.issueDate === issueDate) {
+    section.hidden = !section.querySelector('.weather-spread__source[href]');
+    return;
+  }
+  section.hidden = true;
+  const editions = await fetchJSON('data/edition-weather.json');
+  const report = editions[issueDate];
+  if (!report) return;
+
+  const url = new URL(report.url);
+  if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return;
+  const field = (name) => section.querySelector('.weather-spread__' + name);
+  const date = el('time', { datetime: issueDate }, longDate(issueDate) + '호');
+  field('meta').replaceChildren(date, report.region ? ' · ' + report.region : '');
+  field('summary').textContent = report.headline;
+  field('facts').replaceChildren(...report.facts.map((fact) => el('li', {}, fact)));
+  const source = field('source');
+  source.href = url.href;
+  const sourceDate = el('time', { datetime: report.sourceDate }, longDate(report.sourceDate) + ' 보도');
+  source.replaceChildren(report.outlet + ' 원문 · ', sourceDate);
+  section.dataset.issueDate = issueDate;
+  section.hidden = false;
+}

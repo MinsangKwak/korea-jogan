@@ -18,6 +18,7 @@ dev/web/build-info.json
 dist-preview/
 dev/pipeline/collect/raw/rss/*.json
 dev/web/data/live.json
+dev/web/data/edition-weather.json
 
 node_modules/
 premium-audit.json

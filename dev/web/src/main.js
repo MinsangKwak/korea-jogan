@@ -31,6 +31,9 @@ function renderLoadError() {
 async function boot() {
   const started = performance.now();
   $('main').setAttribute('aria-busy', 'true');
+  const requested = new URLSearchParams(location.search).get('d');
+  const weather = $('weatherSpread');
+  if (requested && weather && requested !== weather.dataset.issueDate) weather.hidden = true;
   let ok = false;
   try {
     setupMetrics();
@@ -52,6 +55,7 @@ async function boot() {
     renderSplits();
     renderMediaMeta();
     renderNational();
+    showEditionWeather(D.date).catch(() => {});
     renderRegions();
     renderPolitics();
     renderNums();

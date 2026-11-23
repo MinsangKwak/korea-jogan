@@ -18,3 +18,7 @@
 .lead-skel { display: grid; gap: var(--space-3); }
 
 .news-edition .lead-extras__body h2[id] { scroll-margin-top: 128px; }
+
+.lead-provenance { margin-block-start: var(--space-4); }
+.lead-provenance > summary { min-height: var(--tap-min); }
+.lead-provenance .kj-src__panel { max-inline-size: 40rem; overflow-wrap: anywhere; line-height: 1.75; }

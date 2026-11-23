@@ -1,0 +1,111 @@
+.weather-spread {
+  padding-block: clamp(2.5rem, 5.5vw, 5.25rem);
+  border-block: 1px solid var(--line);
+  background-color: var(--surface);
+  color: var(--ink);
+}
+
+.weather-spread__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5rem);
+}
+
+.weather-spread__copy { min-width: 0; }
+
+.weather-spread__copy h2 {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin: 0;
+  color: var(--ink);
+  font: 700 1rem/1.5 var(--font-sans);
+}
+
+.weather-spread__copy h2::before {
+  content: "";
+  width: 1.7rem;
+  border-block-start: 2px solid var(--brand);
+}
+
+.weather-spread__meta {
+  margin: .4rem 0 1.1rem;
+  color: var(--ink-3);
+  font-size: .87rem;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.weather-spread__summary {
+  max-inline-size: 22em;
+  margin: 0;
+  font: 650 clamp(1.5rem, 1.1rem + 1.2vw, 2.35rem)/1.42 var(--font-serif);
+  letter-spacing: -.035em;
+  text-wrap: pretty;
+}
+
+.weather-spread__facts {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1rem;
+  padding: 0;
+  list-style: none;
+  margin: .85rem 0 0;
+  color: var(--ink-2);
+  font-size: 1rem;
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.weather-spread__facts li { max-inline-size: 100%; }
+
+.weather-spread__source {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--tap-min);
+  margin-block-start: .75rem;
+  color: var(--brand);
+  font-size: .9rem;
+  font-weight: 650;
+  text-underline-offset: .22em;
+}
+
+.weather-spread__source:hover { text-decoration-thickness: 2px; }
+
+.weather-spread__scene {
+  display: grid;
+  align-items: end;
+  justify-items: end;
+  aspect-ratio: 2.2;
+  min-width: 0;
+  padding: .5rem;
+  background: #c3b2a2 url("../../assets/images/weather-river.webp") center 56% / cover no-repeat;
+}
+
+.weather-spread__credit {
+  padding: .12rem .4rem;
+  background: #282724;
+  color: #fff9ef;
+  font-size: .72rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .weather-spread__inner { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .weather-spread__summary { max-inline-size: none; }
+  .weather-spread__scene {
+    aspect-ratio: 2.65;
+    background-image: url("../../assets/images/weather-river-720.webp");
+  }
+}
+
+@media (forced-colors: active), print {
+  .weather-spread__inner { grid-template-columns: minmax(0, 1fr); }
+  .weather-spread__scene { display: none; }
+}
+
+@media print {
+  .weather-spread { break-inside: avoid; padding-block: 1rem; }
+  .weather-spread__source { min-block-size: 0; }
+}
