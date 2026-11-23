@@ -159,6 +159,7 @@ def with_front(markup: str, issue: dict, questions: list[dict], cutoff: str, *, 
     fragment = re.sub(r' hidden(?=[\s>])', ' hidden="hidden"', match[2].strip())
     root = ET.fromstring(fragment)
     nodes = {el.get("id"): el for el in root.iter() if el.get("id")}
+    root.attrib.pop("hidden", None)
     root.set("data-issue-date", issue.get("date", ""))
     root.set("data-front-view", "edition" if dated else "home")
     # 재빌드에서도 지난 호의 제목과 주소가 감춰진 채로 남지 않게 초기화한다.
