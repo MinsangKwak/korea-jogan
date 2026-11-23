@@ -3,15 +3,15 @@ from pathlib import Path
 import sys
 import unittest
 
-REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO / "dev/pipeline/build"))
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "backend-python/pipeline/build"))
 
 from build_change_strip import STRIP, inject_change_strip, latest_changes
 
 
 class ChangeStripTest(unittest.TestCase):
     def test_editions_and_context(self):
-        template = (REPO / "dev/web/index.html").read_text()
+        template = (REPO / "frontend-vanilla-js/index.html").read_text()
         trackers = {"items": [
             {"id": "issue-one", "title": "기록 하나", "summary": "요약", "steps": [
                 {"d": "2026-11-18", "t": "사건", "done": True}]},

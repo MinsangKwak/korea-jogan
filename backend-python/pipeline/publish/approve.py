@@ -1,9 +1,9 @@
 """사람이 머리기사와 핵심 숫자를 확인한 뒤 초안 호를 공개(published)로 바꾼다.
 
-사용: python3 dev/pipeline/publish/approve.py 2026-10-20 --by 홍길동
+사용: python3 backend-python/pipeline/publish/approve.py 2026-10-20 --by 홍길동
 승인 전에 화면에서 머리기사(lead), 핵심 숫자(nums), 기준이 갈린 숫자(themes[].diffs)를 원문과 대조한다.
 
-python3 dev/pipeline/publish/approve.py 2026-10-20 --auto
+python3 backend-python/pipeline/publish/approve.py 2026-10-20 --auto
 06시까지 사람이 승인하지 않은 초안을 아침 발행 워크플로가 자동으로 공개할 때 쓴다.
 누가 확인했다고 적지 않고 review.auto를 남겨, 화면이 '편집자 확인' 대신 '자동 발행'으로 보여 준다.
 """
@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-ISSUES = ROOT / "dev" / "web" / "data" / "issues"
+ISSUES = ROOT / "frontend-vanilla-js" / "data" / "issues"
 KST = dt.timezone(dt.timedelta(hours=9))
 
 
@@ -52,7 +52,7 @@ def main() -> int:
     except (FileNotFoundError, ValueError) as e:
         print(e)
         return 1
-    print(f"승인: {path.relative_to(ROOT)} → python3 dev/pipeline/publish/validate.py --deploy 로 확인한 뒤 올립니다")
+    print(f"승인: {path.relative_to(ROOT)} → python3 backend-python/pipeline/publish/validate.py --deploy 로 확인한 뒤 올립니다")
     return 0
 
 

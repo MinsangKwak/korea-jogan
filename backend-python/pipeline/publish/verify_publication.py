@@ -11,7 +11,7 @@ import time
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "dev/pipeline/build"))
+sys.path.insert(0, str(ROOT / "backend-python/pipeline/build"))
 from build_info import EmbeddedData, valid_date
 from check_release import SHA
 
@@ -127,7 +127,7 @@ def expect_today(timeout: int, now: dt.datetime | None = None) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--manifest", type=Path, default=ROOT / "dev/web/build-info.json")
+    parser.add_argument("--manifest", type=Path, default=ROOT / "frontend-vanilla-js/build-info.json")
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--expect-today", action="store_true", help="오늘(KST) 호와 원격 main SHA가 공개됐는지 확인")
     args = parser.parse_args(argv)

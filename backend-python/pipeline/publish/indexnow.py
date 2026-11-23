@@ -1,7 +1,7 @@
 """새로 배포한 주소를 IndexNow로 검색엔진(Bing·네이버 등)에 알린다. 배포 워크플로가 배포 직후 돌린다.
 
-사용: python dev/pipeline/publish/indexnow.py
-키는 비밀값이 아니다. dev/web/<키>.txt 파일로 이 도메인의 소유를 증명한다.
+사용: python backend-python/pipeline/publish/indexnow.py
+키는 비밀값이 아니다. frontend-vanilla-js/<키>.txt 파일로 이 도메인의 소유를 증명한다.
 알리지 못해도 배포는 이미 끝났으므로 0으로 끝내고 사유만 남긴다.
 """
 from __future__ import annotations
@@ -13,12 +13,12 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-# 발행 목록은 RSS와 같은 기준(dev/pipeline/build/build_feed.py)으로 읽는다
+# 발행 목록은 RSS와 같은 기준(backend-python/pipeline/build/build_feed.py)으로 읽는다
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "build"))
 
 import build_feed  # noqa: E402
 
-PUBLIC = Path(__file__).resolve().parents[3] / "dev" / "web"
+PUBLIC = Path(__file__).resolve().parents[3] / "frontend-vanilla-js"
 ENDPOINT = "https://api.indexnow.org/indexnow"
 HOST = "korea-jogan.com"
 
@@ -28,7 +28,7 @@ def find_key() -> str:
         text = p.read_text(encoding="utf-8").strip()
         if p.stem == text and len(text) >= 8:
             return text
-    raise FileNotFoundError("dev/web/<키>.txt 형태의 IndexNow 키 파일이 없음")
+    raise FileNotFoundError("frontend-vanilla-js/<키>.txt 형태의 IndexNow 키 파일이 없음")
 
 
 def payload(key: str, issues: list[dict], discovery_urls: list[str] | None = None) -> dict:

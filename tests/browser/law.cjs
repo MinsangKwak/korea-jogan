@@ -6,7 +6,7 @@ const os = require('node:os');
 const { execFileSync } = require('node:child_process');
 const { openBrowser } = require('./browser.cjs');
 
-const repo = path.resolve(__dirname, '../../..');
+const repo = path.resolve(__dirname, '../..');
 const origin = 'https://jogan.test';
 const dataPath = '/law/data/';
 const manifestPath = dataPath + 'catalogue-status.json';
@@ -308,12 +308,12 @@ async function adminIntegrity(browser, web) {
   let browser;
   try {
     const web = path.join(temp, 'web');
-    fs.cpSync(path.join(repo, 'dev/web'), web, { recursive: true });
+    fs.cpSync(path.join(repo, 'frontend-vanilla-js'), web, { recursive: true });
     const build = [
       'import sys', 'from pathlib import Path', 'sys.path.insert(0, sys.argv[1])', 'import build_pages as pages',
       'pages.PUBLIC = Path(sys.argv[2])', 'pages.ISSUES = pages.PUBLIC / "data/issues"', 'pages.build()',
     ].join('\n');
-    execFileSync('python3', ['-c', build, path.join(repo, 'dev/pipeline/build'), web]);
+    execFileSync('python3', ['-c', build, path.join(repo, 'backend-python/pipeline/build'), web]);
     browser = await openBrowser();
     await coverFlow(browser, web);
     await staticCover(browser, web);

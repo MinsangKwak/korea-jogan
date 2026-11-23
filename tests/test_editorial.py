@@ -12,8 +12,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO / "dev/pipeline/publish"))
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "backend-python/pipeline/publish"))
 import check_editorial
 
 DATE = "2026-11-04"
@@ -138,7 +138,7 @@ class EditorialCliTest(unittest.TestCase):
     def test_valid_json_passes_and_corrupt_json_fails_cleanly(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            path = root / "dev/web/data/issues" / (DATE + ".json")
+            path = root / "frontend-vanilla-js/data/issues" / (DATE + ".json")
             path.parent.mkdir(parents=True)
             path.write_text(json.dumps(draft(), ensure_ascii=False), encoding="utf-8")
             args = ["--base-ref", SHA, "--date", DATE]
@@ -158,7 +158,7 @@ class EditorialCliTest(unittest.TestCase):
         self.assertNotIn("Traceback", output.getvalue())
 
     def test_git_read_uses_structured_args_and_fixed_repo_path(self):
-        relative = "dev/web/data/issues/" + DATE + ".json"
+        relative = "frontend-vanilla-js/data/issues/" + DATE + ".json"
         result = subprocess.CompletedProcess([], 0, json.dumps(draft()), "")
         with patch.object(check_editorial.subprocess, "run", return_value=result) as run:
             self.assertEqual(check_editorial.read_baseline(SHA, relative), draft())
@@ -168,7 +168,7 @@ class EditorialCliTest(unittest.TestCase):
     def test_new_draft_can_use_a_separate_baseline_file_without_git(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            candidate = root / "dev/web/data/issues" / (DATE + ".json")
+            candidate = root / "frontend-vanilla-js/data/issues" / (DATE + ".json")
             candidate.parent.mkdir(parents=True)
             baseline = root / "collected-draft.json"
             baseline.write_text(json.dumps(draft(), ensure_ascii=False), encoding="utf-8")
@@ -186,7 +186,7 @@ class EditorialCliTest(unittest.TestCase):
     def test_baseline_file_must_differ_from_candidate(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            candidate = root / "dev/web/data/issues" / (DATE + ".json")
+            candidate = root / "frontend-vanilla-js/data/issues" / (DATE + ".json")
             candidate.parent.mkdir(parents=True)
             candidate.write_text(json.dumps(draft()), encoding="utf-8")
             code, output = self.call(["--baseline-file", str(candidate), "--date", DATE], root)
@@ -216,7 +216,7 @@ class EditorialCliTest(unittest.TestCase):
     def test_baseline_file_still_requires_same_today_draft(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            candidate = root / "dev/web/data/issues" / (DATE + ".json")
+            candidate = root / "frontend-vanilla-js/data/issues" / (DATE + ".json")
             candidate.parent.mkdir(parents=True)
             candidate.write_text(json.dumps(draft()), encoding="utf-8")
             baseline = root / "snapshot.json"

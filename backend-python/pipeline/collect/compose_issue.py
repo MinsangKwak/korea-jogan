@@ -84,12 +84,12 @@ def compose(template: dict, report: dict, day: str, now: dt.datetime | None = No
 
 
 def write_today(root: Path, day: str) -> Path:
-    directory = root / 'dev/web/data/issues'
+    directory = root / 'frontend-vanilla-js/data/issues'
     index = json.loads((directory / 'index.json').read_text())
     if (directory / (day + '.json')).exists():
         raise ValueError('이미 있는 오늘 호를 자동 덮어쓰지 않습니다')
     template = json.loads((directory / (index['latest'] + '.json')).read_text())
-    feeds = json.loads((root / 'dev/pipeline/collect/feeds.json').read_text())['feeds']
+    feeds = json.loads((root / 'backend-python/pipeline/collect/feeds.json').read_text())['feeds']
     report = fetch_rss.run(feeds, dt.date.fromisoformat(day))
     issue = compose(template, report, day)
     target = directory / (day + '.json')

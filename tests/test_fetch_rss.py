@@ -1,6 +1,6 @@
 """RSS 수집기를 네트워크 없이 가짜 피드로 돌려 본다.
 
-사용: python -m unittest discover -s dev/tests
+사용: python -m unittest discover -s tests
 """
 from __future__ import annotations
 
@@ -12,10 +12,10 @@ import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[1]
-# 스크립트는 역할별 폴더(dev/pipeline/collect·build·publish)에 있다
+REPO = HERE.parent
+# 스크립트는 역할별 폴더(backend-python/pipeline/collect·build·publish)에 있다
 for _d in ("collect", "build", "publish"):
-    sys.path.insert(0, str(REPO / "dev" / "pipeline" / _d))
+    sys.path.insert(0, str(REPO / "backend-python/pipeline" / _d))
 
 import fetch_rss  # noqa: E402
 

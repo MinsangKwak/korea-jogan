@@ -19,7 +19,7 @@ DIGEST = "623e66042e012592dbfce46a9c2e6e5c1c3524104f4b9224e13833af19220540"
 MASTER = f"https://media.githubusercontent.com/media/kyusik-yang/kna/{REVISION}/data/processed/master_bills_22.parquet"
 RECENT = "https://narabaro.fingr.io/bills"
 DETAIL = "https://opinion.lawmaking.go.kr/gcom/nsmLmSts/out"
-DESTINATION = Path(__file__).resolve().parents[2] / "web/law/data/bills.json"
+DESTINATION = Path(__file__).resolve().parents[3] / "frontend-vanilla-js/law/data/bills.json"
 
 
 def download(url):

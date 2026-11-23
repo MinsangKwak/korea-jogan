@@ -39,12 +39,12 @@
 
 2026년 11월 5일, 관리자와 공개 지면을 검사할 때 `object-src` 차단 이벤트가 늦게 오면 차단 실패로 기록하는 문제가 있었습니다. 전체 이벤트 개수로 기다림을 끝내면 같은 지시어에서 발생한 두 이벤트가 조건을 먼저 채울 수 있었습니다.
 
-완료 조건을 필요한 지시어 전체가 관측된 시점으로 바꿨습니다. `object-src`를 200ms 늦춘 검사에서는 홈·날짜별 호·관리자 경로가 통과했고, 이벤트를 누락시킨 검사에서는 시간 초과로 실패했습니다. [브라우저 보안 검사](../../dev/tests/browser/security.cjs)
+완료 조건을 필요한 지시어 전체가 관측된 시점으로 바꿨습니다. `object-src`를 200ms 늦춘 검사에서는 홈·날짜별 호·관리자 경로가 통과했고, 이벤트를 누락시킨 검사에서는 시간 초과로 실패했습니다. [브라우저 보안 검사](../../tests/browser/security.cjs)
 
 ## 배포된 HTML의 보안 정책
 
-GitHub Pages에서는 이 사이트의 응답 헤더를 직접 설정할 수 없어, 빌드할 때 인라인 스크립트의 해시를 계산하고 HTML 메타 태그로 CSP를 적용합니다. `frame-ancestors`는 응답 헤더에서만 적용할 수 있습니다. 관리자에 필요한 Google 인증과 통계 API의 허용 대상은 관리자 HTML에서 따로 생성합니다. [보안 정책 생성기](../../dev/pipeline/build/build_security.py) · [관리자 연결](ga4-admin.md)
+GitHub Pages에서는 이 사이트의 응답 헤더를 직접 설정할 수 없어, 빌드할 때 인라인 스크립트의 해시를 계산하고 HTML 메타 태그로 CSP를 적용합니다. `frame-ancestors`는 응답 헤더에서만 적용할 수 있습니다. 관리자에 필요한 Google 인증과 통계 API의 허용 대상은 관리자 HTML에서 따로 생성합니다. [보안 정책 생성기](../../backend-python/pipeline/build/build_security.py) · [관리자 연결](ga4-admin.md)
 
 ## 추적 자료 검사
 
-2026년 10월 30일 무안공항 조사에는 보도일·매체·원문과 확인 범위를 기록했습니다. 사건의 최종 발표일이 미확정일 때는 기간을 근거로 진척률을 표시하지 않습니다. 검사기는 추적 단계 `phases`, 현재 단계 `phaseIndex`, 기간 미확정 여부 `periodUnknown`의 모순을 확인합니다. [사안의 근거 대조](../research/muan-airport-20261030.md) · [발행 자료 검사기](../../dev/pipeline/publish/validate.py)
+2026년 10월 30일 무안공항 조사에는 보도일·매체·원문과 확인 범위를 기록했습니다. 사건의 최종 발표일이 미확정일 때는 기간을 근거로 진척률을 표시하지 않습니다. 검사기는 추적 단계 `phases`, 현재 단계 `phaseIndex`, 기간 미확정 여부 `periodUnknown`의 모순을 확인합니다. [사안의 근거 대조](../research/muan-airport-20261030.md) · [발행 자료 검사기](../../backend-python/pipeline/publish/validate.py)

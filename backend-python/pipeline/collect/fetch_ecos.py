@@ -1,8 +1,8 @@
-"""한국은행 ECOS에서 환율·기준금리·주가지수를 받아 dev/pipeline/collect/raw/ecos/에 원본 그대로 저장한다.
+"""한국은행 ECOS에서 환율·기준금리·주가지수를 받아 backend-python/pipeline/collect/raw/ecos/에 원본 그대로 저장한다.
 
 환경변수 ECOS_API_KEY가 필요하다. 키는 GitHub Secrets에만 두고 코드·페이지에 넣지 않는다.
 통계표·항목 코드는 ECOS '통계코드검색'에서 한 번 더 확인한 뒤 쓴다.
-사용: python dev/pipeline/collect/fetch_ecos.py [--date YYYY-MM-DD]  (발행일. 없으면 한국 시간 오늘)
+사용: python backend-python/pipeline/collect/fetch_ecos.py [--date YYYY-MM-DD]  (발행일. 없으면 한국 시간 오늘)
 조간 기준에 맞춰 발행일 전날까지의 값만 받는다.
 """
 from __future__ import annotations
@@ -16,7 +16,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-OUT = ROOT / "dev" / "pipeline" / "collect" / "raw" / "ecos"
+OUT = ROOT / "backend-python/pipeline" / "collect" / "raw" / "ecos"
 BASE = "https://ecos.bok.or.kr/api/StatisticSearch"
 
 # 이름: (통계표 코드, 주기, 항목 코드)

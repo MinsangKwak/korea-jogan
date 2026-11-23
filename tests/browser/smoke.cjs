@@ -5,11 +5,11 @@ const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
 const { openBrowser } = require('./browser.cjs');
-const repo = path.resolve(__dirname, '../../..');
+const repo = path.resolve(__dirname, '../..');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'jogan-browser-'));
 const web = path.join(temp, 'web');
-fs.cpSync(path.join(repo, 'dev/web'), web, { recursive: true });
-execFileSync('python3', ['-c', 'import sys;from pathlib import Path;sys.path.insert(0,sys.argv[1]);import build_pages as b;b.PUBLIC=Path(sys.argv[2]);b.ISSUES=b.PUBLIC/"data/issues";b.build()', path.join(repo, 'dev/pipeline/build'), web]);
+fs.cpSync(path.join(repo, 'frontend-vanilla-js'), web, { recursive: true });
+execFileSync('python3', ['-c', 'import sys;from pathlib import Path;sys.path.insert(0,sys.argv[1]);import build_pages as b;b.PUBLIC=Path(sys.argv[2]);b.ISSUES=b.PUBLIC/"data/issues";b.build()', path.join(repo, 'backend-python/pipeline/build'), web]);
 // 화면이 실제로 쓰는 목록은 생성한 index.html에 실린 것이다.
 // data/issues/index.json에는 공개 전 초안도 들어 있어 그대로 쓰면 아침마다 결과가 달라진다
 const embedded = (id) => JSON.parse(fs.readFileSync(path.join(web, 'index.html'), 'utf8')

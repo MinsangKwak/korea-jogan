@@ -1,4 +1,4 @@
-"""발행 목록으로 RSS 2.0(dev/web/feed.xml), 사이트맵(sitemap.xml), 뉴스 사이트맵(news-sitemap.xml)을 만든다. 배포 워크플로가 올리기 직전에 돌린다.
+"""발행 목록으로 RSS 2.0(frontend-vanilla-js/feed.xml), 사이트맵(sitemap.xml), 뉴스 사이트맵(news-sitemap.xml)을 만든다. 배포 워크플로가 올리기 직전에 돌린다.
 
 승인 전 초안(draft)은 넣지 않는다. RSS는 호마다 머리기사, 요약, 그날 갈린 숫자의 질문을 담는다.
 사이트맵은 첫 화면과 호별 페이지 주소(/YYYY-MM-DD, build_pages.py가 만든다)를 담는다.
@@ -15,7 +15,7 @@ from xml.sax.saxutils import escape
 import build_politics
 
 ROOT = Path(__file__).resolve().parents[3]
-PUBLIC = ROOT / "dev" / "web"
+PUBLIC = ROOT / "frontend-vanilla-js"
 ISSUES = PUBLIC / "data" / "issues"
 SITE = "https://korea-jogan.com/"
 KST = dt.timezone(dt.timedelta(hours=9))

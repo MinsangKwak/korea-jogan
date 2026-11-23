@@ -13,8 +13,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
-REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO / "dev/pipeline/build"))
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "backend-python/pipeline/build"))
 
 import build_discovery
 import build_feed
@@ -81,7 +81,7 @@ class DiscoveryTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         self.public = self.tmp / "web"
-        shutil.copytree(REPO / "dev/web", self.public)
+        shutil.copytree(REPO / "frontend-vanilla-js", self.public)
         for path in self.public.glob("20??-??-??.html"):
             path.unlink()
         for directory in build_discovery.FOLDERS:

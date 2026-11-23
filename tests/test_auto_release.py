@@ -10,8 +10,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO / "dev/pipeline/publish"))
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "backend-python/pipeline/publish"))
 import auto_release
 import prepare_daily
 from test_release import SHA, OTHER, checks
@@ -98,7 +98,7 @@ class WorkflowShapeTest(unittest.TestCase):
         self.assertIn('not in ("skipped", "neutral", None)', pages)
         self.assertIn("id: deployment_retry", pages)
         self.assertIn("branches: [main]", (workflows / "check.yml").read_text(encoding="utf-8"))
-        publisher = (REPO / "dev/pipeline/publish/publish_pending.py").read_text(encoding="utf-8")
+        publisher = (REPO / "backend-python/pipeline/publish/publish_pending.py").read_text(encoding="utf-8")
         self.assertNotIn("refs/heads/deploy", publisher)
 
 

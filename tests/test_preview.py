@@ -13,8 +13,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "dev/pipeline/build"))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "backend-python/pipeline/build"))
 import build_pages
 import build_preview
 import build_security
@@ -34,7 +34,7 @@ class PreviewTest(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.source = self.root / "source"
         self.output = self.root / "preview"
-        shutil.copytree(ROOT / "dev/web", self.source)
+        shutil.copytree(ROOT / "frontend-vanilla-js", self.source)
         self.issues = self.source / "data/issues"
         (self.issues / "index.json").write_text(json.dumps({"latest": DRAFT, "issues": [DRAFT, PUBLISHED]}))
         draft = json.loads((self.issues / f"{DRAFT}.json").read_text())

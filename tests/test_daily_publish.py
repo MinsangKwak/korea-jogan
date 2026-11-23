@@ -9,14 +9,14 @@ import sys
 import tempfile
 import unittest
 
-REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO / "dev/pipeline/publish"))
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "backend-python/pipeline/publish"))
 import prepare_daily
 
 PREVIOUS = "2026-11-04"
 DATE = "2026-11-05"
 OLDER = "2026-11-03"
-ISSUE = f"dev/web/data/issues/{DATE}.json"
+ISSUE = f"frontend-vanilla-js/data/issues/{DATE}.json"
 
 
 class DailyPublicationTest(unittest.TestCase):
@@ -27,9 +27,9 @@ class DailyPublicationTest(unittest.TestCase):
         self.git("config", "user.name", "Test")
         self.git("config", "user.email", "test@example.com")
         self.write(prepare_daily.INDEX, {"latest": PREVIOUS, "issues": [PREVIOUS]})
-        self.write(f"dev/web/data/issues/{PREVIOUS}.json", {"date": PREVIOUS, "status": "published", "headline": "이전 공개 기록"})
+        self.write(f"frontend-vanilla-js/data/issues/{PREVIOUS}.json", {"date": PREVIOUS, "status": "published", "headline": "이전 공개 기록"})
         self.write(prepare_daily.TRACKERS, {"updated": PREVIOUS, "items": [{"id": "case", "summary": "이전 기록"}]})
-        self.write("dev/web/index.html", "안정된 화면")
+        self.write("frontend-vanilla-js/index.html", "안정된 화면")
         self.base = self.commit("기준 main")
         self.git("switch", "-c", "daily/" + DATE)
         self.write(ISSUE, {"date": DATE, "status": "draft", "headline": "오늘의 새 기록"})
@@ -78,15 +78,15 @@ class DailyPublicationTest(unittest.TestCase):
         self.assertEqual(result["paths"], sorted([ISSUE, prepare_daily.INDEX]))
         self.assertEqual(self.read(ISSUE)["status"], "draft")
         self.assertEqual(self.read(prepare_daily.INDEX), {"latest": DATE, "issues": [DATE, PREVIOUS]})
-        self.assertEqual((self.root / "dev/web/index.html").read_text(), "안정된 화면")
-        self.assertEqual(self.git("show", self.base + f":dev/web/data/issues/{PREVIOUS}.json"), (self.root / f"dev/web/data/issues/{PREVIOUS}.json").read_text().strip())
+        self.assertEqual((self.root / "frontend-vanilla-js/index.html").read_text(), "안정된 화면")
+        self.assertEqual(self.git("show", self.base + f":frontend-vanilla-js/data/issues/{PREVIOUS}.json"), (self.root / f"frontend-vanilla-js/data/issues/{PREVIOUS}.json").read_text().strip())
 
     def test_experimental_code_in_daily_branch_is_rejected(self):
-        self.edit_source(lambda: self.write("dev/web/index.html", "미승인 실험 화면"))
+        self.edit_source(lambda: self.write("frontend-vanilla-js/index.html", "미승인 실험 화면"))
         self.rejected_without_writing("오늘 호·색인·추적")
 
     def test_previous_editions_cannot_be_rewritten(self):
-        self.edit_source(lambda: self.write(f"dev/web/data/issues/{PREVIOUS}.json", {"date": PREVIOUS, "status": "published", "headline": "과거 내용 변경"}))
+        self.edit_source(lambda: self.write(f"frontend-vanilla-js/data/issues/{PREVIOUS}.json", {"date": PREVIOUS, "status": "published", "headline": "과거 내용 변경"}))
         self.rejected_without_writing("오늘 호·색인·추적")
 
     def test_source_index_cannot_reset_or_extend_history(self):
@@ -96,12 +96,12 @@ class DailyPublicationTest(unittest.TestCase):
                 self.rejected_without_writing("발행 목록|기존 날짜")
 
     def test_approved_main_code_and_history_updates_are_preserved(self):
-        self.write("dev/web/index.html", "새로 검증한 안정 화면")
-        self.write(f"dev/web/data/issues/{OLDER}.json", {"date": OLDER, "status": "published"})
+        self.write("frontend-vanilla-js/index.html", "새로 검증한 안정 화면")
+        self.write(f"frontend-vanilla-js/data/issues/{OLDER}.json", {"date": OLDER, "status": "published"})
         self.write(prepare_daily.INDEX, {"latest": PREVIOUS, "issues": [PREVIOUS, OLDER]})
         self.main_ref = self.commit("main의 승인된 변경")
         self.prepare()
-        self.assertEqual((self.root / "dev/web/index.html").read_text(), "새로 검증한 안정 화면")
+        self.assertEqual((self.root / "frontend-vanilla-js/index.html").read_text(), "새로 검증한 안정 화면")
         self.assertEqual(self.read(prepare_daily.INDEX)["issues"], [DATE, PREVIOUS, OLDER])
 
     def test_concurrently_changed_today_issue_is_not_overwritten(self):
@@ -136,7 +136,7 @@ class DailyPublicationTest(unittest.TestCase):
 
     def test_missing_past_issue_does_not_roll_back_latest_or_current_trackers(self):
         newer = '2026-11-06'
-        self.write(f'dev/web/data/issues/{newer}.json', {'date': newer, 'status': 'published'})
+        self.write(f'frontend-vanilla-js/data/issues/{newer}.json', {'date': newer, 'status': 'published'})
         self.write(prepare_daily.INDEX, {'latest': newer, 'issues': [newer, PREVIOUS]})
         self.write(prepare_daily.TRACKERS, {'updated': newer, 'items': [{'id': 'case', 'summary': '더 최근 근거'}]})
         self.main_ref = self.commit('더 최근 운영 기록')
@@ -147,7 +147,7 @@ class DailyPublicationTest(unittest.TestCase):
 
     def test_published_past_issue_is_never_rewritten_during_recovery(self):
         self.write(ISSUE, {'date': DATE, 'status': 'published', 'headline': '공개 보존'})
-        self.write('dev/web/data/issues/2026-11-06.json', {'date': '2026-11-06', 'status': 'published'})
+        self.write('frontend-vanilla-js/data/issues/2026-11-06.json', {'date': '2026-11-06', 'status': 'published'})
         self.write(prepare_daily.INDEX, {'latest': '2026-11-06', 'issues': ['2026-11-06', DATE, PREVIOUS]})
         self.main_ref = self.commit('이미 공개된 과거 호')
         self.assertFalse(prepare_daily.prepare(self.root, DATE, self.source, self.main_ref, allow_archive=True)['changed'])
@@ -175,7 +175,7 @@ class DailyPublicationTest(unittest.TestCase):
     def test_fixed_refs_and_clean_main_are_required(self):
         with self.assertRaisesRegex(prepare_daily.PreparationError, "40자리"):
             prepare_daily.prepare(self.root, DATE, "daily/" + DATE, self.main_ref)
-        self.write("dev/web/index.html", "로컬 변경")
+        self.write("frontend-vanilla-js/index.html", "로컬 변경")
         with self.assertRaisesRegex(prepare_daily.PreparationError, "변경 없는 main"):
             self.prepare()
 

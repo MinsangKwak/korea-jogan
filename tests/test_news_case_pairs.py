@@ -5,9 +5,9 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 
-DEV = Path(__file__).resolve().parents[1]
-DATA = DEV / "web/data"
-LAW = DEV / "web/law/data"
+REPO = Path(__file__).resolve().parents[1]
+DATA = REPO / "frontend-vanilla-js/data"
+LAW = REPO / "frontend-vanilla-js/law/data"
 
 
 def read_json(path):
@@ -19,7 +19,7 @@ class NewsCasePairsTests(unittest.TestCase):
     def setUpClass(cls):
         cls.pairs = read_json(DATA / "news-case-pairs.json")["pairs"]
         cls.issues = read_json(DATA / "issues/index.json")["issues"]
-        themes = read_json(DEV / "pipeline/law/themes.json")
+        themes = read_json(REPO / "backend-python/pipeline/law/themes.json")
         cls.catalogues = {
             key: {case["id"]: case for case in read_json(LAW / spec["file"])}
             for key, spec in themes.items()

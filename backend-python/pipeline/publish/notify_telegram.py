@@ -1,6 +1,6 @@
 """새로 공개한 최신 호의 요약을 텔레그램 채널에 한 번 보낸다. 아침 발행 워크플로가 발행 직후에 돌린다.
 
-사용: python3 dev/pipeline/publish/notify_telegram.py --before <발행 전 main SHA> [--after origin/main] [--dry-run]
+사용: python3 backend-python/pipeline/publish/notify_telegram.py --before <발행 전 main SHA> [--after origin/main] [--dry-run]
 - 발행 전 커밋에서 이미 공개 상태였던 호는 다시 보내지 않는다(재확인 실행에서 중복 발송 방지).
 - TELEGRAM_BOT_TOKEN·TELEGRAM_CHAT_ID가 없으면 아무것도 보내지 않고 정상 종료한다.
 - 알림 실패는 발행을 되돌릴 이유가 아니므로 항상 0으로 끝낸다. 토큰은 출력하지 않는다.
@@ -20,7 +20,7 @@ import urllib.parse
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[3]
-ISSUES = "dev/web/data/issues"
+ISSUES = "frontend-vanilla-js/data/issues"
 SITE = "https://korea-jogan.com/"
 API = "https://api.telegram.org/bot{token}/sendMessage"
 WEEKDAYS = "월화수목금토일"

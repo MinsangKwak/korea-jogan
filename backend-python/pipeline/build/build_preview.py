@@ -1,6 +1,6 @@
 """운영 소스를 바꾸지 않고 관리자 검증용 정적 지면을 별도 출력한다.
 
-사용: python3 dev/pipeline/build/build_preview.py
+사용: python3 backend-python/pipeline/build/build_preview.py
 접근 인증은 Vercel 프로젝트의 All Deployments 보호가 담당한다. noindex는 인증이 아니다.
 """
 from __future__ import annotations
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "backend-python"))
 from edition_api import build_catalog
 
-PUBLIC = ROOT / "dev/web"
+PUBLIC = ROOT / "frontend-vanilla-js"
 OUTPUT = ROOT / "dist-preview"
 ORIGIN = "https://dev.korea-jogan.com"
 PRODUCTION = "https://korea-jogan.com"

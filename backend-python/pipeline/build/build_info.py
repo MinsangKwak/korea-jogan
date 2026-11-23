@@ -1,6 +1,6 @@
 """생성된 운영 HTML과 실제 체크아웃 커밋을 배포 확인용 JSON으로 기록한다.
 
-사용: python3 dev/pipeline/build/build_info.py --source-sha <git rev-parse HEAD>
+사용: python3 backend-python/pipeline/build/build_info.py --source-sha <git rev-parse HEAD>
 GITHUB_SHA는 예약 실행의 main을 가리킬 수 있으므로 소스 식별에 사용하지 않는다.
 """
 from __future__ import annotations
@@ -15,7 +15,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[3]
-PUBLIC = ROOT / "dev" / "web"
+PUBLIC = ROOT / "frontend-vanilla-js"
 SHA = re.compile(r"[0-9a-fA-F]{40}\Z")
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}\Z")
 

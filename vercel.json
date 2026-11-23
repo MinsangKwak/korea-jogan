@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "python3 dev/pipeline/build/build_preview.py",
+  "buildCommand": "python3 backend-python/pipeline/build/build_preview.py",
   "installCommand": "",
   "outputDirectory": "dist-preview",
   "cleanUrls": true,

@@ -6,8 +6,8 @@ import unittest
 from pathlib import Path
 from xml.etree import ElementTree
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "dev/pipeline/build"))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "backend-python/pipeline/build"))
 
 import build_case_edition as edition
 
@@ -28,7 +28,7 @@ def fields(page):
 
 class CaseEditionBuildTest(unittest.TestCase):
     def setUp(self):
-        self.template = (ROOT / "dev/web/index.html").read_text(encoding="utf-8")
+        self.template = (ROOT / "frontend-vanilla-js/index.html").read_text(encoding="utf-8")
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.public = Path(tmp.name)

@@ -12,17 +12,17 @@
 - `trackers.json`은 최신 호에서만 읽는 현재 기록입니다. 기한 미확정이면 기간 백분율을 만들지 않습니다.
 - PC·모바일의 배치·접기·경제 순환은 같은 JSON을 사용합니다. 화면 상태를 별도 기사 데이터로 저장하지 않습니다.
 
-검사의 기준은 [validate.py](../../dev/pipeline/publish/validate.py), 화면 해석은 [컴포넌트 코드](../../dev/web/src/components/)입니다. 아래의 **검사**와 **작성 기준**을 구분해 읽습니다.
+검사의 기준은 [validate.py](../../backend-python/pipeline/publish/validate.py), 화면 해석은 [컴포넌트 코드](../../frontend-vanilla-js/src/components/)입니다. 아래의 **검사**와 **작성 기준**을 구분해 읽습니다.
 
 ## 파일과 색인
 
 | 경로 | 내용 |
 | --- | --- |
-| `dev/web/data/issues/YYYY-MM-DD.json` | 날짜별 호 |
-| `dev/web/data/issues/index.json` | 최신 호와 호 목록 |
-| `dev/web/data/corrections.json` | 전체 호의 정정 이력 |
-| `dev/web/data/trackers.json` | 최신 호에서 제공하는 장기 이슈·단계·근거 기사 |
-| `dev/web/data/live.json` | 배포 시 생성하는 최신 공식 숫자. Git에는 저장하지 않음 |
+| `frontend-vanilla-js/data/issues/YYYY-MM-DD.json` | 날짜별 호 |
+| `frontend-vanilla-js/data/issues/index.json` | 최신 호와 호 목록 |
+| `frontend-vanilla-js/data/corrections.json` | 전체 호의 정정 이력 |
+| `frontend-vanilla-js/data/trackers.json` | 최신 호에서 제공하는 장기 이슈·단계·근거 기사 |
+| `frontend-vanilla-js/data/live.json` | 배포 시 생성하는 최신 공식 숫자. Git에는 저장하지 않음 |
 
 아래 날짜는 형식 설명용 예시입니다. 실제 최신 호는 색인을 확인합니다.
 
@@ -178,7 +178,7 @@
 | 공통 검사 | 기사마다 `https://` 링크와 비어 있지 않은 요약 |
 | 열람 기록 | 본문을 읽지 못했다면 `body_read: false`. 요약도 실제 확인 범위에 한정 |
 
-분류 문자열은 [config.js](../../dev/web/src/core/config.js)에 있습니다. 기사 수·17개 시도 전체 포함 여부·본문 열람의 진위는 현재 검사기가 보장하지 않습니다. 예를 들어 2026-11-08호에는 전국 19건·지역 32건이 있으며, 이는 해당 호의 자료 수이지 검사에 고정한 개수가 아닙니다.
+분류 문자열은 [config.js](../../frontend-vanilla-js/src/core/config.js)에 있습니다. 기사 수·17개 시도 전체 포함 여부·본문 열람의 진위는 현재 검사기가 보장하지 않습니다. 예를 들어 2026-11-08호에는 전국 19건·지역 32건이 있으며, 이는 해당 호의 자료 수이지 검사에 고정한 개수가 아닙니다.
 
 ## themes
 
@@ -229,7 +229,7 @@
 
 ## political-questions.json
 
-편집 질문은 `dev/web/data/political-questions.json`에서 관리합니다. `question`과 `answer`는 검색으로 들어온 독자가 바로 읽을 문장입니다. `changedAt`은 본문이 다루는 사건이나 제도에 변화가 있었던 날짜, `checkedAt`은 자료를 마지막으로 대조한 날짜입니다. `next`에는 새 발표가 있어야 알 수 있는 내용이나 다음 확인 사항을 씁니다. 출처에는 기관·매체명과 원문 링크를 포함합니다.
+편집 질문은 `frontend-vanilla-js/data/political-questions.json`에서 관리합니다. `question`과 `answer`는 검색으로 들어온 독자가 바로 읽을 문장입니다. `changedAt`은 본문이 다루는 사건이나 제도에 변화가 있었던 날짜, `checkedAt`은 자료를 마지막으로 대조한 날짜입니다. `next`에는 새 발표가 있어야 알 수 있는 내용이나 다음 확인 사항을 씁니다. 출처에는 기관·매체명과 원문 링크를 포함합니다.
 
 `trackerId`가 있는 질문은 기존 이슈 주소를 사용합니다. 정책과 용어는 `/politics/<id>/`에서 읽고, 관련 질문은 고유 ID로 연결합니다. 발행 당시 정보와 현재 기록을 구분할 때는 호의 날짜를 기준으로 사용합니다.
 
@@ -284,7 +284,7 @@
 }
 ```
 
-근거 기사 수는 새 자료에 따라 바뀝니다. 현재 목록은 [trackers.json](../../dev/web/data/trackers.json), 2026.10.30 당시의 확인 범위는 [근거 기록](../research/muan-airport-20261030.md)을 확인합니다. 편집상 단계와 공식 판단을 나누고, 본문을 대조하지 못했다면 실제 확인 범위를 적습니다. 송치를 유죄 확정으로, 수색 예정일을 완료로 바꾸지 않습니다.
+근거 기사 수는 새 자료에 따라 바뀝니다. 현재 목록은 [trackers.json](../../frontend-vanilla-js/data/trackers.json), 2026.10.30 당시의 확인 범위는 [근거 기록](../research/muan-airport-20261030.md)을 확인합니다. 편집상 단계와 공식 판단을 나누고, 본문을 대조하지 못했다면 실제 확인 범위를 적습니다. 송치를 유죄 확정으로, 수색 예정일을 완료로 바꾸지 않습니다.
 
 화면은 PC에서 사안 카드를 두 열로 비교하고 모바일에서는 진행 일정·기사 근거를 기본으로 접습니다. 기사 표가 있는 경우 중복된 최근 기사 목록을 표로 통합합니다. 이 배치가 `steps`·`links` 원문을 삭제하거나 완료 상태를 바꾸지는 않습니다.
 
@@ -331,4 +331,4 @@
 
 지난 호를 틀로 삼되 발행일·수집 시각·당일 기사·숫자·일정은 다시 확인합니다. 상설 지표는 새 공식 발표가 있을 때만 바꾸고 기존 기준일을 유지합니다. 초안 상태로 색인을 갱신하고 검사한 뒤, 사람 확인 또는 자동 발행 경로로 공개합니다. 실행 명령과 실패 대응은 [발행 런북](runbook.md)에 있습니다.
 
-일일 작성은 안정 `main`에서 만든 `daily/YYYY-MM-DD`를 사용하며, 아침 발행은 고정 SHA의 허용 데이터만 가져옵니다. `dev/web/`는 모든 브랜치에서 사용하는 폴더 경로입니다. [브랜치별 발행 기준](../dev/branches.md#일일-발행-경로의-보호-조건)
+일일 작성은 안정 `main`에서 만든 `daily/YYYY-MM-DD`를 사용하며, 아침 발행은 고정 SHA의 허용 데이터만 가져옵니다. `frontend-vanilla-js/`는 모든 브랜치에서 사용하는 폴더 경로입니다. [브랜치별 발행 기준](../dev/branches.md#일일-발행-경로의-보호-조건)

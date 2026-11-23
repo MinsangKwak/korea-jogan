@@ -1,8 +1,8 @@
 """검색엔진이 읽을 수 있게 호마다 정적 페이지를 만든다. 배포 워크플로가 올리기 직전에 돌린다.
 
-사용: python dev/pipeline/build/build_pages.py
-- 첫 화면(dev/web/index.html): 최신 호 요약을 본문에 미리 넣고 NewsArticle 구조화 데이터를 더한다.
-- 호별 페이지(dev/web/YYYY-MM-DD.html → 주소 /YYYY-MM-DD): 그 호의 제목·설명·대표 주소·요약을 넣는다.
+사용: python backend-python/pipeline/build/build_pages.py
+- 첫 화면(frontend-vanilla-js/index.html): 최신 호 요약을 본문에 미리 넣고 NewsArticle 구조화 데이터를 더한다.
+- 호별 페이지(frontend-vanilla-js/YYYY-MM-DD.html → 주소 /YYYY-MM-DD): 그 호의 제목·설명·대표 주소·요약을 넣는다.
 
 화면은 JavaScript가 JSON을 읽어 그리므로, 이 요약은 JavaScript를 실행하지 않는 검색 로봇과
 불러오기에 실패한 경우를 위한 것이다. 화면이 그려지면 지운다(index.html의 seoDigest).
@@ -27,7 +27,7 @@ import build_weather
 import reader_panel
 
 ROOT = Path(__file__).resolve().parents[3]
-PUBLIC = ROOT / "dev" / "web"
+PUBLIC = ROOT / "frontend-vanilla-js"
 ISSUES = PUBLIC / "data" / "issues"
 SITE = "https://korea-jogan.com/"
 OG_IMAGE = "assets/images/og-first-light.png"

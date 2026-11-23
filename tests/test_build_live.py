@@ -1,6 +1,6 @@
 """최신 공식 숫자(live.json) 생성기를 가짜 ECOS 응답으로 돌려 본다.
 
-사용: python -m unittest discover -s dev/tests
+사용: python -m unittest discover -s tests
 """
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ from pathlib import Path
 from unittest import mock
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[1]
-# 스크립트는 역할별 폴더(dev/pipeline/collect·build·publish)에 있다
+REPO = HERE.parent
+# 스크립트는 역할별 폴더(backend-python/pipeline/collect·build·publish)에 있다
 for _d in ("collect", "build", "publish"):
-    sys.path.insert(0, str(REPO / "dev" / "pipeline" / _d))
+    sys.path.insert(0, str(REPO / "backend-python/pipeline" / _d))
 
 import build_live  # noqa: E402
 import fetch_ecos  # noqa: E402

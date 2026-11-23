@@ -10,7 +10,7 @@ from unittest.mock import patch
 from xml.etree import ElementTree as ET
 
 HERE = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(HERE / "pipeline/build"))
+sys.path.insert(0, str(HERE / "backend-python/pipeline/build"))
 
 import build_feed
 import build_pages
@@ -20,7 +20,7 @@ import build_politics
 class PoliticsBuildTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        public = HERE / "web"
+        public = HERE / "frontend-vanilla-js"
         cls.template = (public / "index.html").read_text()
         cls.rows = build_politics.load(public)
         cls.tracker = json.loads((public / "data/trackers.json").read_text())

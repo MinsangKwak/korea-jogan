@@ -10,8 +10,8 @@ import sys
 from tempfile import TemporaryDirectory
 import unittest
 
-DEV = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(DEV / "pipeline/law"))
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "backend-python/pipeline/law"))
 import bills
 import build_law_calendar
 import build_precedents
@@ -37,7 +37,7 @@ class LawDataTest(unittest.TestCase):
             for config in build_precedents.THEMES.values():
                 self.assertEqual((directory / config["file"]).read_bytes(),
                                  (build_status.DATA / config["file"]).read_bytes())
-            self.assertEqual((directory / "themes.js").read_bytes(), (DEV / "web/law/themes.js").read_bytes())
+            self.assertEqual((directory / "themes.js").read_bytes(), (REPO / "frontend-vanilla-js/law/themes.js").read_bytes())
 
     def test_classifier_uses_one_issue_and_filters_out_other_courts(self):
         row = dict(판례정보일련번호=123456, 법원명="대법원", 사건번호="2025다12345",
@@ -64,7 +64,7 @@ class LawDataTest(unittest.TestCase):
             refresh_gazette.parse_preview(html, date(2026, 11, 20))
 
     def test_search_across_all_published_catalogues(self):
-        result = subprocess.run(["node", "--test", str(DEV / "tests/law-search.mjs")],
+        result = subprocess.run(["node", "--test", str(REPO / "tests/law-search.mjs")],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 

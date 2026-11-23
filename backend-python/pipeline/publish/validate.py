@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-ISSUES = ROOT / "dev" / "web" / "data" / "issues"
+ISSUES = ROOT / "frontend-vanilla-js" / "data" / "issues"
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 REGIONS = {
     "서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종", "경기",
@@ -253,7 +253,7 @@ def check_late(name: str, issue: dict, day: dt.date, collected: dt.datetime) -> 
 
 def check_trackers() -> list[str]:
     """추적 사안은 제목·상태·기간·단계가 있어야 하고, 날짜와 링크 꼴이 맞아야 한다."""
-    path = ROOT / "dev" / "web" / "data" / "trackers.json"
+    path = ROOT / "frontend-vanilla-js" / "data" / "trackers.json"
     if not path.exists():
         return []
     try:
@@ -313,7 +313,7 @@ def check_trackers() -> list[str]:
 
 def check_corrections(dates: list[str]) -> list[str]:
     """정정 기록은 항목마다 무엇을 왜 고쳤는지가 있고, 있는 호를 가리켜야 한다."""
-    path = ROOT / "dev" / "web" / "data" / "corrections.json"
+    path = ROOT / "frontend-vanilla-js" / "data" / "corrections.json"
     if not path.exists():
         return ["corrections.json 파일 없음"]
     errors: list[str] = []
@@ -362,7 +362,7 @@ def main(argv: list[str] | None = None) -> int:
         issue_errors = check_issue(path)
         errors.extend(issue_errors)
         if deploy and not issue_errors and json.loads(path.read_text(encoding="utf-8")).get("status") == "draft":
-            errors.append(f"{date}.json: 승인 전 초안(draft)은 배포하지 않음. dev/pipeline/publish/approve.py로 승인한 뒤 올림")
+            errors.append(f"{date}.json: 승인 전 초안(draft)은 배포하지 않음. backend-python/pipeline/publish/approve.py로 승인한 뒤 올림")
     errors.extend(check_corrections(index["issues"]))
     errors.extend(check_trackers())
 

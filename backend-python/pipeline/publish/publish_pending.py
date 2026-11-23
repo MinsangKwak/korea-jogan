@@ -15,7 +15,7 @@ import auto_release
 import prepare_daily
 
 ROOT = prepare_daily.ROOT
-sys.path.insert(0, str(ROOT / 'dev/pipeline/collect'))
+sys.path.insert(0, str(ROOT / 'backend-python/pipeline/collect'))
 import compose_issue
 
 
@@ -71,17 +71,17 @@ def verify_source(sha: str) -> None:
     outcome = 'failure'
     try:
         run('git', 'worktree', 'add', '--detach', str(temporary), sha)
-        commands = [(sys.executable, 'dev/pipeline/publish/validate.py'), (sys.executable, 'dev/pipeline/build/build_tokens.py', '--check'), (sys.executable, '-m', 'unittest', 'discover', '-s', 'dev/tests')]
+        commands = [(sys.executable, 'backend-python/pipeline/publish/validate.py'), (sys.executable, 'backend-python/pipeline/build/build_tokens.py', '--check'), (sys.executable, '-m', 'unittest', 'discover', '-s', 'tests')]
         for args in commands:
             run(*args, root=temporary)
-        tests = temporary / 'dev/tests/browser'
-        current = ROOT / 'dev/tests/browser'
+        tests = temporary / 'tests/browser'
+        current = ROOT / 'tests/browser'
         same_lock = hashlib.sha256((tests / 'package-lock.json').read_bytes()).digest() == hashlib.sha256((current / 'package-lock.json').read_bytes()).digest()
         if same_lock and (current / 'node_modules').is_dir():
             (tests / 'node_modules').symlink_to(current / 'node_modules', target_is_directory=True)
         else:
-            run('npm', 'ci', '--prefix', 'dev/tests/browser', root=temporary)
-        run('npm', 'test', '--prefix', 'dev/tests/browser', root=temporary, timeout=240)
+            run('npm', 'ci', '--prefix', 'tests/browser', root=temporary)
+        run('npm', 'test', '--prefix', 'tests/browser', root=temporary, timeout=240)
         outcome = 'success'
     finally:
         write_api('check-runs/' + str(proof['id']), {'status': 'completed', 'conclusion': outcome, 'output': {'title': '일일 원본 SHA 전체 검사', 'summary': '고정된 원본 커밋에서 데이터·토큰·Python·전체 브라우저 검사를 수행했습니다. 실패한 검사는 성공으로 대체하지 않습니다.'}}, 'PATCH')
@@ -90,9 +90,9 @@ def verify_source(sha: str) -> None:
 
 def prepare_fallback(day: str, main_sha: str) -> str:
     compose_issue.write_today(ROOT, day)
-    run(sys.executable, 'dev/pipeline/publish/validate.py')
+    run(sys.executable, 'backend-python/pipeline/publish/validate.py')
     run('git', 'switch', '-c', 'daily/' + day)
-    run('git', 'add', '--', f'dev/web/data/issues/{day}.json', prepare_daily.INDEX)
+    run('git', 'add', '--', f'frontend-vanilla-js/data/issues/{day}.json', prepare_daily.INDEX)
     run('git', 'commit', '-m', f'data(issue): {day}호 RSS 보조 초안')
     sha = run('git', 'rev-parse', 'HEAD')
     if remote_day(day) is not None:
@@ -121,7 +121,7 @@ def main() -> int:
         raise ValueError('발행 색인에 미래 날짜가 있습니다')
     sources = {}
     for target in recent_days(day):
-        path = ROOT / f'dev/web/data/issues/{target}.json'
+        path = ROOT / f'frontend-vanilla-js/data/issues/{target}.json'
         if path.exists() and json.loads(path.read_text()).get('status') == 'published':
             continue
         source = remote_day(target)
@@ -132,21 +132,21 @@ def main() -> int:
     for target, source in sorted(sources.items()):
         current = run('git', 'rev-parse', 'HEAD')
         prepare_daily.prepare(ROOT, target, source, current, allow_archive=True)
-        run(sys.executable, 'dev/pipeline/publish/validate.py')
+        run(sys.executable, 'backend-python/pipeline/publish/validate.py')
         verify_source(source)
         if remote_day(target) != source:
             raise RuntimeError('검사 중 일일 자료가 변경됐습니다')
-        issue = json.loads((ROOT / f'dev/web/data/issues/{target}.json').read_text())
+        issue = json.loads((ROOT / f'frontend-vanilla-js/data/issues/{target}.json').read_text())
         if issue['status'] == 'draft':
-            run(sys.executable, 'dev/pipeline/publish/approve.py', target, '--auto')
+            run(sys.executable, 'backend-python/pipeline/publish/approve.py', target, '--auto')
         if target < day:
-            path = ROOT / f'dev/web/data/issues/{target}.json'
+            path = ROOT / f'frontend-vanilla-js/data/issues/{target}.json'
             recovered = json.loads(path.read_text())
             recovered['publicationRecovery'] = {'at': now.isoformat(timespec='seconds'), 'sourceSha': source, 'reason': '발행 누락 호 복구'}
             recovered.setdefault('limits', []).append(f'{target}호는 자동 발행 장애로 {day}에 복구 공개했습니다. 원래 수집 시각과 당시 자료 기준일을 유지했습니다.')
             path.write_text(json.dumps(recovered, ensure_ascii=False, indent=2) + '\n')
-        run(sys.executable, 'dev/pipeline/publish/validate.py', '--deploy')
-        run('git', 'add', '--', f'dev/web/data/issues/{target}.json', prepare_daily.INDEX, prepare_daily.TRACKERS)
+        run(sys.executable, 'backend-python/pipeline/publish/validate.py', '--deploy')
+        run('git', 'add', '--', f'frontend-vanilla-js/data/issues/{target}.json', prepare_daily.INDEX, prepare_daily.TRACKERS)
         run('git', 'commit', '-m', f'data(issue): {target}호 자동 복구 발행')
     candidate = run('git', 'rev-parse', 'HEAD')
     latest = json.loads((ROOT / prepare_daily.INDEX).read_text())['latest']

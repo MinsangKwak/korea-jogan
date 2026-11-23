@@ -7,7 +7,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 HERE = Path(__file__).resolve().parent
-DATA = HERE.parents[1] / "web/law/data"
+DATA = HERE.parents[2] / "frontend-vanilla-js/law/data"
 FILENAME = "catalogue-status.json"
 
 

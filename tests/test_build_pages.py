@@ -1,6 +1,6 @@
 """호별 검색 페이지와 IndexNow 알림 내용을 임시 폴더에서 만들어 본다.
 
-사용: python -m unittest discover -s dev/tests
+사용: python -m unittest discover -s tests
 """
 from __future__ import annotations
 
@@ -13,10 +13,10 @@ import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[1]
-# 스크립트는 역할별 폴더(dev/pipeline/collect·build·publish)에 있다
+REPO = HERE.parent
+# 스크립트는 역할별 폴더(backend-python/pipeline/collect·build·publish)에 있다
 for _d in ("collect", "build", "publish"):
-    sys.path.insert(0, str(REPO / "dev" / "pipeline" / _d))
+    sys.path.insert(0, str(REPO / "backend-python/pipeline" / _d))
 
 import build_pages  # noqa: E402
 import indexnow  # noqa: E402
@@ -27,14 +27,14 @@ DATE = "2026-10-19"
 class PagesTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
-        shutil.copytree(REPO / "dev" / "web", self.tmp / "dev" / "web")
+        shutil.copytree(REPO / "frontend-vanilla-js", self.tmp / "frontend-vanilla-js")
         # 손으로 build_pages를 돌려 둔 호별 페이지가 남아 있어도 시험 결과가 달라지지 않게 지운다
-        for stale in (self.tmp / "dev" / "web").glob("20??-??-??.html"):
+        for stale in (self.tmp / "frontend-vanilla-js").glob("20??-??-??.html"):
             stale.unlink()
-        self.issues = self.tmp / "dev" / "web" / "data" / "issues"
+        self.issues = self.tmp / "frontend-vanilla-js" / "data" / "issues"
         (self.issues / "index.json").write_text(json.dumps({"latest": DATE, "issues": [DATE]}), encoding="utf-8")
         self.saved = (build_pages.PUBLIC, build_pages.ISSUES)
-        build_pages.PUBLIC, build_pages.ISSUES = self.tmp / "dev" / "web", self.issues
+        build_pages.PUBLIC, build_pages.ISSUES = self.tmp / "frontend-vanilla-js", self.issues
         self.issue = json.loads((self.issues / f"{DATE}.json").read_text(encoding="utf-8"))
 
     def tearDown(self):
@@ -97,7 +97,7 @@ class PagesTest(unittest.TestCase):
 
     def test_issue_page_has_own_head_and_digest(self):
         build_pages.build()
-        page = (self.tmp / "dev" / "web" / f"{DATE}.html").read_text(encoding="utf-8")
+        page = (self.tmp / "frontend-vanilla-js" / f"{DATE}.html").read_text(encoding="utf-8")
         url = build_pages.SITE + DATE
         headline = self.issue["lead"]["headline"]
         self.assertIn(f'<link rel="canonical" href="{url}">', page)
@@ -127,9 +127,9 @@ class PagesTest(unittest.TestCase):
 
     def test_home_title_names_today_summary_and_is_idempotent(self):
         build_pages.build()
-        once = (self.tmp / "dev" / "web" / "index.html").read_text(encoding="utf-8")
+        once = (self.tmp / "frontend-vanilla-js" / "index.html").read_text(encoding="utf-8")
         build_pages.build()
-        twice = (self.tmp / "dev" / "web" / "index.html").read_text(encoding="utf-8")
+        twice = (self.tmp / "frontend-vanilla-js" / "index.html").read_text(encoding="utf-8")
         self.assertEqual(once, twice)
         # 2026-10-19는 월요일. 매체 이름 없이 치는 말과 그날 날짜를 제목·설명·보이는 한 줄에 함께 둔다
         self.assertIn("<title>오늘 정치 한 장 · 10월 19일(월) 광고 없는 뉴스 요약 | 대한민국 조간</title>", once)
@@ -140,7 +140,7 @@ class PagesTest(unittest.TestCase):
         self.assertIn("정치와 생활 정책", self.ld(once)["@graph"][0]["description"])
         self.assertIn("오늘 우리나라 뉴스", re.search(r'<meta name="keywords" content="([^"]*)">', once).group(1))
         self.assertIn("오늘 뉴스 요약", self.ld(once)["@graph"][0]["alternateName"])
-        past = (self.tmp / "dev" / "web" / f"{DATE}.html").read_text(encoding="utf-8")
+        past = (self.tmp / "frontend-vanilla-js" / f"{DATE}.html").read_text(encoding="utf-8")
         self.assertIn('<p class="kj-lead__today" id="leadToday">10월 19일 한국 뉴스 요약</p>', past)
         self.assertNotIn("<title>오늘 뉴스 요약", past)
         self.assertEqual(once.count('id="seoDigest"'), 1)
@@ -148,7 +148,7 @@ class PagesTest(unittest.TestCase):
 
     def test_keywords_cover_date_regions_and_stay_bounded(self):
         build_pages.build()
-        page = (self.tmp / "dev" / "web" / f"{DATE}.html").read_text(encoding="utf-8")
+        page = (self.tmp / "frontend-vanilla-js" / f"{DATE}.html").read_text(encoding="utf-8")
         words = re.search(r'<meta name="keywords" content="([^"]*)">', page).group(1).split(", ")
         self.assertIn("10월 19일 뉴스", words)
         self.assertIn("10월 19일 월요일 뉴스", words)
@@ -156,7 +156,7 @@ class PagesTest(unittest.TestCase):
         self.assertEqual(len(words), len(set(words)))
         article = next(g for g in self.ld(page)["@graph"] if g["@type"] == "NewsArticle")
         self.assertIn("머리기사", article["articleSection"])
-        home = (self.tmp / "dev" / "web" / "index.html").read_text(encoding="utf-8")
+        home = (self.tmp / "frontend-vanilla-js" / "index.html").read_text(encoding="utf-8")
         home_words = re.search(r'<meta name="keywords" content="([^"]*)">', home).group(1).split(", ")
         for word in ("오늘 뉴스 요약", "오늘 뉴스", "광고 없는 뉴스", "데이터 기반 뉴스", "10월 19일 뉴스"):
             self.assertIn(word, home_words)
@@ -166,7 +166,7 @@ class PagesTest(unittest.TestCase):
         self.issue["lead"]["headline"] = '<script>alert(1)</script> "따옴표"'
         (self.issues / f"{DATE}.json").write_text(json.dumps(self.issue, ensure_ascii=False), encoding="utf-8")
         build_pages.build()
-        page = (self.tmp / "dev" / "web" / f"{DATE}.html").read_text(encoding="utf-8")
+        page = (self.tmp / "frontend-vanilla-js" / f"{DATE}.html").read_text(encoding="utf-8")
         self.assertNotIn("<script>alert(1)</script>", page)
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", page)
 
@@ -192,7 +192,7 @@ class PagesTest(unittest.TestCase):
         self.issue["status"] = "draft"
         (self.issues / f"{DATE}.json").write_text(json.dumps(self.issue, ensure_ascii=False), encoding="utf-8")
         build_pages.build()
-        self.assertFalse((self.tmp / "dev" / "web" / f"{DATE}.html").exists())
+        self.assertFalse((self.tmp / "frontend-vanilla-js" / f"{DATE}.html").exists())
 
 
 class IndexNowTest(unittest.TestCase):
@@ -234,7 +234,7 @@ class IndexNowTest(unittest.TestCase):
 
     def test_key_file_is_published(self):
         key = indexnow.find_key()
-        self.assertEqual((REPO / "dev" / "web" / f"{key}.txt").read_text(encoding="utf-8").strip(), key)
+        self.assertEqual((REPO / "frontend-vanilla-js" / f"{key}.txt").read_text(encoding="utf-8").strip(), key)
 
 
 if __name__ == "__main__":

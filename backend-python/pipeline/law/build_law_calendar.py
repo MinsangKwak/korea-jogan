@@ -85,7 +85,7 @@ def main():
     parser.add_argument("archive", type=Path, help="Local legalize-kr/legalize-kr Git repository")
     parser.add_argument("--revision", default="HEAD")
     parser.add_argument("--as-of", required=True, type=date.fromisoformat)
-    parser.add_argument("--output", type=Path, default=HERE.parents[1] / "web/law/data/law-calendar.json")
+    parser.add_argument("--output", type=Path, default=HERE.parents[2] / "frontend-vanilla-js/law/data/law-calendar.json")
     args = parser.parse_args()
     cutoff = args.as_of.isoformat()
     revision = git(args.archive, "rev-parse", "--verify", f"{args.revision}^{{commit}}").strip()

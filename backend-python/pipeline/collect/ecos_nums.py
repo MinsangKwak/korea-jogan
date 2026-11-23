@@ -1,7 +1,7 @@
-"""dev/pipeline/collect/raw/ecos/YYYY-MM-DD.json(원본)을 발행 JSON의 nums 항목 꼴로 바꾼다.
+"""backend-python/pipeline/collect/raw/ecos/YYYY-MM-DD.json(원본)을 발행 JSON의 nums 항목 꼴로 바꾼다.
 
-사용: python dev/pipeline/collect/ecos_nums.py 2026-10-20
-결과는 dev/pipeline/collect/raw/ecos/YYYY-MM-DD.nums.json에 저장한다. 일일 작업은 이 값을 기사 검색보다 먼저 쓴다.
+사용: python backend-python/pipeline/collect/ecos_nums.py 2026-10-20
+결과는 backend-python/pipeline/collect/raw/ecos/YYYY-MM-DD.nums.json에 저장한다. 일일 작업은 이 값을 기사 검색보다 먼저 쓴다.
 값은 발행일 전날까지의 마지막 관측값이고, 변동은 그 직전 관측값과 비교한다.
 """
 from __future__ import annotations
@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-RAW = ROOT / "dev" / "pipeline" / "collect" / "raw" / "ecos"
+RAW = ROOT / "backend-python/pipeline" / "collect" / "raw" / "ecos"
 ECOS_URL = "https://ecos.bok.or.kr/"
 
 # 원본 이름: (화면 이름, 단위, 소수 자리, ECOS 통계표 이름)
@@ -73,7 +73,7 @@ def convert(raw: dict) -> list[dict]:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("사용: python dev/pipeline/collect/ecos_nums.py YYYY-MM-DD")
+        print("사용: python backend-python/pipeline/collect/ecos_nums.py YYYY-MM-DD")
         return 2
     src = RAW / f"{sys.argv[1]}.json"
     if not src.exists():

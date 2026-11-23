@@ -14,7 +14,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
-PUBLIC = Path(__file__).resolve().parents[3] / "dev" / "web"
+PUBLIC = Path(__file__).resolve().parents[3] / "frontend-vanilla-js"
 CSP_META = re.compile(r'\s*<meta\b(?=[^>]*http-equiv=["\']Content-Security-Policy["\'])[^>]*>', re.I)
 REFERRER_META = re.compile(r'\s*<meta\b(?=[^>]*name=["\']referrer["\'])[^>]*>', re.I)
 

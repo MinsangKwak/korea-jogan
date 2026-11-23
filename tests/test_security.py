@@ -8,8 +8,8 @@ import sys
 import unittest
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO / "dev/pipeline/build"))
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "backend-python/pipeline/build"))
 import build_pages
 import build_security
 
@@ -54,8 +54,8 @@ class SecurityTest(unittest.TestCase):
         self.assertIn('name="referrer" content="strict-origin-when-cross-origin"', admin)
 
     def test_news_content_cannot_add_executable_script_or_csp_hash(self):
-        template = (REPO / "dev/web/index.html").read_text()
-        issue = json.loads((REPO / "dev/web/data/issues/2026-10-19.json").read_text())
+        template = (REPO / "frontend-vanilla-js/index.html").read_text()
+        issue = json.loads((REPO / "frontend-vanilla-js/data/issues/2026-10-19.json").read_text())
         index = {"latest": issue["date"], "issues": [issue["date"]]}
         ordinary = build_pages.issue_page(template, issue, index)
         attack = '</script><script>window.injected=true</script><img src=x onerror="window.injected=true">'

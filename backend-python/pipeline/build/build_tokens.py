@@ -1,7 +1,7 @@
-"""디자인 토큰(design/tokens.json)으로 화면이 읽는 CSS 변수 파일(dev/web/src/styles/tokens.css)을 만든다.
+"""디자인 토큰(design/tokens.json)으로 화면이 읽는 CSS 변수 파일(frontend-vanilla-js/src/styles/tokens.css)을 만든다.
 
-사용: python3 dev/pipeline/build/build_tokens.py          # 파일을 새로 쓴다
-      python3 dev/pipeline/build/build_tokens.py --check  # 지금 파일이 토큰과 같은지만 본다(다르면 종료 코드 1)
+사용: python3 backend-python/pipeline/build/build_tokens.py          # 파일을 새로 쓴다
+      python3 backend-python/pipeline/build/build_tokens.py --check  # 지금 파일이 토큰과 같은지만 본다(다르면 종료 코드 1)
 기본은 밝은 화면이며, data-theme="dark"를 선택할 때만 다크 토큰을 적용한다.
 """
 from __future__ import annotations
@@ -13,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 SRC = ROOT / "design" / "tokens.json"
-OUT = ROOT / "dev" / "web" / "src" / "styles" / "tokens.css"
+OUT = ROOT / "frontend-vanilla-js" / "src" / "styles" / "tokens.css"
 # 색·그림자처럼 테마마다 값이 다른 묶음
 THEMED = ("color", "shadow")
 # 테마와 상관없이 한 값인 묶음
@@ -45,7 +45,7 @@ def build(tokens: dict) -> str:
     plain = [f"--{t['name']}: {t['value']};" for fam in PLAIN for t in tokens.get(fam, {}).get("tokens", [])]
     plain += [f"--font-{k}: {v};" for k, v in tokens["type"]["families"].items()]
 
-    out = [f"/* {tokens['name']} — generated from design/tokens.json by dev/pipeline/build/build_tokens.py. 손으로 고치지 않는다 */\n"]
+    out = [f"/* {tokens['name']} — generated from design/tokens.json by backend-python/pipeline/build/build_tokens.py. 손으로 고치지 않는다 */\n"]
     out.append(block(":root", theme_lines(first) + plain + [f"color-scheme: {first};"]))
     out.append(block(f':root[data-theme="{first}"]', theme_lines(first) + [f"color-scheme: {first};"]))
     for theme in themes[1:]:
@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
     css = build(json.loads(SRC.read_text(encoding="utf-8")))
     if "--check" in args:
         if not OUT.exists() or OUT.read_text(encoding="utf-8") != css:
-            print(f"{OUT.relative_to(ROOT)}가 토큰과 다름. python3 dev/pipeline/build/build_tokens.py로 다시 만듦")
+            print(f"{OUT.relative_to(ROOT)}가 토큰과 다름. python3 backend-python/pipeline/build/build_tokens.py로 다시 만듦")
             return 1
         print("토큰 CSS 최신")
         return 0

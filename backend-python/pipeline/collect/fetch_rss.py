@@ -1,7 +1,7 @@
-"""언론사 RSS(dev/pipeline/collect/feeds.json)에서 발행일 전날 나온 기사의 제목·링크·날짜만 모은다.
+"""언론사 RSS(backend-python/pipeline/collect/feeds.json)에서 발행일 전날 나온 기사의 제목·링크·날짜만 모은다.
 
-사용: python dev/pipeline/collect/fetch_rss.py [--date YYYY-MM-DD] [--all]
-결과는 dev/pipeline/collect/raw/rss/YYYY-MM-DD.json. --all이면 날짜로 거르지 않는다(피드 점검용).
+사용: python backend-python/pipeline/collect/fetch_rss.py [--date YYYY-MM-DD] [--all]
+결과는 backend-python/pipeline/collect/raw/rss/YYYY-MM-DD.json. --all이면 날짜로 거르지 않는다(피드 점검용).
 
 원칙
 - 제목·링크·날짜·언론사만 남긴다. 피드에 요약(description)이나 본문(content)이 있어도 읽어 들이지 않는다.
@@ -27,9 +27,9 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-FEEDS = ROOT / "dev" / "pipeline" / "collect" / "feeds.json"
-TRACKERS = ROOT / "dev" / "web" / "data" / "trackers.json"
-OUT = ROOT / "dev" / "pipeline" / "collect" / "raw" / "rss"
+FEEDS = ROOT / "backend-python/pipeline" / "collect" / "feeds.json"
+TRACKERS = ROOT / "frontend-vanilla-js" / "data" / "trackers.json"
+OUT = ROOT / "backend-python/pipeline" / "collect" / "raw" / "rss"
 KST = dt.timezone(dt.timedelta(hours=9))
 USER_AGENT = "korea-jogan-rss/1.0 (+https://github.com/MinsangKwak/korea-jogan)"
 TIMEOUT = 20

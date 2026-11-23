@@ -6,10 +6,10 @@ const path = require('node:path');
 const os = require('node:os');
 const { execFileSync } = require('node:child_process');
 const { openBrowser } = require('./browser.cjs');
-const repo = path.resolve(__dirname, '../../..');
+const repo = path.resolve(__dirname, '../..');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'jogan-security-'));
 const web = path.join(temp, 'web');
-fs.cpSync(path.join(repo, 'dev/web'), web, { recursive: true });
+fs.cpSync(path.join(repo, 'frontend-vanilla-js'), web, { recursive: true });
 const buildPublicFixture = `
 import json
 import sys
@@ -25,7 +25,7 @@ public_issues = pages.published()
 pages.build()
 `;
 // 관리자가 직접 읽는 JSON 색인도 공개용 HTML과 같은 호를 가리킨다
-execFileSync('python3', ['-c', buildPublicFixture, path.join(repo, 'dev/pipeline/build'), web]);
+execFileSync('python3', ['-c', buildPublicFixture, path.join(repo, 'backend-python/pipeline/build'), web]);
 const publicIndex = JSON.parse(fs.readFileSync(path.join(web, 'data/issues/index.json'), 'utf8'));
 const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp' };
 const requiredDirectives = ['script-src-elem', 'script-src-attr', 'script-src', 'connect-src', 'object-src'];

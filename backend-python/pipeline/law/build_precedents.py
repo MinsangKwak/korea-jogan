@@ -9,7 +9,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 HERE = Path(__file__).resolve().parent
-WEB = HERE.parents[1] / "web/law"
+WEB = HERE.parents[2] / "frontend-vanilla-js/law"
 THEMES = json.loads((HERE / "themes.json").read_text(encoding="utf-8"))
 CURATED = {
     theme: {int(case_id): tags for case_id, tags in entries.items()}

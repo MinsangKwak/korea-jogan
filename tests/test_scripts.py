@@ -1,6 +1,6 @@
 """검사·승인·RSS·ECOS 변환 스크립트를 임시 폴더에서 돌려 본다.
 
-사용: python -m unittest discover -s dev/tests
+사용: python -m unittest discover -s tests
 """
 from __future__ import annotations
 
@@ -17,10 +17,10 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[1]
-# 스크립트는 역할별 폴더(dev/pipeline/collect·build·publish)에 있다
+REPO = HERE.parent
+# 스크립트는 역할별 폴더(backend-python/pipeline/collect·build·publish)에 있다
 for _d in ("collect", "build", "publish"):
-    sys.path.insert(0, str(REPO / "dev" / "pipeline" / _d))
+    sys.path.insert(0, str(REPO / "backend-python/pipeline" / _d))
 
 import approve  # noqa: E402
 import build_feed  # noqa: E402
@@ -36,16 +36,16 @@ class Site(unittest.TestCase):
 
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
-        shutil.copytree(REPO / "dev" / "web", self.tmp / "dev" / "web")
-        self.issues = self.tmp / "dev" / "web" / "data" / "issues"
+        shutil.copytree(REPO / "frontend-vanilla-js", self.tmp / "frontend-vanilla-js")
+        self.issues = self.tmp / "frontend-vanilla-js" / "data" / "issues"
         # 매일 새 호(초안 포함)가 쌓여도 시험 결과가 바뀌지 않게, 목록을 기준 호 하나로 고정한다
         (self.issues / "index.json").write_text(json.dumps({"latest": DATE, "issues": [DATE]}), encoding="utf-8")
         # 정정 기록도 같은 이유로 비워 둔다. 실제 정정이 쌓여도 기준 호 하나만 보는 검사가 깨지지 않는다
-        (self.tmp / "dev" / "web" / "data" / "corrections.json").write_text(json.dumps({"items": []}), encoding="utf-8")
+        (self.tmp / "frontend-vanilla-js" / "data" / "corrections.json").write_text(json.dumps({"items": []}), encoding="utf-8")
         self.saved = (validate.ROOT, validate.ISSUES, approve.ISSUES, build_feed.PUBLIC, build_feed.ISSUES)
         validate.ROOT, validate.ISSUES = self.tmp, self.issues
         approve.ISSUES = self.issues
-        build_feed.PUBLIC, build_feed.ISSUES = self.tmp / "dev" / "web", self.issues
+        build_feed.PUBLIC, build_feed.ISSUES = self.tmp / "frontend-vanilla-js", self.issues
 
     def tearDown(self):
         validate.ROOT, validate.ISSUES, approve.ISSUES, build_feed.PUBLIC, build_feed.ISSUES = self.saved
@@ -58,7 +58,7 @@ class Site(unittest.TestCase):
         path.write_text(json.dumps(issue, ensure_ascii=False), encoding="utf-8")
 
     def test_tracker_unknown_period_and_phase_validation(self):
-        path = self.tmp / "dev/web/data/trackers.json"
+        path = self.tmp / "frontend-vanilla-js/data/trackers.json"
         data = json.loads(path.read_text())
         item = next(item for item in data["items"] if item.get("periodUnknown") and item.get("phases"))
         self.assertTrue(item["periodUnknown"])
@@ -79,7 +79,7 @@ class Site(unittest.TestCase):
 
 class ValidateTest(Site):
     def test_tracker_rejects_incomplete_or_empty_keyword_groups(self):
-        path = self.tmp / "dev/web/data/trackers.json"
+        path = self.tmp / "frontend-vanilla-js/data/trackers.json"
         data = json.loads(path.read_text())
         for keywords in (
             {"subject": ["인물"], "procedure": ["기일"]},
@@ -141,8 +141,8 @@ class ValidateTest(Site):
 
     def test_root_favicon_is_a_real_ico(self):
         # /favicon.ico가 없으면 네이버 진단이 '접근 불가'로 잡고 검색 결과에 아이콘이 비어 보인다
-        path = self.tmp / "dev" / "web" / "favicon.ico"
-        self.assertTrue(path.exists(), "dev/web/favicon.ico 없음")
+        path = self.tmp / "frontend-vanilla-js" / "favicon.ico"
+        self.assertTrue(path.exists(), "frontend-vanilla-js/favicon.ico 없음")
         data = path.read_bytes()
         reserved, kind, count = struct.unpack("<HHH", data[:6])
         self.assertEqual((reserved, kind), (0, 1))
@@ -156,7 +156,7 @@ class ValidateTest(Site):
         self.assertIn(32, sizes, f"32픽셀 그림이 없음: {sizes}")
 
     def test_corrections(self):
-        path = self.tmp / "dev" / "web" / "data" / "corrections.json"
+        path = self.tmp / "frontend-vanilla-js" / "data" / "corrections.json"
         good = {"date": "2026-10-20", "issue": DATE, "section": "경제", "before": "1", "after": "2", "reason": "오기"}
         path.write_text(json.dumps({"items": [good]}), encoding="utf-8")
         self.assertEqual(self.run_validate()[0], 0)

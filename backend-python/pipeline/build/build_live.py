@@ -1,6 +1,6 @@
-"""한국은행 ECOS에서 오늘까지 나온 최신 공식 숫자를 받아 dev/web/data/live.json을 만든다.
+"""한국은행 ECOS에서 오늘까지 나온 최신 공식 숫자를 받아 frontend-vanilla-js/data/live.json을 만든다.
 
-사용: python dev/pipeline/build/build_live.py
+사용: python backend-python/pipeline/build/build_live.py
 배포 워크플로가 평일 낮에 1시간마다 돌린다. 저장소에는 올리지 않고 배포 파일에만 넣는다.
 
 원칙
@@ -17,14 +17,14 @@ import os
 import sys
 from pathlib import Path
 
-# 수집기(dev/pipeline/collect)를 그대로 불러 쓴다
+# 수집기(backend-python/pipeline/collect)를 그대로 불러 쓴다
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "collect"))
 
 import ecos_nums  # noqa: E402
 import fetch_ecos  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
-OUT = ROOT / "dev" / "web" / "data" / "live.json"
+OUT = ROOT / "frontend-vanilla-js" / "data" / "live.json"
 KST = dt.timezone(dt.timedelta(hours=9))
 # 조간의 '전 거래일 종가'와 달리 자동 갱신 띠는 그날 값일 수 있어 이름을 바꾼다
 LABELS = {"kospi": "코스피 종가", "kosdaq": "코스닥 종가"}

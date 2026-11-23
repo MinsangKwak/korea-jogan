@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 
 
 SOURCE = "https://gwanbo.go.kr/user/pblicteNoti/tomorrowOfctt.do"
-OUTPUT = Path(__file__).resolve().parents[2] / "web/law/data/gazette-preview.json"
+OUTPUT = Path(__file__).resolve().parents[3] / "frontend-vanilla-js/law/data/gazette-preview.json"
 
 
 class PageText(HTMLParser):

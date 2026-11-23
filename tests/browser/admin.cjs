@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { openBrowser } = require('./browser.cjs');
-const web = path.resolve(__dirname, '../../web');
+const web = path.resolve(__dirname, '../../frontend-vanilla-js');
 
 function publishedIndex() {
   const issues = path.join(web, 'data/issues');

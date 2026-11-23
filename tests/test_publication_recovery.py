@@ -11,8 +11,8 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-REPO = Path(__file__).resolve().parents[2]
-for folder in ('dev/pipeline/collect', 'dev/pipeline/publish', 'dev/tools'):
+REPO = Path(__file__).resolve().parents[1]
+for folder in ('backend-python/pipeline/collect', 'backend-python/pipeline/publish', 'tools'):
     sys.path.insert(0, str(REPO / folder))
 import compose_issue
 import install_browser
@@ -21,7 +21,7 @@ import publish_pending
 
 class SupplementIssueTest(unittest.TestCase):
     def setUp(self):
-        self.template = json.loads((REPO / 'dev/web/data/issues/2026-11-09.json').read_text())
+        self.template = json.loads((REPO / 'frontend-vanilla-js/data/issues/2026-11-09.json').read_text())
         self.now = dt.datetime(2026, 11, 12, 7, 30, tzinfo=dt.timezone(dt.timedelta(hours=9)))
         self.item = {'outlet': '테스트 매체', 'title': '서울 공공도서관 운영 안내', 'url': 'https://example.org/news?utm_source=rss', 'published': '2026-11-11T10:00+09:00'}
 
@@ -110,8 +110,8 @@ class RecoveryPublicationIntegrationTest(unittest.TestCase):
             git('init', '-b', 'main')
             git('config', 'user.name', '검사')
             git('config', 'user.email', 'test@example.com')
-            shutil.copytree(REPO / 'dev/web/data', root / 'dev/web/data')
-            fixture_directory = root / 'dev/web/data/issues'
+            shutil.copytree(REPO / 'frontend-vanilla-js/data', root / 'frontend-vanilla-js/data')
+            fixture_directory = root / 'frontend-vanilla-js/data/issues'
             fixture_index = json.loads((fixture_directory / 'index.json').read_text())
             fixture_index.update(latest='2026-11-09', issues=[day for day in fixture_index['issues'] if day <= '2026-11-09'])
             (fixture_directory / 'index.json').write_text(json.dumps(fixture_index))
@@ -125,16 +125,16 @@ class RecoveryPublicationIntegrationTest(unittest.TestCase):
             for path in fixture_directory.glob('*.json'):
                 if path.stem != 'index' and path.stem > '2026-11-09':
                     path.unlink()
-            scripts = root / 'dev/pipeline/publish'
+            scripts = root / 'backend-python/pipeline/publish'
             scripts.mkdir(parents=True)
             for name in ('validate.py', 'approve.py'):
-                shutil.copy2(REPO / 'dev/pipeline/publish' / name, scripts / name)
+                shutil.copy2(REPO / 'backend-python/pipeline/publish' / name, scripts / name)
             git('add', '.')
             git('commit', '-m', '안정 기준')
             base = git('rev-parse', 'HEAD')
             git('remote', 'add', 'origin', str(remote))
             git('push', 'origin', 'HEAD:main')
-            directory = root / 'dev/web/data/issues'
+            directory = root / 'frontend-vanilla-js/data/issues'
             index = json.loads((directory / 'index.json').read_text())
             template = json.loads((directory / (index['latest'] + '.json')).read_text())
             expected = []

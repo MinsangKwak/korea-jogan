@@ -1,7 +1,7 @@
 """초안의 문장 편집이 허용된 텍스트와 기존 근거 범위 안에 있는지 대조한다.
 
-사용: python3 dev/pipeline/publish/check_editorial.py --base-ref <40자리 SHA> --date YYYY-MM-DD
-새 호: python3 dev/pipeline/publish/check_editorial.py --baseline-file <조사 직후 원본 JSON> --date YYYY-MM-DD
+사용: python3 backend-python/pipeline/publish/check_editorial.py --base-ref <40자리 SHA> --date YYYY-MM-DD
+새 호: python3 backend-python/pipeline/publish/check_editorial.py --baseline-file <조사 직후 원본 JSON> --date YYYY-MM-DD
 이 검사는 고유명사·주체·인과관계의 정확성을 보장하지 않는다. 편집 전후 원문 대조가 필요하다.
 """
 from __future__ import annotations
@@ -146,7 +146,7 @@ def main(argv: list[str] | None = None) -> int:
     if not valid_date(args.date) or args.date != today_kst():
         print("편집 검사 실패: --date는 한국 시간 오늘의 유효한 날짜여야 합니다")
         return 1
-    relative = f"dev/web/data/issues/{args.date}.json"
+    relative = f"frontend-vanilla-js/data/issues/{args.date}.json"
     try:
         candidate = ROOT / relative
         if args.baseline_file is not None:

@@ -58,7 +58,7 @@ def ensure_deployment(sha: str) -> bool:
               and run.get("event") in ("push", "workflow_dispatch") and run.get("status") != "completed"]
     if active:
         return False
-    date = json.loads(git("show", sha + ":dev/web/data/issues/index.json"))["latest"]
+    date = json.loads(git("show", sha + ":frontend-vanilla-js/data/issues/index.json"))["latest"]
     try:
         if verify_publication.check_once(sha, date):
             return False

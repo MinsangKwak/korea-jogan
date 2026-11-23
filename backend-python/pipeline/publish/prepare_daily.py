@@ -1,6 +1,6 @@
 """안정된 main 작업본에 일일 브랜치의 허용된 데이터만 가져온다.
 
-사용: python3 dev/pipeline/publish/prepare_daily.py --date YYYY-MM-DD --source-ref <SHA> --main-ref <SHA>
+사용: python3 backend-python/pipeline/publish/prepare_daily.py --date YYYY-MM-DD --source-ref <SHA> --main-ref <SHA>
 소스 브랜치의 코드와 과거 호는 실행하거나 복사하지 않는다. 원문 사실 검증은 별도 조사·검토 범위다.
 """
 from __future__ import annotations
@@ -19,8 +19,8 @@ ROOT = Path(__file__).resolve().parents[3]
 KST = dt.timezone(dt.timedelta(hours=9))
 SHA = re.compile(r"[0-9a-fA-F]{40}\Z")
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}\Z")
-INDEX = "dev/web/data/issues/index.json"
-TRACKERS = "dev/web/data/trackers.json"
+INDEX = "frontend-vanilla-js/data/issues/index.json"
+TRACKERS = "frontend-vanilla-js/data/trackers.json"
 
 
 class PreparationError(ValueError):
@@ -144,7 +144,7 @@ def prepare(root: Path, date: str, source_ref: str, main_ref: str, allow_archive
     current_dates = dates(current_index, "main")
     if not allow_archive and any(day > date for day in current_dates):
         raise PreparationError("main 발행 목록에 오늘 이후 날짜가 있습니다")
-    issue_path = f"dev/web/data/issues/{date}.json"
+    issue_path = f"frontend-vanilla-js/data/issues/{date}.json"
     current_issue = blob(root, main_ref, issue_path, required=False)
     if current_issue is not None:
         issue = decode(current_issue, issue_path)
