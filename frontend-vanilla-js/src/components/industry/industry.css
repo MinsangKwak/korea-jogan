@@ -1,10 +1,3 @@
-/* 산업 */
-.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
-.strip > div { min-width: 0; padding-top: var(--space-2); border-top: var(--border-rule) solid var(--ink); }
-.strip .k { font-size: 0.85rem; font-weight: 500; color: var(--ink-2); }
-.strip .v { font-size: 1.3rem; font-weight: 900; line-height: 1.3; font-variant-numeric: tabular-nums; }
-.strip .d { font-size: 0.85rem; }
-@media (max-width: 760px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .oct { margin-top: var(--space-6); }
 
 /* 핵심 수치는 같은 줄에서 비교하고 근거는 아래 넓은 지면에서 읽는다 */
@@ -99,13 +92,23 @@
   .inds { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 }
 
-/* 산업 개요와 품목 비교를 나란히 읽고 좁은 화면에서는 순서대로 잇는다 */
+/* 표와 그래프를 독립적인 길이로 읽을 수 있게 한다. */
+.news-edition .industry-intro { max-inline-size: 44rem; }
 .news-edition .industry-overview { display: grid; gap: var(--space-8); align-items: start; }
 .news-edition .industry-summary, .news-edition .industry-chart { min-width: 0; }
-.news-edition .industry-summary .kj-sechead { margin-bottom: var(--space-6); }
-.news-edition .industry-summary .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-4); }
-.news-edition .industry-summary .strip .v { margin-block: var(--space-1); overflow-wrap: anywhere; }
-.news-edition .industry-summary .src-note { margin-top: var(--space-5); line-height: 1.85; }
+.trade-table { width: 100%; border-collapse: collapse; color: var(--ink); line-height: 1.55; }
+.trade-table caption { padding-block: .2rem .7rem; border-bottom: var(--border-rule) solid var(--ink); text-align: start; font-size: 1.15rem; font-weight: 750; }
+.trade-table th, .trade-table td { padding-block: .65rem; padding-inline: .35rem; border-bottom: 1px solid var(--line); text-align: end; vertical-align: baseline; }
+.trade-table th:first-child { padding-inline-start: 0; text-align: start; }
+.trade-table :is(th, td):last-child { padding-inline-end: 0; }
+.trade-table thead th { color: var(--ink-2); font-size: .8rem; font-weight: 600; }
+.trade-table tbody th { font-size: .9rem; font-weight: 600; word-break: keep-all; overflow-wrap: anywhere; }
+.trade-table td { font-size: .85rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.trade-table .v { font-size: 1.05rem; font-weight: 700; }
+.trade-table .kj-dir { white-space: normal; }
+.industry-source { margin-block-start: var(--space-4); }
+.industry-source > summary { min-block-size: var(--tap-min); }
+.industry-source .kj-src__panel { margin: 0; overflow-wrap: anywhere; line-height: 1.75; }
 .news-edition .industry-chart { padding: var(--space-6); border: var(--border-hairline) solid var(--line); background: var(--surface); }
 .news-edition .industry-chart .sub { margin: 0 0 var(--space-2); }
 .news-edition .industry-chart > summary.sub { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: var(--tap-min); margin: 0; cursor: pointer; list-style: none; }
@@ -119,8 +122,9 @@
 .news-edition .industry-chart[open] .industry-chart__toggle::before { content: '접기'; }
 .news-edition .industry-chart[open] .industry-chart__toggle::after { content: ' −'; }
 .news-edition .industry-chart__note { margin: 0 0 var(--space-5); color: var(--ink-3); font-size: .8rem; line-height: 1.75; }
-.news-edition .industry-chart .kj-bars { gap: var(--space-2); }
-.news-edition .industry-chart .kj-bar { min-width: 0; grid-template-columns: 7rem minmax(0, 1fr) 7.5rem; }
+.news-edition .industry-chart .kj-bars { gap: .7rem; }
+.news-edition .industry-chart .kj-bar__tr { height: .55rem; background: var(--line); }
+.news-edition .industry-chart .kj-bar { min-width: 0; grid-template-columns: minmax(5rem, 1fr) minmax(0, 2fr) minmax(5rem, 1fr); }
 .news-edition .industry-chart .kj-bar__lab { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.6; }
 .news-edition .industry-chart .kj-bar__v { display: flex; flex-direction: column; align-items: flex-end; min-width: 0; white-space: normal; line-height: 1.4; overflow-wrap: anywhere; }
 .news-edition .industry-chart .kj-bar__change { color: var(--ink-3); font-size: .8rem; }
@@ -130,6 +134,7 @@
 }
 @media (max-width: 600px) {
   .news-edition .industry-chart { padding: var(--space-4); }
-  .news-edition .industry-chart .kj-bar { grid-template-columns: 5.6rem minmax(0, 1fr); gap: var(--space-1) var(--space-3); }
-  .news-edition .industry-chart .kj-bar__v { grid-column: 2; align-items: flex-start; }
+  .news-edition .industry-chart .kj-bar { grid-template-columns: minmax(0, 1fr) auto; gap: .15rem .6rem; }
+  .news-edition .industry-chart .kj-bar__tr { grid-column: 1 / -1; grid-row: 2; }
+  .news-edition .industry-chart .kj-bar__v { flex-direction: row; flex-wrap: wrap; gap: 0 .4rem; align-items: baseline; justify-content: end; }
 }

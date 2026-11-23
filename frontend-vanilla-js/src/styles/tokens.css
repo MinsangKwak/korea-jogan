@@ -56,8 +56,8 @@
   --rail-w: 9rem;
   --wrap: 1120px;
   --measure: 42rem;
-  --font-serif: "Noto Serif KR", "Batang", "AppleMyungjo", serif;
-  --font-sans: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-serif: "AppleMyungjo", "Batang", "Noto Serif CJK KR", "Noto Serif KR", Georgia, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", "Noto Sans KR", "Jogan Korean", serif;
+  --font-sans: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", "Noto Sans KR", "Jogan Korean", system-ui, sans-serif;
   color-scheme: light;
 }
 

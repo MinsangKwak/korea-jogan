@@ -27,7 +27,7 @@ pages.build()
 // 관리자가 직접 읽는 JSON 색인도 공개용 HTML과 같은 호를 가리킨다
 execFileSync('python3', ['-c', buildPublicFixture, path.join(repo, 'backend-python/pipeline/build'), web]);
 const publicIndex = JSON.parse(fs.readFileSync(path.join(web, 'data/issues/index.json'), 'utf8'));
-const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp' };
+const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2' };
 const requiredDirectives = ['script-src-elem', 'script-src-attr', 'script-src', 'connect-src', 'object-src'];
 const probe = `
 (async () => {
@@ -58,6 +58,7 @@ const probe = `
       const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
       const page = await context.newPage();
       const errors = [];
+      const fontRequests = [];
       page.on('pageerror', (error) => errors.push(error.message));
       await context.addInitScript(() => {
         window.cspEvents = [];
@@ -66,6 +67,9 @@ const probe = `
       });
       await page.route('**/*', async (route) => {
         const url = new URL(route.request().url());
+        if ((route.request().resourceType() === 'font' && url.origin !== 'http://jogan.test') || ['fonts.googleapis.com', 'fonts.gstatic.com'].includes(url.hostname)) {
+          fontRequests.push(url.href);
+        }
         if (url.pathname === '/security-probe.js' && url.hostname === 'jogan.test') return route.fulfill({ body: probe, contentType: mime['.js'] });
         if (url.hostname === 'accounts.google.com') return route.fulfill({ body: 'window.google={accounts:{oauth2:{}}};window.gsiSecurityLoaded=true;', contentType: mime['.js'] });
         if (url.hostname !== 'jogan.test') {
@@ -111,7 +115,12 @@ const probe = `
             await new Promise((resolve) => { const frame = document.createElement('iframe'); frame.onload = resolve; frame.src = 'https://www.googletagmanager.com/signals-test.html'; document.body.append(frame); });
           });
           await page.waitForFunction(() => !!window.allowedGoogleScript);
-          await page.waitForFunction(() => document.getElementById('fontStyles').media === 'all');
+          const fallback = await page.evaluate(async () => {
+            const faces = await document.fonts.load('16px "Jogan Korean"', '대한민국');
+            return faces.map((face) => face.status);
+          });
+          assert.deepEqual(fallback, ['loaded'], '같은 출처 한글 글꼴을 읽을 수 없음');
+          assert.deepEqual(fontRequests, [], '기사 첫 방문에 외부 글꼴을 요청함');
         }
         assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'dark');
         assert.deepEqual(await page.evaluate(() => window.cspEvents), [], '정상 화면에서 CSP 위반');

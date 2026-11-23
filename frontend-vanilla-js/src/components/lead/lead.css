@@ -8,9 +8,6 @@
 .news-edition .lead-extras > summary:hover { color: var(--brand); background: var(--brand-soft); }
 .news-edition .lead-extras > summary:focus-visible { outline: var(--border-focus) solid var(--focus); outline-offset: -3px; }
 .news-edition .lead-extras__body { padding-top: var(--space-4); }
-@media (min-width: 901px) {
-  .news-edition .hero-grid [data-paired-overflow] .lead-extras > summary { position: sticky; top: 0; z-index: 1; }
-}
 @media (max-width: 900px) {
   .hero-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
   .briefs-box { border-left: 0; padding-left: 0; border-top: var(--border-hairline) solid var(--line); padding-top: var(--space-4); }

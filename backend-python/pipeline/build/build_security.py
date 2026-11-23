@@ -54,7 +54,7 @@ def policy(page: str, admin: bool = False, *, law: bool = False) -> str:
     scripts = Scripts()
     scripts.feed(page)
     script_sources = ["'self'", *scripts.hashes]
-    styles = ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"]
+    styles = ["'self'", "'unsafe-inline'"]
     images = ["'self'", "data:"]
     connections = ["'self'"]
     frames = ["'none'"]
@@ -83,7 +83,7 @@ def policy(page: str, admin: bool = False, *, law: bool = False) -> str:
         "script-src": script_sources,
         "script-src-attr": ["'none'"],
         "style-src": ["'self'"] if law else styles,
-        "font-src": ["'self'"] if law else ["'self'", "https://fonts.gstatic.com"],
+        "font-src": ["'self'"],
         "img-src": images,
         "connect-src": connections,
         "frame-src": frames,

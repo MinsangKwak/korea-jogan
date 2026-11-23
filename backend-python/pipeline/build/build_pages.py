@@ -403,9 +403,7 @@ def discovery_page(template: str, item: dict) -> str:
 <link rel="alternate" type="application/rss+xml" title="대한민국 조간" href="/feed.xml">
 {verification}
 {theme}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link id="fontStyles" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;family=Noto+Serif+KR:wght@700;900&amp;display=swap" media="print">
+<link rel="stylesheet" href="/src/styles/korean-fallback.css">
 <link rel="stylesheet" href="/src/styles/tokens.css">
 <link rel="stylesheet" href="/src/styles/kj.css">
 <link rel="stylesheet" href="/src/components/header/header.css">
@@ -415,7 +413,6 @@ def discovery_page(template: str, item: dict) -> str:
 <script type="application/ld+json">
 {data}
 </script>
-<script src="/src/core/fonts.js" async></script>
 <script src="/src/core/theme.js" defer></script>
 <script src="/src/core/metrics.js" defer></script>
 <script src="/src/core/discovery.js" defer></script>

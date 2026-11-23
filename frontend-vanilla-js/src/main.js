@@ -63,8 +63,6 @@ async function boot() {
     renderIndustry();
     renderFiscal();
     matchReadingColumns(document.querySelector('.politics-grid'), 1040, ['임기와 선거·예산 D-Day', '이번 주 일정']);
-    matchReadingColumns(document.querySelector('.fiscal-grid'), 1040, ['국가채무와 연도별 그래프', '예산 전망과 국민연금']);
-    matchReadingColumns(document.querySelector('.industry-overview'), 1100, ['산업 요약과 수출입 지표', '품목별 수출액'], $('industryChart'));
     showTheme(D.themes[0].id);
     renderLimits();
     renderArchive();
@@ -82,7 +80,7 @@ async function boot() {
   if (ok) trackSections();
   if (ok) {
     loadTrackers().then(renderTrack).catch(() => renderTrack(null));
-    loadCorrections().then(renderCorrections).catch(() => { $('fixes').textContent = '정정 기록을 불러오지 못했습니다. 잠시 뒤 다시 확인해 주세요.'; });
+    loadCorrections().then(renderCorrections, () => renderCorrections(null));
     renderLive().catch(() => { $('live').hidden = true; });
   }
 }

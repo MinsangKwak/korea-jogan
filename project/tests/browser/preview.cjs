@@ -109,6 +109,20 @@ async function identity(page) {
       assert.ok(!policy.includes('googletagmanager.com'));
     });
 
+    for (const width of [390, 1920]) {
+      await check('묶은 CSS의 제호·첫 기사·대표 이미지 ' + width, { width }, async ({ page }) => {
+        await page.goto(origin + '/');
+        for (const reload of [false, true]) {
+          if (reload) await page.reload();
+          await ready(page);
+          assert.equal(await page.locator('.kj-mast__logo').evaluate((el) => getComputedStyle(el).display), 'flex');
+          assert.equal(await page.locator('#frontTitle').evaluate((el) => getComputedStyle(el).fontWeight), '900');
+          const leadImage = await page.locator('.politics-front__lead').evaluate((el) => getComputedStyle(el, '::before').backgroundImage);
+          assert.match(leadImage, /politics-first-light\.webp/);
+        }
+      });
+    }
+
     await check('날짜별 기사 검색은 펼칠 때만 API에서 선택한 호를 읽으며 실패 후 재시도할 수 있다', {}, async ({ page }) => {
       const requests = [];
       page.on('request', (request) => {

@@ -45,7 +45,7 @@
   color: var(--brand);
   border-inline-start: 1px solid var(--line);
 }
-.front-law-tab span { font-family: system-ui, sans-serif; }
+.front-law-tab span { font-family: var(--font-sans); }
 .news-edition .news-sticky { box-shadow: none; }
 .news-edition #home {
   padding-block: clamp(1.5rem, 3.4vw, 3rem) clamp(1.4rem, 3vw, 2.5rem);
@@ -72,21 +72,32 @@
   text-wrap: pretty;
 }
 .news-edition .kj-facts {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
-  gap: 1.05rem;
-  padding: .8rem 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin-block-start: var(--space-6);
+  padding: 0;
   border-block: 1px solid var(--line-strong);
 }
 .news-edition .kj-facts:empty { display: none; }
-.news-edition .kj-facts li { gap: .2rem; padding: 0; border: 0; background: none; }
-.news-edition .kj-facts .t { color: var(--ink); font-weight: 700; }
-.news-edition .kj-facts .v {
-  color: var(--brand);
-  font: 750 clamp(1.55rem, 2.8vw, 2.4rem)/1.13 var(--font-serif);
-  font-variant-numeric: lining-nums tabular-nums;
-  letter-spacing: -.045em;
+.news-edition .kj-facts li {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 25%) minmax(0, 1fr);
+  gap: .25rem var(--space-4);
+  align-items: baseline;
+  padding: .8rem 0;
+  border: 0;
+  background: none;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
-.news-edition .kj-facts .m { line-height: 1.5; }
+.news-edition .kj-facts li + li { border-block-start: 1px solid var(--line); }
+.news-edition .kj-facts .t { color: var(--ink-2); font-size: .85rem; font-weight: 700; line-height: 1.55; }
+.news-edition .kj-facts .v {
+  color: var(--ink);
+  font: 700 1.12rem/1.5 var(--font-serif);
+  font-variant-numeric: tabular-nums;
+}
+.news-edition .kj-facts .m { grid-column: 2; color: var(--ink-3); line-height: 1.65; }
 .news-edition .kj-lead__stand { max-width: 42rem; margin: 1.05rem 0 0; }
 .news-edition .hero .meta { line-height: 1.55; }
 .news-edition .briefs-box { padding-inline-start: clamp(1rem, 2vw, 2rem); }
@@ -121,10 +132,8 @@
   .news-edition .kj-cats a { min-width: 44px; padding-inline: .2rem; }
   .news-edition .kj-cats .front-law-tab { padding-inline: .45rem; }
   .front-law-tab span { display: none; }
-  .news-edition .kj-facts { grid-template-columns: minmax(0, 1fr); gap: .65rem; }
-  .news-edition .kj-facts li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .1rem .7rem; align-items: baseline; }
-  .news-edition .kj-facts .m { grid-column: 1 / -1; }
-  .news-edition .kj-facts li + li { border-top: 1px solid var(--line); padding-top: .65rem; }
+  .news-edition .kj-facts li { grid-template-columns: minmax(0, 1fr); }
+  .news-edition .kj-facts .m { grid-column: 1; }
   .news-edition .news-quick a { padding: .65rem; }
 }
 /* 첫 지면에서 신문 기사와 판결문을 함께 읽는다. */

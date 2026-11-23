@@ -1,0 +1,17 @@
+@font-face {
+  font-family: "Jogan Korean";
+  src: url("/assets/fonts/hangul.d43c64639356.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  unicode-range: U+3131-3163, U+3165-318E, U+AC00-D7A3;
+}
+
+@font-face {
+  font-family: "Jogan Korean";
+  src: url("/assets/fonts/jamo-hanja.20bbe6d9e526.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  unicode-range: U+1100-11FF, U+20A9, U+3000-303F, U+3164, U+3200-32FF, U+3400-9FFF, U+A960-A97C, U+D7B0-D7FB, U+F900-FAFF, U+FFA0-FFDC, U+FFE6;
+}

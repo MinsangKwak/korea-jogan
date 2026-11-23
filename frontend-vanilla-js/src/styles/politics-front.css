@@ -153,7 +153,7 @@
 .politics-front__edition > span { flex: none; color: var(--brand); font-weight: 750; font-size: .83rem; }
 .politics-front__edition a { min-width: 0; padding: .12rem 0; color: inherit; }
 .is-loading:has(#politicsFront:not([hidden])) #main { display: block; }
-.is-loading:has(#politicsFront:not([hidden])) :is(#pageLoading, #home > :not(#politicsFront), #main > :not(#home)) { display: none; }
+.is-loading:has(#politicsFront:not([hidden])) :is(#pageLoading, #home > :not(#politicsFront, #changeStrip, #caseEdition), #main > :not(#home)) { display: none; }
 
 @media (max-width: 900px) {
   .news-edition .kj-mast__in { gap: .15rem; padding-block: .55rem .25rem; }

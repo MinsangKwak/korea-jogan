@@ -1,15 +1,17 @@
 /* 정치·재정 패널은 내용 높이만 차지하고 긴 목록에 더 넓은 열을 준다 */
-.politics-grid, .fiscal-grid, .politics-overview, .fiscal-overview {
+.politics-grid, .fiscal-grid, .politics-overview {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: clamp(1rem, 2.4vw, 1.75rem);
   min-width: 0;
 }
-.politics-overview, .fiscal-overview { gap: var(--space-4); }
+.politics-overview { gap: var(--space-4); }
 @media (min-width: 1040px) {
   .politics-grid { grid-template-columns: minmax(0, .9fr) minmax(0, 1.25fr); }
-  .fiscal-grid { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }
+  .fiscal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fiscal-debt { grid-column: 1 / -1; }
+  .fiscal-debt__body { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: var(--space-8); }
 }
 
 /* 임기 숫자·선거 기한은 짧은 목록, 주간 일정은 날짜 순으로 읽는다 */
@@ -33,24 +35,27 @@
 .politics-agenda__source > summary:hover { text-decoration: underline; text-underline-offset: .16em; }
 .politics-agenda__source > .src-note { margin-top: var(--space-1); max-width: var(--measure); }
 
-/* 값과 기준을 함께 줄바꿈하고, 차트의 연도·금액은 모두 노출한다 */
+/* 결산과 전망은 별도로 읽으며 표의 기준 설명은 필요할 때 펼친다. */
+.fiscal-debt__body > div { min-width: 0; }
+.fiscal-debt__body h4 { margin-block: var(--space-3) var(--space-2); }
+.fiscal-note { margin-top: var(--space-3); border-top: 1px solid var(--line); }
+.fiscal-note > summary { padding-block: var(--space-2); min-height: var(--tap-min); color: var(--brand); font-weight: 700; cursor: pointer; }
+.fiscal-note > summary:hover { text-decoration: underline; }
+.fiscal-note .src-note { margin-top: 0; max-width: 72ch; overflow-wrap: anywhere; }
+.fiscal-note .src-note a { text-underline-offset: .15em; }
 .fiscal-grid .kj-kv li { min-width: 0; }
 .fiscal-grid .kj-kv .v { white-space: normal; overflow-wrap: anywhere; }
-.fiscal-overview .kj-kv .v { max-inline-size: 17ch; }
 .fiscal-grid .kj-kv li:last-child { border-bottom: 0; }
 .fiscal-grid .kj-alloc-list li { min-width: 0; }
-#debtChart .kj-bar { grid-template-columns: minmax(0, 7rem) minmax(0, 1fr) minmax(0, auto); gap: var(--space-1) var(--space-3); padding-block: var(--space-1); border-bottom: 1px solid var(--line); }
-#debtChart .kj-bar:last-child { border-bottom: 0; }
-#debtChart .kj-bar__lab, #debtChart .kj-bar__v { white-space: normal; overflow: visible; }
-#debtChart .kj-bar__m { grid-column: 2 / -1; margin: 0; }
-@media (max-width: 860px) {
-  .fiscal-overview .kj-kv .v { max-inline-size: none; }
-}
+.debt-years .kj-bar { grid-template-columns: minmax(0, 7rem) minmax(0, 1fr) minmax(0, auto); gap: var(--space-1) var(--space-3); padding-block: var(--space-1); border-bottom: 1px solid var(--line); }
+.debt-years .kj-bar:last-child { border-bottom: 0; }
+.debt-years .kj-bar__lab, .debt-years .kj-bar__v { white-space: normal; overflow: visible; }
+.debt-years .kj-bar__m { grid-column: 2 / -1; margin: 0; }
 @media (max-width: 620px) {
-  #debtChart .kj-bar { grid-template-columns: minmax(0, 1fr) auto; }
-  #debtChart .kj-bar__v { grid-column: 2; grid-row: 1; }
-  #debtChart .kj-bar__tr, #debtChart .kj-bar__m { grid-column: 1 / -1; }
-  #debtChart .kj-bar__tr { grid-row: 2; }
+  .debt-years .kj-bar { grid-template-columns: minmax(0, 1fr) auto; }
+  .debt-years .kj-bar__v { grid-column: 2; grid-row: 1; }
+  .debt-years .kj-bar__tr, .debt-years .kj-bar__m { grid-column: 1 / -1; }
+  .debt-years .kj-bar__tr { grid-row: 2; }
 }
 @media (max-width: 460px) {
   .politics-deadlines .kj-dday .n { grid-column: 1 / -1; }
