@@ -26,7 +26,7 @@ HTML·CSS·바닐라 JavaScript로 접근 가능한 지면을 만들고, Python�
 | --- | --- | --- |
 | 판례의 정식 명칭을 몰라 같은 내용을 다시 검색해야 합니다. | ‘전세금’과 ‘임대차보증금’처럼 생활어와 법률 용어를 연결했습니다. 결과에 사건번호·선고일을 표시하고 해당 판결문을 바로 엽니다. | [전세보증금 사례](https://korea-jogan.com/law/?issue=rental-deposit) · [검색 규칙](frontend-vanilla-js/law/search-core.js) |
 | 키보드로 판결문 문제를 풀 때 어떤 답을 선택했고 다음에 무엇을 할 수 있는지 알아야 합니다. | 라디오 버튼으로 답을 선택하고, 선택 없이 확인하면 첫 선택지로 포커스를 보냅니다. 결과는 보조기기에 알리고, 자바스크립트를 꺼도 해설과 원문을 열 수 있게 했습니다. | [문제 컴포넌트](frontend-vanilla-js/src/components/question-recall/recall.js) · [키보드 회귀 검사](tests/browser/question-recall.cjs) |
-| 나중에 갱신한 내용을 오래된 기사에 붙이면 당시 독자가 알았던 사실이 달라집니다. | 질문의 마지막 확인일과 사건의 실제 변경일을 분리했습니다. 날짜별 호를 생성할 때 그날까지 확인한 질문만 싣고, 각 질문의 고정 주소에 답과 출처를 함께 넣었습니다. | [호별 페이지 생성](backend-python/pipeline/build/build_politics.py) · [날짜 경계 검사](tests/test_politics_build.py) |
+| 나중에 갱신한 내용을 오래된 기사에 붙이면 당시 독자가 알았던 사실이 달라집니다. | 질문의 마지막 확인일과 사건의 실제 변경일을 분리했습니다. 날짜별 호를 생성할 때 그날까지 확인한 질문만 싣고, 각 질문의 고정 주소에 답과 출처를 함께 넣었습니다. | [호별 페이지 생성](backend-python/pipeline/build/build_politics.py) · [날짜 경계 검사](tests/pipeline/test_politics_build.py) |
 
 검색 규칙, 질문 본문, 답을 확인하는 동작을 분리해 편집 데이터와 UI를 독립적으로 바꿀 수 있습니다. 대표 질문과 답 옆에 새벽 삽화를 두고, 모바일에서는 답과 근거 링크를 읽은 뒤 풍경과 관련 질문으로 넘어갑니다. [기술 구조](docs/dev/architecture.md) · [화면·접근성 설계](docs/design/guide.md) · [Figma](https://www.figma.com/design/Eep2qLjiPT9jhDUyLU8Zjx)
 

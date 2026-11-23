@@ -7,11 +7,11 @@ import {
   searchCases,
   extractSituation,
   createMemo,
-} from "../frontend-vanilla-js/law/search-core.js";
+} from "../../frontend-vanilla-js/law/search-core.js";
 
 const cases = parseCases(
   JSON.parse(
-    readFileSync(new URL("../frontend-vanilla-js/law/data/precedents.json", import.meta.url)),
+    readFileSync(new URL("../../frontend-vanilla-js/law/data/precedents.json", import.meta.url)),
   ),
 );
 test("catalogue has unique official IDs, complete citations and all four topics", () => {
@@ -103,7 +103,7 @@ test("every theme, subtopic, suggested keyword and sample resolves within its ca
   for (const [id, theme] of Object.entries(themes)) {
     const records = parseCases(
       JSON.parse(
-        readFileSync(new URL("../frontend-vanilla-js/law/data/" + theme.file, import.meta.url)),
+        readFileSync(new URL("../../frontend-vanilla-js/law/data/" + theme.file, import.meta.url)),
       ),
       id,
     );
@@ -136,7 +136,7 @@ test("each curated case is reachable by its keyword and its exact docket", () =>
     const records = parseCases(
       JSON.parse(
         readFileSync(
-          new URL("../frontend-vanilla-js/law/data/" + themes[theme].file, import.meta.url),
+          new URL("../../frontend-vanilla-js/law/data/" + themes[theme].file, import.meta.url),
         ),
       ),
       theme,
@@ -159,7 +159,7 @@ test("each curated case is reachable by its keyword and its exact docket", () =>
 
 test("neighbor and impact-noise cues together find the noise issue", () => {
   const environment = JSON.parse(
-    readFileSync(new URL("../frontend-vanilla-js/law/data/environment.json", import.meta.url)),
+    readFileSync(new URL("../../frontend-vanilla-js/law/data/environment.json", import.meta.url)),
   );
   for (const query of [
     "윗집이 밤마다 쿵쿵거려요",

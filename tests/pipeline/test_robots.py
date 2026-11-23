@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from urllib.robotparser import RobotFileParser
 
-ROBOTS = Path(__file__).resolve().parents[1] / "frontend-vanilla-js" / "robots.txt"
+ROBOTS = Path(__file__).resolve().parents[2] / "frontend-vanilla-js" / "robots.txt"
 SITE = "https://korea-jogan.com"
 
 

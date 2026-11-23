@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 from xml.etree import ElementTree as ET
 
-HERE = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(HERE / "backend-python/pipeline/build"))
 
 import build_feed

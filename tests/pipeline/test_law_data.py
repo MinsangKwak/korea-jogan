@@ -10,7 +10,7 @@ import sys
 from tempfile import TemporaryDirectory
 import unittest
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "backend-python/pipeline/law"))
 import bills
 import build_law_calendar
@@ -64,7 +64,7 @@ class LawDataTest(unittest.TestCase):
             refresh_gazette.parse_preview(html, date(2026, 11, 20))
 
     def test_search_across_all_published_catalogues(self):
-        result = subprocess.run(["node", "--test", str(REPO / "tests/law-search.mjs")],
+        result = subprocess.run(["node", "--test", str(REPO / "tests/frontend/law-search.mjs")],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 

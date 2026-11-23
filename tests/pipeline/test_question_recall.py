@@ -4,7 +4,7 @@ import unittest
 from html.parser import HTMLParser
 from pathlib import Path
 
-BUILD = Path(__file__).resolve().parents[1] / "backend-python/pipeline/build"
+BUILD = Path(__file__).resolve().parents[2] / "backend-python/pipeline/build"
 sys.path.insert(0, str(BUILD))
 
 from question_recall import render_recall
