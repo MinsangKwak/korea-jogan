@@ -24,7 +24,11 @@ class EditionAssetTest(unittest.TestCase):
             root = Path(directory)
             (root / "assets").mkdir()
             (root / "src/css").mkdir(parents=True)
-            (root / "src/css/base.css").write_text(".map { background: url('../../assets/map.webp') }")
+            css_source = (
+                "@font-face { font-family: Hangul; src: url('/assets/fonts/hangul.woff2?v=1') format('woff2'); font-display: swap }\n"
+                ".map { background: url('../../assets/map.webp') }"
+            )
+            (root / "src/css/base.css").write_text(css_source)
             print_css = root / "src/css/print.css"
             print_css.write_text(".map { display: none }")
             (root / "src/first.js").write_text("window.order = [1]")
@@ -47,6 +51,7 @@ class EditionAssetTest(unittest.TestCase):
             self.assertEqual(len(urls), 2)
             css_path, js_path = [root / url.split("?", 1)[0].lstrip("/") for url in urls]
             css = css_path.read_text()
+            self.assertIn("url('/assets/fonts/hangul.woff2?v=1') format('woff2')", css)
             self.assertIn('url("/assets/map.webp")', css)
             self.assertRegex(css, r'@media print\s*\{\s*\.map \{ display: none \}\s*\}')
             self.assertLess(css.index("background:"), css.index("@media print"))
