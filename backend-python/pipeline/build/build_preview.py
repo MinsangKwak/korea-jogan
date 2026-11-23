@@ -16,6 +16,7 @@ import sys
 import tempfile
 from urllib.parse import urlsplit
 
+import build_edition_assets
 import build_feed
 import build_pages
 import build_security
@@ -164,6 +165,7 @@ def build(source: Path = PUBLIC, output: Path = OUTPUT, origin: str = ORIGIN, co
         with tempfile.TemporaryDirectory() as state:
             build_catalog(issues, Path(state) / "articles.sqlite3", temporary / "api/v1")
         build_pages.build()
+        build_edition_assets.package_editions(temporary)
         (temporary / "feed.xml").write_text(build_feed.build(), encoding="utf-8")
         (temporary / "sitemap.xml").write_text(build_feed.build_sitemap(), encoding="utf-8")
         admin.mkdir()

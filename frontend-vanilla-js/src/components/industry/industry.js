@@ -4,26 +4,28 @@
 function renderIndustry() {
   const T = D.trade;
   responsiveDisclosure($('industryChart'));
-  $('tradeIntro').textContent = T.intro;
-  T.stats.forEach((s) => {
-    const d = el('div');
-    const dir = el('div', { class: 'd' });
-    dir.append(el('span', { class: 'kj-dir kj-dir--' + s.dir, 'aria-label': DIR_LABEL[s.dir] + ' ' + s.d }, s.d));
-    d.append(el('div', { class: 'k' }, s.k), el('div', { class: 'v' }, s.v), dir);
-    $('tradeStats').append(d);
+  $('tradeIntro').replaceChildren(...readingText(T.intro).childNodes);
+  T.stats.forEach((stat) => {
+    const row = el('tr');
+    const change = el('td');
+    change.append(el('span', { class: 'kj-dir kj-dir--' + stat.dir, 'aria-label': DIR_LABEL[stat.dir] + ' ' + stat.d }, stat.d));
+    row.append(el('th', { scope: 'row' }, stat.k), el('td', { class: 'v' }, stat.v), change);
+    $('tradeStats').append(row);
   });
-  $('tradeSrc').textContent = '출처: ' + T.src;
+  $('tradeSrc').textContent = T.src;
+  const periods = new Set(Array.from(T.src.matchAll(/산업통상부\s*「(\d{4}년\s*(?:1[0-2]|[1-9])월)\s*수출입\s*동향」/g), (match) => match[1]));
+  $('barsTitle').textContent = (periods.size === 1 ? [...periods][0] + ' ' : '') + '품목별 수출액';
   $('octNote').append(el('h4', {}, T.oct.q), el('p', {}, T.oct.a));
 
   const max = Math.max(...D.items.map((i) => i.v));
   D.items.forEach((it) => {
     const r = el('li', { class: 'kj-bar' + (BAR_CLASS[it.c] || '') });
-    const tr = el('span', { class: 'kj-bar__tr' });
+    const tr = el('span', { class: 'kj-bar__tr', 'aria-hidden': 'true' });
     const b = el('span', { class: 'kj-bar__b' });
     b.style.width = (it.v / max * 100) + '%';
     tr.append(b);
     const v = el('span', { class: 'kj-bar__v' });
-    v.append(el('b', {}, (it.approx ? '약 ' : '') + it.v + '억$'), el('span', { class: 'kj-bar__change' }, ' ' + it.y));
+    v.append(el('b', {}, (it.approx ? '약 ' : '') + it.v + '억 달러'), el('span', { class: 'kj-bar__change' }, ' ' + it.y));
     r.append(el('span', { class: 'kj-bar__lab' }, it.k), tr, v);
     $('bars').append(r);
   });

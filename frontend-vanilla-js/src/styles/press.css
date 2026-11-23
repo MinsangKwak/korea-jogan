@@ -9,7 +9,7 @@
   --press-on-accent: #fffaf0;
   --press-tint: #ece9de;
   --press-focus: #07588a;
-  --press-serif: "Noto Serif KR", "Noto Serif CJK KR", Batang, AppleMyungjo, Georgia, serif;
+  --press-serif: "AppleMyungjo", "Batang", "Noto Serif CJK KR", "Noto Serif KR", Georgia, serif;
 }
 :root[data-theme="dark"] {
   --press-paper: #1c1d1b;

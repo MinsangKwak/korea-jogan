@@ -2,7 +2,7 @@
 <html lang="ko" class="no-js">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#x27;self&#x27;; base-uri &#x27;none&#x27;; object-src &#x27;none&#x27;; script-src &#x27;self&#x27; &#x27;sha256-Qdinrw/DhMZqJX33brQgCbze8QhJ8S95Kagf3Du8gRY=&#x27; &#x27;sha256-8aNzJ0xIS9cuLfyRr5M+4fwoNVkOQMC4eCSqdZc/P8g=&#x27; https://www.googletagmanager.com https://gc.zgo.at; script-src-attr &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com; font-src &#x27;self&#x27; https://fonts.gstatic.com; img-src &#x27;self&#x27; data: https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com https://*.google.co.kr https://*.g.doubleclick.net; connect-src &#x27;self&#x27; https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.google.com https://*.google.co.kr https://*.g.doubleclick.net https://pagead2.googlesyndication.com; frame-src https://www.googletagmanager.com; form-action &#x27;self&#x27;; manifest-src &#x27;self&#x27;; worker-src &#x27;none&#x27;">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;self&#x27;; base-uri &#x27;none&#x27;; object-src &#x27;none&#x27;; script-src &#x27;self&#x27; &#x27;sha256-Qdinrw/DhMZqJX33brQgCbze8QhJ8S95Kagf3Du8gRY=&#x27; &#x27;sha256-8aNzJ0xIS9cuLfyRr5M+4fwoNVkOQMC4eCSqdZc/P8g=&#x27; https://www.googletagmanager.com https://gc.zgo.at; script-src-attr &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27;; font-src &#x27;self&#x27;; img-src &#x27;self&#x27; data: https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com https://*.google.co.kr https://*.g.doubleclick.net; connect-src &#x27;self&#x27; https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.google.com https://*.google.co.kr https://*.g.doubleclick.net https://pagead2.googlesyndication.com; frame-src https://www.googletagmanager.com; form-action &#x27;self&#x27;; manifest-src &#x27;self&#x27;; worker-src &#x27;none&#x27;">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>광고 없는 오늘의 뉴스 요약 | 대한민국 조간</title>
@@ -122,10 +122,6 @@ window.kjLoadTimer = setTimeout(() => {
 <meta name="jg-goatcounter" content="">
 <!-- GA4 측정 ID를 넣으면 켜진다. 예: G-XXXXXXXXXX -->
 <meta name="jg-ga4" content="G-RNLCEWH9M6">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link id="fontStyles" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&display=swap" media="print">
-<script src="src/core/fonts.js" async></script>
 <!-- 디자인 시스템: 토큰(frontend-vanilla-js/src/styles/tokens.json에서 생성)과 kj- 컴포넌트 -->
 <link rel="stylesheet" href="src/styles/tokens.css">
 <link rel="stylesheet" href="src/styles/kj.css">
@@ -324,8 +320,8 @@ window.kjLoadTimer = setTimeout(() => {
           <p class="kj-lead__kicker" id="leadKicker"></p>
         </div>
         <h1 id="leadH"></h1>
-        <ul class="kj-facts" id="leadFacts" aria-label="머리기사의 핵심 수치"></ul>
         <p class="kj-lead__stand" id="leadStand"></p>
+        <ul class="kj-facts" id="leadFacts" aria-label="머리기사의 핵심 사실"></ul>
         <details class="kj-src lead-provenance" id="leadProvenance" hidden>
           <summary>머리기사의 취재 근거와 확인 기록</summary>
           <p class="kj-src__panel" id="leadMeta"></p>
@@ -521,19 +517,26 @@ window.kjLoadTimer = setTimeout(() => {
 
   <section class="kj-sec" id="industry" aria-labelledby="indH">
     <div class="kj-wrap">
+      <header class="kj-sechead industry-intro">
+        <p class="kj-label">산업</p>
+        <h2 id="indH">반도체 밖의 한국 산업</h2>
+        <p id="tradeIntro"></p>
+      </header>
       <div class="industry-overview">
         <div class="industry-summary">
-          <header class="kj-sechead">
-            <p class="kj-label">산업</p>
-            <h2 id="indH">반도체 밖의 한국 산업</h2>
-            <p id="tradeIntro"></p>
-          </header>
-          <div class="strip" id="tradeStats"></div>
-          <p class="src-note" id="tradeSrc"></p>
+          <table class="trade-table">
+            <caption>수출입 핵심 지표</caption>
+            <thead><tr><th scope="col">항목</th><th scope="col">금액</th><th scope="col">증감·수지</th></tr></thead>
+            <tbody id="tradeStats"></tbody>
+          </table>
+          <details class="kj-src industry-source">
+            <summary>수출입 집계 기준과 출처</summary>
+            <p class="kj-src__panel" id="tradeSrc"></p>
+          </details>
         </div>
         <details class="industry-chart" id="industryChart">
-          <summary class="sub" id="barsH"><span>9월 품목별 수출액</span><span class="industry-chart__toggle" aria-hidden="true"></span></summary>
-          <p class="industry-chart__note">품목별 수출액은 제목의 기준월 자료입니다. 수출입 핵심 지표와 기준월을 구분해 읽어 주세요.</p>
+          <summary class="sub" id="barsH"><span id="barsTitle">품목별 수출액</span><span class="industry-chart__toggle" aria-hidden="true"></span></summary>
+          <p class="industry-chart__note">단위는 억 달러이며, 증감률은 전년 동월 대비입니다.</p>
           <ul class="kj-bars" id="bars" aria-labelledby="barsH"></ul>
           <ul class="kj-legend"><li><i class="c1"></i>반도체</li><li><i style="background:var(--hl)"></i>전통 주력산업</li><li><i style="background:var(--bar)"></i>그 밖의 품목</li><li>'약'은 소수점까지 확인하지 못한 값</li></ul>
         </details>
@@ -551,36 +554,51 @@ window.kjLoadTimer = setTimeout(() => {
         <p><strong>국가채무와 연금의 장기 흐름을 봅니다.</strong> 새 공식 발표가 있을 때 갱신하며 확정값과 전망을 구분합니다.</p>
       </header>
       <div class="fiscal-grid">
-        <section class="kj-panel fiscal-debt" aria-labelledby="fiscalDebtH">
-          <h3 id="fiscalDebtH">국가채무</h3>
+        <section class="kj-panel" aria-labelledby="fiscalDebtH">
+          <h3 id="fiscalDebtH">월간 재정 동향</h3>
           <ul class="kj-kv" id="fisMonthly"></ul>
-          <p class="src-note" id="fisMonthlySrc"></p>
-          <h4 id="debtH">연도별 국가채무 (중앙+지방, 조 원)</h4>
-          <ul class="kj-kv" id="fisSummary"></ul>
-          <ul class="kj-bars" id="debtChart" aria-labelledby="debtH" style="margin-top:var(--space-4)"></ul>
-          <ul class="kj-legend"><li><i class="c1"></i>결산(확정)</li><li><i class="fc"></i>추경·정부안·중기전망</li><li>금액을 확인하지 못한 해는 '미확인'</li></ul>
-          <p class="src-note" id="debtSrc"></p>
+          <details class="fiscal-note"><summary>월간 재정 자료와 기준</summary><p class="src-note" id="fisMonthlySrc"></p></details>
         </section>
-        <div class="fiscal-overview">
-          <section class="kj-panel" aria-labelledby="fiscalOutlookH">
-            <h3 id="fiscalOutlookH">국가채무·예산 전망</h3>
-            <ul class="kj-kv" id="fisOutlook"></ul>
-            <p class="src-note" id="fisOutlookSrc"></p>
-          </section>
-          <section class="kj-panel" aria-labelledby="pensionH">
-            <h3 id="pensionH">국민연금 기금</h3>
-            <ul class="kj-kv" id="npsKv"></ul>
-            <h4>어디에 투자하나</h4>
-            <div class="kj-alloc" id="npsBar" role="img"></div>
-            <ul class="kj-alloc-list" id="npsList"></ul>
-            <p class="src-note" id="npsSrc"></p>
-          </section>
-          <section class="kj-panel" aria-labelledby="pensionReformH">
-            <h3 id="pensionReformH">연금개혁 확정 내용</h3>
-            <ul class="kj-kv" id="npsReform"></ul>
-            <p class="src-note" id="npsReformSrc"></p>
-          </section>
-        </div>
+        <section class="kj-panel" aria-labelledby="fiscalOutlookH">
+          <h3 id="fiscalOutlookH">국가채무·예산 전망</h3>
+          <ul class="kj-kv" id="fisOutlook"></ul>
+          <details class="fiscal-note"><summary>예산 전망의 출처와 기준</summary><p class="src-note" id="fisOutlookSrc"></p></details>
+        </section>
+        <section class="kj-panel fiscal-debt" aria-labelledby="debtH">
+          <h3 id="debtH">연도별 국가채무</h3>
+          <div class="fiscal-debt__body">
+            <div>
+              <h4>중앙·지방정부 채무 합계</h4>
+              <ul class="kj-kv" id="fisSummary"></ul>
+            </div>
+            <div>
+              <h4 id="debtLatestH">최근 결산</h4>
+              <ul class="kj-bars debt-years" id="debtChart" aria-labelledby="debtLatestH"></ul>
+              <details class="fiscal-note" id="debtHistory" hidden>
+                <summary id="debtHistoryLabel">이전 연도 결산</summary>
+                <ul class="kj-bars debt-years" id="debtHistoryList" aria-labelledby="debtHistoryLabel"></ul>
+              </details>
+              <details class="fiscal-note" id="debtPlans" hidden>
+                <summary id="debtPlansLabel">추경·정부안·중기전망</summary>
+                <ul class="kj-bars debt-years" id="debtPlansList" aria-labelledby="debtPlansLabel"></ul>
+              </details>
+            </div>
+          </div>
+          <details class="fiscal-note"><summary>연도별 채무의 출처와 기준</summary><p class="src-note" id="debtSrc"></p></details>
+        </section>
+        <section class="kj-panel" aria-labelledby="pensionH">
+          <h3 id="pensionH">국민연금 기금</h3>
+          <ul class="kj-kv" id="npsKv"></ul>
+          <h4>어디에 투자하나</h4>
+          <div class="kj-alloc" id="npsBar" role="img"></div>
+          <ul class="kj-alloc-list" id="npsList"></ul>
+          <details class="fiscal-note"><summary>기금 운용의 출처와 기준</summary><p class="src-note" id="npsSrc"></p></details>
+        </section>
+        <section class="kj-panel" aria-labelledby="pensionReformH">
+          <h3 id="pensionReformH">연금개혁 확정 내용</h3>
+          <ul class="kj-kv" id="npsReform"></ul>
+          <details class="fiscal-note"><summary>연금개혁의 출처와 기준</summary><p class="src-note" id="npsReformSrc"></p></details>
+        </section>
       </div>
     </div>
   </section>
@@ -628,7 +646,11 @@ window.kjLoadTimer = setTimeout(() => {
       </section>
       <section class="kj-foot__section kj-foot__section--corrections" aria-labelledby="fixH">
         <h2 id="fixH">정정 기록</h2>
-        <ul class="fixes" id="fixes" aria-labelledby="fixH"></ul>
+        <p id="fixStatus">정정 기록을 불러오는 중입니다.</p>
+        <details class="fix-disclosure" hidden>
+          <summary id="fixLabel">정정 내역</summary>
+          <ul class="fixes" id="fixes" aria-labelledby="fixLabel"></ul>
+        </details>
         <p>숫자·문장·링크가 원문과 다르면 <a id="reportLink" href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" target="_blank" rel="noopener">오류 신고</a>로 알려 주세요. 확인한 뒤 고치고, 고친 내용은 이 기록에 남깁니다.</p>
       </section>
     </div>

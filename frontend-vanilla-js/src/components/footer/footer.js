@@ -30,9 +30,17 @@ function renderCorrections(list) {
   const ul = $('fixes');
   $('reportLink').href = reportUrl('');
   $('reportLink').addEventListener('click', () => track('report', 'footer'));
-  if (!list.length) { ul.append(el('li', {}, '아직 정정한 내용이 없습니다.')); return; }
+  const status = $('fixStatus');
+  if (!list || !list.length) {
+    status.textContent = list ? '아직 정정한 내용이 없습니다.' : '정정 기록을 불러오지 못했습니다. 잠시 뒤 다시 확인해 주세요.';
+    return;
+  }
+  const sorted = list.slice().sort((a, b) => b.date.localeCompare(a.date));
+  $('fixLabel').textContent = '정정 ' + sorted.length + '건 · 최근 ' + sorted[0].date.replace(/-/g, '.');
+  status.hidden = true;
+  ul.closest('details').hidden = false;
   // 최근 정정이 위로 오게 한다
-  list.slice().sort((a, b) => b.date.localeCompare(a.date)).forEach((c) => {
+  sorted.forEach((c) => {
     const li = el('li');
     li.append(el('div', { class: 'fw' }, c.date.replace(/-/g, '.') + ' 정정 · ' + c.issue.replace(/-/g, '.') + '호 · ' + c.section));
     const p = el('div');

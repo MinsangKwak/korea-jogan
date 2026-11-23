@@ -100,10 +100,8 @@
   .politics-front__questions { grid-template-columns: minmax(0, 1fr); gap: .25rem; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .politics-front__lead::before { animation: edition-daybreak 650ms ease-out; }
   .politics-front__button [aria-hidden] { transition: transform 180ms ease-out; }
   .politics-front__button:is(:hover, :focus-visible) [aria-hidden] { transform: translateX(3px); }
-  @keyframes edition-daybreak { from { filter: brightness(.85); } to { filter: brightness(1); } }
 }
 @media (forced-colors: active) {
   .politics-front__lead { grid-template-columns: minmax(0, 1fr); }

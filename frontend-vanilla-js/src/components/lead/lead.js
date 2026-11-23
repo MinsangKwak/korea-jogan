@@ -55,5 +55,4 @@ function renderLead() {
   briefsBox.append(extras);
   collapse($('briefs'), { noun: '개', name: '오늘 꼭 볼 숫자' });
   responsiveDisclosure(extras);
-  matchReadingColumns($('heroGrid'), 901, ['머리기사', '함께 읽을 주제와 핵심 숫자'], extras);
 }
