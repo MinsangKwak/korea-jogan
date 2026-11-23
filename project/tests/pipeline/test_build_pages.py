@@ -101,13 +101,21 @@ class PagesTest(unittest.TestCase):
         headline = self.issue["lead"]["headline"]
         self.assertIn(f'<link rel="canonical" href="{url}">', page)
         self.assertIn(f'<meta name="kj-date" content="{DATE}">', page)
-        self.assertIn("<title>" + build_pages.esc(headline) + " | 2026년 10월 19일 대한민국 조간</title>", page)
+        title = build_pages.esc(headline) + " | 2026년 10월 19일 대한민국 조간"
+        self.assertIn(f"<title>{title}</title>", page)
+        self.assertIn(f'<meta property="og:title" content="{title}">', page)
+        self.assertIn(f'<meta name="twitter:title" content="{title}">', page)
+        self.assertIn('<meta property="og:type" content="article">', page)
+        self.assertIn('<p class="kj-lead__today" id="leadToday">10월 19일 한국 뉴스 요약</p>', page)
         self.assertIn('id="seoDigest"', page)
         self.assertIn(build_pages.esc(self.issue["nums"][0]["k"]), page)
         article = [g for g in self.ld(page)["@graph"] if g["@type"] == "NewsArticle"]
         self.assertEqual(len(article), 1)
         self.assertEqual(article[0]["url"], url)
-        self.assertLessEqual(len(re.search(r'<meta name="description" content="([^"]*)">', page).group(1)), build_pages.DESC_MAX + 20)
+        description = build_pages.clip("2026년 10월 19일 대한민국 조간. " + self.issue["lead"]["standfirst"])
+        self.assertEqual(article[0]["description"], description)
+        for key in ('name="description"', 'property="og:description"', 'name="twitter:description"'):
+            self.assertIn(f'<meta {key} content="{build_pages.esc(description)}">', page)
 
     def test_embeds_issue_and_archive_index(self):
         build_pages.build()
@@ -124,26 +132,37 @@ class PagesTest(unittest.TestCase):
         self.assertNotIn("<", body)
         self.assertEqual(json.loads(body)["lead"]["headline"], self.issue["lead"]["headline"])
 
-    def test_home_title_names_today_summary_and_is_idempotent(self):
+    def test_home_metadata_stays_stable_when_latest_issue_changes(self):
+        title = "광고 없는 오늘의 뉴스 요약 | 대한민국 조간"
+        description = "오늘의 국내 주요 뉴스를 광고 없이 짧게 읽으세요. 정치·경제·사회 이슈를 살펴보고, 같은 사안을 여러 언론이 어떻게 전했는지 원문으로 비교해 보세요."
+        share_description = "오늘의 주요 뉴스를 짧게 읽고, 같은 이슈를 다룬 여러 언론의 보도와 원문을 비교해 보세요."
+        home_path = build_pages.PUBLIC / "index.html"
+        for day in (DATE, "2026-10-20"):
+            with self.subTest(day=day):
+                dates = [day] if day == DATE else [day, DATE]
+                (self.issues / "index.json").write_text(json.dumps({"latest": day, "issues": dates}), encoding="utf-8")
+                build_pages.build()
+                home = home_path.read_text(encoding="utf-8")
+                self.assertIn(f"<title>{title}</title>", home)
+                self.assertIn(f'<meta name="description" content="{description}">', home)
+                self.assertIn('<meta property="og:type" content="website">', home)
+                self.assertIn(f'<meta property="og:title" content="{title}">', home)
+                self.assertIn(f'<meta property="og:description" content="{share_description}">', home)
+                self.assertIn(f'<meta name="twitter:title" content="{title}">', home)
+                self.assertIn(f'<meta name="twitter:description" content="{share_description}">', home)
+                self.assertIn(f'<link rel="canonical" href="{build_pages.SITE}">', home)
+                graph = self.ld(home)["@graph"]
+                website = next(node for node in graph if node["@type"] == "WebSite")
+                self.assertEqual(website["description"], description)
+                self.assertIn("오늘 뉴스 요약", website["alternateName"])
+                articles = [node for node in graph if node["@type"] == "NewsArticle"]
+                self.assertEqual(len(articles), 1)
+                issue = json.loads((self.issues / f"{day}.json").read_text(encoding="utf-8"))
+                self.assertEqual(articles[0]["description"], build_pages.clip(issue["lead"]["standfirst"]))
+                self.assertIn(f'오늘의 한국 뉴스 요약 · {build_pages.month_day(day)}</p>', home)
+                self.assertEqual(home.count('id="seoDigest"'), 1)
         build_pages.build()
-        once = (self.tmp / "frontend-vanilla-js" / "index.html").read_text(encoding="utf-8")
-        build_pages.build()
-        twice = (self.tmp / "frontend-vanilla-js" / "index.html").read_text(encoding="utf-8")
-        self.assertEqual(once, twice)
-        # 2026-10-19는 월요일. 매체 이름 없이 치는 말과 그날 날짜를 제목·설명·보이는 한 줄에 함께 둔다
-        self.assertIn("<title>오늘 정치 한 장 · 10월 19일(월) 광고 없는 뉴스 요약 | 대한민국 조간</title>", once)
-        desc = re.search(r'<meta name="description" content="([^"]*)">', once).group(1)
-        self.assertTrue(desc.startswith("10월 19일 오늘 뉴스 요약. 정치 이슈와 생활 정책"))
-        self.assertLessEqual(len(desc), 160)
-        self.assertIn('<p class="kj-lead__today" id="leadToday">오늘의 한국 뉴스 요약 · 10월 19일</p>', once)
-        self.assertIn("정치와 생활 정책", self.ld(once)["@graph"][0]["description"])
-        self.assertIn("오늘 우리나라 뉴스", re.search(r'<meta name="keywords" content="([^"]*)">', once).group(1))
-        self.assertIn("오늘 뉴스 요약", self.ld(once)["@graph"][0]["alternateName"])
-        past = (self.tmp / "frontend-vanilla-js" / f"{DATE}.html").read_text(encoding="utf-8")
-        self.assertIn('<p class="kj-lead__today" id="leadToday">10월 19일 한국 뉴스 요약</p>', past)
-        self.assertNotIn("<title>오늘 뉴스 요약", past)
-        self.assertEqual(once.count('id="seoDigest"'), 1)
-        self.assertEqual(sum(g["@type"] == "NewsArticle" for g in self.ld(once)["@graph"]), 1)
+        self.assertEqual(home_path.read_text(encoding="utf-8"), home)
 
     def test_keywords_cover_date_regions_and_stay_bounded(self):
         build_pages.build()
