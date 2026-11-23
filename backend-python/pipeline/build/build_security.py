@@ -66,7 +66,9 @@ def policy(page: str, admin: bool = False, *, law: bool = False) -> str:
         connections += ["https://www.googleapis.com/webmasters/v3/", "https://searchconsole.googleapis.com/v1/"]
         frames = ["https://accounts.google.com/gsi/"]
         forms += ["https://oauth2.googleapis.com/revoke"]
-    elif not law:
+    elif law:
+        frames = ["https://korea-jogan.com/src/core/law-pageview.html"]
+    else:
         script_sources += ["https://www.googletagmanager.com", "https://gc.zgo.at"]
         images += ["https://*.google-analytics.com", "https://*.googletagmanager.com", "https://*.google.com", "https://*.google.co.kr", "https://*.g.doubleclick.net"]
         connections += ["https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googletagmanager.com", "https://*.google.com", "https://*.google.co.kr", "https://*.g.doubleclick.net", "https://pagead2.googlesyndication.com"]
@@ -107,8 +109,11 @@ def secure_page(page: str, admin: bool = False, *, law: bool = False) -> str:
 def build(public: Path = PUBLIC) -> list[Path]:
     written = []
     for path in sorted(public.rglob("*.html")):
-        page = path.read_text(encoding="utf-8")
         parts = path.relative_to(public).parts
+        # 측정 문서는 전용 CSP와 no-referrer를 파일에 선언한다
+        if parts == ("src", "core", "law-pageview.html"):
+            continue
+        page = path.read_text(encoding="utf-8")
         path.write_text(secure_page(page, "admin" in parts, law=parts[0] == "law"), encoding="utf-8")
         written.append(path)
     return written

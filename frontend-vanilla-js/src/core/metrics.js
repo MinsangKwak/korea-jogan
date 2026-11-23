@@ -9,12 +9,12 @@ const metaContent = (name) => (document.querySelector('meta[name="' + name + '"]
 const INTERNAL_KEY = 'kj-internal';
 function isInternal() {
   if (navigator.webdriver) return true;
+  const flag = new URLSearchParams(location.search).get(INTERNAL_KEY);
   try {
-    const flag = new URLSearchParams(location.search).get(INTERNAL_KEY);
     if (flag === '1') localStorage.setItem(INTERNAL_KEY, '1');
     if (flag === '0') localStorage.removeItem(INTERNAL_KEY);
     return localStorage.getItem(INTERNAL_KEY) === '1';
-  } catch { return false; }
+  } catch { return flag === '1'; }
 }
 const INTERNAL = isInternal();
 const GC = INTERNAL ? '' : metaContent('jg-goatcounter');
@@ -137,3 +137,20 @@ function trackSections() {
   });
   window.addEventListener('pagehide', () => { settle(); flush(); });
 }
+
+// 빈 측정 문서에 고정 지면 경로와 유입 원점만 전달한다
+function measureLawPage() {
+  if (INTERNAL || window.top !== window || location.origin !== 'https://korea-jogan.com') return;
+  const path = location.pathname.replace(/index\.html$/, '');
+  if (path !== '/law/' && path !== '/law/calendar/') return;
+  const from = document.referrer ? new URL(document.referrer) : null;
+  const referrer = from && ['https:', 'http:'].includes(from.protocol) ? from.origin : '';
+  const frame = document.createElement('iframe');
+  frame.hidden = true;
+  frame.title = '법률 지면 방문 측정';
+  frame.referrerPolicy = 'no-referrer';
+  frame.src = '/src/core/law-pageview.html';
+  frame.addEventListener('load', () => frame.contentWindow.postMessage({ page: path, referrer }, location.origin), { once: true });
+  document.body.append(frame);
+}
+if (document.currentScript?.hasAttribute('data-law-pageview')) measureLawPage();
