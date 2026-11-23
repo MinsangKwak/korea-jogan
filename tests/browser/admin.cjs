@@ -104,6 +104,12 @@ async function fixture(options = {}) {
     }
     if (url.hostname !== 'jogan.test') return route.abort();
     if (url.pathname === '/data/trackers.json' && options.trackerResponse) return route.fulfill(options.trackerResponse);
+    if (url.pathname === '/api/v1/index.json') {
+      const current = publishedIndex();
+      const date = options.staleCatalog ? current.issues[1] : current.latest;
+      return options.catalogFailure ? route.fulfill({ status: 503, body: '' }) :
+        route.fulfill({ json: { version: 1, latest: date, editions: [{ date, articleCount: 67 }] } });
+    }
     if (options.publishFailed && url.pathname === '/data/issues/index.json') return route.fulfill({ status: 404, body: '' });
     // 배포용 기본 클라이언트 ID와 상관없이 미설정 상태부터 검사한다
     // 배포본에는 공개된 호만 올라가므로, 아침 발행 전 dev의 초안은 색인에서 뺀다
@@ -698,6 +704,17 @@ async function check(name, options, fn) {
     assert.equal(await page.locator('#reportUsers').innerText(), '—');
     assert.ok((await page.locator('#authMessage').innerText()).includes('만료'));
   });
+  for (const [mode, expected] of [['match', '발행일 일치'], ['stale', '발행일 불일치'], ['error', '기사 API를 확인하지 못했습니다.']]) {
+    await check('Google 연결 전 발행 정보와 기사 API 독립 확인 ' + mode,
+      { noConfig: true, staleCatalog: mode === 'stale', catalogFailure: mode === 'error' }, async ({ page, requests }) => {
+        await page.locator('#publishData').waitFor({ state: 'visible' });
+        await page.locator('#catalogStatus').filter({ hasText: expected }).waitFor();
+        assert.equal(await page.locator('#latestIssue').textContent(), publishedIndex().latest);
+        assert.equal(await page.locator('#retryCatalog').isVisible(), mode !== 'match');
+        if (mode !== 'error') assert.match(await page.locator('#catalogStatus').textContent(), /기사 67건/);
+        assert.equal(requests.length, 0);
+      });
+  }
   await check('발행 정보 실패와 복구 동작', { publishFailed: true }, async ({ page }) => {
     await page.locator('#retryPublish').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#publishData').isVisible(), false);

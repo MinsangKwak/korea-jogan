@@ -495,7 +495,36 @@ if (!validClient(clientId)) {
   message('최초 연결에는 Google OAuth 설정이 필요합니다. 아래 안내에서 클라이언트 ID를 등록해 주세요.');
 } else googleLibrary().catch(() => {});
 
+let publishedDate = '';
+let catalogEdition = null;
+
+function compareCatalog() {
+  if (!catalogEdition) return;
+  const date = catalogEdition.date;
+  const comparison = publishedDate ? (date === publishedDate ? '발행일 일치' : '발행일 불일치') : '발행일 대조 대기';
+  $('catalogStatus').textContent = '기사 API · ' + date + '호 · 기사 ' + number(catalogEdition.articleCount) + '건 · ' + comparison;
+  $('retryCatalog').hidden = !publishedDate || publishedDate === date;
+}
+
+async function loadCatalog() {
+  catalogEdition = null;
+  $('retryCatalog').hidden = true;
+  $('catalogStatus').textContent = '기사 API의 최신 호를 확인하고 있습니다.';
+  try {
+    const catalog = await request('/api/v1/index.json');
+    const latest = catalog.editions.find((item) => item.date === catalog.latest);
+    if (catalog.version !== 1 || !/^\d{4}-\d{2}-\d{2}$/.test(catalog.latest) || !latest || !Number.isSafeInteger(latest.articleCount) || latest.articleCount < 0) throw new Error('기사 색인 오류');
+    catalogEdition = latest;
+    compareCatalog();
+  } catch {
+    $('catalogStatus').textContent = '기사 API를 확인하지 못했습니다.';
+    $('retryCatalog').hidden = false;
+  }
+}
+
 async function loadPublishing() {
+  publishedDate = '';
+  compareCatalog();
   $('retryPublish').hidden = true;
   $('publishMessage').textContent = '공개된 최신 호를 확인하고 있습니다.';
   try {
@@ -503,6 +532,8 @@ async function loadPublishing() {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(index.latest) || !Array.isArray(index.issues) || !index.issues.includes(index.latest)) throw new Error('잘못된 색인');
     const issue = await request('/data/issues/' + index.latest + '.json');
     if (issue.status !== 'published' || issue.date !== index.latest) throw new Error('공개 상태 불일치');
+    publishedDate = index.latest;
+    compareCatalog();
     $('latestIssue').textContent = index.latest;
     $('issueCount').textContent = number(index.issues.length) + '개';
     const review = issue.review || {};
@@ -520,4 +551,6 @@ async function loadPublishing() {
 }
 $('retryPublish').addEventListener('click', loadPublishing);
 searchController = initSearch({ getClientId: () => clientId, validClient, prepareGoogle: googleLibrary, renderTable: table, missingClient: () => { $('setup').open = true; $('clientId').focus(); }, disconnected: () => disconnect('Google 연결을 해제했습니다.') });
+$('retryCatalog').addEventListener('click', loadCatalog);
 loadPublishing();
+loadCatalog();
