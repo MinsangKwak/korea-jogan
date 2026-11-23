@@ -385,16 +385,18 @@ window.kjLoadTimer = setTimeout(() => {
   <div class="tracking-bar" id="trackingBar" hidden><div class="kj-wrap"><button id="trackingExpand" type="button" aria-haspopup="dialog" aria-controls="trackingDialog">이슈 추적</button><span>끝까지 확인합니다</span><button id="trackingHide" type="button" aria-label="이슈 추적 막대 숨기기">×</button></div></div>
   <section class="kj-sec" id="track" aria-labelledby="trackH" hidden>
     <div class="kj-wrap">
-      <header class="kj-sechead">
-        <p class="kj-label">추적</p>
-        <h2 id="trackH">이슈 추적</h2>
-        <p><strong>지금 확인된 단계와 남은 일을 살핍니다.</strong> 관련 기사와 날짜별 기록을 함께 확인할 수 있습니다.</p>
-        <p class="kj-sechead__meta" id="trackMeta"></p>
-      </header>
-      <div class="track-controls" id="trackControls" role="group" aria-label="이슈 넘기기" hidden>
-        <span id="trackPosition" role="status" aria-atomic="true"></span>
-        <button type="button" class="kj-btn kj-btn--secondary kj-btn--sm" id="trackPrev" aria-controls="trackList" aria-label="이전 이슈">이전</button>
-        <button type="button" class="kj-btn kj-btn--secondary kj-btn--sm" id="trackNext" aria-controls="trackList" aria-label="다음 이슈">다음</button>
+      <div class="track-heading">
+        <header class="kj-sechead">
+          <p class="kj-label">추적</p>
+          <h2 id="trackH">이슈 추적</h2>
+          <p><strong>지금 확인된 단계와 남은 일을 살핍니다.</strong> 관련 기사와 날짜별 기록을 함께 확인할 수 있습니다.</p>
+          <p class="kj-sechead__meta" id="trackMeta"></p>
+        </header>
+        <div class="track-controls" id="trackControls" role="group" aria-label="이슈 넘기기" hidden>
+          <span id="trackPosition" role="status" aria-atomic="true"></span>
+          <button type="button" class="kj-btn kj-btn--secondary kj-btn--sm" id="trackPrev" aria-controls="trackList" aria-label="이전 이슈">이전</button>
+          <button type="button" class="kj-btn kj-btn--secondary kj-btn--sm" id="trackNext" aria-controls="trackList" aria-label="다음 이슈">다음</button>
+        </div>
       </div>
       <div id="trackViewport"><div id="trackList"></div></div>
     </div>

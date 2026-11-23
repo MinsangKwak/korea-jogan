@@ -713,7 +713,23 @@ async function check(name, options, run) {
           assert.ok(target.y >= sticky.y + sticky.height, id + ' 제목이 고정 메뉴에 가려짐');
         }
       }
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+      const layout = await page.evaluate(() => {
+        const width = document.documentElement.scrollWidth;
+        if (width <= innerWidth + 1) return { width, viewport: innerWidth };
+        const identify = (node) => node.id ? '#' + node.id : node.localName + '.' + [...node.classList].join('.');
+        const overflow = [];
+        for (const node of document.body.querySelectorAll('*')) {
+          const rect = node.getBoundingClientRect();
+          if (!rect.height || rect.right <= innerWidth + 1) continue;
+          let parent = node.parentElement;
+          while (parent && parent !== document.body && getComputedStyle(parent).overflowX === 'visible') parent = parent.parentElement;
+          if (parent && parent !== document.body) continue;
+          overflow.push({ node: identify(node), parent: identify(node.parentElement), x: Math.round(rect.x), width: Math.round(rect.width), right: Math.round(rect.right) });
+          if (overflow.length === 10) break;
+        }
+        return { width, viewport: innerWidth, overflow };
+      });
+      assert.ok(layout.width <= layout.viewport + 1, JSON.stringify(layout));
     });
   }
   for (const width of [390, 1440]) {
