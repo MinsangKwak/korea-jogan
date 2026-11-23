@@ -8,7 +8,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 
 | 독자가 하는 일 | 구현에서 내린 결정 | 구현과 검증 |
 | --- | --- | --- |
-| 질문을 검색해 답을 읽고 지난 호를 열기 | 질문·한 줄 답·근거 원문을 고정 주소의 HTML에 넣었습니다. 지난 호를 다시 만들 때는 확인일이 그 호의 발행일을 넘는 답을 제외합니다. | [질문 생성기](../../dev/pipeline/build/build_politics.py) · [고정 주소와 과거 호 회귀 검사](../../dev/tests/test_politics_build.py) |
+| 검색 결과에서 정치 질문의 근거 확인하기 | 질문마다 고정 주소를 부여합니다. 질문·한 줄 답·확인일·근거 원문을 HTML에 담아 첫 화면에서 바로 읽을 수 있습니다. | [질문 생성기](../../dev/pipeline/build/build_politics.py) · [질문 페이지 생성 검사](../../dev/tests/test_politics_build.py) |
 | 1면에 사건번호를 입력해 판결문 찾기 | 검색어를 같은 탭의 판례면에 한 번 전달하고 판례면이 읽은 직후 삭제합니다. 브라우저 검사로 검색어가 주소·요청·분석 이벤트에도 남지 않는지 확인합니다. | [1면 검색](../../dev/web/src/components/news-case/edition.js) · [판례면](../../dev/web/law/desk.js) · [독자 동선 검사](../../dev/tests/browser/law.cjs) |
 | 파기환송 판결문을 읽고 다음 재판을 맡을 법원 고르기 | 자바스크립트를 꺼도 해설과 판결문을 열 수 있게 했습니다. 선택 없이 확인하면 첫 선택지로 포커스를 옮기고 상태 메시지로 안내합니다. | [문제 마크업](../../dev/pipeline/build/question_recall.py) · [응답 처리](../../dev/web/src/components/question-recall/recall.js) · [키보드·스크립트 비활성 검사](../../dev/tests/browser/question-recall.cjs) |
 
@@ -37,18 +37,18 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 | `live.json` | ECOS 최신 일별 확정값. Git에 없음 | `build_live.py`(배포 시) | `economy.js` 숫자 띠 |
 | `build-info.json` | 실제 배포 소스. Git에 없음 | `build_info.py`(배포 시) | `verify_publication.py`, 관리자, 복구 확인 |
 
-[법률 수록본](../../dev/web/law/data/)은 판례면을 열 때 불러옵니다. 판례 보관함은 선택한 식별번호와 분야를 현재 도메인의 브라우저 저장소에 보관하고, 판결 내용은 해당 분야 파일에서 다시 읽습니다. 이전 Casewise 도메인의 보관 목록은 자동 이전할 수 없습니다. [보관함 구현](../../dev/web/law/library.js) · [자료의 범위와 갱신 방법](../planning/law-data.md)
+[법률 수록본](../../dev/web/law/data/)은 판례면을 열 때 불러옵니다. 판례 보관함은 선택한 식별번호와 분야를 현재 도메인의 브라우저 저장소에 보관하고, 판결 내용은 해당 분야 파일에서 다시 읽습니다. [보관함 구현](../../dev/web/law/library.js) · [자료의 범위와 갱신 방법](../planning/law-data.md)
 
 ## 설계 트레이드오프
 
 | 선택 | 선택 이유 | 유지 비용과 한계 |
 | --- | --- | --- |
-| 정적 HTML과 JSON | 상시 서버·DB 없이 각 호의 내용과 공개 버전을 Git 이력으로 대조할 수 있습니다. | Pages에서 사용자 지정 응답 헤더를 설정할 수 없어 CSP는 HTML 메타 태그에 둡니다. 전체 호 검색이나 로그인이 필요해지면 구성을 재검토합니다. |
-| 호별 JSON을 배포 전에 검사 | 필수값이나 공개 상태에 오류가 있으면 해당 호와 필드를 식별할 수 있습니다. | 필드를 바꾸면 Python 검사와 브라우저의 `assertIssue()`를 함께 갱신하고 과거 호도 시험합니다. |
+| 정적 HTML과 JSON | 상시 서버·DB 없이 각 호의 내용과 공개 버전을 Git 이력으로 대조할 수 있습니다. | Pages에서 사용자 지정 응답 헤더를 설정할 수 없어 CSP는 HTML 메타 태그에 둡니다. |
+| 호별 JSON을 배포 전에 검사 | 필수값이나 공개 상태에 오류가 있으면 해당 호와 필드를 식별할 수 있습니다. | 필드를 바꾸면 Python 검사와 브라우저의 `assertIssue()`를 함께 갱신하고 발행된 모든 호를 검사합니다. |
 | 바닐라 JS와 지면별 컴포넌트 | 판례 검색·보관·렌더링은 ES 모듈로 나눠 각각 검사합니다. | 신문 쪽 공통 스크립트의 실행 순서와 전역 의존성은 직접 관리합니다. |
 | PR별 미리보기와 운영 배포 | PR에서 `verify-ci`와 보호된 Vercel 미리보기를 확인하고 `main`에 병합합니다. Pages는 배포할 커밋의 검사와 공개본 확인을 거칩니다. | 미리보기와 Pages의 빌드 설정을 함께 유지합니다. [현재 배포 절차](branches.md) |
 | 06시 자동 발행 | 매일 같은 시각에 발행을 시작하고 호마다 자동 발행 또는 편집자 확인 상태를 표시합니다. | 자동 호는 발행 뒤 원문 대조와 정정이 필요합니다. [운영 런북](../planning/runbook.md) |
-| 일일 브랜치에서 데이터만 반영 | 아침 호를 발행할 때 코드·워크플로·과거 호를 함께 덮어쓰는 일을 막습니다. | 발행 허용 경로·색인·동시 변경 검사 규칙을 유지합니다. |
+| 일일 브랜치에서 데이터만 반영 | 아침 호를 발행할 때 지정된 호와 색인 등 허용한 자료만 갱신합니다. | 발행 허용 경로·색인·동시 변경 검사 규칙을 유지합니다. |
 
 ## 변경 영향 범위
 
@@ -56,8 +56,8 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 
 | 지점 | 파일 | 무엇이 깨지나 |
 | --- | --- | --- |
-| 구조 검사 | `validate.py` `check_structure()`·`REQUIRED` | 새 필드를 안 넣으면 검사가 통과해도 화면이 비고, 이름을 바꾸면 모든 과거 호가 실패 |
-| 시험 | `dev/tests/test_scripts.py`(기준 호 `2026-10-19.json` 복사·변형) | 기준 호에 필드가 없으면 시험 자체가 깨짐 |
+| 구조 검사 | `validate.py` `check_structure()`·`REQUIRED` | 필수값 누락을 검사하고, 필드명 변경 시 전체 공개 자료의 호환성을 확인 |
+| 시험 | `dev/tests/test_scripts.py`(호별 JSON을 복제한 시험 자료) | 기준 호에 필드가 없으면 시험 자체가 깨짐 |
 | 브라우저 방어 | `core/data.js` `assertIssue()` | `themes[].id/articles/keywords/summary`·`date`를 바꾸면 전체 로딩 실패 화면 |
 | 화면 | `lead.js`(`lead`,`briefs`,`themes`), `economy.js`(`nums`), `splits.js`·`media.js`(`themes`), `national.js`, `regions.js`, `politics.js`(`agenda`,`agendaSrc`), `industry.js`(`industries`,`items`,`trade`), `fiscal.js`(`debt`,`fiscal`,`nps`), `header.js`(`status`,`review`,`collectedAt`,`late`), `footer.js`(`limits`) | 해당 섹션만 깨지지만 `main.js`는 한 `try/catch`라 예외가 나면 **전체** 오류 화면 |
 | 검색·RSS | `build_pages.py`(`lead`, `nums`, `themes[].diffs[].q`, `national.items[].cat`, `review`), `build_feed.py`(`lead`, `diffs.q`, `status`), `build_discovery.py`(`nums`, `review.scope`, `status`) | `/YYYY-MM-DD`, `feed.xml`, `/archive/`·`/topics/`·`/indicators/` |
@@ -100,18 +100,18 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 
 - 날짜별 조간은 발행 당시의 기록이고, `live.json`은 별도로 생성하는 ECOS 최신 일별 확정값입니다. 장중 시세가 아니며 수집 실패가 조간 배포를 막지 않습니다. 지난 호에서는 현재의 추적 상태와 숫자 띠를 숨깁니다. 갱신 시각과 배포 방식은 [워크플로 표](branches.md#워크플로와-실행-환경)를 따릅니다.
 - `/admin/`에서 공개 발행 상태와 법률 수록 파일을 확인할 수 있습니다. GA4·검색 실적은 권한 있는 계정이 별도로 연결합니다. OAuth 토큰은 메모리에서만 쓰며 브라우저가 Google API를 직접 호출합니다. 인증·조회 실패 처리는 [관리자 문서](ga4-admin.md), 개발 환경의 읽기 전용 범위는 [개발 미리보기](branches.md#개발-미리보기-vercel)에 있습니다.
-- [build_pages.py](../../dev/pipeline/build/build_pages.py)는 최신 호와 `/YYYY-MM-DD`에 제목·설명·canonical·요약·구조화 데이터를 만들고, [index.html](../../dev/web/index.html)의 초기 스크립트는 기존 `?d=` 주소를 호별 주소로 옮깁니다. [build_security.py](../../dev/pipeline/build/build_security.py)는 실제 인라인 실행 코드의 해시로 메타 CSP를 생성합니다. [IndexNow 알림](../../dev/pipeline/publish/indexnow.py)의 실패는 배포를 중단하지 않습니다. 검색 도착 페이지·RSS·사이트맵의 운영 기준은 [검색·재방문 문서](../planning/growth.md)에 있습니다.
+- [build_pages.py](../../dev/pipeline/build/build_pages.py)는 최신 호와 `/YYYY-MM-DD`에 제목·설명·canonical·요약·구조화 데이터를 만들고, [index.html](../../dev/web/index.html)의 날짜 탐색은 호별 주소를 사용합니다. [build_security.py](../../dev/pipeline/build/build_security.py)는 실제 인라인 실행 코드의 해시로 메타 CSP를 생성합니다. [IndexNow 알림](../../dev/pipeline/publish/indexnow.py)의 실패는 배포를 중단하지 않습니다. 검색 도착 페이지·RSS·사이트맵의 운영 기준은 [검색·재방문 문서](../planning/growth.md)에 있습니다.
 
-## 검사 범위 (2026-11-09 기준)
+## 검사 범위
 
-| 검사 | 범위 | 명령 |
+[CI 검사 정의](../../.github/actions/verify/action.yml)에서 Python 3.12와 Node.js 22를 사용합니다. 아래 명령은 저장소 루트 기준입니다.
+
+| 확인할 항목 | 검사 범위 | 명령 |
 | --- | --- | --- |
-| 데이터·배포 규칙 | 색인의 모든 호 + `corrections.json` + `trackers.json`: 필수값·하위 구조·허용 상태·링크 형식·수치 범위·미확정 기간 모순. `--deploy`는 초안 차단 | `python3 dev/pipeline/publish/validate.py [--deploy]` |
-| 토큰 | `design/tokens.json` ↔ `tokens.css` | `python3 dev/pipeline/build/build_tokens.py --check` |
-| Python | `dev/tests/test_*.py` 14개 파일, 166개 | `python3 -m unittest discover -s dev/tests` |
-| 브라우저 | 공개 지면(최신·지난 호·로딩·오류·탐색·반응형·슬라이드), 관리자(모의 인증·API), CSP(허용·차단), 검색 페이지, 개발 미리보기, 일일 후보 — 6개 파일, 엔진 1개 | `cd dev/tests/browser && npm ci && npx playwright install chromium && npm test` |
-| 커밋 제목 | 종류·범위·72자·마침표 | `node dev/tools/check_commit_msg.mjs --range origin/main..HEAD` |
+| 발행 자료 | 호별 필수값, 상태, 링크 형식과 수치의 일관성. 배포 검사에서는 초안도 걸러냅니다. | `python3 dev/pipeline/publish/validate.py --deploy` |
+| 디자인 토큰 | 원본 JSON과 생성된 CSS의 일치 | `python3 dev/pipeline/build/build_tokens.py --check` |
+| 생성기·발행기 | 질문별 페이지, 호별 HTML, 발행 자료 선별과 공개본 검증 | `python3 -m unittest discover -s dev/tests` |
+| 독자·관리자 화면 | Chromium에서 판례 검색, 키보드 조작, 지면 로딩·오류, 관리자 권한별 상태와 미리보기 확인 | `cd dev/tests/browser && npm ci && python3 ../../tools/install_browser.py && npm test` |
+| PR 커밋 제목 | 종류·범위·길이·문장부호 | `node dev/tools/check_commit_msg.mjs --range origin/main..HEAD` |
 
-2026-11-09 기준 커밋 `e0ab6c7`의 [통합 검사](https://github.com/MinsangKwak/korea-jogan/actions/runs/42578253130)에서 위 데이터·Python·브라우저 검사가 통과했습니다. 당시 색인은 22개 호(`published` 21개·`prototype` 1개)이며, 검사 수와 호 수는 해당 커밋의 값입니다.
-
-이 검사는 구조와 동작을 확인합니다. 원문의 내용과 수치 계산은 별도로 대조하며, 당시 검사와 정정 이력은 [변경 기록](changelog.md)에서 확인할 수 있습니다.
+판결문과 보도 원문의 사실관계, 인용 수치의 계산 과정은 편집자가 직접 대조합니다. [편집 기준](../planning/editorial.md)
