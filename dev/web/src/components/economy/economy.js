@@ -70,34 +70,6 @@ function renderNums() {
   setupEconomyCarousel(list, detail);
 }
 
-let economySwiperRequest = null;
-
-// 경제 지표에 가까워졌을 때만 같은 출처의 라이브러리를 읽는다
-function loadEconomySwiper() {
-  if (economySwiperRequest) return economySwiperRequest;
-  const load = (kind, url) => new Promise((resolve) => {
-    const node = kind === 'script' ? document.createElement('script') : document.createElement('link');
-    let done = false;
-    const finish = (ok) => {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      resolve(ok);
-    };
-    const timer = setTimeout(() => finish(false), 8000);
-    if (kind === 'script') { node.src = url; node.async = true; }
-    else { node.rel = 'stylesheet'; node.href = url; }
-    node.onload = () => finish(true);
-    node.onerror = () => finish(false);
-    document.head.append(node);
-  });
-  economySwiperRequest = Promise.all([
-    load('style', 'assets/vendor/swiper/swiper-14.4.0.min.css'),
-    load('script', 'assets/vendor/swiper/swiper-14.4.0.min.js')
-  ]).then((loaded) => loaded.every(Boolean) && typeof window.Swiper === 'function');
-  return economySwiperRequest;
-}
-
 // 초기화에 실패해도 여섯 지표와 출처는 기존 격자 목록으로 남는다
 function setupEconomyCarousel(list, detail) {
   const cards = Array.from(list.children);
@@ -110,7 +82,7 @@ function setupEconomyCarousel(list, detail) {
   list.dataset.carouselState = 'static';
   const activate = async () => {
     list.dataset.carouselState = 'loading';
-    const loaded = await loadEconomySwiper();
+    const loaded = await loadLocalSwiper();
     // 늦게 도착한 코드가 이미 읽던 긴 목록을 줄이지 않도록 한다
     if (!loaded || list.getBoundingClientRect().top < -80 || list.contains(document.activeElement) || !detail.hidden) {
       list.dataset.carouselState = 'static';
