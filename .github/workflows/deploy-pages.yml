@@ -47,7 +47,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+      ECOS_CONFIGURED: ${{ secrets.ECOS_API_KEY != '' && 'present' || 'absent' }}
       EVENT_NAME: ${{ github.event_name }}
       PUSH_SHA: ${{ github.event_name == 'push' && github.sha || '' }}
       REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
@@ -63,7 +63,7 @@ jobs:
               with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
                   stream.writelines(f"{key}={value}\n" for key, value in values.items())
           event = os.environ["EVENT_NAME"]
-          if event == "schedule" and not os.environ.get("ECOS_API_KEY"):
+          if event == "schedule" and os.environ["ECOS_CONFIGURED"] != "present":
               print("ECOS_API_KEY가 없어 예약 배포를 건너뜁니다.")
               output(sha="", proven="false", run="false")
               raise SystemExit(0)
@@ -112,8 +112,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
-    env:
-      ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
     steps:
       - name: 고정 배포 입력 확인
         env:
@@ -149,8 +147,10 @@ jobs:
       # 키가 없으면 예약 실행은 다시 배포할 이유가 없어 여기서 멈춘다
       - id: gate
         name: 예약 실행 조건
+        env:
+          ECOS_CONFIGURED: ${{ secrets.ECOS_API_KEY != '' && 'present' || 'absent' }}
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ] && [ -z "$ECOS_API_KEY" ]; then
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$ECOS_CONFIGURED" != "present" ]; then
             echo "run=false" >> "$GITHUB_OUTPUT"
             echo "ECOS_API_KEY가 없어 예약 배포를 건너뜁니다."
           else
@@ -188,6 +188,8 @@ jobs:
       - name: 최신 공식 숫자 만들기
         if: steps.gate.outputs.run == 'true'
         continue-on-error: true
+        env:
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
         run: python backend-python/pipeline/build/build_live.py
       - name: 실제 배포 소스 기록
         if: steps.gate.outputs.run == 'true'
