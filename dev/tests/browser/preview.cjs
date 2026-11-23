@@ -159,6 +159,33 @@ async function identity(page) {
       assert.equal(await page.locator('#frontChecked').getAttribute('datetime'), '2026-11-20');
     });
 
+    await check('날씨 기사 원문과 보도일을 읽고 자료가 없는 지난 호로 키보드 이동', {}, async ({ page }) => {
+      const date = '2026-11-23';
+      const past = '2026-11-11';
+      const issue = JSON.parse(fs.readFileSync(path.join(web, 'data/issues', date + '.json'), 'utf8'));
+      const story = issue.national.items.find((item) => item.title.includes('23일 전국에 비'));
+      await page.goto(origin + '/' + date);
+      await ready(page);
+      const spread = page.locator('#weatherSpread');
+      assert.ok(await spread.isVisible());
+      assert.equal(await spread.locator('.weather-spread__summary').textContent(), story.title);
+      assert.ok((await spread.innerText()).includes(story.outlet));
+      const source = spread.getByRole('link');
+      assert.equal(await source.getAttribute('href'), story.url);
+      assert.ok(await spread.locator('time[datetime="' + story.date + '"]').isVisible());
+      assert.ok(await spread.locator('time[datetime="' + date + '"]').isVisible());
+      await source.focus();
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Shift+Tab');
+      assert.ok(await source.evaluate((link) => link === document.activeElement && link.matches(':focus-visible')));
+      await page.locator('#archSel').selectOption(past);
+      await Promise.all([page.waitForURL(origin + '/' + past), page.locator('#archive button').press('Enter')]);
+      await ready(page);
+      assert.equal(await page.locator('#issueDate').getAttribute('datetime'), past);
+      assert.ok(await spread.isHidden());
+      assert.ok(await page.locator('#national').isVisible());
+    });
+
     for (const width of [320, 1440]) {
       await check('개발 화면의 모바일·PC 너비와 배너 ' + width, { width }, async ({ page }) => {
         for (const routePath of ['/', '/topics/', '/indicators/kospi/']) {
@@ -167,6 +194,25 @@ async function identity(page) {
           await identity(page);
           const size = await page.evaluate(() => ({ width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
           assert.ok(size.scroll <= size.width + 1, JSON.stringify({ routePath, width, size }));
+          if (routePath === '/') {
+            const detail = page.locator('#frontDetail');
+            await detail.focus();
+            await page.keyboard.press('Tab');
+            await page.keyboard.press('Shift+Tab');
+            assert.ok(await detail.evaluate((link) => link === document.activeElement && link.matches(':focus-visible')));
+            const motion = await detail.evaluate((link) => ({
+              image: getComputedStyle(link.closest('article'), '::before').animationName,
+              arrow: getComputedStyle(link.querySelector('[aria-hidden]')).transform,
+            }));
+            assert.deepEqual(motion, { image: 'none', arrow: 'none' });
+            await page.getByRole('switch', { name: '글자 크게', exact: true }).click();
+            const bounds = await page.locator('#frontQuestion, #frontAnswer, #frontDetail').evaluateAll((elements) =>
+              elements.map((element) => {
+                const { left, right, height } = element.getBoundingClientRect();
+                return { left, right, height };
+              }));
+            assert.ok(bounds.every((box) => box.height > 0 && box.left >= -1 && box.right <= width + 1), JSON.stringify(bounds));
+          }
         }
       });
     }

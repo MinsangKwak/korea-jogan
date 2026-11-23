@@ -57,6 +57,27 @@ class PagesTest(unittest.TestCase):
             self.assertIn('id="readerFeedCopy" disabled', page)
         self.assertEqual(build_pages.with_reader_tools(home), home)
 
+    def test_dated_weather_and_legacy_lookup_use_only_published_editions(self):
+        dates = ["2026-11-23", "2026-11-22", "2026-11-11"]
+        (self.issues / "index.json").write_text(json.dumps({"latest": dates[0], "issues": dates}), encoding="utf-8")
+        build_pages.build()
+        public = build_pages.PUBLIC
+        lookup = public / "data/edition-weather.json"
+        reports = json.loads(lookup.read_text(encoding="utf-8"))
+        self.assertEqual(set(reports), set(dates[:2]))
+        for filename, day in [("index.html", dates[0]), (dates[1] + ".html", dates[1])]:
+            page = (public / filename).read_text(encoding="utf-8")
+            spread = build_pages.build_weather.SPREAD.search(page).group()
+            self.assertIn('data-issue-date="' + day + '"', spread)
+            self.assertIn(reports[day]["headline"], spread)
+            self.assertNotIn("hidden=", spread.split(">", 1)[0])
+        issue_path = self.issues / (dates[0] + ".json")
+        latest = json.loads(issue_path.read_text(encoding="utf-8"))
+        latest["status"] = "draft"
+        issue_path.write_text(json.dumps(latest, ensure_ascii=False), encoding="utf-8")
+        build_pages.build()
+        self.assertNotIn(dates[0], json.loads(lookup.read_text(encoding="utf-8")))
+
     def test_lead_heading_is_static_single_and_escaped(self):
         self.issue["lead"]["headline"] = '코스피 <b>5,000</b> & "환율"'
         (self.issues / f"{DATE}.json").write_text(json.dumps(self.issue, ensure_ascii=False), encoding="utf-8")
