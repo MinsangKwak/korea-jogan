@@ -46,12 +46,12 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: tests/browser/package-lock.json
+          cache-dependency-path: project/tests/browser/package-lock.json
       - name: 브라우저 검사 도구 설치
-        working-directory: tests/browser
+        working-directory: project/tests/browser
         run: npm ci
       - name: 준비된 Chromium 사용 또는 제한된 재시도 설치
-        working-directory: tests/browser
+        working-directory: project/tests/browser
         run: python3 ../../tools/install_browser.py
       - name: 초안 복구·같은 SHA 검사·최근 누락 호 선별 발행
         run: python3 backend-python/pipeline/publish/publish_pending.py

@@ -6,7 +6,7 @@
   "functions": {
     "api/articles.py": {
       "includeFiles": "var/articles.sqlite3",
-      "excludeFiles": "{tests/**,pipeline/**,public/**}"
+      "excludeFiles": "{pipeline/**,public/**}"
     }
   },
   "git": { "deploymentEnabled": { "daily/*": false } },
