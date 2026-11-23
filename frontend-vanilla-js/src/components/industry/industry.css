@@ -105,7 +105,7 @@
 .trade-table tbody th { font-size: .9rem; font-weight: 600; word-break: keep-all; overflow-wrap: anywhere; }
 .trade-table td { font-size: .85rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .trade-table .v { font-size: 1.05rem; font-weight: 700; }
-.trade-table .kj-dir { white-space: normal; }
+.trade-table .kj-dir { white-space: normal; overflow-wrap: normal; word-break: keep-all; }
 .industry-source { margin-block-start: var(--space-4); }
 .industry-source > summary { min-block-size: var(--tap-min); }
 .industry-source .kj-src__panel { margin: 0; overflow-wrap: anywhere; line-height: 1.75; }
