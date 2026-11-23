@@ -223,9 +223,9 @@ def with_article(page: str, issue: dict, url: str, desc: str) -> str:
     return page[: m.start()] + block + page[m.end():]
 
 
-def month_day(date: str, weekday: bool = False) -> str:
-    y, m, d = (int(x) for x in date.split("-"))
-    return f"{m}월 {d}일" + (f"({WEEKDAYS[dt.date(y, m, d).weekday()]})" if weekday else "")
+def month_day(date: str) -> str:
+    day = dt.date.fromisoformat(date)
+    return f"{day.month}월 {day.day}일"
 
 
 def with_today_line(page: str, text: str) -> str:
@@ -255,18 +255,9 @@ def embed_data(page: str, issue: dict, index: dict) -> str:
 
 
 def home_page(template: str, issue: dict, index: dict) -> str:
-    # 사람들이 매체 이름 없이 치는 '오늘 뉴스 요약' 같은 말과 그날 날짜·머리기사를 제목과 설명에 함께 둔다
-    day = month_day(issue["date"], weekday=True)
-    headline = (issue.get("lead") or {}).get("headline") or issue.get("headline", "")
-    title = f"오늘 정치 한 장 · {day} 광고 없는 뉴스 요약 | 대한민국 조간"
-    desc = clip(f"{month_day(issue['date'])} 오늘 뉴스 요약. 정치 이슈와 생활 정책을 한 줄 답과 근거 원문으로 읽습니다. 이번 호 머리기사는 {headline}입니다.", 160)
-    page = re.sub(r"<title>.*?</title>", lambda _: f"<title>{esc(title)}</title>", template, count=1)
-    page = set_attr(page, r'(<meta name="description" content=")[^"]*(">)', desc)
-    for prop, value in (("og:title", title), ("og:description", desc)):
-        page = set_attr(page, rf'(<meta property="{prop}" content=")[^"]*(">)', value)
-    for name, value in (("twitter:title", title), ("twitter:description", desc)):
-        page = set_attr(page, rf'(<meta name="{name}" content=")[^"]*(">)', value)
-    page = with_today_line(page, f"오늘의 한국 뉴스 요약 · {month_day(issue['date'])}")
+    lead = issue.get("lead") or {}
+    desc = clip(lead.get("standfirst") or lead.get("headline") or issue.get("headline"))
+    page = with_today_line(template, f"오늘의 한국 뉴스 요약 · {month_day(issue['date'])}")
     page = with_lead_heading(DIGEST.sub(lambda _: digest(issue), page, count=1), issue)
     merged = list(dict.fromkeys(BASE_KEYWORDS + keywords(issue)))[:KEYWORD_MAX]
     page = set_attr(page, r'(<meta name="keywords" content=")[^"]*(">)', ", ".join(merged))
