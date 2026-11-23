@@ -260,8 +260,18 @@
   #trackList .kj-prog__since { margin-block: .25rem .65rem; }
   #trackList .kj-prog__meta { margin-block-start: .45rem; }
 }
-@media (min-width: 1100px) and (min-height: 600px) {
-  .news-edition #trackList[data-carousel-state="ready"] .kj-track__body {
+@media screen and (min-width: 1100px) {
+  .news-edition #trackList[data-carousel-state]:not(.swiper-wrapper) {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: calc(50% - 16px);
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+  }
+  #trackList[data-carousel-state]:not(.swiper-wrapper) > article { scroll-snap-align: start; }
+}
+@media screen and (min-width: 1100px) and (min-height: 600px) {
+  .news-edition #trackList[data-carousel-state] .kj-track__body {
     max-height: clamp(18rem, 46dvh, 30rem);
   }
 }
