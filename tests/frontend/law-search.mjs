@@ -130,7 +130,7 @@ test("dates and amounts in a situation don't trigger an unrelated exact docket s
 
 test("each curated case is reachable by its keyword and its exact docket", () => {
   const selection = JSON.parse(
-    readFileSync(new URL("../backend-python/pipeline/law/curated_cases.json", import.meta.url)),
+    readFileSync(new URL("../../backend-python/pipeline/law/curated_cases.json", import.meta.url)),
   );
   for (const [theme, entries] of Object.entries(selection)) {
     const records = parseCases(

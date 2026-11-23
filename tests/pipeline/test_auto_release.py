@@ -14,7 +14,10 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "backend-python/pipeline/publish"))
 import auto_release
 import prepare_daily
-from .test_release import SHA, OTHER, checks
+if __package__:
+    from .test_release import SHA, OTHER, checks
+else:
+    from test_release import SHA, OTHER, checks
 
 
 class DailyProofTest(unittest.TestCase):
