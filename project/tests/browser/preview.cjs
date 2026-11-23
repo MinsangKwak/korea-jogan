@@ -119,6 +119,14 @@ async function identity(page) {
           assert.equal(await page.locator('#frontTitle').evaluate((el) => getComputedStyle(el).fontWeight), '900');
           const leadImage = await page.locator('.politics-front__lead').evaluate((el) => getComputedStyle(el, '::before').backgroundImage);
           assert.match(leadImage, /politics-first-light\.webp/);
+          const wrappedValues = await page.locator('#tradeStats .kj-dir').evaluateAll((values) =>
+            values.filter((value) => {
+              if (!/^[+-]?[\d.,]+%$/.test(value.textContent.trim())) return false;
+              const range = document.createRange();
+              range.selectNodeContents(value);
+              return range.getClientRects().length > 1;
+            }).map((value) => value.textContent));
+          assert.deepEqual(wrappedValues, [], '증감률의 숫자와 단위는 같은 줄에 표시');
         }
       });
     }
