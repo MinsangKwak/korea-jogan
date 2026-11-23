@@ -2,17 +2,19 @@
 
 발행 목록에 오른 호에서 **전국 뉴스와 지역 뉴스**를 추출해 SQLite에 저장합니다. 사이트와 외부 독자는 호 목록, 날짜별 기사, 기사 한 건을 각각 JSON으로 읽을 수 있습니다. 운영 지면에는 같은 SQLite 조회 결과를 파일로 내보내므로 기사 조회에 별도 서버 요금이나 API 키가 들지 않습니다.
 
-**배포된 Python API 사용하기**
+## Swagger UI로 기사 한 건 찾기
 
-호 목록, 날짜별 기사, 기사 한 건을 조회할 수 있습니다. Swagger UI에서 조회 항목을 펼쳐 **Try it out → Execute**를 누르면 SQLite에서 읽은 응답이 표시됩니다. [Swagger UI](https://korea-jogan-backend.vercel.app/api/docs/) · [OpenAPI 명세](https://korea-jogan-backend.vercel.app/api/openapi.json)
+1. [Python API의 Swagger UI](https://korea-jogan-backend.vercel.app/api/docs/)를 열어 발행 호 목록에서 **Try it out → Execute**를 누릅니다.
+2. 응답의 날짜로 해당 호를 조회합니다. 원하는 기사의 `id`를 개별 기사 조회에 입력하면 편집한 제목·요약·출처를 볼 수 있습니다.
 
-Vercel은 이 폴더를 프로젝트 루트로 사용합니다. `python3 build_runtime.py`가 해당 커밋에서 발행된 자료를 함수용 SQLite로 만들고, Python 3.12 WSGI 앱이 읽기 요청을 처리합니다. 웹으로 공개하는 디렉터리에는 문서와 명세를 둡니다. [함수 진입점](api/articles.py) · [배포 설정](vercel.json)
+| 이용 경로 | 응답을 만드는 곳 | OpenAPI 3.0 명세 |
+| --- | --- | --- |
+| [Vercel Python API](https://korea-jogan-backend.vercel.app/api/docs/) | 배포 시 `backend-python/build_runtime.py`가 만든 SQLite를 Python 3.12 WSGI 앱이 조회합니다. Vercel 프로젝트의 루트는 `backend-python/`입니다. | [백엔드 명세](https://korea-jogan-backend.vercel.app/api/openapi.json) |
+| [운영 지면의 API](https://korea-jogan.com/api/docs/) | 발행할 때 같은 저장소에서 내보낸 JSON을 GitHub Pages가 제공합니다. | [운영 지면 명세](https://korea-jogan.com/api/openapi.json) |
 
-## Swagger UI에서 실행
+로컬 Python 서버도 `/api/docs/`와 `/api/openapi.json`을 제공합니다. [함수 진입점](../../../backend-python/api/articles.py) · [백엔드 배포 설정](../../../backend-python/vercel.json)
 
-[기사 API 문서](https://korea-jogan.com/api/docs/)에서 발행 호 목록을 펼쳐 **Try it out → Execute**를 선택합니다. 응답에 나온 날짜를 날짜별 기사 조회에, 기사 ID를 개별 조회에 사용합니다. 같은 문서에서 [OpenAPI 3.0 명세](https://korea-jogan.com/api/openapi.json)를 열 수 있습니다. 로컬 Python 서버에서도 `/api/docs/`와 `/api/openapi.json`을 사용합니다.
-
-문서 원본은 [public/api/](public/api/)에 있습니다. Swagger UI는 공식 `swagger-ui-dist@5.35.1`의 번들과 스타일을 같은 출처에서 제공하고 HTML의 SHA-384 무결성 값으로 확인합니다. [배포본](https://registry.npmjs.org/swagger-ui-dist/-/swagger-ui-dist-5.35.1.tgz) · [라이선스](public/api/docs/LICENSE) · [추가 고지](public/api/docs/swagger-ui-bundle.js.LICENSE.txt)
+문서 원본은 [public/api/](../../../backend-python/public/api/)에 있습니다. Swagger UI는 공식 `swagger-ui-dist@5.35.1`의 번들과 스타일을 같은 출처에서 제공하고 HTML의 SHA-384 무결성 값으로 확인합니다. [배포본](https://registry.npmjs.org/swagger-ui-dist/-/swagger-ui-dist-5.35.1.tgz) · [라이선스](../../../backend-python/public/api/docs/LICENSE) · [추가 고지](../../../backend-python/public/api/docs/swagger-ui-bundle.js.LICENSE.txt)
 
 ## 공개 API
 
@@ -60,5 +62,5 @@ python3 backend-python/edition_api.py serve \
 두 번째 명령은 SQLite를 읽기 전용으로 열고 `http://127.0.0.1:8080/api/v1/index.json`에서 JSON을 제공합니다. GET과 HEAD를 지원합니다. SQL로 확인하려면 `editions`의 `date`와 `articles`의 `edition_date`를 연결합니다. API 파일용 출력 경로와 데이터베이스 파일은 분리합니다.
 
 ```bash
-python3 -m unittest discover -s backend-python/tests
+python3 -m unittest discover -s project/tests/backend
 ```

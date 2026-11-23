@@ -42,7 +42,7 @@ Codex 예약에는 별도 모델 API 키가 필요 없지만 GitHub 조회·쓰�
 python3 backend-python/pipeline/collect/fetch_rss.py --date YYYY-MM-DD
 ```
 
-GitHub Actions의 **일일 수집 → rss** 실행 로그 또는 실행 아티팩트(`rss-<실행 ID>`)에서 결과를 확인합니다. 원자료 `backend-python/pipeline/collect/raw/rss/YYYY-MM-DD.json`의 `trackingCandidates`에 사안 ID와 RSS 제목·기사 주소가 있으며 `feeds`에는 피드별 성공·실패가 남습니다. 편집자는 후보 기사 원문에서 당사자·결정일·공개된 절차를 확인한 뒤 새 근거가 있는 사안만 갱신합니다. 피드 설정은 [feeds.json](../../backend-python/pipeline/collect/feeds.json)이며, 피드에 제목이 있다는 사실과 본문 접근 허용은 별개입니다.
+GitHub Actions의 **일일 수집 → rss** 실행 로그 또는 실행 아티팩트(`rss-<실행 ID>`)에서 결과를 확인합니다. 원자료 `backend-python/pipeline/collect/raw/rss/YYYY-MM-DD.json`의 `trackingCandidates`에 사안 ID와 RSS 제목·기사 주소가 있으며 `feeds`에는 피드별 성공·실패가 남습니다. 편집자는 후보 기사 원문에서 당사자·결정일·공개된 절차를 확인한 뒤 새 근거가 있는 사안만 갱신합니다. 피드 설정은 [feeds.json](../../../backend-python/pipeline/collect/feeds.json)이며, 피드에 제목이 있다는 사실과 본문 접근 허용은 별개입니다.
 
 ## 2. 자료 조사
 
@@ -89,7 +89,7 @@ python3 backend-python/pipeline/publish/validate.py --deploy
 
 ## 5. 반영과 배포 확인
 
-`publish.yml`은 안정 `main` 코드로 오늘 `daily`의 정확한 SHA와 `verify-ci` 성공을 확인하고 [prepare_daily.py](../../backend-python/pipeline/publish/prepare_daily.py)로 오늘 JSON·색인·실제 추적 변경만 가져옵니다(허용 경로·색인 보존·동시 변경 검사는 [보호 조건](../dev/branches.md#일일-발행-경로의-보호-조건)). 미확인 초안을 자동 공개하고 `main`에 push한 뒤 Pages를 명시적으로 호출합니다. 이어서 [verify_publication.py](../../backend-python/pipeline/publish/verify_publication.py) `--expect-today`가 최대 15분 동안 공개 색인·호 JSON·홈·`build-info.json`이 오늘(KST) 호와 원격 `main` SHA인지 대조하고, 다르면 실행을 실패시킵니다(06시 전 실행은 건너뜀). 일일 브랜치 전체나 그 브랜치의 코드는 병합·실행하지 않습니다.
+`publish.yml`은 안정 `main` 코드로 오늘 `daily`의 정확한 SHA와 `verify-ci` 성공을 확인하고 [prepare_daily.py](../../../backend-python/pipeline/publish/prepare_daily.py)로 오늘 JSON·색인·실제 추적 변경만 가져옵니다(허용 경로·색인 보존·동시 변경 검사는 [보호 조건](../dev/branches.md#일일-발행-경로의-보호-조건)). 미확인 초안을 자동 공개하고 `main`에 push한 뒤 Pages를 명시적으로 호출합니다. 이어서 [verify_publication.py](../../../backend-python/pipeline/publish/verify_publication.py) `--expect-today`가 최대 15분 동안 공개 색인·호 JSON·홈·`build-info.json`이 오늘(KST) 호와 원격 `main` SHA인지 대조하고, 다르면 실행을 실패시킵니다(06시 전 실행은 건너뜀). 일일 브랜치 전체나 그 브랜치의 코드는 병합·실행하지 않습니다.
 
 `deploy-pages.yml`은 `validate --deploy` → `build_feed.py` → `build_pages.py`(호별 HTML·CSP 해시) → `build_live.py`(실패해도 계속) → `build_info.py` → Pages 순서로 진행하고 공개 색인·호 JSON·홈·`build-info.json`의 날짜·SHA를 대조합니다. 06시를 넘겨 수집했다면 자료 기준은 전날 23:59로 두고 `late.reason`·`late.cutoff`를 남기며 수집 시각을 앞당겨 적지 않습니다.
 
@@ -130,11 +130,7 @@ UI를 바꾼 경우 배포 뒤 [디자인 가이드](../design/guide.md)의 배�
 
 지난 호가 표시될 때 화면의 미발행 안내 문구만 지우지 않고 실제 발행 상태를 복구합니다.
 
-### 11/05 복구를 예로 든 추적
-
-2026.11.05에는 위 3번에서 관리자 공개 호 표시 대기가 실패했습니다. 임시 HTML은 공개 호만 담았지만 JSON 색인에는 초안이 남아 있어, `published_index()`로 같은 공개 목록을 사용하도록 고쳤습니다. 검사 조건을 유지한 채 후보 CI부터 공개 데이터 대조까지 확인했습니다.
-
-예약이 늦게 시작한 현상은 별도로 조사했으며 검사 실패와 같은 원인으로 묶지 않았습니다. 당시 SHA·검사·복구 시각과 CSP 대기 오류의 전체 이력은 [변경 기록](../dev/changelog.md#20261105-발행-복구와-운영-확인)에 모았습니다. 이 사례는 감독 예약의 상시 수정 권한을 뜻하지 않습니다.
+11월 5일 관리자 검사가 멈춘 원인과 해당 SHA의 복구 과정은 [발행 복구 기록](../dev/changelog.md#20261105-발행-복구와-운영-확인)에서 확인합니다. 감독 예약의 복구 범위는 위 절차를 따릅니다.
 
 ## 정정
 
@@ -154,7 +150,7 @@ UI를 바꾼 경우 배포 뒤 [디자인 가이드](../design/guide.md)의 배�
 4. 예정일이 지났다는 이유로 완료 처리하지 않고 송치·기소·유죄 확정을 구분합니다.
 5. 검사 후 최신 호의 2면·추적 패널을 확인하고 지난 호에는 현재 기록이 숨겨지는지 확인합니다.
 
-2026.10.30 무안공항 자료의 확인 범위는 [대조 기록](../research/muan-airport-20261030.md)입니다. 검색·외부 소개 작업은 [검색·소개·재방문 운영](growth.md)에 분리했습니다.
+2026.10.30 무안공항 자료의 확인 범위는 [대조 기록](../dev/changelog.md#무안공항-추적-자료-검사)입니다. 검색·외부 소개 작업은 [검색·소개·재방문 운영](growth.md)에 분리했습니다.
 
 
 ## 자동 발행 누락 복구 · 2026.11.12

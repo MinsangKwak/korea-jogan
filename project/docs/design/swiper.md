@@ -2,7 +2,7 @@
 
 이슈 추적과 경제 지표는 지면에 가까워지면 같은 출처에서 Swiper를 한 번만 불러옵니다. PC에서 이슈가 세 건 이상이면 처음부터 한 줄에 두 장이 보입니다. 준비가 끝나면 버튼이나 방향키로 한 장씩 넘깁니다. 라이브러리를 받지 못해도 가로 스크롤과 Tab 키로 모든 이슈를 읽을 수 있습니다. 작은 화면에서는 세로 목록으로 읽습니다.
 
-경제 지표의 자동 넘김은 독자가 끄고 켤 수 있습니다. 라이브러리를 받지 못하면 지표 목록을 그대로 보여 줍니다. [공용 로더](../../../src/core/swiper.js) · [이슈 추적](../../../src/components/track/carousel.js) · [경제 지표](../../../src/components/economy/economy.js)
+경제 지표의 자동 넘김은 독자가 끄고 켤 수 있습니다. 라이브러리를 받지 못하면 지표 목록을 그대로 보여 줍니다. [공용 로더](../../../frontend-vanilla-js/src/core/swiper.js) · [이슈 추적](../../../frontend-vanilla-js/src/components/track/carousel.js) · [경제 지표](../../../frontend-vanilla-js/src/components/economy/economy.js)
 
 ## 보관한 원본
 
@@ -10,10 +10,10 @@
 
 | 저장 파일 | npm 원본 파일 |
 | --- | --- |
-| `swiper-14.4.0.min.js` | `swiper-bundle.min.js` |
-| `swiper-14.4.0.min.css` | `swiper.min.css` |
+| [swiper-14.4.0.min.js](../../../frontend-vanilla-js/assets/vendor/swiper/swiper-14.4.0.min.js) | `swiper-bundle.min.js` |
+| [swiper-14.4.0.min.css](../../../frontend-vanilla-js/assets/vendor/swiper/swiper-14.4.0.min.css) | `swiper.min.css` |
 
-라이선스는 MIT이며 원문을 [LICENSE](LICENSE)에 보관합니다. 사용법은 [공식 API 문서](https://swiperjs.com/swiper-api), 버전 기록은 [공식 변경 이력](https://swiperjs.com/changelog)을 참조합니다.
+라이선스는 MIT이며 원문을 [LICENSE](../../../frontend-vanilla-js/assets/vendor/swiper/LICENSE)에 보관합니다. 사용법은 [공식 API 문서](https://swiperjs.com/swiper-api), 버전 기록은 [공식 변경 이력](https://swiperjs.com/changelog)을 참조합니다.
 
 ## 파일 무결성
 

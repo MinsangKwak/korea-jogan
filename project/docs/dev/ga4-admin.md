@@ -2,7 +2,7 @@
 
 **[운영 화면](https://korea-jogan.com/admin/)에서 최신 조간의 발행 상태와 판례·입법 자료의 수록 범위를 확인할 수 있습니다.** 자료 파일 검사와 홍보 초안 도구도 로그인 없이 이용합니다. 독자 통계와 Google 검색 실적은 각각 조회 권한이 있는 계정으로 연결합니다.
 
-[문서 안내](../README.md) · [기술 설계](architecture.md) · [화면 코드](../../frontend-vanilla-js/admin/) · [측정 코드](../../frontend-vanilla-js/src/core/metrics.js)
+[문서 안내](../README.md) · [기술 설계](architecture.md) · [화면 코드](../../../frontend-vanilla-js/admin/) · [측정 코드](../../../frontend-vanilla-js/src/core/metrics.js)
 
 ## 현재 구현과 연결 상태
 
@@ -11,7 +11,7 @@
 | 조회 대상 | GA4 속성 `559927668`, 호스트 `korea-jogan.com` |
 | 배포 | 기존 GitHub Pages의 `/admin/`. 별도 서버·서비스 계정 키 없음 |
 | 인증 | Google Identity Services의 읽기 전용 단기 OAuth 토큰 |
-| 기본 설정 | [config.js](../../frontend-vanilla-js/admin/config.js)에 공개 클라이언트 ID 설정 |
+| 기본 설정 | [config.js](../../../frontend-vanilla-js/admin/config.js)에 공개 클라이언트 ID 설정 |
 | 보관 | 토큰·통계는 현재 창의 메모리에만 유지. 새로고침하면 재연결 |
 | 자동 검사 | OAuth·GA4·검색 응답을 대체해 관리자 연결과 그래프 동작을 검사 |
 
@@ -19,7 +19,7 @@
 
 ## 판례 자료의 건수와 무결성
 
-**판례 데이터 → 분야별 건수와 파일 상태 → 배포 파일 검사**를 누르면 현재 서비스의 자료 파일을 차례로 내려받습니다. 브라우저가 각 파일의 바이트 수와 SHA-256을 [배포 검수 목록](../../frontend-vanilla-js/law/data/catalogue-status.json)과 대조합니다. ‘일치’는 내려받은 파일이 검수 목록과 같다는 뜻입니다. 원문 진위나 발행기관의 전자서명은 이 검사 범위 밖입니다. ‘확인 실패’가 있으면 해당 파일과 목록을 같은 배포에서 받았는지 살핀 뒤 다시 검사합니다.
+**판례 데이터 → 분야별 건수와 파일 상태 → 배포 파일 검사**를 누르면 현재 서비스의 자료 파일을 차례로 내려받습니다. 브라우저가 각 파일의 바이트 수와 SHA-256을 [배포 검수 목록](../../../frontend-vanilla-js/law/data/catalogue-status.json)과 대조합니다. ‘일치’는 내려받은 파일이 검수 목록과 같다는 뜻입니다. 원문 진위나 발행기관의 전자서명은 이 검사 범위 밖입니다. ‘확인 실패’가 있으면 해당 파일과 목록을 같은 배포에서 받았는지 살핀 뒤 다시 검사합니다.
 
 | 화면에서 보이는 값 | 집계 기준 |
 | --- | --- |
@@ -161,20 +161,20 @@ GA4는 속성 시간대로 오늘을 포함하며 검색 보고서는 미국 태
 
 적은 표본에서는 사람 수·세션·참여 시간을 함께 봅니다. 같은 사용자가 여러 소스·캠페인·방문 유형에 포함될 수 있으므로 행별 방문자를 더하지 않습니다. Google이 소규모 자료 생략 상태를 반환하면 이를 안내합니다. 상위 항목만 조회하므로 표의 합계가 전체 요약과 같다고 보장하지 않습니다. RSS 열기·주소 복사는 실제 구독 완료가 아닙니다.
 
-[보안 정책 생성기](../../backend-python/pipeline/build/build_security.py)는 관리자 HTML의 실행 코드 해시와 GSI·GA4·검색 API·연결 해제 출처를 포함한 메타 CSP를 만듭니다. 검색 API 출처는 공개 지면에 허용하지 않습니다. 토큰·통계는 저장소·URL·파일에 기록하지 않습니다. GitHub Pages 메타 CSP의 적용 범위와 응답 헤더 제약은 [보안 변경 기록](changelog.md#배포된-html의-보안-정책)을 참조합니다.
+[보안 정책 생성기](../../../backend-python/pipeline/build/build_security.py)는 관리자 HTML의 실행 코드 해시와 GSI·GA4·검색 API·연결 해제 출처를 포함한 메타 CSP를 만듭니다. 검색 API 출처는 공개 지면에 허용하지 않습니다. 토큰·통계는 저장소·URL·파일에 기록하지 않습니다. GitHub Pages 메타 CSP의 적용 범위와 응답 헤더 제약은 [보안 변경 기록](changelog.md#배포된-html의-보안-정책)을 참조합니다.
 
 ## 검증과 실제 계정 확인
 
 관리자 검사만 실행하려면 저장소 루트에서 시작합니다.
 
 ```bash
-cd tests/browser
+cd project/tests/browser
 npm ci
 npx playwright install chromium
 npm run test:admin
 ```
 
-인증·CSP 등 공통 연결을 바꿨다면 저장소 루트에서 `npm test --prefix tests/browser`로 공개 지면·관리자·보안 검사도 함께 실행합니다.
+인증·CSP 등 공통 연결을 바꿨다면 저장소 루트에서 `npm test --prefix project/tests/browser`로 공개 지면·관리자·보안 검사도 함께 실행합니다.
 
 [admin.cjs](../../tests/browser/admin.cjs)는 OAuth·GA4·검색 응답을 브라우저 요청 경계에서 대체합니다. 브라우저 검사는 로그인 전 요청 차단, 설정 검증, 토큰 비저장, 320~1440px 배치, 빈 결과, 권한/한도/서버 오류, 기간 변경·재시도·늦은 응답 차단, 갱신·시간 초과·만료, 공개 발행 정보와 인증 도구 실패, 신문과 관리자 사이의 테마 공유를 다룹니다. 추이 툴팁은 천 단위 수치·0명·시간별 표시, 포인터 유지·키보드·터치, 320px 다크 화면·28개 열 이동, 기간 변경·빈 응답·연결 해제 시 정리를 추가로 검사합니다. 실제 계정이나 운영 통계를 쓰는 검사가 아닙니다.
 

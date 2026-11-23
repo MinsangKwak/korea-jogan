@@ -49,7 +49,7 @@
 
 ## 문서별 커밋과 병합
 
-기능 하나는 하나의 `feature/<기능명>` 브랜치와 PR로 관리합니다. PR을 검토할 때 기능 전체의 동작·검사를 확인할 수 있도록 하되, 내부 커밋은 구현·스타일·검사·문서 등 설명 가능한 목적별로 나눕니다. 기능이 독립적이면 PR도 나누고, 미완성·배포 보류 기능은 `main`에 병합하지 않습니다. PR의 `verify-ci`와 Vercel 미리보기를 확인하고, 병합 뒤에는 `main` 커밋의 전체 검사가 Pages 배포 전에 다시 돌아갑니다.
+PR 안에서는 구현·스타일·검사·문서 등 각각 설명 가능한 목적별로 커밋을 나눕니다. PR 단위와 검사·미리보기·배포 조건은 [브랜치·배포 절차](branches.md)를 따릅니다.
 
 문서별 커밋을 요청받았다면 README·기술 설계·운영 절차를 각각 설명하는 제목으로 나눕니다. 여러 문서를 같은 제목으로 반복하거나, 문서 작업을 모두 ‘가독성 개선’으로만 기록하지 않습니다.
 
@@ -59,17 +59,17 @@
 
 ## 검사 실행
 
-저장소 루트에서 로컬 훅을 설정합니다.
+저장소 루트에서 커밋 훅과 로컬 파일 제외 규칙을 설정합니다. 이전 작업본에서도 한 번 실행해 Git의 훅 경로를 새 위치로 갱신합니다.
 
 ```bash
-git config core.hooksPath tools/githooks
+python3 project/tools/setup_git.py
 ```
 
 메시지 파일 하나 또는 PR의 커밋 범위를 검사할 수도 있습니다.
 
 ```bash
-node tools/check_commit_msg.mjs .git/COMMIT_EDITMSG
-node tools/check_commit_msg.mjs --range origin/main..HEAD
+node project/tools/check_commit_msg.mjs .git/COMMIT_EDITMSG
+node project/tools/check_commit_msg.mjs --range origin/main..HEAD
 ```
 
 검사기는 형식·종류·범위·길이·끝 마침표를 확인합니다. 한국어 여부나 본문 품질까지 판정하지는 않습니다. PR 검사 실패가 실제 병합을 막는지는 저장소 보호 설정에 달려 있습니다.
