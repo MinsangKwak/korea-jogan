@@ -1,6 +1,21 @@
 {
   "pairs": [
     {
+      "id": "kepco-data-exposure",
+      "issueDate": "2026-11-23",
+      "section": "national",
+      "articleTitle": "한국전력, 개인정보 150만건 털렸다…이름·주민번호·계좌번호 등 12개 항목",
+      "articleUrl": "https://www.kmib.co.kr/article/20261122501151",
+      "question": "개인정보 유출로 인한 정신적 피해를 법원은 어떻게 판단할까요?",
+      "context": "11월 22일 한전은 한전ON과 전자조달시스템 이용자 정보가 유출됐다고 밝혔습니다. 2018년 카드사 정보 유출 판결에서 대법원은 정보의 종류, 제3자가 볼 수 있었는지, 피해 확산을 막기 위해 어떤 조치를 했는지 등을 살폈습니다. 이 판결은 카드사 사건에 대한 판단입니다.",
+      "caseTitle": "손해배상(기)",
+      "caseNumber": "2018다214142",
+      "caseDate": "2018-12-28",
+      "caseId": 207581,
+      "theme": "digital",
+      "keyword": "개인정보 유출"
+    },
+    {
       "id": "work-before-shift",
       "issueDate": "2026-11-20",
       "section": "regions",

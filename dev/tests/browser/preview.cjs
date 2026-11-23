@@ -140,6 +140,25 @@ async function identity(page) {
       }
     });
 
+    await check('재판 질문의 지난 호 판본을 브라우저에서도 복원', {}, async ({ page }) => {
+      const date = '2026-11-23';
+      await page.goto(origin + '/' + date);
+      await ready(page);
+      const front = page.locator('#politicsFront');
+      const answer = await page.locator('#frontAnswer').textContent();
+      const source = await page.locator('#frontSource').getAttribute('href');
+      assert.equal(await page.locator('#frontChecked').getAttribute('datetime'), '2026-11-20');
+      await page.evaluate(async () => {
+        delete document.getElementById('politicsFront').dataset.frontView;
+        document.getElementById('frontAnswer').textContent = '';
+        await showPoliticsFront(D);
+      });
+      assert.equal(await front.getAttribute('data-front-view'), 'edition');
+      assert.equal(await page.locator('#frontAnswer').textContent(), answer);
+      assert.equal(await page.locator('#frontSource').getAttribute('href'), source);
+      assert.equal(await page.locator('#frontChecked').getAttribute('datetime'), '2026-11-20');
+    });
+
     for (const width of [320, 1440]) {
       await check('개발 화면의 모바일·PC 너비와 배너 ' + width, { width }, async ({ page }) => {
         for (const routePath of ['/', '/topics/', '/indicators/kospi/']) {
