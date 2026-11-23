@@ -8,6 +8,7 @@ const { openBrowser } = require('./browser.cjs');
 
 const repo = path.resolve(__dirname, '../../..');
 const origin = 'https://jogan.test';
+const production = 'https://korea-jogan.com';
 const dataPath = '/law/data/';
 const manifestPath = dataPath + 'catalogue-status.json';
 const privateMarker = 'local-only-reader-7341';
@@ -15,8 +16,9 @@ const source = id => 'https://www.law.go.kr/LSW/precInfoP.do?precSeq=' + id;
 const types = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.png': 'image/png', '.webp': 'image/webp' };
 
 async function surface(browser, web, width, options = {}) {
-  const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce', ...options });
-  await context.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
+  const { siteOrigin = origin, automated = false, ...contextOptions } = options;
+  const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce', ...contextOptions });
+  await context.addInitScript(flag => Object.defineProperty(navigator, 'webdriver', { get: () => flag }), automated);
   const page = await context.newPage();
   const requests = [];
   const errors = [];
@@ -24,7 +26,7 @@ async function surface(browser, web, width, options = {}) {
   page.on('request', request => requests.push({ url: request.url(), body: request.postData(), referrer: request.headers().referer }));
   await page.route('**/*', async route => {
     const url = new URL(route.request().url());
-    if (url.origin !== origin) return route.fulfill({ body: '', contentType: 'application/javascript' });
+    if (url.origin !== siteOrigin) return route.fulfill({ body: '', contentType: 'application/javascript' });
     const routePath = /^\/\d{4}-\d{2}-\d{2}$/.test(url.pathname) ? url.pathname + '.html' : url.pathname;
     const filename = path.join(web, routePath, routePath.endsWith('/') ? 'index.html' : '');
     try {
@@ -51,6 +53,70 @@ async function checkLawPrivacy(page, requests) {
   assert.equal(requests.some(request => new URL(request.url).origin !== origin), false, '법률면의 외부 자동 요청');
   assert.equal(await page.locator('meta[name="referrer"]').getAttribute('content'), 'no-referrer');
   assert.match(await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content'), /(?:^|; )connect-src 'self'(?:;|$)/);
+}
+
+async function lawAnalytics(browser, web) {
+  const { context, page, requests, errors } = await surface(browser, web, 390, { siteOrigin: production });
+  const helper = '/src/core/law-pageview.html';
+  const tag = 'https://www.googletagmanager.com/gtag/js?id=G-RNLCEWH9M6';
+  const readerCookie = 'GA1.1.123456789.1234567890';
+  const outbound = start => requests.slice(start).filter(request => new URL(request.url).origin !== production);
+  try {
+    await context.addCookies([{ name: '_ga', value: readerCookie, url: production }]);
+    for (const [pathname, field] of [['/law/', '#lawQuery'], ['/law/calendar/', '#cal-q']]) {
+      const start = requests.length;
+      const tagLoaded = page.waitForRequest(tag);
+      await page.goto(production + pathname + '?q=' + privateMarker + '&utm_campaign=' + privateMarker + '#private', {
+        referer: 'https://search.example/term/' + privateMarker + '?source=private',
+      });
+      const frameElement = page.locator('iframe[src="' + helper + '"]');
+      await frameElement.waitFor({ state: 'attached' });
+      assert.equal(await frameElement.count(), 1);
+      assert.equal(await frameElement.getAttribute('referrerpolicy'), 'no-referrer');
+      await tagLoaded;
+      const frame = await (await frameElement.elementHandle()).contentFrame();
+      assert.equal(frame.url(), production + helper);
+      assert.equal(await frame.locator('form, input, textarea, select, a[href], [contenteditable]').count(), 0);
+      assert.equal(await frame.evaluate(() => document.referrer), '');
+      assert.ok(await frame.evaluate(value => document.cookie.split('; ').includes('_ga=' + value), readerCookie),
+        '기존 독자의 동일한 GA 쿠키를 두 지면에서도 사용 가능');
+      const policy = await frame.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');
+      assert.ok(!policy.includes('doubleclick') && !policy.includes('googlesyndication') && !policy.includes('gc.zgo.at'));
+      assert.equal(await frame.locator('meta[name="referrer"]').getAttribute('content'), 'no-referrer');
+      await frame.waitForFunction(() => (window.dataLayer || []).some(entry => entry[0] === 'event'));
+      await page.locator(field).fill(privateMarker + '-typed');
+      await page.locator(field).press('Enter');
+      const queue = await frame.evaluate(() => window.dataLayer.map(entry => Array.from(entry)));
+      const config = queue.find(([action]) => action === 'config');
+      assert.ok(config && config[2].send_page_view === false, '자동 페이지뷰와 중복 집계 방지');
+      const events = queue.filter(([action]) => action === 'event');
+      assert.deepEqual(events.map(entry => entry[1]), ['page_view']);
+      assert.equal(events[0][2].page_location, production + pathname);
+      assert.equal(events[0][2].page_referrer, 'https://search.example');
+      assert.equal(events[0][2].page_title, await page.title());
+      assert.equal(await page.evaluate(() => typeof window.gtag), 'undefined');
+      const external = outbound(start);
+      assert.deepEqual(external.map(request => request.url), [tag]);
+      assert.ok(external.every(request => !request.referrer), 'Google 스크립트 요청의 리퍼러 제외');
+      assert.ok(!JSON.stringify([queue, external]).includes(privateMarker), '법률 검색어·입력·리퍼러 상세 경로 제외');
+    }
+    const before = requests.length;
+    await page.goto(production + helper);
+    await page.goto(production + '/law/?kj-internal=1');
+    await page.goto(production + '/law/calendar/');
+    assert.deepEqual(outbound(before), [], '직접 연 측정 프레임과 운영자 방문 제외');
+    assert.deepEqual(errors, []);
+  } finally {
+    await context.close();
+  }
+  const automated = await surface(browser, web, 390, { siteOrigin: production, automated: true });
+  try {
+    await automated.page.goto(production + '/law/');
+    assert.ok(automated.requests.every(request => new URL(request.url).origin === production), '자동화 방문 제외');
+    console.log('통과: 판례·캘린더 직접 유입 1회, 검색어·개인 입력 비공개, 운영자·자동화 방문 제외');
+  } finally {
+    await automated.context.close();
+  }
 }
 
 async function readerFlow(browser, web) {
@@ -319,6 +385,7 @@ async function adminIntegrity(browser, web) {
     await staticCover(browser, web);
     await returnToCoverage(browser, web);
     await readerFlow(browser, web);
+    await lawAnalytics(browser, web);
     await adminIntegrity(browser, web);
   } finally {
     await browser?.close();

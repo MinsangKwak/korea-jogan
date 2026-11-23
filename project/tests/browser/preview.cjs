@@ -138,6 +138,14 @@ async function identity(page) {
       assert.match(await page.locator('#editionSearchStatus').innerText(), /일치하는 기사가 없습니다/);
     });
 
+    await check('판례·캘린더의 미리보기 방문 측정 제외', {}, async ({ page }) => {
+      for (const path of ['/law/', '/law/calendar/', '/src/core/law-pageview.html']) {
+        await page.goto(origin + path);
+        assert.equal(await page.locator('iframe[src="/src/core/law-pageview.html"]').count(), 0);
+        assert.equal(await page.evaluate(() => typeof window.gtag), 'undefined');
+      }
+    });
+
     await check('배너와 빌드 메타데이터의 정확한 dev 커밋 일치', {}, async ({ page }) => {
       await page.goto(origin + '/');
       await ready(page);
