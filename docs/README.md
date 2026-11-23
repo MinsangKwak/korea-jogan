@@ -19,6 +19,10 @@
 - 판례와 법령의 자료원, 의안·공포·시행 집계, 호별 데이터 필드와 검사 규칙. [법률 자료](planning/law-data.md) · [데이터 규격](planning/data-spec.md)
 - 추적 중인 사안의 진행 단계와 다음 확인 일정. [이슈 추적](https://korea-jogan.com/#track) · [현재 추적 데이터](../frontend-vanilla-js/data/trackers.json)
 
+## 구현을 검증하는 코드
+
+날짜별 발행과 정정은 [Python 검사](../tests/pipeline/)에서, 판례 검색 규칙은 [Node.js 검사](../tests/frontend/)에서 확인합니다. [Playwright 검사](../tests/browser/)는 공개 지면과 관리자 화면을 열어 키보드 포커스, 날짜 이동, 조회 실패 후 복구를 검증합니다. SQLite 저장소와 JSON 응답의 일치는 [백엔드 검사](../backend-python/tests/)에서 다룹니다.
+
 ## 개발·운영 기준
 
 - **발행과 복구** — 매일 발행할 데이터 준비, 검사 실패 시 복구 순서, 운영 도메인에서의 확인. [운영 런북](planning/runbook.md) · [브랜치·배포](dev/branches.md)
