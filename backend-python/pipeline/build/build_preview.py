@@ -91,7 +91,7 @@ def inline_hashes(page: str) -> list[str]:
     return scripts.hashes
 
 
-def transform_html(page: str, origin: str, commit: str | None, branch: str) -> str:
+def transform_html(page: str, origin: str, commit: str | None, branch: str, *, api_docs: bool = False) -> str:
     page = disable_measurement(page)
     page = META.sub(lambda match: '<meta name="robots" content="' + NOINDEX + '">' if attributes(match[0]).get("name", "").lower() == "robots" else match[0], page)
     if not re.search(r'<meta\b[^>]*name=["\']robots["\']', page, re.I):
@@ -104,7 +104,7 @@ def transform_html(page: str, origin: str, commit: str | None, branch: str) -> s
         identity = html.escape(commit if commit else "로컬 작업본 · 커밋 미지정")
         banner = '<aside id="previewBanner" class="kj-preview" role="note" aria-label="개발 검증 환경"><strong>개발 검증 환경</strong><span>브랜치 ' + html.escape(branch) + '</span><span>커밋 <code>' + identity + '</code></span><span>운영 지면과 구분해 확인해 주세요.</span></aside>'
         page = re.sub(r'(<body\b[^>]*>)', lambda match: match[1] + "\n" + banner, page, count=1)
-    return secure_preview(page)
+    return page if api_docs else secure_preview(page)
 
 
 def admin_notice(origin: str) -> str:
@@ -165,7 +165,8 @@ def build(source: Path = PUBLIC, output: Path = OUTPUT, origin: str = ORIGIN, co
         admin.mkdir()
         (admin / "index.html").write_text(admin_notice(origin), encoding="utf-8")
         for page in temporary.rglob("*.html"):
-            page.write_text(transform_html(page.read_text(encoding="utf-8"), origin, commit, branch), encoding="utf-8")
+            api_docs = page == temporary / "api/docs/index.html"
+            page.write_text(transform_html(page.read_text(encoding="utf-8"), origin, commit, branch, api_docs=api_docs), encoding="utf-8")
         (temporary / "preview.css").write_text(BANNER_CSS, encoding="utf-8")
         (temporary / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
         manifest = temporary / "manifest.webmanifest"

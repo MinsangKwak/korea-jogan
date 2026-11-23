@@ -68,7 +68,9 @@ def check_once(sha: str, date: str, built_at: str | None = None, deadline: float
 
     index, issue = read("data/issues/index.json"), read(f"data/issues/{date}.json")
     return (snapshot_matches(index, read("build-info.json"), issue, read("", False), sha, date, built_at)
-            and catalog_matches(index, issue, read("api/v1/index.json"), read(f"api/v1/editions/{date}.json")))
+            and catalog_matches(index, issue, read("api/v1/index.json"), read(f"api/v1/editions/{date}.json"))
+            and set(read("api/openapi.json").get("paths", {})) == {"/index.json", "/editions/{date}.json", "/articles/{id}.json"}
+            and 'src="/api/docs/initialize.js"' in read("api/docs/", False))
 
 
 def wait_until(sha: str, date: str, built_at: str | None, timeout: int) -> bool:

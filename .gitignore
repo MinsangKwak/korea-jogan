@@ -23,4 +23,4 @@ frontend-vanilla-js/data/edition-weather.json
 node_modules/
 premium-audit.json
 
-frontend-vanilla-js/api/v1/
+frontend-vanilla-js/api/
