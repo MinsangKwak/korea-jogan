@@ -19,6 +19,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 | 독자 화면 | [공통 UI·로딩](../../frontend-vanilla-js/src/core/) · [지면 컴포넌트](../../frontend-vanilla-js/src/components/) | 날짜·출처·테마 등 공통 동작을 섹션별 기사 렌더링과 분리 |
 | 법률 자료실 | [판례 검색·보관·비교](../../frontend-vanilla-js/law/) · [입법 캘린더](../../frontend-vanilla-js/law/calendar/) | 독자가 연 화면에 필요한 수록본을 읽어 브라우저에서 검색 |
 | 관리자 | [관리자 화면](../../frontend-vanilla-js/admin/) · [운영 문서](ga4-admin.md) | 발행·법률 파일 상태 표시, Google 권한을 연결하면 GA4·검색 실적 조회 |
+| 기사 저장·조회 | [백엔드 API](../../backend-python/README.md) · [독자 검색 컴포넌트](../../frontend-vanilla-js/src/components/national/edition-search.js) | 발행일과 원문 보도일을 분리해 SQLite에 기록하고, 지면과 함께 배포한 JSON을 날짜별 검색에 사용 |
 | 수집 | [RSS·ECOS](../../backend-python/pipeline/collect/) · [판례·입법](../../backend-python/pipeline/law/) | RSS 중복 제거·피드별 실패 기록, ECOS 본문 오류 확인, 법률 수록본과 검수 목록 생성 |
 | 생성·발행 | [빌드](../../backend-python/pipeline/build/) · [검사와 발행](../../backend-python/pipeline/publish/) | 호별 HTML·RSS·사이트맵 생성, 일일 데이터 선별, 배포 뒤 공개된 호와 소스 버전 대조 |
 

@@ -4,9 +4,21 @@
 
 **곽민상 · 1인 기획·UI 설계·프론트엔드 개발·운영**
 
-HTML, CSS, 바닐라 JavaScript로 화면을 구현하고 Python으로 발행할 HTML과 데이터를 생성합니다. GitHub Actions에서 검사한 뒤 GitHub Pages로 공개합니다.
+HTML·CSS·바닐라 JavaScript로 접근 가능한 지면을 만들고, Python·SQLite로 전국·지역 기사를 정제해 제공합니다.
 
 [운영 서비스](https://korea-jogan.com/) · [파기환송 직접 읽기](https://korea-jogan.com/politics/reversal-and-remand/) · [Notion 프로젝트 소개](https://app.notion.com/p/3ffcbbdd109b8167a28dd65769e55676)
+
+## 기술 스택과 코드 위치
+
+| 폴더 | 기술 | 확인할 구현 |
+| --- | --- | --- |
+| [frontend-vanilla-js/](frontend-vanilla-js/) | HTML · CSS · 바닐라 JavaScript | 키보드로 조작하는 [판례 검색](frontend-vanilla-js/law/)과 [날짜별 기사 찾기](frontend-vanilla-js/src/components/national/edition-search.js), 글자 확대·동작 줄이기를 지원하는 지면 컴포넌트 |
+| [backend-python/](backend-python/) | Python · SQLite | [기사 저장소와 읽기 API](backend-python/README.md). 기사 정정 시 같은 ID로 내용을 갱신하고, 호 날짜·보도일·원문을 함께 저장 |
+| [tests/](tests/) · [GitHub Actions](.github/workflows/) | unittest · Playwright · GitHub Actions | 지난 호·키보드 조작 검사, API와 지면 대조, 검증한 커밋의 배포 |
+
+**기사 한 건이 독자에게 도달하는 과정**
+
+발행 목록에 오른 [호별 지면 원본](frontend-vanilla-js/data/issues/)에서 전국·지역 기사를 뽑아 SQLite에 저장합니다. 같은 데이터로 날짜별·기사별 JSON을 만들어 지면과 함께 배포합니다. 독자가 ‘날짜별 기사 찾기’를 열면 선택한 날짜의 자료를 읽어 제목·언론사·지역으로 검색합니다. [기사 찾기](https://korea-jogan.com/#editionSearch) · [공개 API](https://korea-jogan.com/api/v1/index.json)
 
 ## 대표 구현 세 가지
 
@@ -50,6 +62,7 @@ python3 -m http.server -d dist-preview 8001
 python3 backend-python/pipeline/publish/validate.py
 python3 backend-python/pipeline/build/build_tokens.py --check
 python3 -m unittest discover -s tests
+python3 -m unittest discover -s backend-python/tests
 cd tests/browser && npm ci && npx playwright install chromium && npm test
 ```
 
