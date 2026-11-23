@@ -14,13 +14,14 @@ import re
 import subprocess
 import sys
 from check_release import required_checks
+from history_paths import FRONTEND, frontend_at
 
 ROOT = Path(__file__).resolve().parents[3]
 KST = dt.timezone(dt.timedelta(hours=9))
 SHA = re.compile(r"[0-9a-fA-F]{40}\Z")
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}\Z")
-INDEX = "frontend-vanilla-js/data/issues/index.json"
-TRACKERS = "frontend-vanilla-js/data/trackers.json"
+INDEX = f"{FRONTEND}/data/issues/index.json"
+TRACKERS = f"{FRONTEND}/data/trackers.json"
 
 
 class PreparationError(ValueError):
@@ -144,35 +145,39 @@ def prepare(root: Path, date: str, source_ref: str, main_ref: str, allow_archive
     current_dates = dates(current_index, "main")
     if not allow_archive and any(day > date for day in current_dates):
         raise PreparationError("main 발행 목록에 오늘 이후 날짜가 있습니다")
-    issue_path = f"frontend-vanilla-js/data/issues/{date}.json"
+    issue_path = f"{FRONTEND}/data/issues/{date}.json"
     current_issue = blob(root, main_ref, issue_path, required=False)
     if current_issue is not None:
         issue = decode(current_issue, issue_path)
         if issue.get("date") == date and issue.get("status") == "published" and (allow_archive or current_index["latest"] == date):
             return {"changed": False, "date": date, "source_sha": source_ref, "paths": []}
     base = git(root, "merge-base", main_ref, source_ref)
-    permitted = {issue_path, INDEX, TRACKERS}
+    source_frontend = frontend_at(root, base)
+    source_issue_path = f"{source_frontend}/data/issues/{date}.json"
+    source_index_path = f"{source_frontend}/data/issues/index.json"
+    source_trackers = f"{source_frontend}/data/trackers.json"
+    permitted = {source_issue_path, source_index_path, source_trackers}
     changed = set(git(root, "diff", "--name-only", "--no-renames", "-z", base, source_ref).split("\0")) - {""}
     if not changed or not changed <= permitted:
         raise PreparationError("일일 브랜치에는 오늘 호·색인·추적 자료만 변경할 수 있습니다: " + ", ".join(sorted(changed - permitted)))
-    baseline_index = read_json(root, base, INDEX)
+    baseline_index = read_json(root, base, source_index_path)
     baseline_dates = dates(baseline_index, "시작 기준")
-    source_index = read_json(root, source_ref, INDEX)
+    source_index = read_json(root, source_ref, source_index_path)
     source_dates = dates(source_index, "일일 브랜치")
     if source_index["latest"] != date or set(source_dates) != set(baseline_dates) | {date}:
         raise PreparationError("일일 발행 색인은 기존 날짜를 보존하고 오늘 호만 더해야 합니다")
-    source_issue_text = blob(root, source_ref, issue_path)
+    source_issue_text = blob(root, source_ref, source_issue_path)
     source_issue = decode(source_issue_text, issue_path)
     if source_issue.get("date") != date or source_issue.get("status") not in ("draft", "published"):
         raise PreparationError("오늘 날짜의 초안 또는 확인된 공개 호만 가져올 수 있습니다")
-    if blob(root, base, issue_path, required=False) != current_issue:
+    if blob(root, base, source_issue_path, required=False) != current_issue:
         raise PreparationError("main의 오늘 호가 조사 시작 이후 바뀌었습니다")
     replacements = {issue_path: source_issue_text + "\n"}
-    if TRACKERS in changed and (not allow_archive or date >= current_index['latest']):
-        before = blob(root, base, TRACKERS)
+    if source_trackers in changed and (not allow_archive or date >= current_index['latest']):
+        before = blob(root, base, source_trackers)
         if before != blob(root, main_ref, TRACKERS):
             raise PreparationError("main의 추적 자료가 조사 시작 이후 바뀌었습니다")
-        tracker_text = blob(root, source_ref, TRACKERS)
+        tracker_text = blob(root, source_ref, source_trackers)
         tracker = decode(tracker_text, TRACKERS)
         baseline_tracker = decode(before, TRACKERS)
         if tracker.get("items") == baseline_tracker.get("items"):

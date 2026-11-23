@@ -81,6 +81,21 @@ class DailyPublicationTest(unittest.TestCase):
         self.assertEqual((self.root / "frontend-vanilla-js/index.html").read_text(), "안정된 화면")
         self.assertEqual(self.git("show", self.base + f":frontend-vanilla-js/data/issues/{PREVIOUS}.json"), (self.root / f"frontend-vanilla-js/data/issues/{PREVIOUS}.json").read_text().strip())
 
+    def test_pending_draft_from_before_the_folder_move_can_be_published(self):
+        (self.root / "dev").mkdir()
+        self.git("mv", "frontend-vanilla-js", "dev/web")
+        legacy_base = self.commit("이전 지면 구조")
+        self.git("switch", "-c", "old-draft", legacy_base)
+        self.write(f"dev/web/data/issues/{DATE}.json", {"date": DATE, "status": "draft"})
+        self.write("dev/web/data/issues/index.json", {"latest": DATE, "issues": [DATE, PREVIOUS]})
+        self.source = self.commit("구조 변경 전 조사한 호")
+        self.git("switch", "main")
+        self.git("mv", "dev/web", "frontend-vanilla-js")
+        self.main_ref = self.commit("새 지면 구조")
+        self.assertEqual(self.prepare()["paths"], sorted([ISSUE, prepare_daily.INDEX]))
+        self.assertEqual(self.read(ISSUE)["date"], DATE)
+        self.assertFalse((self.root / "dev/web").exists())
+
     def test_experimental_code_in_daily_branch_is_rejected(self):
         self.edit_source(lambda: self.write("frontend-vanilla-js/index.html", "미승인 실험 화면"))
         self.rejected_without_writing("오늘 호·색인·추적")

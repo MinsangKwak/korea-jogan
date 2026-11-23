@@ -71,17 +71,20 @@ def verify_source(sha: str) -> None:
     outcome = 'failure'
     try:
         run('git', 'worktree', 'add', '--detach', str(temporary), sha)
-        commands = [(sys.executable, 'backend-python/pipeline/publish/validate.py'), (sys.executable, 'backend-python/pipeline/build/build_tokens.py', '--check'), (sys.executable, '-m', 'unittest', 'discover', '-s', 'tests')]
+        pipeline, suite = 'backend-python/pipeline', 'tests'
+        if not (temporary / pipeline).is_dir() and (temporary / 'dev/pipeline').is_dir():
+            pipeline, suite = 'dev/pipeline', 'dev/tests'
+        commands = [(sys.executable, pipeline + '/publish/validate.py'), (sys.executable, pipeline + '/build/build_tokens.py', '--check'), (sys.executable, '-m', 'unittest', 'discover', '-s', suite)]
         for args in commands:
             run(*args, root=temporary)
-        tests = temporary / 'tests/browser'
+        tests = temporary / suite / 'browser'
         current = ROOT / 'tests/browser'
         same_lock = hashlib.sha256((tests / 'package-lock.json').read_bytes()).digest() == hashlib.sha256((current / 'package-lock.json').read_bytes()).digest()
         if same_lock and (current / 'node_modules').is_dir():
             (tests / 'node_modules').symlink_to(current / 'node_modules', target_is_directory=True)
         else:
-            run('npm', 'ci', '--prefix', 'tests/browser', root=temporary)
-        run('npm', 'test', '--prefix', 'tests/browser', root=temporary, timeout=240)
+            run('npm', 'ci', '--prefix', str(tests), root=temporary)
+        run('npm', 'test', '--prefix', str(tests), root=temporary, timeout=240)
         outcome = 'success'
     finally:
         write_api('check-runs/' + str(proof['id']), {'status': 'completed', 'conclusion': outcome, 'output': {'title': '일일 원본 SHA 전체 검사', 'summary': '고정된 원본 커밋에서 데이터·토큰·Python·전체 브라우저 검사를 수행했습니다. 실패한 검사는 성공으로 대체하지 않습니다.'}}, 'PATCH')

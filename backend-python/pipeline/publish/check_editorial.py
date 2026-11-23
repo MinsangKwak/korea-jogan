@@ -15,6 +15,8 @@ import re
 import subprocess
 import sys
 
+from history_paths import FRONTEND, frontend_at
+
 ROOT = Path(__file__).resolve().parents[3]
 KST = dt.timezone(dt.timedelta(hours=9))
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}\Z")
@@ -127,8 +129,9 @@ def check(before: dict, after: dict) -> list[str]:
 
 
 def read_baseline(base_ref: str, relative: str) -> dict:
+    path = f"{frontend_at(ROOT, base_ref)}/{relative.removeprefix(FRONTEND + '/')}"
     result = subprocess.run(
-        ["git", "show", f"{base_ref}:{relative}"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True, timeout=30,
+        ["git", "show", f"{base_ref}:{path}"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True, timeout=30,
     )
     return json.loads(result.stdout)
 
@@ -136,7 +139,7 @@ def read_baseline(base_ref: str, relative: str) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     baseline = parser.add_mutually_exclusive_group(required=True)
-    baseline.add_argument("--base-ref", help="편집 시작 때 확인한 dev의 40자리 커밋 SHA")
+    baseline.add_argument("--base-ref", help="편집 시작 때 확인한 40자리 커밋 SHA")
     baseline.add_argument("--baseline-file", type=Path, help="새 호 조사 직후 따로 보관한 편집 전 원본 JSON 경로")
     parser.add_argument("--date", required=True, help="한국 시간 오늘의 초안 날짜")
     args = parser.parse_args(argv)
@@ -146,7 +149,7 @@ def main(argv: list[str] | None = None) -> int:
     if not valid_date(args.date) or args.date != today_kst():
         print("편집 검사 실패: --date는 한국 시간 오늘의 유효한 날짜여야 합니다")
         return 1
-    relative = f"frontend-vanilla-js/data/issues/{args.date}.json"
+    relative = f"{FRONTEND}/data/issues/{args.date}.json"
     try:
         candidate = ROOT / relative
         if args.baseline_file is not None:

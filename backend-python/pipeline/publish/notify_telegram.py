@@ -19,8 +19,10 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from history_paths import FRONTEND, frontend_at
+
 ROOT = Path(__file__).resolve().parents[3]
-ISSUES = "frontend-vanilla-js/data/issues"
+ISSUES = f"{FRONTEND}/data/issues"
 SITE = "https://korea-jogan.com/"
 API = "https://api.telegram.org/bot{token}/sendMessage"
 WEEKDAYS = "월화수목금토일"
@@ -121,7 +123,8 @@ def run(before: str, after: str, dry_run: bool = False, wait: int = 240, root: P
         return "최신 호를 찾지 못해 건너뜀"
     path = f"{ISSUES}/{date}.json"
     issue = show(after, path, root)
-    if not should_send(show(before, path, root), issue):
+    previous_path = f"{frontend_at(root, before)}/data/issues/{date}.json"
+    if not should_send(show(before, previous_path, root), issue):
         return f"{date}호는 새로 공개한 호가 아니어서 건너뜀"
     text = message(issue)
     if dry_run:

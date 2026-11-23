@@ -106,6 +106,17 @@ class NotifyTest(unittest.TestCase):
         self.assertIn("코스피 3%대 하락", body["text"][0])
         self.assertIn("123:SECRET", posts[0].full_url)
 
+    def test_folder_move_does_not_repeat_an_existing_notification(self):
+        self.commit(issue())
+        (self.root / "dev").mkdir()
+        self.git("mv", "frontend-vanilla-js", "dev/web")
+        self.git("commit", "-qm", "이전 지면 구조")
+        before = self.git("rev-parse", "HEAD")
+        self.git("mv", "dev/web", "frontend-vanilla-js")
+        after = self.commit(issue())
+        self.assertIn("건너뜀", self.run_once(before, after))
+        self.assertEqual(self.sent(), [])
+
     def test_sends_when_issue_file_is_new(self):
         before = self.commit(None, latest="2026-11-16")
         after = self.commit(issue())
