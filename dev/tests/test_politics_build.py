@@ -27,7 +27,7 @@ class PoliticsBuildTest(unittest.TestCase):
         cls.issue = json.loads((public / "data/issues/2026-11-20.json").read_text())
 
     def test_fixed_question_routes_are_unique_and_searchable_without_scripts(self):
-        with patch.object(build_politics, "today", return_value="2026-11-20"):
+        with patch.object(build_politics, "today", return_value=max(q["checkedAt"] for q in self.rows)):
             pages = build_politics.pages([self.issue], self.tracker, self.rows)
             sitemap = ET.fromstring(build_feed.build_sitemap())
         locs = [node.text for node in sitemap.findall("{*}url/{*}loc")]
@@ -63,6 +63,31 @@ class PoliticsBuildTest(unittest.TestCase):
             self.assertNotIn(row["sources"][0]["url"], fragment)
         self.assertIn('data-issue-date="2025-01-01"', fragment)
         self.assertNotIn('href="' + build_politics.route(self.rows[0]) + '"', fragment)
+
+    def test_checked_answer_and_source_follow_the_edition_cutoff(self):
+        row = copy.deepcopy(next(q for q in self.rows if q["id"] == "lee-jae-myung-trials"))
+        original = next(v for v in row["pastEditions"] if v["checkedAt"] == "2026-11-20")
+        row["sources"][0] = {"url": "https://example.com/new-source", "label": "새 판본 근거"}
+        checked = row["checkedAt"]
+        scenarios = [
+            ("2026-11-19", True, None),
+            *[(f"2026-11-{day}", True, original) for day in (20, 21, 22, 23)],
+            (checked, False, row),
+            (row["editionFrom"], True, row),
+        ]
+        for day, dated, version in scenarios:
+            with self.subTest(day=day, dated=dated):
+                html = build_politics.with_front(self.template, {"date": day}, [row], day, dated=dated)
+                fragment = build_politics.FRONT.search(html)[2]
+                if version:
+                    self.assertIn(build_pages.esc(version["answer"]), fragment)
+                    self.assertIn(f'datetime="{version["checkedAt"]}"', fragment)
+                    self.assertIn(f'href="{version["sources"][0]["url"]}"', fragment)
+                else:
+                    self.assertNotIn(original["answer"], fragment)
+                if version is not row:
+                    self.assertNotIn(row["sources"][0]["url"], fragment)
+                    self.assertNotIn(row["answer"], fragment)
 
     def test_daily_headline_and_original_date_come_from_that_edition(self):
         issue = copy.deepcopy(self.issue)

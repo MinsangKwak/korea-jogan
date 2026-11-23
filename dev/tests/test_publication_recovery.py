@@ -115,6 +115,13 @@ class RecoveryPublicationIntegrationTest(unittest.TestCase):
             fixture_index = json.loads((fixture_directory / 'index.json').read_text())
             fixture_index.update(latest='2026-11-09', issues=[day for day in fixture_index['issues'] if day <= '2026-11-09'])
             (fixture_directory / 'index.json').write_text(json.dumps(fixture_index))
+            corrections_path = fixture_directory.parent / 'corrections.json'
+            corrections = json.loads(corrections_path.read_text())
+            corrections['items'] = [
+                item for item in corrections['items']
+                if item['issue'] in fixture_index['issues'] and item['date'] <= fixture_index['latest']
+            ]
+            corrections_path.write_text(json.dumps(corrections, ensure_ascii=False))
             for path in fixture_directory.glob('*.json'):
                 if path.stem != 'index' and path.stem > '2026-11-09':
                     path.unlink()
