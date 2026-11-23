@@ -96,6 +96,35 @@ async function identity(page) {
       assert.ok(!policy.includes('googletagmanager.com'));
     });
 
+    await check('날짜별 기사 검색은 펼칠 때만 API에서 선택한 호를 읽으며 실패 후 재시도할 수 있다', {}, async ({ page }) => {
+      const requests = [];
+      page.on('request', (request) => {
+        if (new URL(request.url()).pathname.startsWith('/api/v1/')) requests.push(request.url());
+      });
+      await page.goto(origin + '/' + older);
+      await ready(page);
+      assert.equal(requests.length, 0);
+      const olderPath = origin + '/api/v1/editions/' + older + '.json';
+      await page.route(olderPath, (route) => route.fulfill({ status: 503, body: '' }), { times: 1 });
+      await page.locator('#editionSearch summary').focus();
+      await page.keyboard.press('Enter');
+      await page.locator('#editionSearchRetry').waitFor({ state: 'visible' });
+      assert.equal(await page.locator('#editionSearchDate').inputValue(), older);
+      await page.locator('#editionSearchRetry').click();
+      await page.locator('#editionSearchQuery:enabled').waitFor();
+      assert.equal(await page.locator('#editionSearchPage').getAttribute('href'), '/' + older);
+      const articles = JSON.parse(fs.readFileSync(path.join(web, 'api/v1/editions', index.latest + '.json'))).articles;
+      await page.locator('#editionSearchDate').selectOption(index.latest);
+      await page.locator('#editionSearchQuery:enabled').waitFor();
+      assert.ok((await page.locator('#editionSearchStatus').innerText()).includes(articles.length + '건'));
+      const article = articles.find((row) => row.section === 'regions') || articles[0];
+      await page.locator('#editionSearchQuery').fill(article.title);
+      const original = page.locator('#editionSearchList a').filter({ hasText: article.title }).first();
+      assert.equal(await original.getAttribute('href'), article.url);
+      await page.locator('#editionSearchQuery').fill('찾을수없는검사용문자열');
+      assert.match(await page.locator('#editionSearchStatus').innerText(), /일치하는 기사가 없습니다/);
+    });
+
     await check('배너와 빌드 메타데이터의 정확한 dev 커밋 일치', {}, async ({ page }) => {
       await page.goto(origin + '/');
       await ready(page);

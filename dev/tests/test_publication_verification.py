@@ -49,6 +49,20 @@ class PublicationVerificationTest(unittest.TestCase):
         self.assertFalse(self.matches(sha=None))
 
 
+class PublicCatalogTest(unittest.TestCase):
+    def test_archive_matches_publication_and_detects_unapplied_corrections(self):
+        article = {"url": "https://news.example/story", "title": "공연", "summary": "요약", "outlet": "신문", "date": "2026-11-04"}
+        issue = {"date": DATE, "status": "published", "national": {"items": [article]}, "regions": {"items": []}}
+        index = {"issues": [DATE]}
+        catalog = {"version": 1, "latest": DATE, "editions": [{"date": DATE, "articleCount": 1}]}
+        edition = {"version": 1, "date": DATE, "status": "published",
+                   "articles": [{**article, "section": "national", "editionDate": DATE}]}
+        self.assertTrue(verify_publication.catalog_matches(index, issue, catalog, edition))
+        self.assertFalse(verify_publication.catalog_matches(index, issue, catalog, {**edition, "articles": []}))
+        issue["national"]["items"][0]["summary"] = "정정된 요약"
+        self.assertFalse(verify_publication.catalog_matches(index, issue, catalog, edition))
+
+
 class ExpectTodayTest(unittest.TestCase):
     def refs(self, output=f"{SHA}\trefs/heads/main\n"):
         return mock.patch.object(verify_publication.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, output, ""))

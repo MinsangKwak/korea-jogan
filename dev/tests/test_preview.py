@@ -115,6 +115,16 @@ class PreviewTest(unittest.TestCase):
         self.assertFalse((self.output / f"{DRAFT}.html").exists())
         self.assertTrue((self.output / f"{PUBLISHED}.html").exists())
         self.assertIn(PUBLISHED, (self.output / "index.html").read_text())
+        api = self.output / "api/v1"
+        catalog = json.loads((api / "index.json").read_text())
+        self.assertEqual([row["date"] for row in catalog["editions"]], [PUBLISHED])
+        edition = json.loads((api / "editions" / f"{PUBLISHED}.json").read_text())
+        self.assertEqual(edition["date"], PUBLISHED)
+        self.assertEqual(len(edition["articles"]), catalog["editions"][0]["articleCount"])
+        record = edition["articles"][0]
+        self.assertEqual(json.loads((api / "articles" / (record["id"] + ".json")).read_text()), record)
+        self.assertFalse((api / "editions" / f"{DRAFT}.json").exists())
+        self.assertFalse(list(self.output.rglob("*.sqlite3")))
 
     def test_admin_oauth_and_domain_verification_are_not_shipped(self):
         (self.source / "CNAME").write_text("korea-jogan.com\n")
