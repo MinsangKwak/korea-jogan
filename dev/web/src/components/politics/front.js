@@ -3,12 +3,15 @@
 // 빌드된 지면은 그대로 읽고, 원본 미리보기나 다른 호의 데이터가 열릴 때에만 채운다.
 async function showPoliticsFront(issue) {
   const front = $('politicsFront');
-  if (!front || front.dataset.issueDate === issue.date) return;
+  const datedPage = document.querySelector('meta[name="kj-date"]') || VIEWING_PAST || new URLSearchParams(location.search).get('d') === issue.date;
+  const view = datedPage ? 'edition' : 'home';
+  if (!front || (front.dataset.issueDate === issue.date && front.dataset.frontView === view)) return;
   front.hidden = true;
-  const datedPage = document.querySelector('meta[name="kj-date"]') || VIEWING_PAST;
   const cutoff = datedPage ? issue.date : todayKST();
   const data = await fetchJSON('data/political-questions.json');
-  const entries = data.questions.filter((entry) => entry.checkedAt <= cutoff)
+  const entries = data.questions.flatMap((entry) => [entry, ...(entry.pastEditions || [])]
+    .filter((version) => (datedPage ? version.editionFrom || version.checkedAt : version.checkedAt) <= cutoff)
+    .map((version) => ({ ...entry, ...version })))
     .sort((a, b) => b.checkedAt.localeCompare(a.checkedAt) || a.id.localeCompare(b.id));
   const lead = entries.find((entry) => entry.kind === 'issue');
   if (!lead) return;
@@ -44,5 +47,6 @@ async function showPoliticsFront(issue) {
     $('frontEditionStory').href = article.url;
   }
   front.dataset.issueDate = issue.date;
+  front.dataset.frontView = view;
   front.hidden = false;
 }

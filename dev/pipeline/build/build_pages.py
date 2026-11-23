@@ -509,7 +509,7 @@ def build() -> list[Path]:
     for issue in issues:
         out = PUBLIC / f"{issue['date']}.html"
         edition = build_case_edition.with_edition(template, issue["date"], pairs)
-        edition = build_politics.with_front(edition, issue, questions, issue["date"])
+        edition = build_politics.with_front(edition, issue, questions, issue["date"], dated=True)
         edition = build_change_strip.inject_change_strip(edition, trackers, issue["date"], current=False)
         out.write_text(issue_page(edition, issue, index), encoding="utf-8")
         written.append(out)

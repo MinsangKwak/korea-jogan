@@ -39,8 +39,17 @@ def load(public: Path) -> list[dict]:
         if not date_value(row["checkedAt"]) or (row.get("changedAt") and
                 (not date_value(row["changedAt"]) or row["changedAt"] > row["checkedAt"])):
             raise ValueError(f"정치 질문 날짜 오류: {slug}")
-        if not row["sources"] or any(not safe_url(s["url"]) or not s["label"] for s in row["sources"]):
-            raise ValueError(f"정치 질문 출처 오류: {slug}")
+        seen_checks = set()
+        for version in [row, *row.get("pastEditions", [])]:
+            checked = version["checkedAt"]
+            first_edition = version.get("editionFrom", checked)
+            if (not date_value(checked) or checked > row["checkedAt"] or checked in seen_checks
+                    or not date_value(first_edition) or first_edition < checked):
+                raise ValueError(f"정치 질문 판본 날짜 오류: {slug}")
+            seen_checks.add(checked)
+            if not version["answer"] or not version["sources"] or any(
+                    not safe_url(s["url"]) or not s["label"] for s in version["sources"]):
+                raise ValueError(f"정치 질문 답 또는 출처 오류: {slug}")
         if any(c["path"] not in CONNECTIONS for c in row.get("connections", [])):
             raise ValueError(f"정치 질문 내부 링크 오류: {slug}")
     for row in rows:
@@ -136,7 +145,14 @@ def edition_story(issue: dict) -> dict | None:
     return None
 
 
-def with_front(markup: str, issue: dict, questions: list[dict], cutoff: str) -> str:
+def front_version(row: dict, cutoff: str, dated: bool) -> dict | None:
+    versions = [row, *row.get("pastEditions", [])]
+    available = (v for v in versions if (v.get("editionFrom", v["checkedAt"]) if dated else v["checkedAt"]) <= cutoff)
+    version = max(available, key=lambda v: v["checkedAt"], default=None)
+    return {**row, **version} if version else None
+
+
+def with_front(markup: str, issue: dict, questions: list[dict], cutoff: str, *, dated: bool = False) -> str:
     match = FRONT.search(markup)
     if not match:
         return markup
@@ -144,6 +160,7 @@ def with_front(markup: str, issue: dict, questions: list[dict], cutoff: str) -> 
     root = ET.fromstring(fragment)
     nodes = {el.get("id"): el for el in root.iter() if el.get("id")}
     root.set("data-issue-date", issue.get("date", ""))
+    root.set("data-front-view", "edition" if dated else "home")
     # 재빌드에서도 지난 호의 제목과 주소가 감춰진 채로 남지 않게 초기화한다.
     for name in ("frontQuestion", "frontAnswer", "frontChecked", "frontSource", "frontEditionLabel", "frontEditionStory"):
         nodes[name].text = ""
@@ -155,8 +172,9 @@ def with_front(markup: str, issue: dict, questions: list[dict], cutoff: str) -> 
     for name in ("politicsFront", "frontPolicyItem", "frontTermItem", "frontEdition"):
         nodes[name].set("hidden", "hidden")
     selected = {}
-    for row in sorted(questions, key=lambda q: q["id"]):
-        if row["checkedAt"] <= cutoff and (row["kind"] not in selected or row["checkedAt"] > selected[row["kind"]]["checkedAt"]):
+    for question in sorted(questions, key=lambda q: q["id"]):
+        row = front_version(question, cutoff, dated)
+        if row and (row["kind"] not in selected or row["checkedAt"] > selected[row["kind"]]["checkedAt"]):
             selected[row["kind"]] = row
     for kind, field in (("policy", "frontPolicy"), ("term", "frontTerm")):
         row = selected.get(kind)
