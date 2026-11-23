@@ -24,7 +24,7 @@ export function parseSnapshot(raw, source) {
             throw new Error("입법 기록의 필수 항목이 비었습니다.");
         }
         const link = new URL(url);
-        if (link.protocol !== "https:" || !/(^|\.)(assembly\.go\.kr|law\.go\.kr|lawmaking\.go\.kr)$/.test(link.hostname)) {
+        if (link.protocol !== "https:" || link.username || link.password || !/(^|\.)(assembly\.go\.kr|law\.go\.kr|lawmaking\.go\.kr)$/.test(link.hostname)) {
             throw new Error("공식 원문 주소를 확인할 수 없습니다.");
         }
         const add = (kind, date) => {

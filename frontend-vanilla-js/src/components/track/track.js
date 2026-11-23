@@ -73,8 +73,8 @@ function renderTrack(data) {
         const li = el('li');
         const who = el('b', {}, a.outlet);
         who.append(el('small', {}, a.date.slice(5).replace('-', '/')));
-        const link = el('a', { href: a.url, target: '_blank', rel: 'noopener' }, a.title);
-        link.addEventListener('click', () => track('track-link', item.id + ' · ' + a.outlet));
+        const link = newsSourceLink(a.url, a.title, { target: '_blank' });
+        if (link.hasAttribute('href')) link.addEventListener('click', () => track('track-link', item.id + ' · ' + a.outlet));
         li.append(who, link);
         ul.append(li);
       });
@@ -241,7 +241,7 @@ function trackingArticles(item) {
     const date = el('td', { 'data-label': '보도일·매체' });
     date.append(el('time', { datetime: a.date }, a.date), el('b', {}, a.outlet));
     const title = el('td', { 'data-label': '기사·원문' });
-    title.append(el('small', {}, a.topic || '보도'), el('a', { href: a.url, target: '_blank', rel: 'noopener' }, a.title));
+    title.append(el('small', {}, a.topic || '보도'), newsSourceLink(a.url, a.title, { target: '_blank' }));
     const summary = el('td', { 'data-label': '핵심 내용·확인 범위' });
     summary.append(el('p', {}, a.summary || ''), el('small', {}, a.verification || '원문 링크'));
     row.append(date, title, summary);

@@ -1,9 +1,7 @@
-import { request, ApiError } from './api.js';
+import { request, ApiError, sitesUrl, inspectionUrl, searchProperties } from './api.js';
 import { loadPilotQuestions } from './question-pilot.js';
 
 const ORIGIN = 'https://korea-jogan.com';
-const API = 'https://www.googleapis.com/webmasters/v3/sites/';
-const SITES = [ORIGIN + '/', 'sc-domain:korea-jogan.com'];
 export const SEARCH_TARGETS = [ORIGIN + '/', ORIGIN + '/politics/', ORIGIN + '/topics/', ORIGIN + '/topics/muan-airport/', ORIGIN + '/indicators/', ORIGIN + '/indicators/usd-krw/'];
 const BRAND_QUERY = '(?i)(대한민국\\s*조간|코리아\\s*조간|korea[-\\s]*jogan|오늘\\s*정치\\s*한\\s*장)';
 let pilotTargets = new Map();
@@ -42,16 +40,16 @@ export function searchRange(days, now = new Date()) {
 export async function loadSearch(token, { days, country, site, signal }) {
   if (!['all', 'kor'].includes(country)) throw new ApiError(400, 'INVALID_COUNTRY');
   if (!site) {
-    const data = await request(API.slice(0, -1), { token, signal });
+    const data = await request(sitesUrl, { token, signal });
     const entries = data.siteEntry || [];
-    site = SITES.find((url) => entries.some((entry) => entry.siteUrl === url && ['siteOwner', 'siteFullUser', 'siteRestrictedUser'].includes(entry.permissionLevel)));
+    site = searchProperties.find((url) => entries.some((entry) => entry.siteUrl === url && ['siteOwner', 'siteFullUser', 'siteRestrictedUser'].includes(entry.permissionLevel)));
   }
-  if (!SITES.includes(site)) throw new ApiError(403, 'NO_SITE');
+  if (!searchProperties.includes(site)) throw new ApiError(403, 'NO_SITE');
   const range = searchRange(days);
   const filters = [{ dimension: 'page', operator: 'includingRegex', expression: '^https://korea-jogan[.]com/' }];
   if (country === 'kor') filters.push({ dimension: 'country', operator: 'equals', expression: 'kor' });
   const common = { ...range, type: 'web', dataState: 'final', dimensionFilterGroups: [{ groupType: 'and', filters }] };
-  const endpoint = API + encodeURIComponent(site);
+  const endpoint = sitesUrl + '/' + encodeURIComponent(site);
   const query = (dimensions, rowLimit = 10) => request(endpoint + '/searchAnalytics/query', { token, signal, body: { ...common, dimensions, rowLimit } });
   async function loadPilot() {
     const questions = await loadPilotQuestions();
@@ -80,8 +78,8 @@ export async function loadSearch(token, { days, country, site, signal }) {
 }
 
 export async function inspectSearchUrl(token, site, url, signal) {
-  if (!SITES.includes(site) || !(SEARCH_TARGETS.includes(url) || inspectionTopics.has(url) || pilotTargets.has(url))) throw new ApiError(400, 'INVALID_TARGET');
-  const data = await request('https://searchconsole.googleapis.com/v1/urlInspection/index:inspect', { token, signal, body: { inspectionUrl: url, siteUrl: site, languageCode: 'ko-KR' } });
+  if (!searchProperties.includes(site) || !(SEARCH_TARGETS.includes(url) || inspectionTopics.has(url) || pilotTargets.has(url))) throw new ApiError(400, 'INVALID_TARGET');
+  const data = await request(inspectionUrl, { token, signal, body: { inspectionUrl: url, siteUrl: site, languageCode: 'ko-KR' } });
   if (!data.inspectionResult?.indexStatusResult) throw new ApiError(502, 'INVALID_RESPONSE');
   return data.inspectionResult.indexStatusResult;
 }

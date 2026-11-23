@@ -40,7 +40,7 @@ function renderLead() {
   const briefsBox = document.querySelector('.briefs-box');
   D.briefs.forEach((b) => {
     const li = el('li');
-    const a = el('a', { href: b.href });
+    const a = /^#[a-zA-Z][\w-]*$/.test(b.href) ? el('a', { href: b.href }) : newsSourceLink(b.href);
     a.append(el('span', { class: 'bk' }, b.k), el('span', { class: 'bm' }, b.m));
     // 처리기한처럼 날짜가 있는 항목은 남은 날을 배지로 붙인다
     if (b.dday) a.append(el('span', { class: 'kj-badge kj-badge--brand' }, dday(parseDate(b.dday))));

@@ -97,7 +97,7 @@ function showTheme(id) {
       const li = el('li');
       const who = el('b', {}, a.outlet);
       who.append(el('small', {}, (a.date ? a.date.slice(5).replace('-', '/') : '발표일 미확인') + (a.read ? '' : ' · 본문 미확인')));
-      li.append(who, el('a', { href: a.url, target: '_blank', rel: 'noopener', lang: name === '해외' ? 'en' : 'ko' }, a.title));
+      li.append(who, newsSourceLink(a.url, a.title, { target: '_blank', lang: name === '해외' ? 'en' : 'ko' }));
       ulx.append(li);
     });
     col.append(ulx);

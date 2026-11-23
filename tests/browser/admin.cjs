@@ -155,6 +155,28 @@ async function check(name, options, fn) {
   const deployed = /clientId: '([^']*)'/.exec(fs.readFileSync(path.join(web, 'admin/config.js'), 'utf8'))[1];
   assert.ok(deployed === '' || /^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(deployed), deployed);
   browser = await openBrowser();
+  await check('인증 토큰은 등록된 조회 주소에만 전달', {}, async ({ page }) => {
+    await page.locator('#publishData').waitFor({ state: 'visible' });
+    await page.locator('#catalogStatus').filter({ hasText: '발행일 일치' }).waitFor();
+    const result = await page.evaluate(async () => {
+      const { request, sitesUrl } = await import('/admin/api.js');
+      const original = window.fetch;
+      const calls = [];
+      window.fetch = async (url, options) => {
+        calls.push([url, options.redirect, options.credentials]);
+        return new Response('{}');
+      };
+      try {
+        const blocked = await request('/api/v1/index.json', { token: 'only-for-test' }).catch((error) => error.code);
+        await request(sitesUrl, { token: 'only-for-test' });
+        return { blocked, calls };
+      } finally {
+        window.fetch = original;
+      }
+    });
+    assert.equal(result.blocked, 'INVALID_REPORT_URL');
+    assert.deepEqual(result.calls, [['https://www.googleapis.com/webmasters/v3/sites', 'error', 'omit']]);
+  });
   await check('검색 읽기 권한과 태평양 날짜·국가 필터·모바일 표', { width: 320 }, async ({ page, searchRequests, requests }) => {
     assert.equal(searchRequests.length, 0);
     assert.equal(await page.locator('#searchData').isVisible(), false);

@@ -23,7 +23,7 @@ function setupEditionSearch(issueDate) {
       const row = el('li');
       const meta = [article.region || '전국', article.outlet];
       if (article.date) meta.push('보도일 ' + article.date);
-      const headline = /^https?:\/\//i.test(article.url) ? el('a', { href: article.url }, article.title) : el('span', {}, article.title);
+      const headline = newsSourceLink(article.url, article.title);
       row.append(el('small', {}, meta.join(' · ')), headline);
       list.append(row);
     }

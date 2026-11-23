@@ -44,7 +44,7 @@ def date_value(value) -> str:
 
 
 def safe_url(value) -> str:
-    if not isinstance(value, str) or any(ord(char) <= 32 or ord(char) == 127 for char in value):
+    if not isinstance(value, str) or "\\" in value or any(ord(char) <= 32 or ord(char) == 127 for char in value):
         return ""
     try:
         parsed = urlsplit(value)
@@ -61,11 +61,12 @@ def date_html(value) -> str:
     return f'<time datetime="{date}">{date}</time>' if date else esc(value or "날짜 미기록")
 
 
-def source_link(url, label) -> str:
+def source_link(url, label, *, new_window=True) -> str:
     href = safe_url(url)
     if not href:
         return esc(label)
-    return f'<a href="{esc(href)}" target="_blank" rel="noopener noreferrer">{esc(label)}</a>'
+    attributes = ' target="_blank" rel="noopener noreferrer"' if new_window else ''
+    return f'<a href="{esc(href)}"{attributes}>{esc(label)}</a>'
 
 
 def review_text(issue: dict) -> str:
