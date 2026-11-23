@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 import unittest
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "backend-python/pipeline/build"))
 
 from build_change_strip import STRIP, inject_change_strip, latest_changes

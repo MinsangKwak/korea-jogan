@@ -10,7 +10,7 @@ import sys
 import unittest
 from unittest import mock
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend-python/pipeline/publish"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend-python/pipeline/publish"))
 import verify_publication
 
 SHA = "a" * 40

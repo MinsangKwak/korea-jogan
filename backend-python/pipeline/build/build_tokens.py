@@ -1,4 +1,4 @@
-"""디자인 토큰(design/tokens.json)으로 화면이 읽는 CSS 변수 파일(frontend-vanilla-js/src/styles/tokens.css)을 만든다.
+"""디자인 토큰(frontend-vanilla-js/src/styles/tokens.json)으로 화면이 읽는 CSS 변수 파일(frontend-vanilla-js/src/styles/tokens.css)을 만든다.
 
 사용: python3 backend-python/pipeline/build/build_tokens.py          # 파일을 새로 쓴다
       python3 backend-python/pipeline/build/build_tokens.py --check  # 지금 파일이 토큰과 같은지만 본다(다르면 종료 코드 1)
@@ -12,8 +12,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-SRC = ROOT / "design" / "tokens.json"
-OUT = ROOT / "frontend-vanilla-js" / "src" / "styles" / "tokens.css"
+STYLES = ROOT / "frontend-vanilla-js" / "src" / "styles"
+SRC = STYLES / "tokens.json"
+OUT = STYLES / "tokens.css"
 # 색·그림자처럼 테마마다 값이 다른 묶음
 THEMED = ("color", "shadow")
 # 테마와 상관없이 한 값인 묶음
@@ -45,7 +46,7 @@ def build(tokens: dict) -> str:
     plain = [f"--{t['name']}: {t['value']};" for fam in PLAIN for t in tokens.get(fam, {}).get("tokens", [])]
     plain += [f"--font-{k}: {v};" for k, v in tokens["type"]["families"].items()]
 
-    out = [f"/* {tokens['name']} — generated from design/tokens.json by backend-python/pipeline/build/build_tokens.py. 손으로 고치지 않는다 */\n"]
+    out = [f"/* {tokens['name']} — generated from frontend-vanilla-js/src/styles/tokens.json by backend-python/pipeline/build/build_tokens.py. 손으로 고치지 않는다 */\n"]
     out.append(block(":root", theme_lines(first) + plain + [f"color-scheme: {first};"]))
     out.append(block(f':root[data-theme="{first}"]', theme_lines(first) + [f"color-scheme: {first};"]))
     for theme in themes[1:]:

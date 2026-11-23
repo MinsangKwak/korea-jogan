@@ -8,7 +8,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 
 | 독자가 하는 일 | 구현에서 내린 결정 | 구현과 검증 |
 | --- | --- | --- |
-| 검색 결과에서 정치 질문의 근거 확인하기 | 질문마다 고정 주소를 부여합니다. 질문·한 줄 답·확인일·근거 원문을 HTML에 담아 첫 화면에서 바로 읽을 수 있습니다. | [질문 생성기](../../backend-python/pipeline/build/build_politics.py) · [질문 페이지 생성 검사](../../tests/test_politics_build.py) |
+| 검색 결과에서 정치 질문의 근거 확인하기 | 질문마다 고정 주소를 부여합니다. 질문·한 줄 답·확인일·근거 원문을 HTML에 담아 첫 화면에서 바로 읽을 수 있습니다. | [질문 생성기](../../backend-python/pipeline/build/build_politics.py) · [질문 페이지 생성 검사](../../tests/pipeline/test_politics_build.py) |
 | 1면에 사건번호를 입력해 판결문 찾기 | 검색어를 같은 탭의 판례면에 한 번 전달하고 판례면이 읽은 직후 삭제합니다. 브라우저 검사로 검색어가 주소·요청·분석 이벤트에도 남지 않는지 확인합니다. | [1면 검색](../../frontend-vanilla-js/src/components/news-case/edition.js) · [판례면](../../frontend-vanilla-js/law/desk.js) · [독자 동선 검사](../../tests/browser/law.cjs) |
 | 파기환송 판결문을 읽고 다음 재판을 맡을 법원 고르기 | 자바스크립트를 꺼도 해설과 판결문을 열 수 있게 했습니다. 선택 없이 확인하면 첫 선택지로 포커스를 옮기고 상태 메시지로 안내합니다. | [문제 마크업](../../backend-python/pipeline/build/question_recall.py) · [응답 처리](../../frontend-vanilla-js/src/components/question-recall/recall.js) · [키보드·스크립트 비활성 검사](../../tests/browser/question-recall.cjs) |
 
@@ -58,7 +58,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 | 지점 | 파일 | 무엇이 깨지나 |
 | --- | --- | --- |
 | 구조 검사 | `validate.py` `check_structure()`·`REQUIRED` | 필수값 누락을 검사하고, 필드명 변경 시 전체 공개 자료의 호환성을 확인 |
-| 시험 | `tests/test_scripts.py`(호별 JSON을 복제한 시험 자료) | 기준 호에 필드가 없으면 시험 자체가 깨짐 |
+| 시험 | `tests/pipeline/test_scripts.py`(호별 JSON을 복제한 시험 자료) | 기준 호에 필드가 없으면 시험 자체가 깨짐 |
 | 브라우저 방어 | `core/data.js` `assertIssue()` | `themes[].id/articles/keywords/summary`·`date`를 바꾸면 전체 로딩 실패 화면 |
 | 화면 | `lead.js`(`lead`,`briefs`,`themes`), `economy.js`(`nums`), `splits.js`·`media.js`(`themes`), `national.js`, `regions.js`, `politics.js`(`agenda`,`agendaSrc`), `industry.js`(`industries`,`items`,`trade`), `fiscal.js`(`debt`,`fiscal`,`nps`), `header.js`(`status`,`review`,`collectedAt`,`late`), `footer.js`(`limits`) | 해당 섹션만 깨지지만 `main.js`는 한 `try/catch`라 예외가 나면 **전체** 오류 화면 |
 | 검색·RSS | `build_pages.py`(`lead`, `nums`, `themes[].diffs[].q`, `national.items[].cat`, `review`), `build_feed.py`(`lead`, `diffs.q`, `status`), `build_discovery.py`(`nums`, `review.scope`, `status`) | `/YYYY-MM-DD`, `feed.xml`, `/archive/`·`/topics/`·`/indicators/` |
@@ -73,7 +73,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 | `index.html`·`admin/index.html`의 인라인 스크립트 | `build_security.py`가 배포 시 CSP 해시 재계산(수동 해시 유지 금지). `security.cjs` 통과 확인 |
 | `trackers.json` 구조 | `validate.py check_trackers()`, `track.js`, `build_discovery.py`, `prepare_daily.py`의 `updated` 규칙 |
 | 발행 시각·cron | `publish.yml` cron 5개, `validate.py` `COLLECT_DEADLINE`(06:00), 런북·AGENTS.md의 시각 서술, Codex 예약 |
-| `design/tokens.json` | `build_tokens.py`로 CSS 재생성. CI `--check`가 불일치를 막음 |
+| `frontend-vanilla-js/src/styles/tokens.json` | `build_tokens.py`로 CSS 재생성. CI `--check`가 불일치를 막음 |
 | 허용 데이터 경로 | `prepare_daily.py`의 `permitted`와 `publish.yml`의 `git add` 목록 |
 | 관리자 외부 연결(로그인·API) | `build_security.py` 허용 목록과 관리자 브라우저 검사 |
 | 판례·입법 원자료나 집계 변경 | [자료 갱신 절차](../planning/law-data.md), 검색·캘린더의 중복 제거 기준, 검수 목록과 [관리자 검사](ga4-admin.md#판례-자료의-건수와-무결성) |
@@ -95,7 +95,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 | 외부 글꼴 | 비동기 적용, 기본 글꼴로 읽기 가능 |
 | 경제 슬라이더 | 영역 800px 전 지연 로드, 실패·늦은 전환 시 전체 격자 유지 |
 
-배치·테마·탐색 동작은 [디자인 가이드](../../design/guide.md)에 정리했습니다. 동적으로 그리는 신문 본문의 문자열은 공통 UI 함수에서 `textContent`로 삽입합니다. [UI 함수](../../frontend-vanilla-js/src/core/ui.js)
+배치·테마·탐색 동작은 [디자인 가이드](../design/guide.md)에 정리했습니다. 동적으로 그리는 신문 본문의 문자열은 공통 UI 함수에서 `textContent`로 삽입합니다. [UI 함수](../../frontend-vanilla-js/src/core/ui.js)
 
 ## 공개 본문·최신 숫자·관리자·검색의 구분
 

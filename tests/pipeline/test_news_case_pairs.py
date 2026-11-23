@@ -5,7 +5,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 DATA = REPO / "frontend-vanilla-js/data"
 LAW = REPO / "frontend-vanilla-js/law/data"
 

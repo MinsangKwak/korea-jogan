@@ -104,7 +104,7 @@ Codex 감독은 05:55에 깨어나 연결·도구를 준비하고 06:00:00 정�
 
 - [공개 색인](https://korea-jogan.com/data/issues/index.json) · [배포 정보](https://korea-jogan.com/build-info.json) · [서비스](https://korea-jogan.com/)
 
-UI를 바꾼 경우 배포 뒤 [디자인 가이드](../../design/guide.md)의 배치·펼침·순환·테마 기준대로 PC·모바일을 확인하고, 호별 HTML·관리자의 CSP 해시는 `build_pages.py`가 갱신하므로 오래된 해시를 수동으로 유지하지 않습니다.
+UI를 바꾼 경우 배포 뒤 [디자인 가이드](../design/guide.md)의 배치·펼침·순환·테마 기준대로 PC·모바일을 확인하고, 호별 HTML·관리자의 CSP 해시는 `build_pages.py`가 갱신하므로 오래된 해시를 수동으로 유지하지 않습니다.
 
 ## 장애 추적 순서
 

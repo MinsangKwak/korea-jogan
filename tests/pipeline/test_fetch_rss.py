@@ -11,8 +11,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-REPO = HERE.parent
+REPO = Path(__file__).resolve().parents[2]
 # 스크립트는 역할별 폴더(backend-python/pipeline/collect·build·publish)에 있다
 for _d in ("collect", "build", "publish"):
     sys.path.insert(0, str(REPO / "backend-python/pipeline" / _d))
