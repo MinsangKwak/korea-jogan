@@ -73,7 +73,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 | `index.html`·`admin/index.html`의 인라인 스크립트 | `build_security.py`가 배포 시 CSP 해시 재계산(수동 해시 유지 금지). `security.cjs` 통과 확인 |
 | `trackers.json` 구조 | `validate.py check_trackers()`, `track.js`, `build_discovery.py`, `prepare_daily.py`의 `updated` 규칙 |
 | 발행 시각·cron | `publish.yml` cron 5개, `validate.py` `COLLECT_DEADLINE`(06:00), 런북·AGENTS.md의 시각 서술, Codex 예약 |
-| `design/tokens.json` | `build_tokens.py`로 CSS 재생성. CI `--check`가 불일치를 막음 |
+| `frontend-vanilla-js/src/styles/tokens.json` | `build_tokens.py`로 CSS 재생성. CI `--check`가 불일치를 막음 |
 | 허용 데이터 경로 | `prepare_daily.py`의 `permitted`와 `publish.yml`의 `git add` 목록 |
 | 관리자 외부 연결(로그인·API) | `build_security.py` 허용 목록과 관리자 브라우저 검사 |
 | 판례·입법 원자료나 집계 변경 | [자료 갱신 절차](../planning/law-data.md), 검색·캘린더의 중복 제거 기준, 검수 목록과 [관리자 검사](ga4-admin.md#판례-자료의-건수와-무결성) |
@@ -95,7 +95,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 | 외부 글꼴 | 비동기 적용, 기본 글꼴로 읽기 가능 |
 | 경제 슬라이더 | 영역 800px 전 지연 로드, 실패·늦은 전환 시 전체 격자 유지 |
 
-배치·테마·탐색 동작은 [디자인 가이드](../../design/guide.md)에 정리했습니다. 동적으로 그리는 신문 본문의 문자열은 공통 UI 함수에서 `textContent`로 삽입합니다. [UI 함수](../../frontend-vanilla-js/src/core/ui.js)
+배치·테마·탐색 동작은 [디자인 가이드](../design/guide.md)에 정리했습니다. 동적으로 그리는 신문 본문의 문자열은 공통 UI 함수에서 `textContent`로 삽입합니다. [UI 함수](../../frontend-vanilla-js/src/core/ui.js)
 
 ## 공개 본문·최신 숫자·관리자·검색의 구분
 

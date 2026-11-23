@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 // 앱 아이콘과 ICO를 icon.html에서 그린다. 공유 이미지 원본은 별도로 관리한다
-// 사용: node design/og/build.mjs (Playwright와 Chromium이 필요하다)
+// 사용: node tools/og/build.mjs (Playwright와 Chromium이 필요하다)
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs/promises';
