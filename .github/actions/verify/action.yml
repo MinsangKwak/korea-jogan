@@ -38,15 +38,3 @@ runs:
       shell: bash
       working-directory: project/tests/browser
       run: npm test
-
-    - name: 변경 전후 첫 방문 측정
-      if: ${{ always() && github.event_name == 'pull_request' }}
-      shell: bash
-      run: bash project/tests/browser/run-measurement.sh
-    - name: 첫 방문 측정 자료 보관
-      if: ${{ always() && github.event_name == 'pull_request' }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: edition-first-visit
-        path: ${{ runner.temp }}/edition-first-visit
-        retention-days: 3
