@@ -52,6 +52,18 @@ def remote_day(day: str) -> str | None:
     return sha
 
 
+def verification_paths(root: Path) -> tuple[str, list[str]]:
+    if (root / 'project/tests').is_dir():
+        return 'backend-python/pipeline', ['project/tests']
+    if (root / 'tests').is_dir():
+        pipeline, suites = 'backend-python/pipeline', ['tests']
+    else:
+        pipeline, suites = 'dev/pipeline', ['dev/tests']
+    if (root / 'backend-python/edition_api.py').is_file():
+        suites.append('backend-python/tests')
+    return pipeline, suites
+
+
 def verify_source(sha: str) -> None:
     deadline = time.monotonic() + 420
     while True:
@@ -71,20 +83,13 @@ def verify_source(sha: str) -> None:
     outcome = 'failure'
     try:
         run('git', 'worktree', 'add', '--detach', str(temporary), sha)
-        pipeline, suite = 'backend-python/pipeline', 'tests'
-        if not (temporary / pipeline).is_dir() and (temporary / 'dev/pipeline').is_dir():
-            pipeline, suite = 'dev/pipeline', 'dev/tests'
-        commands = [
-            (sys.executable, pipeline + '/publish/validate.py'),
-            (sys.executable, pipeline + '/build/build_tokens.py', '--check'),
-            (sys.executable, '-m', 'unittest', 'discover', '-s', suite),
-        ]
-        if (temporary / 'backend-python/edition_api.py').is_file():
-            commands.append((sys.executable, '-m', 'unittest', 'discover', '-s', 'backend-python/tests'))
-        for args in commands:
-            run(*args, root=temporary)
-        tests = temporary / suite / 'browser'
-        current = ROOT / 'tests/browser'
+        pipeline, suites = verification_paths(temporary)
+        run(sys.executable, pipeline + '/publish/validate.py', root=temporary)
+        run(sys.executable, pipeline + '/build/build_tokens.py', '--check', root=temporary)
+        for suite in suites:
+            run(sys.executable, '-m', 'unittest', 'discover', '-s', suite, root=temporary)
+        tests = temporary / suites[0] / 'browser'
+        current = ROOT / 'project/tests/browser'
         same_lock = hashlib.sha256((tests / 'package-lock.json').read_bytes()).digest() == hashlib.sha256((current / 'package-lock.json').read_bytes()).digest()
         if same_lock and (current / 'node_modules').is_dir():
             (tests / 'node_modules').symlink_to(current / 'node_modules', target_is_directory=True)

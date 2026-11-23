@@ -1,3 +1,0 @@
-#!/bin/sh
-# 커밋 제목 규칙(docs/dev/commits.md). 켜기: git config core.hooksPath tools/githooks
-exec node "$(git rev-parse --show-toplevel)/tools/check_commit_msg.mjs" "$1"

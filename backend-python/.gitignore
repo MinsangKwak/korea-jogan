@@ -1,1 +1,11 @@
+.env
+.env.*
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+premium-audit.json
+dist-preview/
+
+/pipeline/collect/raw/rss/*.json
 var/

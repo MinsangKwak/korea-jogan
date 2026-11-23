@@ -5,6 +5,7 @@
 """
 from __future__ import annotations
 
+import argparse
 import html
 import json
 import os
@@ -24,7 +25,7 @@ sys.path.insert(0, str(ROOT / "backend-python"))
 from edition_api import build_catalog
 
 PUBLIC = ROOT / "frontend-vanilla-js"
-OUTPUT = ROOT / "dist-preview"
+OUTPUT = ROOT / "project/tools/vercel-preview/dist-preview"
 ORIGIN = "https://dev.korea-jogan.com"
 PRODUCTION = "https://korea-jogan.com"
 KIND = "korea-jogan-preview"
@@ -136,7 +137,10 @@ def build(source: Path = PUBLIC, output: Path = OUTPUT, origin: str = ORIGIN, co
     temporary = Path(tempfile.mkdtemp(prefix=".jogan-preview-", dir=output.parent))
     saved = (build_pages.PUBLIC, build_pages.ISSUES, build_pages.SITE, build_feed.PUBLIC, build_feed.ISSUES, build_feed.SITE)
     try:
-        shutil.copytree(source, temporary, dirs_exist_ok=True)
+        shutil.copytree(
+            source, temporary, dirs_exist_ok=True,
+            ignore=shutil.ignore_patterns(".gitignore", ".env", ".env.*", "node_modules"),
+        )
         admin = temporary / "admin"
         if admin.exists():
             shutil.rmtree(admin)
@@ -200,13 +204,13 @@ def origin_from_environment(environment) -> str:
     return ORIGIN
 
 
-def main() -> int:
+def main(output: Path = OUTPUT) -> int:
     try:
         commit = os.environ.get("VERCEL_GIT_COMMIT_SHA") or None
         branch = os.environ.get("VERCEL_GIT_COMMIT_REF") or "local"
         if os.environ.get("VERCEL") == "1" and (not commit or not preview_branch(branch)):
             raise ValueError("Vercel 미리보기는 main·daily를 뺀 작업 브랜치와 정확한 커밋 SHA가 필요합니다")
-        result = build(origin=origin_from_environment(os.environ), commit=commit, branch=branch)
+        result = build(output=output, origin=origin_from_environment(os.environ), commit=commit, branch=branch)
     except (OSError, ValueError) as exc:
         print(f"개발 빌드 실패: {exc}")
         return 1
@@ -215,4 +219,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    parser = argparse.ArgumentParser(description="운영 원본과 분리된 개발 지면을 생성합니다.")
+    parser.add_argument("--output", type=Path, default=OUTPUT, help="미리보기 전용 출력 디렉터리")
+    sys.exit(main(parser.parse_args().output))

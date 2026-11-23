@@ -1,0 +1,376 @@
+"""검사·승인·RSS·ECOS 변환 스크립트를 임시 폴더에서 돌려 본다.
+
+사용: python -m unittest discover -s project/tests
+"""
+from __future__ import annotations
+
+import datetime as dt
+import io
+import json
+import shutil
+import struct
+import sys
+import tempfile
+import unittest
+import xml.dom.minidom
+from contextlib import redirect_stdout
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[3]
+# 스크립트는 역할별 폴더(backend-python/pipeline/collect·build·publish)에 있다
+for _d in ("collect", "build", "publish"):
+    sys.path.insert(0, str(REPO / "backend-python/pipeline" / _d))
+
+import approve  # noqa: E402
+import build_feed  # noqa: E402
+import build_tokens  # noqa: E402
+import ecos_nums  # noqa: E402
+import validate  # noqa: E402
+
+DATE = "2026-10-19"
+
+
+class Site(unittest.TestCase):
+    """지금 호를 임시 폴더로 복사하고 스크립트들이 그 폴더를 보게 한다."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        shutil.copytree(REPO / "frontend-vanilla-js", self.tmp / "frontend-vanilla-js")
+        self.issues = self.tmp / "frontend-vanilla-js" / "data" / "issues"
+        # 매일 새 호(초안 포함)가 쌓여도 시험 결과가 바뀌지 않게, 목록을 기준 호 하나로 고정한다
+        (self.issues / "index.json").write_text(json.dumps({"latest": DATE, "issues": [DATE]}), encoding="utf-8")
+        # 정정 기록도 같은 이유로 비워 둔다. 실제 정정이 쌓여도 기준 호 하나만 보는 검사가 깨지지 않는다
+        (self.tmp / "frontend-vanilla-js" / "data" / "corrections.json").write_text(json.dumps({"items": []}), encoding="utf-8")
+        self.saved = (validate.ROOT, validate.ISSUES, approve.ISSUES, build_feed.PUBLIC, build_feed.ISSUES)
+        validate.ROOT, validate.ISSUES = self.tmp, self.issues
+        approve.ISSUES = self.issues
+        build_feed.PUBLIC, build_feed.ISSUES = self.tmp / "frontend-vanilla-js", self.issues
+
+    def tearDown(self):
+        validate.ROOT, validate.ISSUES, approve.ISSUES, build_feed.PUBLIC, build_feed.ISSUES = self.saved
+        shutil.rmtree(self.tmp)
+
+    def edit(self, fn, date=DATE):
+        path = self.issues / f"{date}.json"
+        issue = json.loads(path.read_text(encoding="utf-8"))
+        fn(issue)
+        path.write_text(json.dumps(issue, ensure_ascii=False), encoding="utf-8")
+
+    def test_tracker_unknown_period_and_phase_validation(self):
+        path = self.tmp / "frontend-vanilla-js/data/trackers.json"
+        data = json.loads(path.read_text())
+        item = next(item for item in data["items"] if item.get("periodUnknown") and item.get("phases"))
+        self.assertTrue(item["periodUnknown"])
+        self.assertEqual(validate.check_trackers(), [])
+        item["end"] = "2027-03-22"
+        item["phaseIndex"] = len(item["phases"])
+        path.write_text(json.dumps(data), encoding="utf-8")
+        errors = validate.check_trackers()
+        self.assertTrue(any("미확정 기간" in x for x in errors))
+        self.assertTrue(any("phaseIndex" in x for x in errors))
+
+    def run_validate(self, *args):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = validate.main(list(args))
+        return code, buf.getvalue()
+
+
+class ValidateTest(Site):
+    def test_tracker_rejects_incomplete_or_empty_keyword_groups(self):
+        path = self.tmp / "frontend-vanilla-js/data/trackers.json"
+        data = json.loads(path.read_text())
+        for keywords in (
+            {"subject": ["인물"], "procedure": ["기일"]},
+            {"subject": ["인물"], "case": "사건", "procedure": ["기일"]},
+            {"subject": ["인물"], "case": ["사건"], "procedure": [""]},
+        ):
+            with self.subTest(keywords=keywords):
+                data["items"][0]["trackingKeywords"] = keywords
+                path.write_text(json.dumps(data), encoding="utf-8")
+                self.assertTrue(any("trackingKeywords" in error for error in validate.check_trackers()))
+
+    def test_current_issue_passes(self):
+        self.assertEqual(self.run_validate()[0], 0)
+        self.assertEqual(self.run_validate("--deploy")[0], 0)
+
+    def test_draft_blocked_only_on_deploy(self):
+        self.edit(lambda i: i.update(status="draft"))
+        self.assertEqual(self.run_validate()[0], 0)
+        code, out = self.run_validate("--deploy")
+        self.assertEqual(code, 1)
+        self.assertIn("draft", out)
+
+    def test_published_needs_review(self):
+        self.edit(lambda i: i.update(status="published", collectedAt="2026-10-19T00:20:00+09:00"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("review.by", out)
+
+    def test_published_rejects_late_collection(self):
+        def late(i):
+            i.update(status="published", review={"by": "검토자", "at": "2026-10-19T07:00+09:00"})
+        self.edit(late)
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("collectedAt", out)
+
+    def test_late_collection_needs_reason_and_prior_cutoff(self):
+        def late(cutoff, collected="2026-10-19T10:20:00+09:00"):
+            def fn(i):
+                i.update(status="published", collectedAt=collected, review={"by": "자동 발행", "at": "2026-10-19T10:40+09:00", "auto": True},
+                         late={"reason": "예약 실행 지연", "cutoff": cutoff})
+            return fn
+        self.edit(late("2026-10-18T23:59:00+09:00"))
+        self.assertEqual(self.run_validate("--deploy")[0], 0)
+        self.edit(late("2026-10-19T09:00:00+09:00"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("late.cutoff", out)
+        self.edit(late("2026-10-18T23:59:00+09:00", collected="2026-10-20T01:00:00+09:00"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("발행일을 넘김", out)
+        self.edit(lambda i: i.update(late={"reason": "", "cutoff": "2026-10-18T23:59:00+09:00"}))
+        self.assertEqual(self.run_validate()[0], 1)
+
+    def test_unknown_status(self):
+        self.edit(lambda i: i.update(status="final"))
+        self.assertEqual(self.run_validate()[0], 1)
+
+    def test_root_favicon_is_a_real_ico(self):
+        # /favicon.ico가 없으면 네이버 진단이 '접근 불가'로 잡고 검색 결과에 아이콘이 비어 보인다
+        path = self.tmp / "frontend-vanilla-js" / "favicon.ico"
+        self.assertTrue(path.exists(), "frontend-vanilla-js/favicon.ico 없음")
+        data = path.read_bytes()
+        reserved, kind, count = struct.unpack("<HHH", data[:6])
+        self.assertEqual((reserved, kind), (0, 1))
+        self.assertGreaterEqual(count, 1)
+        sizes = []
+        for i in range(count):
+            entry = struct.unpack("<BBBBHHII", data[6 + 16 * i:22 + 16 * i])
+            size, length, offset = entry[0] or 256, entry[6], entry[7]
+            self.assertLessEqual(offset + length, len(data), "그림 자료가 파일 밖을 가리킴")
+            sizes.append(size)
+        self.assertIn(32, sizes, f"32픽셀 그림이 없음: {sizes}")
+
+    def test_corrections(self):
+        path = self.tmp / "frontend-vanilla-js" / "data" / "corrections.json"
+        good = {"date": "2026-10-20", "issue": DATE, "section": "경제", "before": "1", "after": "2", "reason": "오기"}
+        path.write_text(json.dumps({"items": [good]}), encoding="utf-8")
+        self.assertEqual(self.run_validate()[0], 0)
+        path.write_text(json.dumps({"items": [dict(good, issue="2026-01-01")]}), encoding="utf-8")
+        self.assertEqual(self.run_validate()[0], 1)
+        path.write_text(json.dumps({"items": [dict(good, reason="")]}), encoding="utf-8")
+        self.assertEqual(self.run_validate()[0], 1)
+
+    def test_rejects_render_breaking_shapes(self):
+        cases = [
+            lambda i: i.update(themes=[]),
+            lambda i: i.update(themes=None),
+            lambda i: i["themes"][0].pop("id"),
+            lambda i: i["themes"][0].update(summary="잘못된 요약"),
+            lambda i: i["themes"][0]["articles"][0].update(date=None),
+            lambda i: i["lead"].update(facts=None),
+            lambda i: i["trade"].update(stats={}),
+            lambda i: i["nps"]["alloc"][0].update(s="37%"),
+            lambda i: i.update(debt=[[2026, 1300]]),
+            lambda i: i.update(items=[None]),
+            lambda i: i.update(national={"items": []}),
+        ]
+        path = self.issues / f"{DATE}.json"
+        original = path.read_text(encoding="utf-8")
+        for mutate in cases:
+            with self.subTest(mutate=mutate):
+                path.write_text(original, encoding="utf-8")
+                self.edit(mutate)
+                code, output = self.run_validate()
+                self.assertEqual(code, 1)
+                self.assertIn("검사 실패", output)
+
+    def test_invalid_json_reports_failure(self):
+        (self.issues / f"{DATE}.json").write_text("{", encoding="utf-8")
+        self.assertEqual(self.run_validate("--deploy")[0], 1)
+
+    def test_invalid_index_reports_failure(self):
+        for value in [{"issues": []}, {"latest": "../bad", "issues": ["../bad"]}, []]:
+            with self.subTest(value=value):
+                (self.issues / "index.json").write_text(json.dumps(value), encoding="utf-8")
+                self.assertEqual(self.run_validate()[0], 1)
+
+    def test_duplicate_theme_ids_fail(self):
+        self.edit(lambda i: i["themes"].append(i["themes"][0].copy()))
+        self.assertEqual(self.run_validate()[0], 1)
+
+    def test_nums_failure_names_the_field_to_fix(self):
+        # 실패 로그만 보고 고칠 필드를 알 수 있어야 한다. 빈 기관 이름은 구조 검사가, 링크 형식·방향은 내용 검사가 각각 필드를 지목한다
+        original = (self.issues / f"{DATE}.json").read_text(encoding="utf-8")
+        self.edit(lambda i: i["nums"][0]["src"].update(name=" "))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("nums[0].src.name", out)
+        (self.issues / f"{DATE}.json").write_text(original, encoding="utf-8")
+        self.edit(lambda i: i["nums"][0]["src"].update(url="http://example.org/plain"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("nums[0]", out)
+        self.assertIn("src.url", out)
+        self.assertIn("http://example.org/plain", out)
+        self.assertNotIn("dir 값은", out)
+        self.edit(lambda i: i["nums"][0].update(dir="rise"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("dir 값은 up/down/flat", out)
+        self.assertIn("'rise'", out)
+
+    def test_debt_rows_must_be_ordered_and_plausible(self):
+        self.edit(lambda i: i.update(debt=[[2026, 1300, 50, "전망"], [2025, 1200, 48, "결산"]]))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("debt 연도 순서", out)
+        self.edit(lambda i: i.update(debt=[[2025, 12000, 48, "결산"]]))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("debt 2025", out)
+
+    def test_regions_only_accept_seventeen_provinces(self):
+        self.edit(lambda i: i["regions"]["items"][0].update(region="수도권"))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("regions[0] 시도 이름 오류 '수도권'", out)
+
+
+class ApproveTest(Site):
+    def test_draft_becomes_published_and_passes_deploy(self):
+        self.edit(lambda i: i.update(status="draft", collectedAt="2026-10-19T00:20:00+09:00"))
+        now = dt.datetime(2026, 10, 19, 7, 40, tzinfo=approve.KST)
+        approve.approve(DATE, "검토자", now)
+        issue = json.loads((self.issues / f"{DATE}.json").read_text(encoding="utf-8"))
+        self.assertEqual(issue["status"], "published")
+        self.assertEqual(issue["review"]["by"], "검토자")
+        self.assertEqual(self.run_validate("--deploy")[0], 0)
+
+    def test_auto_publish_is_marked_not_reviewed(self):
+        self.edit(lambda i: i.update(status="draft", collectedAt="2026-10-19T00:20:00+09:00"))
+        now = dt.datetime(2026, 10, 19, 6, 0, tzinfo=approve.KST)
+        approve.approve(DATE, "", now, auto=True)
+        issue = json.loads((self.issues / f"{DATE}.json").read_text(encoding="utf-8"))
+        self.assertEqual(issue["status"], "published")
+        self.assertEqual((issue["review"]["by"], issue["review"]["auto"], issue["review"]["scope"]), ("자동 발행", True, []))
+        self.assertEqual(self.run_validate("--deploy")[0], 0)
+
+    def test_only_drafts(self):
+        with self.assertRaises(ValueError):
+            approve.approve(DATE, "검토자")
+
+
+class FeedTest(Site):
+    def test_feed_is_valid_and_skips_drafts(self):
+        doc = xml.dom.minidom.parseString(build_feed.build().encode("utf-8"))
+        items = doc.getElementsByTagName("item")
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0].getElementsByTagName("link")[0].firstChild.data, build_feed.SITE + DATE)
+        self.edit(lambda i: i.update(status="draft"))
+        doc = xml.dom.minidom.parseString(build_feed.build().encode("utf-8"))
+        self.assertEqual(len(doc.getElementsByTagName("item")), 0)
+
+    def test_sitemap_lists_home_and_skips_drafts(self):
+        doc = xml.dom.minidom.parseString(build_feed.build_sitemap().encode("utf-8"))
+        locs = [n.firstChild.data for n in doc.getElementsByTagName("loc")]
+        self.assertEqual(locs[:2], [build_feed.SITE, build_feed.SITE + DATE])
+        self.assertIn(build_feed.SITE + "archive/", locs)
+        self.assertIn(build_feed.SITE + "topics/", locs)
+        self.assertEqual(len(locs), len(set(locs)))
+        self.assertEqual(doc.getElementsByTagName("lastmod")[0].firstChild.data, DATE)
+        self.edit(lambda i: i.update(status="draft"))
+        doc = xml.dom.minidom.parseString(build_feed.build_sitemap().encode("utf-8"))
+        self.assertEqual(len(doc.getElementsByTagName("lastmod")), 0)
+
+    def test_feed_names_the_update_hub(self):
+        self.assertIn(f'<atom:link href="{build_feed.HUB}" rel="hub"/>', build_feed.build())
+
+    def test_news_sitemap_lists_only_issues_public_within_two_days(self):
+        day = dt.date.fromisoformat(DATE)
+        self.edit(lambda i: i.update(status="published", review={"by": "자동 발행", "at": f"{DATE}T09:04+09:00", "scope": [], "auto": True}))
+
+        def locs(now):
+            doc = xml.dom.minidom.parseString(build_feed.build_news_sitemap(now).encode("utf-8"))
+            return doc, [n.firstChild.data for n in doc.getElementsByTagName("loc")]
+
+        doc, found = locs(dt.datetime.combine(day, dt.time(12, 0), build_feed.KST))
+        self.assertEqual(found, [build_feed.SITE + DATE])
+        self.assertEqual(doc.getElementsByTagName("news:publication_date")[0].firstChild.data, f"{DATE}T09:04:00+09:00")
+        self.assertEqual(doc.getElementsByTagName("news:name")[0].firstChild.data, "대한민국 조간")
+        self.assertEqual(doc.getElementsByTagName("news:language")[0].firstChild.data, "ko")
+        self.assertTrue(doc.getElementsByTagName("news:title")[0].firstChild.data.strip())
+        # 공개 전 시각과 이틀이 지난 뒤에는 싣지 않는다
+        self.assertEqual(locs(dt.datetime.combine(day, dt.time(8, 0), build_feed.KST))[1], [])
+        self.assertEqual(locs(dt.datetime.combine(day + dt.timedelta(days=3), dt.time(12, 0), build_feed.KST))[1], [])
+        self.edit(lambda i: i.update(status="draft"))
+        self.assertEqual(locs(dt.datetime.combine(day, dt.time(12, 0), build_feed.KST))[1], [])
+
+    def test_news_sitemap_escapes_titles(self):
+        def change(issue):
+            issue.update(status="published", review={"at": f"{DATE}T06:00+09:00", "auto": True})
+            issue["lead"]["headline"] = "A & B <c>"
+
+        self.edit(change)
+        text = build_feed.build_news_sitemap(dt.datetime.combine(dt.date.fromisoformat(DATE), dt.time(12, 0), build_feed.KST))
+        self.assertIn("<news:title>A &amp; B &lt;c&gt;</news:title>", text)
+
+
+def ecos(*pairs):
+    return {"StatisticSearch": {"list_total_count": len(pairs), "row": [{"TIME": t, "DATA_VALUE": v} for t, v in pairs]}}
+
+
+class EcosTest(unittest.TestCase):
+    def test_change_and_direction(self):
+        n = ecos_nums.to_num("usdkrw", ecos(("20261016", "1,470.5"), ("20261015", "1465.0")))
+        self.assertEqual(n["v"], "1,470.5원")
+        self.assertEqual(n["dir"], "up")
+        self.assertEqual(n["d"], "+5.5원 (+0.38%)")
+        self.assertEqual(n["src"]["base"], "2026-10-16")
+        self.assertTrue(n["src"]["url"].startswith("https://"))
+
+    def test_down_and_flat(self):
+        down = ecos_nums.to_num("kospi", ecos(("20261015", "5800"), ("20261016", "5668.05")))
+        self.assertEqual((down["dir"], down["v"]), ("down", "5,668.05"))
+        self.assertTrue(down["d"].startswith("−131.95"))
+        flat = ecos_nums.to_num("base_rate", ecos(("20261015", "2.5"), ("20261016", "2.5")))
+        self.assertEqual((flat["dir"], flat["v"]), ("flat", "2.50%"))
+
+    def test_error_response_is_skipped(self):
+        raw = {"series": {"kospi": {"RESULT": {"CODE": "INFO-200", "MESSAGE": "해당하는 데이터가 없습니다."}}, "usdkrw": ecos(("20261016", "1470"))}}
+        nums = ecos_nums.convert(raw)
+        self.assertEqual([n["k"] for n in nums], ["원·달러 환율"])
+        self.assertEqual(nums[0]["dir"], "flat")
+
+
+class TokensTest(unittest.TestCase):
+    def test_committed_css_matches_tokens(self):
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(build_tokens.main(["--check"]), 0)
+
+    def test_themes_and_aliases(self):
+        css = build_tokens.build({
+            "name": "t",
+            "color": {"themes": [{"id": "light"}, {"id": "dark"}], "tokens": [
+                {"name": "brand", "value": {"light": "#0047a0", "dark": "#86aeea"}},
+                {"name": "focus", "value": "{brand}"},
+            ]},
+            "type": {"families": {"sans": "sans-serif"}},
+            "radius": {"tokens": [{"name": "radius-md", "value": "8px"}]},
+        })
+        self.assertIn("--focus: var(--brand);", css)
+        self.assertIn("--radius-md: 8px;", css)
+        self.assertIn("--font-sans: sans-serif;", css)
+        # 다크 값은 사용자가 선택한 화면에서만 적용한다
+        self.assertEqual(css.count("--brand: #86aeea;"), 1)
+        self.assertIn(':root[data-theme="dark"]', css)
+        self.assertNotIn("prefers-color-scheme", css)
+        self.assertIn(':root[data-theme="light"]', css)
+        self.assertIn('color-scheme: light;', css)
+
+
+if __name__ == "__main__":
+    unittest.main()
