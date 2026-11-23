@@ -26,3 +26,7 @@ jobs:
           ref: ${{ inputs.source_sha || github.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/verify
+      - name: 실제 Google 태그의 페이지뷰 요청을 브라우저 안에서 검증
+        run: |
+          python3 backend-python/pipeline/build/build_pages.py
+          node project/tests/browser/law-analytics-smoke.cjs
