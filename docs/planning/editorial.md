@@ -94,18 +94,18 @@ AI가 원문에 접근했더라도 기존 `read`·`body_read`·`review`를 승�
 새 호는 기준 커밋에 아직 파일이 없을 수 있으므로 `--baseline-file`로 조사 직후 사실 초안을 대조합니다. 실제 임시 파일 경로와 한국 시간 오늘 날짜로 바꿔 실행합니다.
 
 ```bash
-python3 dev/pipeline/publish/validate.py
-python3 dev/pipeline/publish/check_editorial.py --baseline-file /tmp/jogan-facts-YYYY-MM-DD.json --date YYYY-MM-DD
-python3 dev/pipeline/publish/validate.py
+python3 backend-python/pipeline/publish/validate.py
+python3 backend-python/pipeline/publish/check_editorial.py --baseline-file /tmp/jogan-facts-YYYY-MM-DD.json --date YYYY-MM-DD
+python3 backend-python/pipeline/publish/validate.py
 ```
 
 첫 `validate.py`는 사실 초안을 만든 직후, 나머지 두 검사는 문체 편집 후에 실행합니다. 이미 원격에 있는 오늘 미공개 초안만 편집하는 경우에는 기준 SHA에 그 파일이 있을 때 아래 방식도 사용할 수 있습니다.
 
 ```bash
-python3 dev/pipeline/publish/check_editorial.py --base-ref <기준-daily-40자리-SHA> --date YYYY-MM-DD
+python3 backend-python/pipeline/publish/check_editorial.py --base-ref <기준-daily-40자리-SHA> --date YYYY-MM-DD
 ```
 
-[편집 검사](../../dev/pipeline/publish/check_editorial.py)는 같은 호의 수정 전후를 대조해 허용 필드·자료 구조·숫자와 단위의 필드별 보존·본문 URL·한정 표현 등을 검사합니다. 숫자의 쉼표·단위 앞 공백·유니코드 마이너스는 정규화해 비교합니다. 공개 호는 대상에서 제외합니다. 토큰 일치만으로 고유명사·주체와 대상·인용 귀속·인과 관계의 보존을 증명하지 못하므로 원문과 의미 대조가 필요합니다. 검사 통과를 편집 품질·원문의 진실성·완독·사람 확인의 증거로 표현하지 않습니다.
+[편집 검사](../../backend-python/pipeline/publish/check_editorial.py)는 같은 호의 수정 전후를 대조해 허용 필드·자료 구조·숫자와 단위의 필드별 보존·본문 URL·한정 표현 등을 검사합니다. 숫자의 쉼표·단위 앞 공백·유니코드 마이너스는 정규화해 비교합니다. 공개 호는 대상에서 제외합니다. 토큰 일치만으로 고유명사·주체와 대상·인용 귀속·인과 관계의 보존을 증명하지 못하므로 원문과 의미 대조가 필요합니다. 검사 통과를 편집 품질·원문의 진실성·완독·사람 확인의 증거로 표현하지 않습니다.
 
 커밋 예시는 초안+색인에 `data(issue): YYYY-MM-DD호 조사와 문장 편집 초안`, 추적 갱신에 `data(site): 확인된 이슈 추적 근거 갱신`입니다. 편집된 초안의 공개는 사람 확인 또는 안정 `main`의 아침 발행이 담당합니다. 아침 발행은 고정 일일 SHA의 CI·허용 파일·운영 동시 변경을 확인해 오늘 자료만 가져옵니다. 일일 브랜치 전체나 작업 브랜치 코드를 운영에 병합하지 않습니다. [브랜치별 역할](../dev/branches.md#브랜치와-환경)
 

@@ -10,7 +10,7 @@
 - 어두운 지면은 `#1c1d1b` 바탕과 `#262724` 기사 면 위에 밝은 본문과 연한 적갈색 링크를 쓴다. 그래프의 범례·방향과 포커스는 구분되는 색과 글자·기호를 사용한다.
 - 제호·머리기사·대표 수치에는 Noto Serif KR을, 본문과 메뉴에는 Noto Sans KR을 쓴다. 본문은 좁은 화면 18px, 넓은 화면 19px, 글자 크게는 23px를 기준으로 한다.
 - 조간의 `ㅈ`과 짧은 새벽빛 획을 심벌로 사용한다. 지면에서는 읽을 수 있는 제호 옆에 표시하고, 공유 카드에는 신문 너머로 해가 뜨는 ‘첫 빛’ 이미지를 쓴다.
-- 신문과 법률면의 공통 지면색·제호 서체는 [press.css](dev/web/src/styles/press.css)에서 관리한다. 공용 컨트롤의 토큰 원본은 [design/tokens.json](design/tokens.json)이고, [tokens.css](dev/web/src/styles/tokens.css)는 `python3 dev/pipeline/build/build_tokens.py`로 생성한다.
+- 신문과 법률면의 공통 지면색·제호 서체는 [press.css](frontend-vanilla-js/src/styles/press.css)에서 관리한다. 공용 컨트롤의 토큰 원본은 [design/tokens.json](design/tokens.json)이고, [tokens.css](frontend-vanilla-js/src/styles/tokens.css)는 `python3 backend-python/pipeline/build/build_tokens.py`로 생성한다.
 
 ## 구성과 조작
 

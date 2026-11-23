@@ -2,7 +2,7 @@
 
 **커밋 제목에는 바뀐 내용을, 본문에는 변경 이유와 검증 범위를 남깁니다.** 한 커밋에는 설명 가능한 주제 하나를 담고, 문서마다 목적이 다르면 커밋도 나눕니다.
 
-[문서 안내](../README.md) · [브랜치와 배포](branches.md) · [검사기](../../dev/tools/check_commit_msg.mjs)
+[문서 안내](../README.md) · [브랜치와 배포](branches.md) · [검사기](../../tools/check_commit_msg.mjs)
 
 ## 형식
 
@@ -62,14 +62,14 @@
 저장소 루트에서 로컬 훅을 설정합니다.
 
 ```bash
-git config core.hooksPath dev/tools/githooks
+git config core.hooksPath tools/githooks
 ```
 
 메시지 파일 하나 또는 PR의 커밋 범위를 검사할 수도 있습니다.
 
 ```bash
-node dev/tools/check_commit_msg.mjs .git/COMMIT_EDITMSG
-node dev/tools/check_commit_msg.mjs --range origin/main..HEAD
+node tools/check_commit_msg.mjs .git/COMMIT_EDITMSG
+node tools/check_commit_msg.mjs --range origin/main..HEAD
 ```
 
 검사기는 형식·종류·범위·길이·끝 마침표를 확인합니다. 한국어 여부나 본문 품질까지 판정하지는 않습니다. PR 검사 실패가 실제 병합을 막는지는 저장소 보호 설정에 달려 있습니다.

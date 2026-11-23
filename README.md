@@ -4,17 +4,29 @@
 
 **곽민상 · 1인 기획·UI 설계·프론트엔드 개발·운영**
 
-HTML, CSS, 바닐라 JavaScript로 화면을 구현하고 Python으로 발행할 HTML과 데이터를 생성합니다. GitHub Actions에서 검사한 뒤 GitHub Pages로 공개합니다.
+HTML·CSS·바닐라 JavaScript로 접근 가능한 지면을 만들고, Python·SQLite로 전국·지역 기사를 정제해 제공합니다.
 
 [운영 서비스](https://korea-jogan.com/) · [파기환송 직접 읽기](https://korea-jogan.com/politics/reversal-and-remand/) · [Notion 프로젝트 소개](https://app.notion.com/p/3ffcbbdd109b8167a28dd65769e55676)
+
+## 기술 스택과 코드 위치
+
+| 폴더 | 기술 | 확인할 구현 |
+| --- | --- | --- |
+| [frontend-vanilla-js/](frontend-vanilla-js/) | HTML · CSS · 바닐라 JavaScript | 키보드로 조작하는 [판례 검색](frontend-vanilla-js/law/)과 [날짜별 기사 찾기](frontend-vanilla-js/src/components/national/edition-search.js), 글자 확대·동작 줄이기를 지원하는 지면 컴포넌트 |
+| [backend-python/](backend-python/) | Python · SQLite | [기사 저장소와 읽기 API](backend-python/README.md). 기사 정정 시 같은 ID로 내용을 갱신하고, 호 날짜·보도일·원문을 함께 저장 |
+| [tests/](tests/) · [GitHub Actions](.github/workflows/) | unittest · Playwright · GitHub Actions | 지난 호·키보드 조작 검사, API와 지면 대조, 검증한 커밋의 배포 |
+
+**기사 한 건이 독자에게 도달하는 과정**
+
+발행 목록에 오른 [호별 지면 원본](frontend-vanilla-js/data/issues/)에서 전국·지역 기사를 뽑아 SQLite에 저장합니다. 같은 데이터로 날짜별·기사별 JSON을 만들어 지면과 함께 배포합니다. 독자가 ‘날짜별 기사 찾기’를 열면 선택한 날짜의 자료를 읽어 제목·언론사·지역으로 검색합니다. [기사 찾기](https://korea-jogan.com/#editionSearch) · [공개 API](https://korea-jogan.com/api/v1/index.json)
 
 ## 대표 구현 세 가지
 
 | 독자가 겪는 상황 | 설계·구현한 내용 | 확인할 자료 |
 | --- | --- | --- |
-| 판례의 정식 명칭을 몰라 같은 내용을 다시 검색해야 합니다. | ‘전세금’과 ‘임대차보증금’처럼 생활어와 법률 용어를 연결했습니다. 결과에 사건번호·선고일을 표시하고 해당 판결문을 바로 엽니다. | [전세보증금 사례](https://korea-jogan.com/law/?issue=rental-deposit) · [검색 규칙](dev/web/law/search-core.js) |
-| 키보드로 판결문 문제를 풀 때 어떤 답을 선택했고 다음에 무엇을 할 수 있는지 알아야 합니다. | 라디오 버튼으로 답을 선택하고, 선택 없이 확인하면 첫 선택지로 포커스를 보냅니다. 결과는 보조기기에 알리고, 자바스크립트를 꺼도 해설과 원문을 열 수 있게 했습니다. | [문제 컴포넌트](dev/web/src/components/question-recall/recall.js) · [키보드 회귀 검사](dev/tests/browser/question-recall.cjs) |
-| 나중에 갱신한 내용을 오래된 기사에 붙이면 당시 독자가 알았던 사실이 달라집니다. | 질문의 마지막 확인일과 사건의 실제 변경일을 분리했습니다. 날짜별 호를 생성할 때 그날까지 확인한 질문만 싣고, 각 질문의 고정 주소에 답과 출처를 함께 넣었습니다. | [호별 페이지 생성](dev/pipeline/build/build_politics.py) · [날짜 경계 검사](dev/tests/test_politics_build.py) |
+| 판례의 정식 명칭을 몰라 같은 내용을 다시 검색해야 합니다. | ‘전세금’과 ‘임대차보증금’처럼 생활어와 법률 용어를 연결했습니다. 결과에 사건번호·선고일을 표시하고 해당 판결문을 바로 엽니다. | [전세보증금 사례](https://korea-jogan.com/law/?issue=rental-deposit) · [검색 규칙](frontend-vanilla-js/law/search-core.js) |
+| 키보드로 판결문 문제를 풀 때 어떤 답을 선택했고 다음에 무엇을 할 수 있는지 알아야 합니다. | 라디오 버튼으로 답을 선택하고, 선택 없이 확인하면 첫 선택지로 포커스를 보냅니다. 결과는 보조기기에 알리고, 자바스크립트를 꺼도 해설과 원문을 열 수 있게 했습니다. | [문제 컴포넌트](frontend-vanilla-js/src/components/question-recall/recall.js) · [키보드 회귀 검사](tests/browser/question-recall.cjs) |
+| 나중에 갱신한 내용을 오래된 기사에 붙이면 당시 독자가 알았던 사실이 달라집니다. | 질문의 마지막 확인일과 사건의 실제 변경일을 분리했습니다. 날짜별 호를 생성할 때 그날까지 확인한 질문만 싣고, 각 질문의 고정 주소에 답과 출처를 함께 넣었습니다. | [호별 페이지 생성](backend-python/pipeline/build/build_politics.py) · [날짜 경계 검사](tests/test_politics_build.py) |
 
 검색 규칙, 질문 본문, 답을 확인하는 동작을 분리해 편집 데이터와 UI를 독립적으로 바꿀 수 있습니다. 대표 질문과 답 옆에 새벽 삽화를 두고, 모바일에서는 답과 근거 링크를 읽은 뒤 풍경과 관련 질문으로 넘어갑니다. [기술 구조](docs/dev/architecture.md) · [화면·접근성 설계](design/guide.md) · [Figma](https://www.figma.com/design/Eep2qLjiPT9jhDUyLU8Zjx)
 
@@ -39,7 +51,7 @@ HTML, CSS, 바닐라 JavaScript로 화면을 구현하고 Python으로 발행할
 Python 3.12와 Node.js 22를 사용합니다. 질문 상세·지난 호까지 보려면 저장소 루트에서 미리보기를 빌드한 뒤 `http://localhost:8001`을 엽니다.
 
 ```bash
-python3 dev/pipeline/build/build_preview.py
+python3 backend-python/pipeline/build/build_preview.py
 python3 -m http.server -d dist-preview 8001
 ```
 
@@ -47,10 +59,11 @@ python3 -m http.server -d dist-preview 8001
 <summary>데이터·디자인 토큰·브라우저 검사 명령</summary>
 
 ```bash
-python3 dev/pipeline/publish/validate.py
-python3 dev/pipeline/build/build_tokens.py --check
-python3 -m unittest discover -s dev/tests
-cd dev/tests/browser && npm ci && npx playwright install chromium && npm test
+python3 backend-python/pipeline/publish/validate.py
+python3 backend-python/pipeline/build/build_tokens.py --check
+python3 -m unittest discover -s tests
+python3 -m unittest discover -s backend-python/tests
+cd tests/browser && npm ci && npx playwright install chromium && npm test
 ```
 
 ECOS 키는 GitHub Secrets에서 관리합니다. GA4·Search Console 실적 조회에는 해당 속성의 읽기 권한이 필요합니다. [관리자 연결 안내](docs/dev/ga4-admin.md)

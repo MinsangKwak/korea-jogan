@@ -8,9 +8,9 @@ import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const pub = path.join(here, '..', '..', 'dev', 'web', 'assets', 'images');
+const pub = path.join(here, '..', '..', 'frontend-vanilla-js', 'assets', 'images');
 // CJS로 받으면 chromium이 default 안에 들어 있다
-const require = createRequire(path.join(here, '..', '..', 'dev', 'tests', 'browser', 'package.json'));
+const require = createRequire(path.join(here, '..', '..', 'tests', 'browser', 'package.json'));
 const pw = process.env.PLAYWRIGHT_MODULE ? await import(process.env.PLAYWRIGHT_MODULE) : require('playwright');
 const chromium = pw.chromium || pw.default.chromium;
 
@@ -28,7 +28,7 @@ for (const [src, out, width, height, scale] of SHOTS) {
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: path.join(pub, out), type: 'png' });
   await page.close();
-  console.log('저장: dev/web/assets/images/' + out);
+  console.log('저장: frontend-vanilla-js/assets/images/' + out);
 }
 // PNG 자료를 담는 표준 ICO 컨테이너. 탭·즐겨찾기의 작은 크기도 각각 그린다
 const icoImages = [];
@@ -53,5 +53,5 @@ icoImages.forEach(({ size, data }, index) => {
   offset += data.length;
 });
 await fs.writeFile(path.join(pub, '..', '..', 'favicon.ico'), Buffer.concat([directory, ...icoImages.map(({ data }) => data)]));
-console.log('저장: dev/web/favicon.ico');
+console.log('저장: frontend-vanilla-js/favicon.ico');
 await browser.close();

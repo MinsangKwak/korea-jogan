@@ -12,7 +12,7 @@
 | `main` | 운영 코드 + 공개 데이터 | 검사·미리보기를 확인한 PR 병합, 일일 데이터의 제한된 반영 | push마다 [korea-jogan.com](https://korea-jogan.com/) 배포 |
 | `daily/YYYY-MM-DD` | 그날의 조사·초안·색인·실제 추적 갱신 | `main`에서 생성, 허용 데이터만 가져오기 | 미리보기 없음 |
 
-`dev/web/`는 브랜치가 아닌 디렉터리이며 모든 브랜치에서 같은 경로를 사용합니다. 미완성·배포 보류 기능은 작업 브랜치에 남기고 PR을 병합하지 않습니다. `main`에 병합하는 순간 운영에 나가므로 PR의 검사와 미리보기가 마지막 확인 단계입니다. 공개된 이력을 다시 쓰거나 강제 push하지 않습니다.
+`frontend-vanilla-js/`는 브랜치가 아닌 디렉터리이며 모든 브랜치에서 같은 경로를 사용합니다. 미완성·배포 보류 기능은 작업 브랜치에 남기고 PR을 병합하지 않습니다. `main`에 병합하는 순간 운영에 나가므로 PR의 검사와 미리보기가 마지막 확인 단계입니다. 공개된 이력을 다시 쓰거나 강제 push하지 않습니다.
 
 ```mermaid
 flowchart LR
@@ -38,14 +38,14 @@ flowchart LR
 | 파일 | 트리거 | 책임 |
 | --- | --- | --- |
 | [check.yml](../../.github/workflows/check.yml) | `main` 대상 PR, `daily/**` push | 쓰기 권한 없이 [공통 검사 작업](../../.github/actions/verify/action.yml) 실행 = `verify-ci` |
-| Vercel Git 연동 | `main`·`daily/*`를 뺀 브랜치 push | [build_preview.py](../../dev/pipeline/build/build_preview.py)로 보호된 미리보기 빌드 |
+| Vercel Git 연동 | `main`·`daily/*`를 뺀 브랜치 push | [build_preview.py](../../backend-python/pipeline/build/build_preview.py)로 보호된 미리보기 빌드 |
 | [deploy-pages.yml](../../.github/workflows/deploy-pages.yml) | `main` push, 수동(고정 SHA), 평일 KST 09:17~22:17 매시 | 배포 SHA 고정 → 같은 SHA의 전체 검사 성공 증거가 없으면 전체 검사 → `validate --deploy` → RSS·사이트맵·호별 HTML·`live.json`·`build-info.json` 생성 → Pages → 공개 확인. 실패 시 같은 소스로 최대 두 번 재시도 |
 | [publish.yml](../../.github/workflows/publish.yml) | KST 06:00·06:07·06:37·07:17·08:17 (`main` 참조) | 오늘 `daily` SHA의 CI 확인 → 허용 데이터만 준비 → 자동 승인 → `main` 반영 → Pages 호출 → 공개 `build-info.json` 오늘 호·SHA 대조 |
 | [daily.yml](../../.github/workflows/daily.yml) | 매일 04:30 KST·수동 | RSS 원자료·이슈 추적 편집 후보. ECOS는 수동 실행 시 수집 |
 
 공통 검사 작업은 데이터 검사·토큰 CSS 일치·Python 시험·PR 커밋 제목·브라우저 검사를 한 실행 환경에서 수행합니다. 검사를 삭제하거나 경로 필터로 건너뛰지 않습니다.
 
-`GITHUB_TOKEN` push는 후속 Actions를 자동 시작하지 않으므로 일일 발행은 `main` 반영 뒤 같은 SHA로 `deploy-pages.yml`을 명시적으로 호출합니다([auto_release.py](../../dev/pipeline/publish/auto_release.py)). `deploy-pages.yml`은 이벤트 종류와 상관없이 배포할 `main` SHA에 성공한 `verify`·`verify-ci`가 없으면 그 SHA를 다시 전체 검사한 뒤에만 배포합니다. 그래서 병합 push의 검사가 실패한 코드가 다음 매시 예약이나 수동 실행으로 공개되지 않고, 일일 발행 커밋도 배포 전에 한 번 검사합니다(약 3분 추가). 시간당 배포는 SHA가 같아도 `builtAt`이 이번 결과와 같아야 공개 완료로 봅니다([verify_publication.py](../../dev/pipeline/publish/verify_publication.py)).
+`GITHUB_TOKEN` push는 후속 Actions를 자동 시작하지 않으므로 일일 발행은 `main` 반영 뒤 같은 SHA로 `deploy-pages.yml`을 명시적으로 호출합니다([auto_release.py](../../backend-python/pipeline/publish/auto_release.py)). `deploy-pages.yml`은 이벤트 종류와 상관없이 배포할 `main` SHA에 성공한 `verify`·`verify-ci`가 없으면 그 SHA를 다시 전체 검사한 뒤에만 배포합니다. 그래서 병합 push의 검사가 실패한 코드가 다음 매시 예약이나 수동 실행으로 공개되지 않고, 일일 발행 커밋도 배포 전에 한 번 검사합니다(약 3분 추가). 시간당 배포는 SHA가 같아도 `builtAt`이 이번 결과와 같아야 공개 완료로 봅니다([verify_publication.py](../../backend-python/pipeline/publish/verify_publication.py)).
 
 2026.11.21 이전의 `dev` 통합 → `integration.yml`·`promote.yml`의 태그·`main`·`deploy` 자동 승격 경로는 브랜치 정리와 함께 없앴습니다. 기존 `release-*` 태그는 당시 기록으로 남깁니다.
 
@@ -56,7 +56,7 @@ flowchart LR
 | 항목 | 값 |
 | --- | --- |
 | 팀·프로젝트 | `minsangkwaks-projects`(Hobby) · `korea-jogan-dev` · Git `MinsangKwak/korea-jogan` · OWNER 1명 |
-| 배포 대상 | [vercel.json](../../vercel.json): `main`·`daily/*`를 뺀 모든 브랜치(PR 미리보기), `buildCommand` = [build_preview.py](../../dev/pipeline/build/build_preview.py), 출력 `dist-preview` |
+| 배포 대상 | [vercel.json](../../vercel.json): `main`·`daily/*`를 뺀 모든 브랜치(PR 미리보기), `buildCommand` = [build_preview.py](../../backend-python/pipeline/build/build_preview.py), 출력 `dist-preview` |
 | 보호 | 모든 배포에 Vercel Authentication. 로그인과 프로젝트 접근 권한은 별개 |
 | 주소 | PR 브랜치별 `korea-jogan-dev-git-<브랜치>-minsangkwaks-projects.vercel.app`(빌드 시 `VERCEL_BRANCH_URL`을 원점으로 사용) · `dev.korea-jogan.com`은 Vercel에서 연결한 배포만 가리킴 |
 | DNS | Gabia `CNAME dev → 7e4c24757c5a10ba.vercel-dns-017.com.`(TTL 600). 루트 A 레코드 유지, `cname.vercel-dns.com.` 중복 추가 금지. Vercel HTTPS 확인 이력 있음, 사용자 PC NXDOMAIN은 별도 확인 |
@@ -69,11 +69,11 @@ flowchart LR
 | 관리자 | 개발·읽기 전용 안내 | 발행 현황 + 권한 있는 계정의 GA4·검색 조회 |
 | 데이터 | 공개 호만(`preview-build.json`에 브랜치·SHA·포함 호 기록) | 배포 검사 통과 공개 호(`build-info.json`) |
 
-`noindex`는 접근 권한이 아닙니다. 로컬 확인은 `python3 dev/pipeline/build/build_preview.py && python3 -m http.server -d dist-preview 8001`이며 인증은 재현되지 않습니다.
+`noindex`는 접근 권한이 아닙니다. 로컬 확인은 `python3 backend-python/pipeline/build/build_preview.py && python3 -m http.server -d dist-preview 8001`이며 인증은 재현되지 않습니다.
 
 ## 일일 발행 경로의 보호 조건
 
-[prepare_daily.py](../../dev/pipeline/publish/prepare_daily.py)가 안정 `main` 작업본에서 고정 소스 SHA의 오늘 JSON·색인·추적 자료만 가져옵니다. 다음이면 중단합니다.
+[prepare_daily.py](../../backend-python/pipeline/publish/prepare_daily.py)가 안정 `main` 작업본에서 고정 소스 SHA의 오늘 JSON·색인·추적 자료만 가져옵니다. 다음이면 중단합니다.
 
 - 변경 파일이 오늘 호·`index.json`·`trackers.json` 밖에 있음(코드·과거 호·검사 스크립트 혼입)
 - 색인이 `main`의 기존 날짜를 보존하지 않거나 `latest`가 오늘이 아님
@@ -87,7 +87,7 @@ flowchart LR
 
 | 증상 | 먼저 확인할 내용 |
 | --- | --- |
-| PR 미리보기가 Error | Vercel 빌드 로그. `main`·`daily/*`·SHA 없는 빌드는 [build_preview.py](../../dev/pipeline/build/build_preview.py)가 의도적으로 거부 |
+| PR 미리보기가 Error | Vercel 빌드 로그. `main`·`daily/*`·SHA 없는 빌드는 [build_preview.py](../../backend-python/pipeline/build/build_preview.py)가 의도적으로 거부 |
 | 병합했는데 배포 안 됨 | `deploy-pages.yml`의 `verify` 작업 실패 여부 → `deploy` 작업 |
 | 개발 주소가 안 열림 | Gabia DNS·Vercel 도메인 확인·배포 보호 권한 |
 | 브랜치 반영 뒤 화면이 그대로임 | Pages 실행·배포 대상 SHA·공개 색인·`build-info.json` |

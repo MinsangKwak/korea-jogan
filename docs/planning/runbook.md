@@ -39,10 +39,10 @@ Codex 예약에는 별도 모델 API 키가 필요 없지만 GitHub 조회·쓰�
 원격을 가져와 안정 `main`의 최신 SHA에서 `daily/YYYY-MM-DD`를 만듭니다. 작업 브랜치에서 만들지 않으며 같은 날짜 브랜치가 있으면 상태·SHA를 읽고 덮어쓰지 않습니다. `index.json`이 가리키는 지난 호를 새 호의 틀로 씁니다.
 
 ```bash
-python3 dev/pipeline/collect/fetch_rss.py --date YYYY-MM-DD
+python3 backend-python/pipeline/collect/fetch_rss.py --date YYYY-MM-DD
 ```
 
-GitHub Actions의 **일일 수집 → rss** 실행 로그 또는 실행 아티팩트(`rss-<실행 ID>`)에서 결과를 확인합니다. 원자료 `dev/pipeline/collect/raw/rss/YYYY-MM-DD.json`의 `trackingCandidates`에 사안 ID와 RSS 제목·기사 주소가 있으며 `feeds`에는 피드별 성공·실패가 남습니다. 편집자는 후보 기사 원문에서 당사자·결정일·공개된 절차를 확인한 뒤 새 근거가 있는 사안만 갱신합니다. 피드 설정은 [feeds.json](../../dev/pipeline/collect/feeds.json)이며, 피드에 제목이 있다는 사실과 본문 접근 허용은 별개입니다.
+GitHub Actions의 **일일 수집 → rss** 실행 로그 또는 실행 아티팩트(`rss-<실행 ID>`)에서 결과를 확인합니다. 원자료 `backend-python/pipeline/collect/raw/rss/YYYY-MM-DD.json`의 `trackingCandidates`에 사안 ID와 RSS 제목·기사 주소가 있으며 `feeds`에는 피드별 성공·실패가 남습니다. 편집자는 후보 기사 원문에서 당사자·결정일·공개된 절차를 확인한 뒤 새 근거가 있는 사안만 갱신합니다. 피드 설정은 [feeds.json](../../backend-python/pipeline/collect/feeds.json)이며, 피드에 제목이 있다는 사실과 본문 접근 허용은 별개입니다.
 
 ## 2. 자료 조사
 
@@ -58,8 +58,8 @@ GitHub Actions의 **일일 수집 → rss** 실행 로그 또는 실행 아티�
 기사 수는 편집 목표이며 검사가 보장하지 않습니다. 부족하면 날짜 범위와 누락을 `limits`에 공개하고 기사를 만들지 않습니다. `ECOS_API_KEY`가 있으면 공식 숫자를 먼저 수집합니다.
 
 ```bash
-python3 dev/pipeline/collect/fetch_ecos.py --date YYYY-MM-DD
-python3 dev/pipeline/collect/ecos_nums.py YYYY-MM-DD
+python3 backend-python/pipeline/collect/fetch_ecos.py --date YYYY-MM-DD
+python3 backend-python/pipeline/collect/ecos_nums.py YYYY-MM-DD
 ```
 
 ## 3. 초안 작성과 저장
@@ -67,7 +67,7 @@ python3 dev/pipeline/collect/ecos_nums.py YYYY-MM-DD
 `status: draft`로 호 파일을 쓰고 색인의 `latest`·`issues`에 오늘을 넣습니다. 발행일·수집 시각·머리기사·핵심 수치 3개·꼭 볼 숫자 4~6개·일정·당일 뉴스는 새로 정리하고 이월 지표는 기준일·출처를 유지합니다.
 
 ```bash
-python3 dev/pipeline/publish/validate.py
+python3 backend-python/pipeline/publish/validate.py
 ```
 
 실패 메시지는 `파일: 필드` 형태로 고칠 곳을 지목하므로 그 항목부터 수정합니다. 지난 자료를 유지하면 `limits`에 이유를 적고 오래된 값을 오늘 확인한 값처럼 바꾸지 않습니다. 해결하지 못하면 발행을 중단하고 보고합니다. 커밋은 `data(issue): YYYY-MM-DD호 초안`(편집까지 마쳤으면 그 역할을 드러내는 제목), 추적 갱신은 별도 커밋. 예상 SHA로 오늘 `daily`에 반영하고 그 SHA의 CI를 확인합니다.
@@ -78,18 +78,18 @@ python3 dev/pipeline/publish/validate.py
 
 ## 4. 사람 확인 또는 자동 공개
 
-사람이 확인할 때는 `python3 -m http.server -d dev/web 8000`으로 로컬 화면을 열어 `lead`·`nums`·`themes[].diffs`를 원문과 대조한 뒤에만 실행합니다.
+사람이 확인할 때는 `python3 -m http.server -d frontend-vanilla-js 8000`으로 로컬 화면을 열어 `lead`·`nums`·`themes[].diffs`를 원문과 대조한 뒤에만 실행합니다.
 
 ```bash
-python3 dev/pipeline/publish/approve.py YYYY-MM-DD --by 이름
-python3 dev/pipeline/publish/validate.py --deploy
+python3 backend-python/pipeline/publish/approve.py YYYY-MM-DD --by 이름
+python3 backend-python/pipeline/publish/validate.py --deploy
 ```
 
 확인한 호는 `data(issue): YYYY-MM-DD호 승인`으로 오늘 `daily`에 저장합니다. 06시까지 확인이 없으면 워크플로가 `approve.py --auto`로 전환해 `data(issue): YYYY-MM-DD호 자동 발행` 커밋을 남깁니다. 자동 경로에는 사람 이름을 쓰지 않으며, `published`는 공개 상태일 뿐 `review.auto`가 확인 여부를 구분합니다. 이미 공개된 호에 승인 명령을 반복하지 않습니다.
 
 ## 5. 반영과 배포 확인
 
-`publish.yml`은 안정 `main` 코드로 오늘 `daily`의 정확한 SHA와 `verify-ci` 성공을 확인하고 [prepare_daily.py](../../dev/pipeline/publish/prepare_daily.py)로 오늘 JSON·색인·실제 추적 변경만 가져옵니다(허용 경로·색인 보존·동시 변경 검사는 [보호 조건](../dev/branches.md#일일-발행-경로의-보호-조건)). 미확인 초안을 자동 공개하고 `main`에 push한 뒤 Pages를 명시적으로 호출합니다. 이어서 [verify_publication.py](../../dev/pipeline/publish/verify_publication.py) `--expect-today`가 최대 15분 동안 공개 색인·호 JSON·홈·`build-info.json`이 오늘(KST) 호와 원격 `main` SHA인지 대조하고, 다르면 실행을 실패시킵니다(06시 전 실행은 건너뜀). 일일 브랜치 전체나 그 브랜치의 코드는 병합·실행하지 않습니다.
+`publish.yml`은 안정 `main` 코드로 오늘 `daily`의 정확한 SHA와 `verify-ci` 성공을 확인하고 [prepare_daily.py](../../backend-python/pipeline/publish/prepare_daily.py)로 오늘 JSON·색인·실제 추적 변경만 가져옵니다(허용 경로·색인 보존·동시 변경 검사는 [보호 조건](../dev/branches.md#일일-발행-경로의-보호-조건)). 미확인 초안을 자동 공개하고 `main`에 push한 뒤 Pages를 명시적으로 호출합니다. 이어서 [verify_publication.py](../../backend-python/pipeline/publish/verify_publication.py) `--expect-today`가 최대 15분 동안 공개 색인·호 JSON·홈·`build-info.json`이 오늘(KST) 호와 원격 `main` SHA인지 대조하고, 다르면 실행을 실패시킵니다(06시 전 실행은 건너뜀). 일일 브랜치 전체나 그 브랜치의 코드는 병합·실행하지 않습니다.
 
 `deploy-pages.yml`은 `validate --deploy` → `build_feed.py` → `build_pages.py`(호별 HTML·CSP 해시) → `build_live.py`(실패해도 계속) → `build_info.py` → Pages 순서로 진행하고 공개 색인·호 JSON·홈·`build-info.json`의 날짜·SHA를 대조합니다. 06시를 넘겨 수집했다면 자료 기준은 전날 23:59로 두고 `late.reason`·`late.cutoff`를 남기며 수집 시각을 앞당겨 적지 않습니다.
 

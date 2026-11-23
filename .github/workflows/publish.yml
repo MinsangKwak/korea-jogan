@@ -46,18 +46,18 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: dev/tests/browser/package-lock.json
+          cache-dependency-path: tests/browser/package-lock.json
       - name: 브라우저 검사 도구 설치
-        working-directory: dev/tests/browser
+        working-directory: tests/browser
         run: npm ci
       - name: 준비된 Chromium 사용 또는 제한된 재시도 설치
-        working-directory: dev/tests/browser
+        working-directory: tests/browser
         run: python3 ../../tools/install_browser.py
       - name: 초안 복구·같은 SHA 검사·최근 누락 호 선별 발행
-        run: python3 dev/pipeline/publish/publish_pending.py
+        run: python3 backend-python/pipeline/publish/publish_pending.py
       # 사람이 하던 공개 build-info.json 대조를 자동화한다. 06시 전에는 건너뛰고 불일치면 실행을 실패시킨다
       - name: 공개 build-info의 오늘 호·main SHA 일치 확인
-        run: python3 dev/pipeline/publish/verify_publication.py --expect-today --timeout 900
+        run: python3 backend-python/pipeline/publish/verify_publication.py --expect-today --timeout 900
       # 알림은 발행 결과를 바꾸지 않는다. 설정이 없거나 실패해도 발행은 성공으로 남는다
       - name: 새로 공개한 최신 호를 텔레그램 채널에 알리기
         continue-on-error: true
@@ -67,4 +67,4 @@ jobs:
           BEFORE_SHA: ${{ steps.start.outputs.sha }}
         run: |
           git fetch origin main
-          python3 dev/pipeline/publish/notify_telegram.py --before "$BEFORE_SHA" --after origin/main
+          python3 backend-python/pipeline/publish/notify_telegram.py --before "$BEFORE_SHA" --after origin/main

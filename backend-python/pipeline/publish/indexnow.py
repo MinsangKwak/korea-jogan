@@ -1,0 +1,73 @@
+"""새로 배포한 주소를 IndexNow로 검색엔진(Bing·네이버 등)에 알린다. 배포 워크플로가 배포 직후 돌린다.
+
+사용: python backend-python/pipeline/publish/indexnow.py
+키는 비밀값이 아니다. frontend-vanilla-js/<키>.txt 파일로 이 도메인의 소유를 증명한다.
+알리지 못해도 배포는 이미 끝났으므로 0으로 끝내고 사유만 남긴다.
+"""
+from __future__ import annotations
+
+import json
+import sys
+import urllib.parse
+import urllib.request
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+# 발행 목록은 RSS와 같은 기준(backend-python/pipeline/build/build_feed.py)으로 읽는다
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "build"))
+
+import build_feed  # noqa: E402
+
+PUBLIC = Path(__file__).resolve().parents[3] / "frontend-vanilla-js"
+ENDPOINT = "https://api.indexnow.org/indexnow"
+HOST = "korea-jogan.com"
+
+
+def find_key() -> str:
+    for p in sorted(PUBLIC.glob("*.txt")):
+        text = p.read_text(encoding="utf-8").strip()
+        if p.stem == text and len(text) >= 8:
+            return text
+    raise FileNotFoundError("frontend-vanilla-js/<키>.txt 형태의 IndexNow 키 파일이 없음")
+
+
+def payload(key: str, issues: list[dict], discovery_urls: list[str] | None = None) -> dict:
+    # 첫 화면과 최근 호 페이지만 알린다. 지난 호는 사이트맵으로 충분하다
+    urls = [build_feed.SITE] + [build_feed.SITE + i["date"] for i in issues[:2]]
+    urls += [url for url in (discovery_urls or [])
+             if url.startswith(tuple(build_feed.SITE + path for path in ("archive/", "politics/", "topics/", "indicators/", "regions/", "compare/")))]
+    urls = list(dict.fromkeys(urls))
+    return {"host": HOST, "key": key, "keyLocation": f"{build_feed.SITE}{key}.txt", "urlList": urls}
+
+
+def notify_hub(opener=urllib.request.urlopen) -> str:
+    """피드가 바뀌었다고 WebSub 허브에 알린다. 허브가 구독한 검색·리더 서비스에 새 호를 전한다."""
+    feed = build_feed.SITE + "feed.xml"
+    data = urllib.parse.urlencode({"hub.mode": "publish", "hub.url": feed}).encode("utf-8")
+    try:
+        with opener(urllib.request.Request(build_feed.HUB, data=data), timeout=20) as res:
+            return f"WebSub {res.status}: {feed}"
+    except Exception as e:  # 알림 실패는 배포를 되돌릴 이유가 아니다
+        return f"WebSub 알림 실패: {e}"
+
+
+def main() -> int:
+    sitemap = PUBLIC / "sitemap.xml"
+    urls = []
+    if sitemap.exists():
+        tree = ET.fromstring(sitemap.read_text(encoding="utf-8"))
+        urls = [node.text for node in tree.findall("{*}url/{*}loc") if node.text]
+    body = payload(find_key(), build_feed.published(), urls)
+    req = urllib.request.Request(ENDPOINT, data=json.dumps(body).encode("utf-8"),
+                                 headers={"Content-Type": "application/json; charset=utf-8"})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as res:
+            print(f"IndexNow {res.status}: {', '.join(body['urlList'])}")
+    except Exception as e:  # 알림 실패는 배포를 되돌릴 이유가 아니다
+        print(f"IndexNow 알림 실패: {e}")
+    print(notify_hub())
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
