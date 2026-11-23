@@ -74,7 +74,13 @@ def verify_source(sha: str) -> None:
         pipeline, suite = 'backend-python/pipeline', 'tests'
         if not (temporary / pipeline).is_dir() and (temporary / 'dev/pipeline').is_dir():
             pipeline, suite = 'dev/pipeline', 'dev/tests'
-        commands = [(sys.executable, pipeline + '/publish/validate.py'), (sys.executable, pipeline + '/build/build_tokens.py', '--check'), (sys.executable, '-m', 'unittest', 'discover', '-s', suite)]
+        commands = [
+            (sys.executable, pipeline + '/publish/validate.py'),
+            (sys.executable, pipeline + '/build/build_tokens.py', '--check'),
+            (sys.executable, '-m', 'unittest', 'discover', '-s', suite),
+        ]
+        if (temporary / 'backend-python/edition_api.py').is_file():
+            commands.append((sys.executable, '-m', 'unittest', 'discover', '-s', 'backend-python/tests'))
         for args in commands:
             run(*args, root=temporary)
         tests = temporary / suite / 'browser'
