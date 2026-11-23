@@ -38,6 +38,8 @@ class EditionWeatherTest(unittest.TestCase):
         for field, value in [
             ("date", "2026-11-24"), ("date", "2026-11-01"), ("body_read", False),
             ("url", "javascript:void(0)"), ("summary", "기상청은 24일 전국에 눈이 오겠다고 예보했습니다."),
+            ("summary", "기상청은 12월 23일 전국에 눈이 오겠다고 예보했습니다."),
+            ("summary", "기상청은 23일 전국 방재기관과 추위 대비 예보 업무를 점검했습니다."),
             ("summary", "행안부는 23일 기상청과 재난 회의를 열었습니다."),
         ]:
             with self.subTest(field=field, value=value):

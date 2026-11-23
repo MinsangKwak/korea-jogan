@@ -184,6 +184,14 @@ async function identity(page) {
       assert.equal(await page.locator('#issueDate').getAttribute('datetime'), past);
       assert.ok(await spread.isHidden());
       assert.ok(await page.locator('#national').isVisible());
+      await page.goto(origin + '/' + past + '?d=' + date);
+      await ready(page);
+      await spread.waitFor({ state: 'visible' });
+      assert.equal(await source.getAttribute('href'), story.url);
+      assert.equal(await spread.locator('.weather-spread__summary').textContent(), story.title);
+      await page.goto(origin + '/' + date + '?d=' + past);
+      await ready(page);
+      assert.ok(await spread.isHidden());
     });
 
     for (const width of [320, 1440]) {

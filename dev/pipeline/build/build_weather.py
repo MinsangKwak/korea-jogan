@@ -9,7 +9,7 @@ from build_discovery import REGIONS, date_value, safe_url
 
 
 SPREAD = re.compile(r'<aside id="weatherSpread"[^>]*>.*?</aside>', re.S)
-FORECAST = re.compile(r"예보|예상|전망|겠")
+FORECAST = re.compile(r"예보(?:했|됐|되|에 따르)|예상(?:했|됐|되|된|됩)|전망(?:했|된|됩|입)|겠(?:다고|습니다)")
 WEATHER = re.compile(r"기온|강[수설풍]|추위|한파|비가|눈이|산지|일교차|영하|최저|최고|구름|맑|흐리|흐린|안개|소나기|폭염|더위|장마|폭우|태풍|㎜|㎝")
 
 PLACES = re.compile("|".join(name for _, name in REGIONS) + "|수도권|중부|남부|충청|경상|호남|영남|동해안|서해안|남해안")
@@ -28,7 +28,11 @@ def editorial_weather(issue: dict) -> dict | None:
     if not issue_date:
         return None
     day = dt.date.fromisoformat(issue_date)
-    target = re.compile(rf"(?<!\d){day.day}일(?!\s*(?:전|간)(?![가-힣]))")
+    target = re.compile(rf"(?<!\d)(?:(\d{{1,2}})월\s*)?{day.day}일(?!\s*(?:전|간)(?![가-힣]))")
+
+    def names_edition_day(text):
+        return any(not match[1] or int(match[1]) == day.month for match in target.finditer(text))
+
     for row in (issue.get("national") or {}).get("items", []):
         if row.get("cat") != "날씨·재난" or row.get("body_read") is not True:
             continue
@@ -40,12 +44,12 @@ def editorial_weather(issue: dict) -> dict | None:
             continue
         summary = row.get("summary") or ""
         first_sentence = re.split(r"(?<=[.!?])\s+", summary.strip(), maxsplit=1)[0]
-        if "기상청" not in summary or not target.search(first_sentence):
+        if "기상청" not in summary or not names_edition_day(first_sentence):
             continue
         if not FORECAST.search(first_sentence) or not WEATHER.search(first_sentence):
             continue
         title = row["title"].strip()
-        headline = title if target.search(title) else first_sentence
+        headline = title if names_edition_day(title) else first_sentence
         region = covered_area(row, summary)
         if not region:
             continue

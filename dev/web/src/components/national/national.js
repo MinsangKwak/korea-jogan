@@ -99,7 +99,8 @@ function renderNational() {
 }
 
 // 다른 날짜로 여는 예전 주소에도 그 호의 정적 지면과 같은 자료를 쓴다
-async function showEditionWeather(issueDate) {
+async function showEditionWeather(issue) {
+  const issueDate = issue.date;
   const section = $('weatherSpread');
   if (!section) return;
   if (section.dataset.issueDate === issueDate) {
@@ -109,7 +110,7 @@ async function showEditionWeather(issueDate) {
   section.hidden = true;
   const editions = await fetchJSON('data/edition-weather.json');
   const report = editions[issueDate];
-  if (!report) return;
+  if (!report || !issue.national?.items?.some((item) => item.url === report.url)) return;
 
   const url = new URL(report.url);
   if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return;
