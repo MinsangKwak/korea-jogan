@@ -391,7 +391,12 @@ window.kjLoadTimer = setTimeout(() => {
         <p><strong>지금 확인된 단계와 남은 일을 살핍니다.</strong> 관련 기사와 날짜별 기록을 함께 확인할 수 있습니다.</p>
         <p class="kj-sechead__meta" id="trackMeta"></p>
       </header>
-      <div id="trackList"></div>
+      <div class="track-controls" id="trackControls" role="group" aria-label="이슈 넘기기" hidden>
+        <span id="trackPosition" role="status" aria-atomic="true"></span>
+        <button type="button" class="kj-btn kj-btn--secondary kj-btn--sm" id="trackPrev" aria-controls="trackList" aria-label="이전 이슈">이전</button>
+        <button type="button" class="kj-btn kj-btn--secondary kj-btn--sm" id="trackNext" aria-controls="trackList" aria-label="다음 이슈">다음</button>
+      </div>
+      <div id="trackViewport"><div id="trackList"></div></div>
     </div>
   </section>
 
@@ -659,6 +664,7 @@ window.kjLoadTimer = setTimeout(() => {
 <script src="src/core/seo.js" defer></script>
 <script src="src/core/ui.js" defer></script>
 <script src="src/core/paired-reading.js" defer></script>
+<script src="src/core/swiper.js" defer></script>
 <script src="src/core/data.js" defer></script>
 <script src="src/components/politics/front.js" defer></script>
 <script src="src/components/news-case/edition.js" defer></script>
@@ -666,6 +672,7 @@ window.kjLoadTimer = setTimeout(() => {
 <script src="src/components/lead/lead.js" defer></script>
 <script src="src/components/economy/economy.js" defer></script>
 <script src="src/components/media/media.js" defer></script>
+<script src="src/components/track/carousel.js" defer></script>
 <script src="src/components/track/track.js" defer></script>
 <script src="src/components/splits/splits.js" defer></script>
 <script src="src/components/industry/industry.js" defer></script>

@@ -242,6 +242,13 @@
 .news-edition .kj-track__side > .kj-prog__next { padding: 20px; background: var(--surface); border-left: 3px solid var(--brand); font-weight: 500; line-height: 1.85; }
 .news-edition .kj-track__side > .kj-prog__note { line-height: 1.85; }
 .news-edition .kj-track__side:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+#track .track-controls { display: flex; justify-content: flex-end; align-items: center; gap: .5rem; margin-block-end: 1rem; }
+#trackPosition { margin-inline-end: .35rem; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+#trackControls button[aria-disabled="true"] { color: var(--ink-3); border-color: var(--line); cursor: default; }
+#trackViewport.swiper { min-width: 0; overflow: hidden; }
+#trackViewport.swiper:focus-visible { outline-offset: 2px; }
+.news-edition #trackList.swiper-wrapper { display: flex; gap: 0; height: auto; }
+.news-edition #trackList > .swiper-slide { height: auto; }
 @media (min-width: 1100px) {
   .news-edition #trackList { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; align-items: start; }
   .news-edition #trackList .kj-track { display: flex; flex-direction: column; }
