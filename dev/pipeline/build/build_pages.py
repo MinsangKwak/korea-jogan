@@ -23,6 +23,7 @@ import build_change_strip
 import build_politics
 import build_case_edition
 import build_discovery
+import build_weather
 import reader_panel
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -471,6 +472,12 @@ def build() -> list[Path]:
     # 이미 한 번 돌린 index.html이어도 요약·기사 정보만 바뀌므로 그대로 틀로 쓴다
     template = home.read_text(encoding="utf-8")
     issues = published()
+    weather = {}
+    for issue in issues:
+        report = build_weather.editorial_weather(issue)
+        if report:
+            weather[issue["date"]] = report
+    (PUBLIC / "data" / "edition-weather.json").write_text(json.dumps(weather, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     trackers_file = PUBLIC / "data" / "trackers.json"
     trackers = json.loads(trackers_file.read_text(encoding="utf-8")) if trackers_file.exists() else {"items": []}
     questions = build_politics.load(PUBLIC)
@@ -491,6 +498,7 @@ def build() -> list[Path]:
     for law_page in (PUBLIC / "law").rglob("index.html"):
         law_page.write_text(secure_page(law_page.read_text(encoding="utf-8"), law=True), encoding="utf-8")
     if not issues:
+        template = build_weather.with_spread(template, "", None)
         template = build_politics.with_front(template, {}, [], "")
         template = build_change_strip.inject_change_strip(template, trackers, "", current=False)
         template = build_case_edition.with_edition(template, "", pairs)
@@ -511,11 +519,13 @@ def build() -> list[Path]:
         edition = build_case_edition.with_edition(template, issue["date"], pairs)
         edition = build_politics.with_front(edition, issue, questions, issue["date"], dated=True)
         edition = build_change_strip.inject_change_strip(edition, trackers, issue["date"], current=False)
+        edition = build_weather.with_spread(edition, issue["date"], weather.get(issue["date"]))
         out.write_text(issue_page(edition, issue, index), encoding="utf-8")
         written.append(out)
     edition = build_case_edition.with_edition(template, index["latest"], pairs)
     edition = build_politics.with_front(edition, issues[0], questions, build_politics.today())
     edition = build_change_strip.inject_change_strip(edition, trackers, index["latest"], current=True)
+    edition = build_weather.with_spread(edition, index["latest"], weather.get(index["latest"]))
     home.write_text(home_page(edition, issues[0], index), encoding="utf-8")
     written.append(home)
     for item in extra:

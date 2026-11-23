@@ -16,14 +16,14 @@ HTML, CSS, 바닐라 JavaScript로 화면을 구현하고 Python으로 발행할
 | 키보드로 판결문 문제를 풀 때 어떤 답을 선택했고 다음에 무엇을 할 수 있는지 알아야 합니다. | 라디오 버튼으로 답을 선택하고, 선택 없이 확인하면 첫 선택지로 포커스를 보냅니다. 결과는 보조기기에 알리고, 자바스크립트를 꺼도 해설과 원문을 열 수 있게 했습니다. | [문제 컴포넌트](dev/web/src/components/question-recall/recall.js) · [키보드 회귀 검사](dev/tests/browser/question-recall.cjs) |
 | 나중에 갱신한 내용을 오래된 기사에 붙이면 당시 독자가 알았던 사실이 달라집니다. | 질문의 마지막 확인일과 사건의 실제 변경일을 분리했습니다. 날짜별 호를 생성할 때 그날까지 확인한 질문만 싣고, 각 질문의 고정 주소에 답과 출처를 함께 넣었습니다. | [호별 페이지 생성](dev/pipeline/build/build_politics.py) · [날짜 경계 검사](dev/tests/test_politics_build.py) |
 
-검색 규칙, 질문 본문, 답을 확인하는 동작을 분리해 편집 데이터와 UI를 독립적으로 바꿀 수 있습니다. PC에서는 대표 질문과 관련 질문을 나란히 배치하고, 모바일에서는 한 줄 답과 근거 링크를 먼저 읽도록 순서를 정했습니다. [기술 구조](docs/dev/architecture.md) · [화면·접근성 설계](design/guide.md) · [Figma](https://www.figma.com/design/Eep2qLjiPT9jhDUyLU8Zjx)
+검색 규칙, 질문 본문, 답을 확인하는 동작을 분리해 편집 데이터와 UI를 독립적으로 바꿀 수 있습니다. 대표 질문과 답 옆에 새벽 삽화를 두고, 모바일에서는 답과 근거 링크를 읽은 뒤 풍경과 관련 질문으로 넘어갑니다. [기술 구조](docs/dev/architecture.md) · [화면·접근성 설계](design/guide.md) · [Figma](https://www.figma.com/design/Eep2qLjiPT9jhDUyLU8Zjx)
 
 [PC·모바일에서 현재 1면 열기](https://korea-jogan.com/) · [이슈 추적 카드 보기](https://korea-jogan.com/#track)
 
 <details>
 <summary>11월 23일 운영 1면 캡처 보기</summary>
 
-![재판 기일에 관한 대표 질문, 한전 개인정보 유출 기사와 참고 판결, 증안펀드 머리기사가 보이는 PC 1면](docs/assets/current-home-desktop.webp)
+![11월 23일 PC 1면. 재판 기일에 관한 질문과 답 옆에 새벽 삽화가 있고 그 아래에 생활 정책과 시사용어가 이어진다](docs/assets/current-home-desktop.webp)
 
 </details>
 
