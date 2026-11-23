@@ -403,6 +403,7 @@ def discovery_page(template: str, item: dict) -> str:
 <link rel="alternate" type="application/rss+xml" title="대한민국 조간" href="/feed.xml">
 {verification}
 {theme}
+<link rel="stylesheet" href="/src/styles/korean-fallback.css">
 <link rel="stylesheet" href="/src/styles/tokens.css">
 <link rel="stylesheet" href="/src/styles/kj.css">
 <link rel="stylesheet" href="/src/components/header/header.css">

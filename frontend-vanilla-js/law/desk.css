@@ -10,7 +10,7 @@
   --focus: var(--press-focus);
   --bg: var(--paper);
   --serif: var(--press-serif);
-  --sans: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --sans: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", "Noto Sans KR", "Jogan Korean", system-ui, sans-serif;
   color-scheme: light;
 }
 :root[data-theme="dark"] {

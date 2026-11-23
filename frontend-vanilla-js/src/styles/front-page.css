@@ -45,7 +45,7 @@
   color: var(--brand);
   border-inline-start: 1px solid var(--line);
 }
-.front-law-tab span { font-family: system-ui, sans-serif; }
+.front-law-tab span { font-family: var(--font-sans); }
 .news-edition .news-sticky { box-shadow: none; }
 .news-edition #home {
   padding-block: clamp(1.5rem, 3.4vw, 3rem) clamp(1.4rem, 3vw, 2.5rem);

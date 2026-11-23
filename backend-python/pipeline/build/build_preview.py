@@ -111,7 +111,7 @@ def transform_html(page: str, origin: str, commit: str | None, branch: str, *, a
 
 def admin_notice(origin: str) -> str:
     return '''<!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>개발 환경의 관리자 안내 | 대한민국 조간</title><meta name="robots" content="''' + NOINDEX + '''"><link rel="canonical" href="''' + html.escape(origin) + '''/admin/"><link rel="stylesheet" href="/src/styles/tokens.css"><link rel="stylesheet" href="/src/styles/kj.css"><link rel="stylesheet" href="/src/styles/discovery.css"></head><body class="discovery-page"><main id="main" class="discovery-main"><h1>개발 환경에서는 운영 통계를 연결하지 않습니다</h1><p>이곳은 지면과 기능을 검증하는 환경입니다. 운영 GA4의 인증·조회 스크립트는 포함하지 않습니다.</p><p><a href="/">개발 지면으로 돌아가기</a></p></main></body></html>'''
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>개발 환경의 관리자 안내 | 대한민국 조간</title><meta name="robots" content="''' + NOINDEX + '''"><link rel="canonical" href="''' + html.escape(origin) + '''/admin/"><link rel="stylesheet" href="/src/styles/korean-fallback.css"><link rel="stylesheet" href="/src/styles/tokens.css"><link rel="stylesheet" href="/src/styles/kj.css"><link rel="stylesheet" href="/src/styles/discovery.css"></head><body class="discovery-page"><main id="main" class="discovery-main"><h1>개발 환경에서는 운영 통계를 연결하지 않습니다</h1><p>이곳은 지면과 기능을 검증하는 환경입니다. 운영 GA4의 인증·조회 스크립트는 포함하지 않습니다.</p><p><a href="/">개발 지면으로 돌아가기</a></p></main></body></html>'''
 
 
 def owned_output(path: Path) -> bool:
