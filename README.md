@@ -18,9 +18,14 @@ HTML, CSS, 바닐라 JavaScript로 화면을 구현하고 Python으로 발행할
 
 검색 규칙, 질문 본문, 답을 확인하는 동작을 분리해 편집 데이터와 UI를 독립적으로 바꿀 수 있습니다. PC에서는 대표 질문과 관련 질문을 나란히 배치하고, 모바일에서는 한 줄 답과 근거 링크를 먼저 읽도록 순서를 정했습니다. [기술 구조](docs/dev/architecture.md) · [화면·접근성 설계](design/guide.md) · [Figma](https://www.figma.com/design/Eep2qLjiPT9jhDUyLU8Zjx)
 
-![11월 23일 운영 중인 PC 1면. 대표 질문 옆에 생활 정책과 시사용어를 읽는 링크가 있습니다.](docs/assets/current-home-desktop.webp)
+[PC·모바일에서 현재 1면 열기](https://korea-jogan.com/) · [이슈 추적 카드 보기](https://korea-jogan.com/#track)
 
-[PC·모바일에서 현재 1면 열기](https://korea-jogan.com/)
+<details>
+<summary>11월 23일 운영 1면 캡처 보기</summary>
+
+![재판 기일에 관한 대표 질문, 한전 개인정보 유출 기사와 참고 판결, 증안펀드 머리기사가 보이는 PC 1면](docs/assets/current-home-desktop.webp)
+
+</details>
 
 ## 기획부터 운영까지
 
