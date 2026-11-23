@@ -18,11 +18,9 @@ HTML, CSS, 바닐라 JavaScript로 화면을 구현하고 Python으로 발행할
 
 검색 규칙, 질문 본문, 답을 확인하는 동작을 분리해 편집 데이터와 UI를 독립적으로 바꿀 수 있습니다. PC에서는 대표 질문과 관련 질문을 나란히 배치하고, 모바일에서는 한 줄 답과 근거 링크를 먼저 읽도록 순서를 정했습니다. [기술 구조](docs/dev/architecture.md) · [화면·접근성 설계](design/guide.md) · [Figma](https://www.figma.com/design/Eep2qLjiPT9jhDUyLU8Zjx)
 
-<table>
-<caption>2026년 11월 20일 공개한 ‘오늘 정치 한 장’</caption>
-<tr><th scope="col">PC</th><th scope="col">모바일</th></tr>
-<tr><td><img src="docs/assets/politics-desktop-20261120.webp" alt="대표 질문 옆에서 생활 정책과 시사용어를 선택하는 PC 1면" width="760"></td><td><img src="docs/assets/politics-mobile-20261120.webp" alt="한 줄 답과 근거를 먼저 읽고 다음 질문으로 내려가는 모바일 1면" width="250"></td></tr>
-</table>
+![11월 23일 운영 중인 PC 1면. 대표 질문 옆에 생활 정책과 시사용어를 읽는 링크가 있습니다.](docs/assets/current-home-desktop.webp)
+
+[PC·모바일에서 현재 1면 열기](https://korea-jogan.com/)
 
 ## 기획부터 운영까지
 
@@ -55,11 +53,9 @@ ECOS 키는 GitHub Secrets에서 관리합니다. GA4·Search Console 실적 조
 </details>
 
 <details>
-<summary>운영 제약과 이전 화면</summary>
+<summary>자료의 수록 범위</summary>
 
-일부 지표는 수동으로 조사합니다. 2026년 9월 24일 이후 보완한 법률안은 의원발의 자료여서 일부 정부·위원장 제안이 빠질 수 있습니다. 판례 보관함은 현재 브라우저에 저장되며 이전 Casewise 보관 목록의 자동 이전은 지원하지 않습니다. GitHub Pages에서는 응답 헤더로만 설정할 수 있는 보안 기능에 제약이 있습니다. [데이터 규격](docs/planning/data-spec.md) · [기술 구조](docs/dev/architecture.md)
-
-2026년 10월 30일의 이전 1면도 비교할 수 있습니다. [PC 화면](docs/assets/service-desktop-20261030.jpg) · [모바일 화면](docs/assets/service-mobile-20261030.jpg)
+일부 지표는 수동으로 조사합니다. 2026년 9월 24일 이후 보완한 법률안은 의원발의 자료여서 일부 정부·위원장 제안이 빠질 수 있습니다. 판례 보관함은 이용 중인 브라우저에 저장됩니다. GitHub Pages에서는 응답 헤더로만 설정할 수 있는 보안 기능에 제약이 있습니다. [데이터 규격](docs/planning/data-spec.md) · [기술 구조](docs/dev/architecture.md)
 
 </details>
 
