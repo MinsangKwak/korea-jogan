@@ -713,7 +713,23 @@ async function check(name, options, run) {
           assert.ok(target.y >= sticky.y + sticky.height, id + ' 제목이 고정 메뉴에 가려짐');
         }
       }
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+      const layout = await page.evaluate(() => {
+        const width = document.documentElement.scrollWidth;
+        if (width <= innerWidth + 1) return { width, viewport: innerWidth };
+        const identify = (node) => node.id ? '#' + node.id : node.localName + '.' + [...node.classList].join('.');
+        const overflow = [];
+        for (const node of document.body.querySelectorAll('*')) {
+          const rect = node.getBoundingClientRect();
+          if (!rect.height || rect.right <= innerWidth + 1) continue;
+          let parent = node.parentElement;
+          while (parent && parent !== document.body && getComputedStyle(parent).overflowX === 'visible') parent = parent.parentElement;
+          if (parent && parent !== document.body) continue;
+          overflow.push({ node: identify(node), parent: identify(node.parentElement), x: Math.round(rect.x), width: Math.round(rect.width), right: Math.round(rect.right) });
+          if (overflow.length === 10) break;
+        }
+        return { width, viewport: innerWidth, overflow };
+      });
+      assert.ok(layout.width <= layout.viewport + 1, JSON.stringify(layout));
     });
   }
   for (const width of [390, 1440]) {
@@ -748,6 +764,7 @@ async function check(name, options, run) {
     const second = await cards.nth(1).boundingBox();
     assert.ok(Math.abs(first.y - second.y) < 2 && second.x > first.x + first.width, '두 이슈가 같은 행에 나란히 배치');
     await pairedSize(page, '#trackList');
+    assert.equal(await page.locator('#trackNext').isHidden(), true);
     assert.equal(await cards.first().locator('.kj-track__body').evaluate((node) => getComputedStyle(node).overflowY), 'visible');
     const long = page.locator('#trackList > [data-paired-overflow]').first();
     if (await long.count()) {
@@ -755,6 +772,140 @@ async function check(name, options, run) {
       await page.keyboard.press('End');
       await page.waitForFunction(() => { const node = document.querySelector('#trackList > [data-paired-overflow]'); return node.scrollTop > 0 && node.scrollTop + node.clientHeight >= node.scrollHeight - 1; });
     }
+  });
+  const carouselIssues = Array.from({ length: 4 }, (_, i) => ({ ...trackers.items[i % trackers.items.length], id: 'test-issue-' + (i + 1) }));
+  await check('PC 이슈 카드 두 장씩 읽기·한 장 이동·작은 화면 복귀', { width: 1440 }, async (page) => {
+    let releaseSwiper;
+    const delaySwiper = new Promise((resolve) => { releaseSwiper = resolve; });
+    await page.route('**/assets/vendor/swiper/*.js', async (route) => { await delaySwiper; await route.fallback(); });
+    await page.route('**/data/trackers.json', (route) => route.fulfill({ json: { ...trackers, items: carouselIssues } }));
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    const viewport = page.locator('#trackViewport');
+    const list = page.locator('#trackList');
+    const prev = page.locator('#trackPrev');
+    const next = page.locator('#trackNext');
+    const position = page.locator('#trackPosition');
+    await viewport.scrollIntoViewIfNeeded();
+    await page.locator('#trackList[data-carousel-state="loading"]').waitFor();
+    const geometry = () => list.evaluate((node) => ({
+      height: node.closest('section').getBoundingClientRect().height,
+      scrollbar: node.offsetHeight - node.clientHeight,
+      widths: [...node.children].map((card) => card.getBoundingClientRect().width),
+      tops: [...node.children].map((card) => card.offsetTop),
+    }));
+    const before = await geometry();
+    releaseSwiper();
+    await page.locator('#trackList[data-carousel-state="ready"]').waitFor();
+    const after = await geometry();
+    assert.ok(before.tops.every((top) => Math.abs(top - before.tops[0]) <= 1), 'JS가 준비되기 전에도 모든 이슈가 한 행에 놓여야 합니다.');
+    assert.ok(before.widths.every((width, i) => Math.abs(width - after.widths[i]) <= 1), '초기 카드 폭은 활성화 뒤에도 유지됩니다.');
+    assert.ok(Math.abs(before.height - after.height) <= before.scrollbar + 2, '브라우저 스크롤바를 제외한 지면 높이가 유지되어야 합니다. ' + JSON.stringify({ before, after }));
+
+    async function checkPair(start) {
+      await page.waitForFunction(({ start, count }) => {
+        const visible = [...document.querySelectorAll('#trackList > article')].filter((card) => !card.inert);
+        return visible.map((card) => card.id).join() === ['issue-test-issue-' + start, 'issue-test-issue-' + (start + 1)].join()
+          && document.querySelector('#trackPosition').textContent.includes(start + '–' + (start + 1) + ' / ' + count);
+      }, { start, count: carouselIssues.length });
+      const frame = await viewport.boundingBox();
+      const visible = await list.locator('> article:not([inert])').evaluateAll((cards) => cards.map((card) => {
+        const { left, right, top } = card.getBoundingClientRect();
+        return { left, right, top };
+      }));
+      assert.ok(visible[0].left >= frame.x - 2 && visible[1].right <= frame.x + frame.width + 2);
+      assert.ok(visible[1].left >= visible[0].right - 1 && Math.abs(visible[0].top - visible[1].top) < 2);
+      assert.equal(await prev.getAttribute('aria-disabled'), String(start === 1));
+      assert.equal(await next.getAttribute('aria-disabled'), String(start === carouselIssues.length - 1));
+    }
+    await checkPair(1);
+    await next.click();
+    await checkPair(2);
+    await prev.click();
+    await checkPair(1);
+    await viewport.focus();
+    await page.keyboard.press('ArrowRight');
+    await checkPair(2);
+    await page.keyboard.press('ArrowRight');
+    await checkPair(3);
+    await page.keyboard.press('ArrowRight');
+    await checkPair(3);
+    const permalink = list.locator('> article:not([inert])').last().locator('.kj-track__permalink');
+    await permalink.focus();
+    await page.keyboard.press('ArrowLeft');
+    assert.equal(await permalink.evaluate((link) => link === document.activeElement), true);
+    assert.ok((await position.innerText()).includes('3–4 / 4'));
+    await viewport.focus();
+    await page.keyboard.press('ArrowLeft');
+    await checkPair(2);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await next.waitFor({ state: 'hidden' });
+    await page.waitForFunction(() => document.getElementById('trackList').dataset.carouselState === 'static');
+    const rows = await list.locator('> article').evaluateAll((cards) => cards.map((card) => ({
+      inert: card.inert, top: card.getBoundingClientRect().top, bottom: card.getBoundingClientRect().bottom
+    })));
+    assert.equal(rows.length, carouselIssues.length);
+    assert.ok(rows.every((row, i) => !row.inert && (!i || row.top >= rows[i - 1].bottom - 1)));
+    assert.equal(await page.evaluate(() => document.activeElement.closest('.kj-track')?.id), 'issue-test-issue-2');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+    await page.setViewportSize({ width: 1100, height: 844 });
+    await viewport.scrollIntoViewIfNeeded();
+    await page.locator('#trackList[data-carousel-state="ready"]').waitFor();
+    await checkPair(2);
+    const secondCard = list.locator('> article:not([inert])').last();
+    await secondCard.locator('h3').scrollIntoViewIfNeeded();
+    const heading = await secondCard.locator('h3').boundingBox();
+    const startX = heading.x + heading.width / 2;
+    const y = heading.y + heading.height / 2;
+    await page.mouse.move(startX, y);
+    await page.mouse.down();
+    await page.mouse.move(startX - (await viewport.boundingBox()).width * 0.45, y, { steps: 8 });
+    await page.mouse.up();
+    await checkPair(3);
+  });
+  await check('PC 단일 이슈는 링크만 제공하고 빈 이슈 지면은 숨김', { width: 1440 }, async (page) => {
+    let items = trackers.items.slice(0, 1);
+    await page.route('**/data/trackers.json', (route) => route.fulfill({ json: { ...trackers, items } }));
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    const link = page.locator('#trackList .kj-track__permalink');
+    await link.scrollIntoViewIfNeeded();
+    assert.equal(await page.locator('#trackNext').isHidden(), true);
+    assert.equal(await link.getAttribute('href'), '/topics/' + trackers.items[0].id + '/');
+    await link.focus();
+    assert.ok(await link.evaluate((node) => node === document.activeElement));
+    items = [];
+    const response = page.waitForResponse((response) => response.url().endsWith('/data/trackers.json'));
+    await page.reload();
+    await ready(page);
+    await (await response).finished();
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    assert.equal(await page.locator('#track').isHidden(), true);
+    assert.equal(await page.locator('#trackingBar').isHidden(), true);
+    assert.equal(await page.locator('#trackList > article').count(), 0);
+  });
+  await check('PC에서 Swiper를 받지 못해도 모든 이슈 기록을 열 수 있음', { width: 1440 }, async (page) => {
+    await page.route('**/data/trackers.json', (route) => route.fulfill({ json: { ...trackers, items: carouselIssues } }));
+    await page.route('**/assets/vendor/swiper/**', (route) => route.abort());
+    await page.goto('http://jogan.test/');
+    await ready(page);
+    const list = page.locator('#trackList');
+    await list.scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => document.querySelector('script[src*="swiper-14"]') && document.getElementById('trackList').dataset.carouselState === 'static');
+    const links = list.locator('.kj-track__permalink');
+    assert.deepEqual(await links.evaluateAll((nodes) => nodes.map((node) => node.getAttribute('href'))),
+      carouselIssues.map((item) => '/topics/' + item.id + '/'));
+    await links.last().focus();
+    assert.ok(await links.last().evaluate((link) => link === document.activeElement));
+    assert.ok(await list.evaluate((node) => node.scrollLeft > 0 && [...node.children].every((card) => !card.inert)));
+    assert.ok(await links.last().evaluate((link) => {
+      const rect = link.getBoundingClientRect();
+      const list = link.closest('#trackList').getBoundingClientRect();
+      return rect.left >= list.left - 1 && rect.right <= list.right + 1;
+    }));
+    assert.equal(await page.locator('#trackNext').isHidden(), true);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
   });
   for (const width of [390, 900, 1100, 1440, 1920]) {
     await check('섹션 좌우 배치·짧은 열 높이 기준 ' + width, { width }, async (page) => {
@@ -917,7 +1068,7 @@ async function check(name, options, run) {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('http://jogan.test/');
     await ready(page);
-    await page.locator('#economy').evaluate((node) => node.scrollIntoView({ block: 'start' }));
+    await page.locator('#econViewport').evaluate((node) => node.scrollIntoView({ block: 'center', behavior: 'instant' }));
     await page.locator('#nums[data-carousel-state="ready"]').waitFor();
     assert.equal(await page.locator('#nums > .swiper-slide').count(), 6);
     await page.waitForFunction(() => document.getElementById('econCarousel').dataset.autoplay === 'running');

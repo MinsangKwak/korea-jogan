@@ -1,15 +1,25 @@
 'use strict';
 // 추적: 결론이 날 때까지 남기는 사안의 타임라인과 진행 상황
 
+let stopTrackCarousel = null;
+
 // 지난 호는 그날의 기록이라 지금 상황을 덧붙이지 않는다. 최신 호에서만 보인다
 function renderTrack(data) {
   renderChangeStrip(data);
   const list = (data && data.items) || [];
-  if (!list.length || VIEWING_PAST) { $('track').hidden = true; toggleSectionNav('track', false); return; }
-  const today = parseDate(todayKST());
   const box = $('trackList');
+  stopTrackCarousel?.();
+  stopTrackCarousel = null;
   clearReadingPair(box);
   box.replaceChildren();
+  if (!list.length || VIEWING_PAST) {
+    $('track').hidden = true;
+    $('trackingBar').hidden = true;
+    $('trackingReopen').hidden = true;
+    toggleSectionNav('track', false);
+    return;
+  }
+  const today = parseDate(todayKST());
   const paired = list.length === 2 && typeof ResizeObserver === 'function';
   list.forEach((item) => {
     const card = el('article', { class: 'kj-track' });
@@ -85,6 +95,7 @@ function renderTrack(data) {
   $('trackMeta').textContent = '사안 ' + list.length + '건 · 오늘 기준 · ' + longDate(data.updated) + ' 갱신';
   $('track').hidden = false;
   if (paired) matchReadingColumns(box, 1100, list.map((item) => item.title + ' 진행 상황과 확인 기록'));
+  if (list.length > 2) stopTrackCarousel = setupTrackCarousel(box);
   toggleSectionNav('track', true);
   setupTrackingPanel(data);
 }
@@ -262,8 +273,8 @@ function setupTrackingPanel(data) {
       article.append(readingText(item.summary), readingText(item.next, 'tracking-next'));
       const details = el('details');
       details.append(el('summary', {}, '기사·타임라인 자세히 보기'));
-      const card = $('issue-' + item.id).cloneNode(true);
-      card.removeAttribute('id');
+      const card = el('article', { class: 'kj-track' });
+      for (const child of $('issue-' + item.id).children) card.append(child.cloneNode(true));
       const permalink = card.querySelector('.kj-track__permalink');
       if (permalink) article.append(permalink);
       card.querySelectorAll('.kj-track__sources').forEach((sources) => sources.replaceWith(sources.querySelector('.tracking-articles')));
