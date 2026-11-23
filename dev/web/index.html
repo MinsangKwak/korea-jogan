@@ -368,6 +368,17 @@ window.kjLoadTimer = setTimeout(() => {
       <details class="kj-callout nat-flow" id="natFlow"></details>
       <div class="kj-chips kj-chips--scroll nat-chips" id="natCtrl" role="group" aria-label="분야 선택"></div>
       <div class="nat-board" id="natList"></div>
+      <details id="editionSearch" class="edition-search" hidden>
+        <summary>날짜별 기사 찾기</summary>
+        <div class="edition-search__fields">
+          <label>조간 발행일 <select id="editionSearchDate" disabled></select></label>
+          <label>제목·언론사·지역 <input id="editionSearchQuery" type="search" maxlength="120" disabled></label>
+        </div>
+        <p id="editionSearchStatus" role="status"></p>
+        <button id="editionSearchRetry" class="kj-btn kj-btn--secondary" type="button" hidden>다시 불러오기</button>
+        <ul id="editionSearchList"></ul>
+        <a id="editionSearchPage" href="/archive/">지난 호 목록 보기</a>
+      </details>
     </div>
   </section>
 
@@ -698,6 +709,7 @@ window.kjLoadTimer = setTimeout(() => {
 <script src="src/components/industry/industry.js" defer></script>
 <script src="src/components/fiscal/fiscal.js" defer></script>
 <script src="src/components/national/national.js" defer></script>
+<script src="src/components/national/edition-search.js" defer></script>
 <script src="src/components/regions/regions.js" defer></script>
 <script src="src/components/politics/politics.js" defer></script>
 <script src="src/components/footer/footer.js" defer></script>

@@ -38,6 +38,24 @@ def snapshot_matches(index, info, issue, html: str, sha: str, date: str, built_a
         return False
 
 
+def catalog_matches(index, issue, catalog, edition) -> bool:
+    try:
+        if (catalog["version"] != 1 or edition["version"] != 1 or catalog["latest"] != issue["date"]
+                or [row["date"] for row in catalog["editions"]] != index["issues"]
+                or edition["date"] != issue["date"] or edition["status"] != issue["status"]):
+            return False
+        expected = [(section, row) for section in ("national", "regions") for row in issue[section]["items"]]
+        articles = edition["articles"]
+        count = next(row["articleCount"] for row in catalog["editions"] if row["date"] == edition["date"])
+        if len(articles) != len(expected) or count != len(expected):
+            return False
+        return all(record["section"] == section and record["editionDate"] == edition["date"]
+                   and all(record[key] == row[key] for key in ("url", "title", "outlet", "date", "summary"))
+                   for (section, row), record in zip(expected, articles))
+    except (KeyError, TypeError, StopIteration):
+        return False
+
+
 def check_once(sha: str, date: str, built_at: str | None = None, deadline: float | None = None) -> bool:
     def read(path: str, as_json: bool = True):
         remaining = 10 if deadline is None else min(10, deadline - time.monotonic())
@@ -48,7 +66,9 @@ def check_once(sha: str, date: str, built_at: str | None = None, deadline: float
             value = response.read().decode("utf-8")
             return json.loads(value) if as_json else value
 
-    return snapshot_matches(read("data/issues/index.json"), read("build-info.json"), read(f"data/issues/{date}.json"), read("", False), sha, date, built_at)
+    index, issue = read("data/issues/index.json"), read(f"data/issues/{date}.json")
+    return (snapshot_matches(index, read("build-info.json"), issue, read("", False), sha, date, built_at)
+            and catalog_matches(index, issue, read("api/v1/index.json"), read(f"api/v1/editions/{date}.json")))
 
 
 def wait_until(sha: str, date: str, built_at: str | None, timeout: int) -> bool:
@@ -127,7 +147,7 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f"공개 확인 입력 실패: {type(error).__name__}", file=sys.stderr)
         return 1
-    print("공개 확인 실패: 색인·호 JSON·홈·빌드 SHA/시각이 배포 결과와 일치하지 않습니다", file=sys.stderr)
+    print("공개 확인 실패: 색인·기사 API·호 JSON·홈·빌드 SHA/시각이 배포 결과와 일치하지 않습니다", file=sys.stderr)
     return 1
 
 

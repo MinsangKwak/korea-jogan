@@ -20,6 +20,9 @@ runs:
     - name: 스크립트 시험
       shell: bash
       run: python3 -m unittest discover -s dev/tests
+    - name: Python 기사 저장소와 API 검사
+      shell: bash
+      run: python3 -m unittest discover -s backend-python/tests
     - name: PR 커밋 제목
       if: github.event_name == 'pull_request'
       shell: bash

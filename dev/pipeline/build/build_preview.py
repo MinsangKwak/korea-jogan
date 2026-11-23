@@ -20,6 +20,9 @@ import build_pages
 import build_security
 
 ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "backend-python"))
+from edition_api import build_catalog
+
 PUBLIC = ROOT / "dev/web"
 OUTPUT = ROOT / "dist-preview"
 ORIGIN = "https://dev.korea-jogan.com"
@@ -154,6 +157,8 @@ def build(source: Path = PUBLIC, output: Path = OUTPUT, origin: str = ORIGIN, co
         for file in issues.glob("*.json"):
             if file.stem != "index" and file.stem not in index["issues"]:
                 file.unlink()
+        with tempfile.TemporaryDirectory() as state:
+            build_catalog(issues, Path(state) / "articles.sqlite3", temporary / "api/v1")
         build_pages.build()
         (temporary / "feed.xml").write_text(build_feed.build(), encoding="utf-8")
         (temporary / "sitemap.xml").write_text(build_feed.build_sitemap(), encoding="utf-8")

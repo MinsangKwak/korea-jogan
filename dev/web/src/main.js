@@ -56,6 +56,7 @@ async function boot() {
     renderMediaMeta();
     renderNational();
     showEditionWeather(D).catch(() => { $('weatherSpread').hidden = true; });
+    setupEditionSearch(D.date);
     renderRegions();
     renderPolitics();
     renderNums();

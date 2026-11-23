@@ -22,3 +22,5 @@ dev/web/data/edition-weather.json
 
 node_modules/
 premium-audit.json
+
+dev/web/api/v1/
