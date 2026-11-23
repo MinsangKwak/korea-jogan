@@ -775,6 +775,9 @@ async function check(name, options, run) {
   });
   const carouselIssues = Array.from({ length: 4 }, (_, i) => ({ ...trackers.items[i % trackers.items.length], id: 'test-issue-' + (i + 1) }));
   await check('PC 이슈 카드 두 장씩 읽기·한 장 이동·작은 화면 복귀', { width: 1440 }, async (page) => {
+    let releaseSwiper;
+    const delaySwiper = new Promise((resolve) => { releaseSwiper = resolve; });
+    await page.route('**/assets/vendor/swiper/*.js', async (route) => { await delaySwiper; await route.fallback(); });
     await page.route('**/data/trackers.json', (route) => route.fulfill({ json: { ...trackers, items: carouselIssues } }));
     await page.goto('http://jogan.test/');
     await ready(page);
@@ -784,7 +787,20 @@ async function check(name, options, run) {
     const next = page.locator('#trackNext');
     const position = page.locator('#trackPosition');
     await viewport.scrollIntoViewIfNeeded();
+    await page.locator('#trackList[data-carousel-state="loading"]').waitFor();
+    const geometry = () => list.evaluate((node) => ({
+      height: node.closest('section').getBoundingClientRect().height,
+      scrollbar: node.offsetHeight - node.clientHeight,
+      widths: [...node.children].map((card) => card.getBoundingClientRect().width),
+      tops: [...node.children].map((card) => card.offsetTop),
+    }));
+    const before = await geometry();
+    releaseSwiper();
     await page.locator('#trackList[data-carousel-state="ready"]').waitFor();
+    const after = await geometry();
+    assert.ok(before.tops.every((top) => Math.abs(top - before.tops[0]) <= 1), 'JS가 준비되기 전에도 모든 이슈가 한 행에 놓여야 합니다.');
+    assert.ok(before.widths.every((width, i) => Math.abs(width - after.widths[i]) <= 1), '초기 카드 폭은 활성화 뒤에도 유지됩니다.');
+    assert.ok(Math.abs(before.height - after.height) <= before.scrollbar + 2, '브라우저 스크롤바를 제외한 지면 높이가 유지되어야 합니다. ' + JSON.stringify({ before, after }));
 
     async function checkPair(start) {
       await page.waitForFunction(({ start, count }) => {
@@ -882,6 +898,12 @@ async function check(name, options, run) {
       carouselIssues.map((item) => '/topics/' + item.id + '/'));
     await links.last().focus();
     assert.ok(await links.last().evaluate((link) => link === document.activeElement));
+    assert.ok(await list.evaluate((node) => node.scrollLeft > 0 && [...node.children].every((card) => !card.inert)));
+    assert.ok(await links.last().evaluate((link) => {
+      const rect = link.getBoundingClientRect();
+      const list = link.closest('#trackList').getBoundingClientRect();
+      return rect.left >= list.left - 1 && rect.right <= list.right + 1;
+    }));
     assert.equal(await page.locator('#trackNext').isHidden(), true);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
   });
@@ -1046,7 +1068,7 @@ async function check(name, options, run) {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('http://jogan.test/');
     await ready(page);
-    await page.locator('#economy').evaluate((node) => node.scrollIntoView({ block: 'start' }));
+    await page.locator('#econViewport').evaluate((node) => node.scrollIntoView({ block: 'center', behavior: 'instant' }));
     await page.locator('#nums[data-carousel-state="ready"]').waitFor();
     assert.equal(await page.locator('#nums > .swiper-slide').count(), 6);
     await page.waitForFunction(() => document.getElementById('econCarousel').dataset.autoplay === 'running');
