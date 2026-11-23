@@ -35,7 +35,7 @@ Python 3.10 이상에서 저장소 루트를 기준으로 실행합니다. SQLit
 
 ```bash
 python3 backend-python/edition_api.py build \
-  --issues dev/web/data/issues \
+  --issues frontend-vanilla-js/data/issues \
   --database backend-python/var/articles.sqlite3 \
   --output backend-python/var/public/api/v1
 
