@@ -58,14 +58,14 @@ def writable(path: tuple) -> bool:
     if len(path) == 3:
         if path[0] == "briefs" and isinstance(path[1], int) and path[2] in ("k", "m"):
             return True
-        if path[:2] == ("national", "flow") and isinstance(path[2], int):
+        if path[0] in ("national", "it") and path[1] == "flow" and isinstance(path[2], int):
             return True
         if path[:2] == ("regions", "summary") and isinstance(path[2], str):
             return True
     if len(path) == 4:
         if path[0] == "themes" and isinstance(path[1], int) and path[2] == "summary" and isinstance(path[3], int):
             return True
-        if path[0] in ("national", "regions") and path[1] == "items" and isinstance(path[2], int) and path[3] == "summary":
+        if path[0] in ("national", "regions", "it") and path[1] == "items" and isinstance(path[2], int) and path[3] == "summary":
             return True
     return False
 

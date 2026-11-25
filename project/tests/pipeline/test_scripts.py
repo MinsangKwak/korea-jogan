@@ -239,6 +239,16 @@ class ValidateTest(Site):
         self.assertEqual(code, 1)
         self.assertIn("regions[0] 시도 이름 오류 '수도권'", out)
 
+    def test_optional_it_page_checks_category_link_and_summary(self):
+        article = {"title": "기사", "outlet": "매체", "url": "https://example.org/a", "date": DATE, "summary": "요약", "cat": "AI"}
+        self.edit(lambda i: i.update(it={"flow": ["흐름"], "items": [article]}))
+        self.assertEqual(self.run_validate()[0], 0)
+        self.edit(lambda i: i["it"]["items"].append({**article, "cat": "과학·IT", "url": "http://example.org/b"}))
+        code, out = self.run_validate()
+        self.assertEqual(code, 1)
+        self.assertIn("it[1] 분야 이름 오류 '과학·IT'", out)
+        self.assertIn("it[1] 링크·요약 누락", out)
+
 
 class ApproveTest(Site):
     def test_draft_becomes_published_and_passes_deploy(self):
