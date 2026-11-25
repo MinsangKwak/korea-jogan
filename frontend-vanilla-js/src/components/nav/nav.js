@@ -48,7 +48,7 @@ function renderDrawerSubs() {
     items.forEach(([label, go]) => {
       const li = el('li');
       const b = el('button', { type: 'button' }, label);
-      b.addEventListener('click', () => { closeDrawer(false); go(); track('menu-sub', sid + ' · ' + label); });
+      b.addEventListener('click', () => { closeDrawer(false); setNewsView('national'); go(); track('menu-sub', sid + ' · ' + label); });
       li.append(b);
       ul.append(li);
     });

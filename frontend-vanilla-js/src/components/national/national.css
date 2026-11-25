@@ -121,3 +121,12 @@
 .edition-search li small { display: block; color: var(--ink-3); }
 .edition-search li a { display: inline-block; padding-block: .25rem; overflow-wrap: anywhere; }
 .edition-search > a { display: inline-block; margin-block: .6rem; }
+
+/* 지면 탭. IT 지면에서는 기사 목록만 남기고 전국 지면의 섹션과 메뉴를 감춘다 */
+.view-tabs { display: flex; gap: 6px; padding-block: 6px; }
+.view-tabs[hidden] { display: none; }
+.view-tabs .kj-chip { min-width: 56px; min-height: 44px; justify-content: center; text-decoration: none; }
+body[data-view="it"] main > :not(#national),
+body[data-view="it"] #rail,
+body[data-view="it"] #editionSearch { display: none; }
+body[data-view="it"] .news-sticky { display: none; }

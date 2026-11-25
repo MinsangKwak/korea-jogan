@@ -1,11 +1,60 @@
 'use strict';
-// 전국 뉴스
+// 전국 뉴스와 IT 뉴스. 같은 목록 화면에 지면별 자료만 바꿔 그린다
+
+function itEdition() {
+  if (D.it && D.it.items.length) return D.it;
+  const items = D.national ? D.national.items.filter((i) => i.cat === '과학·IT') : [];
+  return items.length ? { flow: [], items } : null;
+}
+
+// IT 지면에서는 목록 밖의 전국 섹션을 CSS로 감춘다. 자료가 없으면 전국 지면으로 돌아간다
+function setNewsView(view) {
+  const next = view === 'it' && itEdition() ? 'it' : 'national';
+  if (next === newsView && document.body.dataset.view === next) return;
+  newsView = next;
+  natCat = '전체';
+  document.body.dataset.view = next;
+  document.querySelectorAll('[data-view-tab]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.viewTab === next)));
+  renderNational();
+}
+
+function setupNewsView() {
+  const tabs = $('viewTabs');
+  tabs.hidden = !itEdition();
+  // 고른 지면은 이 브라우저에 기억한다. 저장소가 막혀 있으면 매번 IT 지면으로 연다
+  const VIEW_KEY = 'kj-view';
+  let saved = '';
+  try { saved = localStorage.getItem(VIEW_KEY) || ''; } catch (error) { saved = ''; }
+  tabs.querySelectorAll('[data-view-tab]').forEach((b) => b.addEventListener('click', () => {
+    setNewsView(b.dataset.viewTab);
+    try { localStorage.setItem(VIEW_KEY, newsView); } catch (error) { saved = ''; }
+    window.scrollTo({ top: 0 });
+    track('view-tab', b.dataset.viewTab);
+  }));
+  const inNational = (id) => {
+    const target = id && document.getElementById(id);
+    return Boolean(target && target.closest('main'));
+  };
+  // IT 지면에서 전국 지면의 섹션으로 가는 링크를 누르면 전국 지면을 먼저 연다
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a[href^="#"]');
+    if (link && newsView === 'it' && inNational(link.getAttribute('href').slice(1))) setNewsView('national');
+  }, true);
+  let hash = '';
+  try { hash = decodeURIComponent(location.hash.slice(1)); } catch (error) { hash = ''; }
+  setNewsView(inNational(hash) || saved === 'national' ? 'national' : 'it');
+}
 
 function renderNational() {
-  const N = D.national;
+  const it = newsView === 'it';
+  const N = it ? itEdition() : D.national;
+  const order = it ? IT_CATS : NAT_CATS;
+  const name = it ? 'IT' : '전국';
   if (!N) { $('national').hidden = true; return; }
+  $('natH').textContent = '오늘의 ' + name + ' 뉴스';
   $('natMeta').textContent = N.items.length + '건 · ' + asOfText();
   const flow = $('natFlow');
+  flow.hidden = !N.flow.length;
   flow.textContent = '';
   flow.append(el('summary', {}, '오늘의 흐름 ' + N.flow.length + '가지'));
   const ol = el('ol');
@@ -13,8 +62,13 @@ function renderNational() {
   flow.append(ol);
   responsiveDisclosure(flow);
 
-  const cats = ['전체'].concat(NAT_CATS.filter((c) => N.items.some((i) => i.cat === c)));
+  const cats = ['전체'].concat(order.filter((c) => N.items.some((i) => i.cat === c)));
   const ctrl = $('natCtrl');
+  // 지면을 바꾸면 분야 단추도 그 지면의 분야로 다시 만든다
+  if (ctrl.dataset.view !== newsView) {
+    ctrl.replaceChildren();
+    ctrl.dataset.view = newsView;
+  }
   if (!ctrl.childNodes.length) {
     cats.forEach((c) => {
       const n = c === '전체' ? N.items.length : N.items.filter((i) => i.cat === c).length;
@@ -31,7 +85,7 @@ function renderNational() {
   }
   const box = $('natList');
   const sorted = N.items.filter((i) => natCat === '전체' || i.cat === natCat)
-    .sort((a, b) => NAT_CATS.indexOf(a.cat) - NAT_CATS.indexOf(b.cat));
+    .sort((a, b) => order.indexOf(a.cat) - order.indexOf(b.cat));
   // 전체 지면에서는 한 분야가 첫 목록을 채우지 않도록 분야별 첫 기사를 앞에 둔다
   const seen = new Set();
   const leadItems = [];
@@ -97,7 +151,7 @@ function renderNational() {
     collapse(headlines, { limit: 5, noun: '건', start: true });
   }
   select(0);
-  matchReadingColumns(box, 1000, ['선택한 전국 기사', '전국 기사 제목 목록']);
+  matchReadingColumns(box, 1000, ['선택한 ' + name + ' 기사', name + ' 기사 제목 목록']);
 }
 
 // 다른 날짜로 여는 예전 주소에도 그 호의 정적 지면과 같은 자료를 쓴다

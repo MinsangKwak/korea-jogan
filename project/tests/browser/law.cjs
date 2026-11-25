@@ -18,6 +18,8 @@ const types = { '.html': 'text/html', '.js': 'application/javascript', '.css': '
 async function surface(browser, web, width, options = {}) {
   const { siteOrigin = origin, automated = false, ...contextOptions } = options;
   const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce', ...contextOptions });
+  // 기존 검사는 전국 지면을 고른 독자의 화면을 본다. IT 첫 화면은 smoke.cjs가 따로 검사한다
+  await context.addInitScript(() => { try { localStorage.setItem('kj-view', 'national'); } catch {} });
   await context.addInitScript(flag => Object.defineProperty(navigator, 'webdriver', { get: () => flag }), automated);
   const page = await context.newPage();
   const requests = [];
