@@ -463,6 +463,8 @@ async function check(name, options, fn) {
   });
   await check('신문 기획 지면 노출·경로별 클릭·내부 접속 제외', { width: 390 }, async ({ page }) => {
     await page.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
+    // 이 검사는 전국 지면을 고른 독자의 화면을 본다. IT 첫 화면은 smoke.cjs가 따로 검사한다
+    await page.addInitScript(() => localStorage.setItem('kj-view', 'national'));
     const loadCover = async (flag) => {
       await page.goto('http://jogan.test/?d=2026-11-19&kj-internal=' + flag);
       await page.locator('#casePairRuling[href]').waitFor();

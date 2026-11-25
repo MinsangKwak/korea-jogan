@@ -17,7 +17,7 @@ HTML·CSS·바닐라 JavaScript로 접근 가능한 지면을 만들고, Python�
 | [.github/](.github/) | PR 검사와 일일 발행, 운영 지면의 GitHub Pages 배포를 자동화합니다. | [공통 검사](.github/actions/verify/action.yml) · [운영 배포](.github/workflows/deploy-pages.yml) |
 | [project/docs/](project/docs/README.md) | 기획·편집 기준, 설계 판단, 운영 절차와 화면 자료를 모읍니다. | [화면·접근성](project/docs/design/guide.md) · [기술 구조](project/docs/dev/architecture.md) · [저장소 작업 지침](project/docs/AGENTS.md) |
 | [project/tests/](project/tests/) | 수집·발행, 기사 API, 검색 규칙과 브라우저 동작을 검증합니다. | [파이프라인](project/tests/pipeline/) · [백엔드](project/tests/backend/) · [프런트엔드](project/tests/frontend/) · [브라우저](project/tests/browser/) |
-| [project/tools/](project/tools/) | Git 작업 환경, 검사 브라우저, 앱 아이콘 생성과 PR 미리보기 빌드를 관리합니다. | [Git 설정](project/tools/setup_git.py) · [브라우저 준비](project/tools/install_browser.py) · [미리보기 설정](project/tools/vercel-preview/vercel.json) |
+| [project/tools/](project/tools/) | Git 작업 환경, 검사 브라우저, 앱 아이콘 생성과 선택형 개발 미리보기 빌드를 관리합니다. | [Git 설정](project/tools/setup_git.py) · [브라우저 준비](project/tools/install_browser.py) · [미리보기 설정](project/tools/vercel-preview/vercel.json) |
 
 저장소 루트의 문서는 이 README와 [라이선스](LICENSE)입니다. 개발과 운영에 쓰는 문서는 [문서 안내](project/docs/README.md)에서 주제별로 찾을 수 있습니다.
 

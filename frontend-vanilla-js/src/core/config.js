@@ -35,6 +35,8 @@ const REGION_GROUPS = [
 ];
 const REGIONS = REGION_GROUPS.flatMap(([, names]) => names.map((n) => [n]));
 const NAT_CATS = ['사회', '사건·안전', '날씨·재난', '안보·외교', '국제', '과학·IT', '생활·물가', '문화·스포츠'];
+// IT 지면의 분야. it가 없는 지난 호는 전국 뉴스의 과학·IT 기사를 대신 보여 준다
+const IT_CATS = ['AI', '반도체·기기', '플랫폼·서비스', '보안·개인정보', '통신·정책', '개발·오픈소스', '과학·IT'];
 const DIR_LABEL = { up: '상승', down: '하락', flat: '보합' };
 const BAR_CLASS = { semi: ' kj-bar--semi', trad: ' kj-bar--trad' };
 
@@ -43,4 +45,6 @@ let INDEX = null;
 let VIEWING_PAST = false;
 let ISSUE = new Date();
 let natCat = '전체';
+// 지금 보는 지면. 'it'이면 IT 뉴스만, 'national'이면 기존 전국 지면 전체
+let newsView = 'national';
 let region = '';

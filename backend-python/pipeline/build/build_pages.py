@@ -65,7 +65,7 @@ def published_at(issue: dict) -> str:
 
 # 첫 화면에 늘 싣는 검색어. 사람들이 실제로 치는 꼴(오늘 ~, ~ 요약)로 적는다
 BASE_KEYWORDS = [
-    "대한민국 조간", "오늘의 뉴스", "오늘 뉴스 요약", "아침 뉴스", "경제 뉴스 요약",
+    "대한민국 조간", "IT 뉴스", "오늘 IT 뉴스 요약", "AI 뉴스", "오늘의 뉴스", "오늘 뉴스 요약", "아침 뉴스", "경제 뉴스 요약",
     "오늘 코스피", "코스피 종가", "원달러 환율", "오늘 환율", "기준금리", "국가채무", "국민연금",
     "수출입 동향", "지역 뉴스", "17개 시도 뉴스", "언론 보도 비교", "숫자 팩트체크",
     "오늘의 주요 뉴스", "조간 신문", "아침 신문", "모닝 브리핑", "뉴스 브리핑", "오늘 경제 지표",
@@ -429,7 +429,7 @@ def discovery_page(template: str, item: dict) -> str:
   </div>
 </header>
 {body}
-<footer class="discovery-footer"><p><a href="/">대한민국 조간</a> · 출처와 기준일을 함께 읽습니다.</p><nav aria-label="운영 안내"><a href="/#limitsH">수집 방법과 한계</a><a href="/#fixH">정정 기록</a><a href="/feed.xml">RSS 구독</a><a href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" rel="noopener">오류 신고</a></nav><p>기획·데이터·디자인·개발 <a href="https://github.com/MinsangKwak" rel="author">MinsangKwak</a> · 코드 MIT · 글 CC BY 4.0</p></footer>
+<footer class="discovery-footer"><p><a href="/">대한민국 조간</a> · 출처와 기준일을 함께 읽습니다.</p><nav aria-label="운영 안내"><a href="/#limitsH">수집 방법과 한계</a><a href="/#fixH">정정 기록</a><a href="/feed.xml">RSS 구독</a><a href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" rel="noopener">오류 신고</a></nav><p>코드 MIT · 글 CC BY 4.0 · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub 저장소</a></p></footer>
 </body>
 </html>
 '''

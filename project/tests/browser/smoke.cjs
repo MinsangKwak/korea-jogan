@@ -28,6 +28,8 @@ async function pageFor(options = {}) {
   const context = await browser.newContext({ viewport: { width: options.width || 390, height: options.height || 844 }, reducedMotion: 'reduce', colorScheme: options.dark ? 'dark' : 'light' });
   // 측정은 자동화 브라우저에서 꺼지므로, 사람 브라우저처럼 보이게 한 뒤 시험한다. automation 옵션이면 그대로 둔다
   if (!options.automation) await context.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
+  // 기존 검사는 전국 지면을 고른 독자의 화면을 본다. IT 첫 화면은 smoke.cjs가 따로 검사한다
+  if (options.view !== 'it') await context.addInitScript(() => { try { localStorage.setItem('kj-view', 'national'); } catch {} });
   if (options.blockStorage) await context.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } }));
   const page = await context.newPage();
   const errors = [];
@@ -68,8 +70,10 @@ async function pageFor(options = {}) {
   });
   return { page, context, errors };
 }
-async function ready(page, state = 'ready') {
+async function ready(page, state = 'ready', view = 'national') {
   await page.waitForFunction((expected) => document.documentElement.dataset.loadState === expected, state);
+  // 기존 검사는 전국 지면을 본다. 첫 화면인 IT 지면은 view를 비워 따로 검사한다
+  if (state === 'ready' && view) await page.evaluate((view) => { if (typeof setNewsView === 'function') setNewsView(view); }, view);
 }
 async function pairedSize(page, selector) {
   await page.waitForFunction((selector) => {
@@ -543,6 +547,34 @@ async function check(name, options, run) {
       await page.locator('#natHeadlines button').nth(index).click();
       assert.equal(await article.locator('.article-law-link').count(), 0);
     }
+  });
+  await check('IT 첫 화면과 지면 탭', { width: 1280, view: 'it' }, async (page) => {
+    await page.goto('http://jogan.test/');
+    await ready(page, 'ready', '');
+    const items = latest.it?.items.length ? latest.it.items : latest.national.items.filter((item) => item.cat === '과학·IT');
+    const view = () => page.evaluate(() => document.body.dataset.view);
+    if (!items.length) {
+      assert.equal(await view(), 'national');
+      assert.equal(await page.locator('#viewTabs').isVisible(), false);
+      return;
+    }
+    assert.equal(await view(), 'it');
+    assert.equal(await page.locator('#natH').innerText(), '오늘의 IT 뉴스');
+    assert.ok((await page.locator('#natMeta').innerText()).startsWith(items.length + '건'));
+    assert.equal(await page.locator('#natArticleTitle').innerText(), items[0].title);
+    for (const hidden of ['#home', '#regions', '#fiscal', '#catNav', '#editionSearch']) assert.equal(await page.locator(hidden).isVisible(), false, hidden);
+    assert.equal(await page.locator('#viewTabs a').getAttribute('href'), '/law/');
+    await page.locator('[data-view-tab="national"]').click();
+    assert.equal(await view(), 'national');
+    assert.equal(await page.locator('#natH').innerText(), '오늘의 전국 뉴스');
+    assert.equal(await page.locator('#home').isVisible(), true);
+    assert.equal(await page.locator('[data-view-tab="national"]').getAttribute('aria-pressed'), 'true');
+    await page.locator('[data-view-tab="it"]').click();
+    await page.locator('#tabNav a[data-sec="media"]').evaluate((link) => link.click());
+    assert.equal(await view(), 'national');
+    await page.goto('http://jogan.test/#media');
+    await ready(page, 'ready', '');
+    assert.equal(await view(), 'national');
   });
   await check('조간 1면·판례 자료실·전국 뉴스·진행 막대', { width: 1280 }, async (page) => {
     await page.goto('http://jogan.test/');

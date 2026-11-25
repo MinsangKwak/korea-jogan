@@ -25,6 +25,8 @@ let checks = 0;
 
 async function surface(options = {}) {
   const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, reducedMotion: 'reduce', colorScheme: 'light' });
+  // 기존 검사는 전국 지면을 고른 독자의 화면을 본다. IT 첫 화면은 smoke.cjs가 따로 검사한다
+  await context.addInitScript(() => { try { localStorage.setItem('kj-view', 'national'); } catch {} });
   await context.addInitScript(() => {
     Object.defineProperty(navigator, 'webdriver', { get: () => false });
     window.previewCspEvents = [];

@@ -595,7 +595,6 @@ body.is-locked { overflow: hidden; }
 .kj-digest ul { padding-left: 1.1rem; }
 .kj-digest li + li { margin-top: var(--space-1); }
 .kj-digest__date { color: var(--ink-3); font-size: 0.85rem; margin: 0; }
-.kj-foot__dev { color: var(--ink); }
 
 /* 읽기 준비 상태는 본문과 같은 토큰을 사용한다 */
 .no-js .kj-loading, .no-js #heroGrid, .no-js main .kj-sec { display: none; }

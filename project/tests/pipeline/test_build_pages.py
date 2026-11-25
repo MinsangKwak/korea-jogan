@@ -133,9 +133,9 @@ class PagesTest(unittest.TestCase):
         self.assertEqual(json.loads(body)["lead"]["headline"], self.issue["lead"]["headline"])
 
     def test_home_metadata_stays_stable_when_latest_issue_changes(self):
-        title = "광고 없는 오늘의 뉴스 요약 | 대한민국 조간"
-        description = "오늘의 국내 주요 뉴스를 광고 없이 짧게 읽으세요. 정치·경제·사회 이슈를 살펴보고, 같은 사안을 여러 언론이 어떻게 전했는지 원문으로 비교해 보세요."
-        share_description = "오늘의 주요 뉴스를 짧게 읽고, 같은 이슈를 다룬 여러 언론의 보도와 원문을 비교해 보세요."
+        title = "광고 없는 오늘의 IT 뉴스 요약 | 대한민국 조간"
+        description = "오늘의 IT 주요 뉴스를 광고 없이 짧게 읽으세요. AI·반도체·보안 소식을 먼저 보고, 전국 뉴스와 관련 판례를 탭으로 이어 읽을 수 있습니다."
+        share_description = "오늘의 IT 뉴스를 짧게 읽고, 전국 뉴스와 관련 판례까지 원문과 함께 확인해 보세요."
         home_path = build_pages.PUBLIC / "index.html"
         for day in (DATE, "2026-10-20"):
             with self.subTest(day=day):

@@ -47,7 +47,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 | GitHub Pages의 정적 HTML과 JSON | 지면에 올린 각 호의 내용과 공개 버전을 Git 이력으로 대조할 수 있습니다. | Pages에서 사용자 지정 응답 헤더를 설정할 수 없어 CSP는 HTML 메타 태그에 둡니다. |
 | 호별 JSON을 배포 전에 검사 | 필수값이나 공개 상태에 오류가 있으면 해당 호와 필드를 식별할 수 있습니다. | 필드를 바꾸면 Python 검사와 브라우저의 `assertIssue()`를 함께 갱신하고 발행된 모든 호를 검사합니다. |
 | 바닐라 JS와 지면별 컴포넌트 | 판례 검색·보관·렌더링은 ES 모듈로 나눠 각각 검사합니다. | 신문 쪽 공통 스크립트의 실행 순서와 전역 의존성은 직접 관리합니다. |
-| PR별 미리보기와 운영 배포 | PR에서 `verify-ci`와 보호된 Vercel 미리보기를 확인하고 `main`에 병합합니다. Pages는 배포할 커밋의 검사와 공개본 확인을 거칩니다. | 미리보기와 Pages의 빌드 설정을 함께 유지합니다. [현재 배포 절차](branches.md) |
+| PR 검사와 운영 배포 | PR에서 `verify-ci`를 확인하고 `main`에 병합합니다. Pages는 배포할 커밋의 검사와 공개본 확인을 거칩니다. 보호된 Vercel 미리보기는 화면을 미리 봐야 할 때만 `dev/` 브랜치로 붙입니다. | 미리보기와 Pages의 빌드 설정을 함께 유지합니다. [현재 배포 절차](branches.md) |
 | 06시 자동 발행 | 매일 같은 시각에 발행을 시작하고 호마다 자동 발행 또는 편집자 확인 상태를 표시합니다. | 자동 호는 발행 뒤 원문 대조와 정정이 필요합니다. [운영 런북](../planning/runbook.md) |
 | 일일 브랜치에서 데이터만 반영 | 아침 호를 발행할 때 지정된 호와 색인 등 허용한 자료만 갱신합니다. | 발행 허용 경로·색인·동시 변경 검사 규칙을 유지합니다. |
 
@@ -60,7 +60,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 | 구조 검사 | `validate.py` `check_structure()`·`REQUIRED` | 필수값 누락을 검사하고, 필드명 변경 시 전체 공개 자료의 호환성을 확인 |
 | 시험 | `project/tests/pipeline/test_scripts.py`(호별 JSON을 복제한 시험 자료) | 기준 호에 필드가 없으면 시험 자체가 깨짐 |
 | 브라우저 방어 | `core/data.js` `assertIssue()` | `themes[].id/articles/keywords/summary`·`date`를 바꾸면 전체 로딩 실패 화면 |
-| 화면 | `lead.js`(`lead`,`briefs`,`themes`), `economy.js`(`nums`), `splits.js`·`media.js`(`themes`), `national.js`, `regions.js`, `politics.js`(`agenda`,`agendaSrc`), `industry.js`(`industries`,`items`,`trade`), `fiscal.js`(`debt`,`fiscal`,`nps`), `header.js`(`status`,`review`,`collectedAt`,`late`), `footer.js`(`limits`) | 해당 섹션만 깨지지만 `main.js`는 한 `try/catch`라 예외가 나면 **전체** 오류 화면 |
+| 화면 | `lead.js`(`lead`,`briefs`,`themes`), `economy.js`(`nums`), `splits.js`·`media.js`(`themes`), `national.js`(`national`, `it`. 같은 목록 화면에 지면 탭으로 자료만 바꿔 그림), `regions.js`, `politics.js`(`agenda`,`agendaSrc`), `industry.js`(`industries`,`items`,`trade`), `fiscal.js`(`debt`,`fiscal`,`nps`), `header.js`(`status`,`review`,`collectedAt`,`late`), `footer.js`(`limits`) | 해당 섹션만 깨지지만 `main.js`는 한 `try/catch`라 예외가 나면 **전체** 오류 화면 |
 | 검색·RSS | `build_pages.py`(`lead`, `nums`, `themes[].diffs[].q`, `national.items[].cat`, `review`), `build_feed.py`(`lead`, `diffs.q`, `status`), `build_discovery.py`(`nums`, `review.scope`, `status`) | `/YYYY-MM-DD`, `feed.xml`, `/archive/`·`/topics/`·`/indicators/` |
 | 관리자 | `admin/app.js`(`index.latest`, `status`, `review.by/at/auto`) | 공개 상태 표시 |
 | 발행·검증 | `prepare_daily.py`(`index`, `status`, `trackers.updated/items`), `build_info.py`·`verify_publication.py`(`index.latest`, `status`, `date`) | 아침 발행 중단 또는 공개 확인 실패 |
