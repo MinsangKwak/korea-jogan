@@ -172,7 +172,7 @@ class PreviewTest(unittest.TestCase):
         self.assertEqual(saved, (build_pages.PUBLIC, build_pages.ISSUES, build_pages.SITE))
         self.assertEqual((self.output / "index.html").read_text().count('id="previewBanner"'), 1)
 
-    def test_vercel_configuration_covers_every_path_and_previews_work_branches(self):
+    def test_vercel_configuration_covers_every_path_and_previews_only_dev_branches(self):
         preview_root = ROOT / "project/tools/vercel-preview"
         config = json.loads((preview_root / "vercel.json").read_text())
         interpreter, script, option, output = config["buildCommand"].split()
@@ -180,7 +180,8 @@ class PreviewTest(unittest.TestCase):
         self.assertEqual((preview_root / script).resolve(), Path(build_preview.__file__).resolve())
         self.assertEqual((option, output), ("--output", config["outputDirectory"]))
         self.assertEqual(preview_root / config["outputDirectory"], build_preview.OUTPUT)
-        self.assertEqual(config["git"]["deploymentEnabled"], {"main": False, "daily/*": False})
+        # 미리보기는 기본 절차가 아니다. dev/ 브랜치로 push할 때만 자동 배포한다
+        self.assertEqual(config["git"]["deploymentEnabled"], {"**": False, "dev/**": True})
         self.assertEqual(config["headers"][0]["source"], "/(.*)")
         headers = {row["key"]: row["value"] for row in config["headers"][0]["headers"]}
         self.assertIn("noindex", headers["X-Robots-Tag"])

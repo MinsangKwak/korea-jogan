@@ -194,6 +194,7 @@ def build(source: Path = PUBLIC, output: Path = OUTPUT, origin: str = ORIGIN, co
 
 def preview_branch(branch: str) -> bool:
     # main은 GitHub Pages 운영, daily/*는 일일 데이터라 Vercel 미리보기 대상이 아니다
+    # 자동 배포는 vercel.json이 dev/ 브랜치로 좁힌다. 여기서는 수동 배포까지 막을 대상만 거른다
     return bool(branch) and branch != "main" and not branch.startswith("daily/")
 
 
