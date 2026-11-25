@@ -82,7 +82,6 @@
   color: var(--ink-3);
 }
 .kj-foot .kj-foot__meta p { margin: 0; }
-.kj-foot .kj-foot__dev { color: var(--ink-2); }
 .kj-foot a { text-decoration-thickness: 1px; }
 .kj-foot a:hover { color: var(--brand-strong); text-decoration-thickness: 2px; }
 .kj-foot :is(a, button, select):focus-visible { outline: var(--border-focus) solid var(--focus); outline-offset: 3px; }
