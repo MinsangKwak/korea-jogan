@@ -69,6 +69,7 @@ async function boot() {
     setupControls();
     renderDrawerSubs();
     if ($('seoDigest')) $('seoDigest').remove();
+    setupNewsView();
     ok = true;
   } catch (error) {
     renderLoadError();
