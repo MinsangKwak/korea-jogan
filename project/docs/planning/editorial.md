@@ -66,6 +66,7 @@ AI가 원문에 접근했더라도 기존 `read`·`body_read`·`review`를 승�
 | `themes[i].summary[j]` | 주제별 요약 문단 |
 | `national.flow[i]` | 전국 뉴스의 흐름 |
 | `national.items[i].summary` | 전국 기사 설명 |
+| `it.flow[i]`, `it.items[i].summary` | IT 뉴스의 흐름과 기사 설명 |
 | `regions.summary.<기존 시도명>` | 시도별 전체 요약 |
 | `regions.items[i].summary` | 지역 기사 설명 |
 
