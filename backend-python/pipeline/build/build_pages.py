@@ -429,7 +429,7 @@ def discovery_page(template: str, item: dict) -> str:
   </div>
 </header>
 {body}
-<footer class="discovery-footer"><p><a href="/">대한민국 조간</a> · 출처와 기준일을 함께 읽습니다.</p><nav aria-label="운영 안내"><a href="/#limitsH">수집 방법과 한계</a><a href="/#fixH">정정 기록</a><a href="/feed.xml">RSS 구독</a><a href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" rel="noopener">오류 신고</a></nav><p>기획·데이터·디자인·개발 <a href="https://github.com/MinsangKwak" rel="author">MinsangKwak</a> · 코드 MIT · 글 CC BY 4.0</p></footer>
+<footer class="discovery-footer"><p><a href="/">대한민국 조간</a> · 출처와 기준일을 함께 읽습니다.</p><nav aria-label="운영 안내"><a href="/#limitsH">수집 방법과 한계</a><a href="/#fixH">정정 기록</a><a href="/feed.xml">RSS 구독</a><a href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" rel="noopener">오류 신고</a></nav><p>코드 MIT · 글 CC BY 4.0 · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub 저장소</a></p></footer>
 </body>
 </html>
 '''
