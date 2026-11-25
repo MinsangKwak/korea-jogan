@@ -14,6 +14,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 ISSUES = ROOT / "frontend-vanilla-js" / "data" / "issues"
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# IT 지면의 분야. 화면의 분야 단추와 보조 호 생성기가 같은 이름을 쓴다
+IT_CATS = ("AI", "반도체·기기", "플랫폼·서비스", "보안·개인정보", "통신·정책", "개발·오픈소스")
 REGIONS = {
     "서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종", "경기",
     "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주",
@@ -116,6 +118,7 @@ def check_structure(issue: object, name: str) -> list[str]:
         "review?": record({"by": text, "at": text, "auto?": boolean}),
         "late?": record({"reason": text, "cutoff": text}),
         "national?": record({"flow": array(text), "items": array(news)}),
+        "it?": record({"flow": array(text), "items": array(news)}),
         "regions?": record({"summary": summaries, "items": array(news)}),
     })
     if errors:
@@ -188,6 +191,12 @@ def check_issue(path: Path) -> list[str]:
     for i, it in enumerate(issue.get("national", {}).get("items", [])):
         if not str(it.get("url", "")).startswith("https://") or not it.get("summary"):
             errors.append(f"{name}: national[{i}] 링크·요약 누락")
+    # IT 지면은 선택 항목이다. 있으면 전국 뉴스와 같은 기준에 분야 이름까지 본다
+    for i, it in enumerate(issue.get("it", {}).get("items", [])):
+        if it.get("cat") not in IT_CATS:
+            errors.append(f"{name}: it[{i}] 분야 이름 오류 '{it.get('cat')}'")
+        if not str(it.get("url", "")).startswith("https://") or not it.get("summary"):
+            errors.append(f"{name}: it[{i}] 링크·요약 누락")
     for i, it in enumerate(issue.get("regions", {}).get("items", [])):
         if it.get("region") not in REGIONS:
             errors.append(f"{name}: regions[{i}] 시도 이름 오류 '{it.get('region')}'")

@@ -1,5 +1,5 @@
 {
-  "note": "언론사 RSS 목록. 제목·링크·날짜만 가져온다. 본문·요약(description, content)은 받지도 저장하지도 않는다. 2026-10-19에 열리는지 확인한 주소만 넣었다",
+  "note": "언론사 RSS 목록. 제목·링크·날짜만 가져온다. 본문·요약(description, content)은 받지도 저장하지도 않는다. 2026-10-19에 열리는지 확인한 주소만 넣었다. scope가 IT인 전문 매체는 2026-11-25에 확인했고, 하루 1회 수집으로도 전날 기사가 남는 피드만 골랐다",
   "feeds": [
     { "outlet": "연합뉴스", "region": "국내", "scope": "전국", "url": "https://www.yna.co.kr/rss/news.xml" },
     { "outlet": "조선일보", "region": "국내", "scope": "전국", "url": "https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml" },
@@ -22,6 +22,12 @@
     { "outlet": "경북일보", "region": "국내", "scope": "경북", "url": "https://www.kyongbuk.co.kr/rss/allArticle.xml" },
     { "outlet": "경상일보", "region": "국내", "scope": "울산", "url": "https://www.ksilbo.co.kr/rss/allArticle.xml" },
     { "outlet": "제주일보", "region": "국내", "scope": "제주", "url": "https://www.jejunews.com/rss/allArticle.xml" },
+    { "outlet": "아이뉴스24", "region": "국내", "scope": "IT", "url": "https://www.inews24.com/rss/news_it.xml" },
+    { "outlet": "한국경제 IT", "region": "국내", "scope": "IT", "url": "https://www.hankyung.com/feed/it" },
+    { "outlet": "바이라인네트워크", "region": "국내", "scope": "IT", "url": "https://byline.network/feed/" },
+    { "outlet": "데일리시큐", "region": "국내", "scope": "IT", "url": "https://www.dailysecu.com/rss/allArticle.xml" },
+    { "outlet": "AI타임스", "region": "국내", "scope": "IT", "url": "https://www.aitimes.com/rss/allArticle.xml" },
+    { "outlet": "테크M", "region": "국내", "scope": "IT", "url": "https://www.techm.kr/rss/allArticle.xml" },
     { "outlet": "Korea Herald", "region": "해외", "scope": "영문", "url": "https://www.koreaherald.com/rss/newsAll" },
     { "outlet": "Korea Times", "region": "해외", "scope": "영문", "url": "https://feed.koreatimes.co.kr/k/allnews.xml" },
     { "outlet": "BBC", "region": "해외", "scope": "아시아", "url": "https://feeds.bbci.co.uk/news/world/asia/rss.xml" },
