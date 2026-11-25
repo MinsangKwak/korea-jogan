@@ -60,7 +60,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 | 구조 검사 | `validate.py` `check_structure()`·`REQUIRED` | 필수값 누락을 검사하고, 필드명 변경 시 전체 공개 자료의 호환성을 확인 |
 | 시험 | `project/tests/pipeline/test_scripts.py`(호별 JSON을 복제한 시험 자료) | 기준 호에 필드가 없으면 시험 자체가 깨짐 |
 | 브라우저 방어 | `core/data.js` `assertIssue()` | `themes[].id/articles/keywords/summary`·`date`를 바꾸면 전체 로딩 실패 화면 |
-| 화면 | `lead.js`(`lead`,`briefs`,`themes`), `economy.js`(`nums`), `splits.js`·`media.js`(`themes`), `national.js`, `regions.js`, `politics.js`(`agenda`,`agendaSrc`), `industry.js`(`industries`,`items`,`trade`), `fiscal.js`(`debt`,`fiscal`,`nps`), `header.js`(`status`,`review`,`collectedAt`,`late`), `footer.js`(`limits`) | 해당 섹션만 깨지지만 `main.js`는 한 `try/catch`라 예외가 나면 **전체** 오류 화면 |
+| 화면 | `lead.js`(`lead`,`briefs`,`themes`), `economy.js`(`nums`), `splits.js`·`media.js`(`themes`), `national.js`(`national`, `it`. 같은 목록 화면에 지면 탭으로 자료만 바꿔 그림), `regions.js`, `politics.js`(`agenda`,`agendaSrc`), `industry.js`(`industries`,`items`,`trade`), `fiscal.js`(`debt`,`fiscal`,`nps`), `header.js`(`status`,`review`,`collectedAt`,`late`), `footer.js`(`limits`) | 해당 섹션만 깨지지만 `main.js`는 한 `try/catch`라 예외가 나면 **전체** 오류 화면 |
 | 검색·RSS | `build_pages.py`(`lead`, `nums`, `themes[].diffs[].q`, `national.items[].cat`, `review`), `build_feed.py`(`lead`, `diffs.q`, `status`), `build_discovery.py`(`nums`, `review.scope`, `status`) | `/YYYY-MM-DD`, `feed.xml`, `/archive/`·`/topics/`·`/indicators/` |
 | 관리자 | `admin/app.js`(`index.latest`, `status`, `review.by/at/auto`) | 공개 상태 표시 |
 | 발행·검증 | `prepare_daily.py`(`index`, `status`, `trackers.updated/items`), `build_info.py`·`verify_publication.py`(`index.latest`, `status`, `date`) | 아침 발행 중단 또는 공개 확인 실패 |
