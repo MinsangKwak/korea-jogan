@@ -44,6 +44,14 @@ class SupplementIssueTest(unittest.TestCase):
         self.assertNotEqual(issue['national']['items'], before['national']['items'])
         self.assertFalse(issue['themes'][0]['articles'][0]['read'])
 
+    def test_it_outlets_fill_a_separate_list_and_stale_it_is_dropped(self):
+        tech = {**self.item, 'outlet': '테스트 IT', 'scope': 'IT', 'title': '기업 서버 해킹으로 개인정보 유출', 'url': 'https://example.org/it'}
+        template = {**self.template, 'it': {'flow': ['어제 흐름'], 'items': [{'title': '어제 기사'}]}}
+        issue = compose_issue.compose(template, {'items': [self.item, tech]}, '2026-11-12', self.now)
+        self.assertEqual([(row['url'], row['cat'], row['body_read']) for row in issue['it']['items']], [('https://example.org/it', '보안·개인정보', False)])
+        self.assertNotIn('https://example.org/it', [row['url'] for row in issue['national']['items']])
+        self.assertNotIn('it', compose_issue.compose(template, {'items': [self.item]}, '2026-11-12', self.now))
+
     def test_no_feed_produces_a_disclosed_service_notice(self):
         issue = compose_issue.compose(self.template, {'items': []}, '2026-11-12', self.now)
         self.assertEqual(issue['national']['items'][0]['outlet'], '대한민국 조간')

@@ -13,10 +13,16 @@ import fetch_rss
 REGIONS = ('서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주')
 REGION_WORDS = {'경기': ('경기도', '경기관광', '수원', '성남', '용인'), '강원': ('강원', '춘천', '강릉', '원주'), '충북': ('충북', '청주', '충주'), '충남': ('충남', '천안', '서산', '당진'), '전북': ('전북', '전주', '익산', '군산'), '전남': ('전남', '목포', '여수', '순천'), '경북': ('경북', '포항', '구미', '안동'), '경남': ('경남', '창원', '김해', '진주')}
 CATEGORIES = (('사건·안전', ('화재', '가스', '사고', '경찰', '누출', '수사')), ('날씨·재난', ('날씨', '기온', '한파', '폭설', '태풍')), ('안보·외교', ('국방', '외교', '미사일', '한미', '북한')), ('국제', ('미국', '중국', '이란', '우크라', '유럽', '에볼라')), ('과학·IT', ('AI', '반도체', '인공지능', '디지털', '과학')), ('생활·물가', ('물가', '고용', '취업', '수출', '코스피', '철도', '주택')), ('문화·스포츠', ('축구', '야구', '공연', '문화', '스포츠')))
+# IT 전문 매체(feeds.json의 scope가 IT)의 기사는 전국 목록과 따로 고르고 IT 분야로 나눈다
+IT_CATEGORIES = (('보안·개인정보', ('보안', '해킹', '개인정보', '유출', '랜섬', '취약점')), ('AI', ('AI', '인공지능', 'LLM', '챗봇', '에이전트')), ('반도체·기기', ('반도체', '메모리', '파운드리', '스마트폰', '갤럭시', '아이폰', '디스플레이')), ('통신·정책', ('통신', '5G', '6G', '과기정통부', '방통위', '규제', '법안')), ('개발·오픈소스', ('오픈소스', '개발자', '소프트웨어', '클라우드')))
 
 
 def category(title: str) -> str:
     return next((label for label, words in CATEGORIES if any(word in title for word in words)), '사회')
+
+
+def it_category(title: str) -> str:
+    return next((label for label, words in IT_CATEGORIES if any(word in title for word in words)), '플랫폼·서비스')
 
 
 def prepare_items(report: dict, day: str) -> list[dict]:
@@ -46,6 +52,12 @@ def compose(template: dict, report: dict, day: str, now: dt.datetime | None = No
     for field in ('review', 'late', 'recovery'):
         issue.pop(field, None)
     articles = prepare_items(report, day)
+    it_outlets = {item['outlet'] for item in report.get('items', []) if item.get('scope') == 'IT'}
+    it_items = []
+    for item in articles:
+        if item['outlet'] in it_outlets and len(it_items) < 12 and sum(row['outlet'] == item['outlet'] for row in it_items) < 3:
+            it_items.append({**item, 'cat': it_category(item['title'])})
+    articles = [item for item in articles if item['outlet'] not in it_outlets]
     picked, counts, seen = [], {}, set()
     for cat, _words in CATEGORIES + (('사회', ()),):
         for item in [row for row in articles if row['cat'] == cat]:
@@ -73,6 +85,10 @@ def compose(template: dict, report: dict, day: str, now: dt.datetime | None = No
     issue['lead'] = {'kicker': '자동 수집 · 범위 안내', 'headline': issue['headline'], 'standfirst': note + ' 전국·지역 목록의 열람 여부를 표시하고 이전 지표는 원래 출처와 기준일을 유지합니다.', 'facts': [{'t': '전국 목록', 'v': str(len(picked)) + '건', 'm': 'RSS 메타데이터 선별'}, {'t': '지역 목록', 'v': str(len(regional)) + '건', 'm': '미확보 지역 별도 표시'}, {'t': '본문 확인', 'v': '미확인', 'm': '자동 제목 목록 · 원문 링크 제공'}], 'meta': '자료 기준 ' + cutoff}
     issue['national'] = {'flow': ['새 자료는 전날 게시된 RSS에서 선별했습니다.', '기사 본문을 확인하지 않은 항목은 원문 링크와 함께 표시합니다.', '이전 확정 지표는 기준일을 유지하며 오늘 수치로 바꾸지 않습니다.'], 'items': picked}
     issue['regions'] = {'summary': summaries, 'items': regional}
+    # 기준 호의 IT 기사를 오늘 기사처럼 남기지 않는다. 오늘 확보한 기사가 있을 때만 다시 채운다
+    issue.pop('it', None)
+    if it_items:
+        issue['it'] = {'flow': ['IT 전문 매체가 전날 RSS에 올린 기사에서 선별했습니다. 기사 본문은 확인하지 않았습니다.'], 'items': it_items}
     issue['themes'] = [{'id': 'rss-national', 'title': '전국 기사 목록 · 본문 미확인', 'keywords': ['전국', 'RSS', '기사'], 'period': cutoff[:10] + ' 게시 자료', 'summary': [note], 'diffs': [{'q': '자동 목록과 원문 확인의 범위', 'a': '본문을 읽지 않은 자료의 상세 내용이나 원인을 추정하지 않습니다.', 'cols': ['구분', '확인 범위'], 'rows': [['RSS', '제목·링크·시각'], ['원문', '본문 미확인']]}], 'articles': [{'outlet': item['outlet'], 'region': '국내', 'title': item['title'], 'url': item['url'], 'date': item['date'], 'read': False} for item in picked[:12]]}]
     issue['briefs'] = [{'k': '자료 확인 범위', 'm': note, 'href': 'https://korea-jogan.com/' + day}]
     issue['agenda'] = []
