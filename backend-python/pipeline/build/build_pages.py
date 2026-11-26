@@ -247,10 +247,14 @@ def with_lead_heading(page: str, issue: dict | None) -> str:
     return LEAD_H1.sub(lambda m: m.group(1) + esc(headline) + m.group(2), page, count=1)
 
 
-def it_summary(issue: dict) -> str:
-    items = (issue.get("it") or {}).get("items") or [
+def it_items(issue: dict) -> list:
+    return (issue.get("it") or {}).get("items") or [
         item for item in (issue.get("national") or {}).get("items", []) if item.get("cat") == "과학·IT"
     ]
+
+
+def it_summary(issue: dict) -> str:
+    items = it_items(issue)
     if not items:
         return '<p class="paper-width">이 호에는 IT 기사가 없습니다. <a href="#home">종합 뉴스 읽기</a></p>'
     rows = []
@@ -264,6 +268,8 @@ def it_summary(issue: dict) -> str:
 def embed_data(page: str, issue: dict, index: dict) -> str:
     page = re.sub(r'<!-- it-summary -->.*?<!-- /it-summary -->',
                   lambda _: '<!-- it-summary -->' + it_summary(issue) + '<!-- /it-summary -->', page, count=1, flags=re.S)
+    section_label = "IT 브리핑" if it_items(issue) else "종합 뉴스"
+    page = re.sub(r'(<span id="paperSection">).*?(</span>)', lambda m: m[1] + section_label + m[2], page, count=1)
     limits = issue.get("limits") or []
     rows = "".join(f"<li>{esc(text)}</li>" for text in limits)
     page = re.sub(r'(<ul id="limits">).*?(</ul>)', lambda m: m[1] + rows + m[2], page, count=1, flags=re.S)

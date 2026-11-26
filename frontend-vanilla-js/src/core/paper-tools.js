@@ -29,7 +29,7 @@ function connectPaperShare(buttons, getData) {
     field.select();
   }
   for (const button of buttons) {
-    button.hidden = false;
+    button.disabled = false;
     button.addEventListener('click', async () => {
       const data = getData();
       if (!data) return;

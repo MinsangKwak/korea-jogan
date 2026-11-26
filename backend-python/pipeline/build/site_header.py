@@ -24,13 +24,13 @@ def utility(label, edition=False, subscribe_here=False):
     menu_icon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'
     subscribe = 'href="#readerSubscribe" data-reader-subscribe' if subscribe_here or edition else 'href="/feed.xml"'
     if edition:
-        menu = f'<button class="paper-action" id="menuBtn" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog">{menu_icon}지면 목차</button>'
+        menu = f'<button class="paper-action" id="menuBtn" type="button" disabled aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog">{menu_icon}지면 목차</button>'
     else:
         entries = "".join(f'<a href="{href}">{name}</a>' for _, href, name in SECTIONS)
         menu = f'<details class="paper-directory"><summary class="paper-action">{menu_icon}지면 목차</summary><nav aria-label="지면 목차">{entries}</nav></details>'
     return f'''<div class="paper-tools paper-width">
   <div class="paper-location"><a href="/">대한민국 조간</a><span aria-hidden="true">/</span><span id="paperSection">{escape(label)}</span></div>
-  <div class="paper-actions"><a class="paper-action paper-subscribe" {subscribe}>새 호 구독</a><button class="paper-action" id="shareBtn" type="button" hidden>{share_icon}공유</button>{menu}</div>
+  <div class="paper-actions"><a class="paper-action paper-subscribe" {subscribe}>새 호 구독</a><button class="paper-action" id="shareBtn" type="button" disabled>{share_icon}공유</button>{menu}</div>
 </div>'''
 
 

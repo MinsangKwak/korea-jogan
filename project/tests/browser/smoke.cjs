@@ -1140,7 +1140,7 @@ async function check(name, options, run) {
   await check('첫 화면의 받아보기 이동·RSS 복사와 행동 기록', { width: 320 }, async (page) => {
     await page.goto('http://jogan.test/'); await ready(page);
     assert.equal(await page.locator('[data-reader-tools]').count(), 1);
-    const open = page.locator('.kj-mast__utility [data-reader-subscribe]');
+    const open = page.locator('.paper-actions [data-reader-subscribe]');
     await open.focus(); await page.keyboard.press('Enter');
     await page.waitForFunction(() => document.getElementById('readerSubscribe').open);
     assert.equal(await page.locator('#readerSubscribe > summary').evaluate((node) => node === document.activeElement), true);
