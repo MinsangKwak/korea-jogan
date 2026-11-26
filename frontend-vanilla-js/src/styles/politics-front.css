@@ -4,10 +4,6 @@
 .news-edition .kj-mast .kj-mast__logo small { display: block; margin-top: .12rem; }
 .news-edition .kj-mast__symbol { inline-size: clamp(2.25rem, 4vw, 3rem); }
 .news-edition #home { padding-top: clamp(.85rem, 2.2vw, 1.8rem); }
-.news-edition #catNav { flex: 1; overflow-x: auto; scrollbar-width: thin; }
-.news-edition #catNav > li { flex: none; order: 0; }
-.news-edition #catNav a { min-block-size: 44px; }
-.news-edition #catNav li:has(a[data-sec]) { order: 0; }
 
 .no-js :is(.kj-mast__preferences, .kj-mast__utility button, .kj-tabbar, .case-edition__mast a[href="#leadH"]) { display: none; }
 
@@ -175,8 +171,6 @@
   .news-edition .kj-mast__actions .reading-switch__track::before { width: 10px; height: 10px; }
   .news-edition .kj-mast__actions .reading-switch[aria-checked="true"] .reading-switch__track::before { transform: translateX(11px); }
   .news-edition .kj-mast__actions .reading-switch__state { display: none; }
-  .news-edition #catNav > li { flex: none; }
-  .news-edition #catNav a { padding-inline: .55rem; }
   .politics-front__lead { padding: 1.25rem 1.1rem; }
   .politics-front__lead::before { width: 31%; opacity: .38; }
   #frontQuestion { max-width: 90%; }

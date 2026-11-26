@@ -164,19 +164,11 @@ window.kjLoadTimer = setTimeout(() => {
     <li><a href="#itBriefing" data-view-tab="it">IT 브리핑</a></li><li><a href="#home" data-view-tab="national">종합 뉴스</a></li><li><a href="/topics/">이슈 추적</a></li><li><a href="/indicators/">경제 지표</a></li><li><a href="/law/">판례·입법</a></li><li><a href="/archive/">지난 호</a></li>
   </ul></nav>
 </header>
-<!-- /site-header -->
-<div class="edition-tools paper-width">
-  <p class="kj-mast__meta">
-        <time id="issueDate" datetime="">—</time>
-        <span id="asOf"></span>
-        <a class="kj-status" id="statusChip" href="#limitsH" hidden></a>
-      </p>
-  <div class="kj-mast__actions"><div class="kj-mast__utility">
-          <a class="reading-action" href="#readerSubscribe" data-reader-subscribe>새 호 구독</a>
-          <button class="reading-action" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>공유</button>
-          <button class="reading-action" id="menuBtn" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>지면 목차</button>
-        </div><button id="trackingReopen" type="button" hidden aria-haspopup="dialog" aria-controls="trackingDialog">추적</button></div>
+<div class="paper-tools paper-width">
+  <div class="paper-location"><a href="/">대한민국 조간</a><span aria-hidden="true">/</span><span id="paperSection">지난 호</span></div>
+  <div class="paper-actions"><a class="paper-action paper-subscribe" href="#readerSubscribe" data-reader-subscribe>새 호 구독</a><button class="paper-action" id="shareBtn" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>공유</button><button class="paper-action" id="menuBtn" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>지면 목차</button></div>
 </div>
+<!-- /site-header -->
 <div class="kj-notice kj-notice--stale" id="stale" role="status" hidden>
     <div class="kj-wrap kj-notice__in"><p id="staleMsg"></p></div>
   </div>
@@ -197,6 +189,11 @@ window.kjLoadTimer = setTimeout(() => {
   <a class="kj-btn kj-btn--secondary" id="loadingRetry" href="" hidden>다시 불러오기</a>
 </div>
 <main id="main">
+  <div class="edition-dateline paper-width"><p class="kj-mast__meta">
+        <time id="issueDate" datetime="">—</time>
+        <span id="asOf"></span>
+        <a class="kj-status" id="statusChip" href="#limitsH" hidden></a>
+      </p><button id="trackingReopen" type="button" hidden aria-haspopup="dialog" aria-controls="trackingDialog">추적</button></div>
   <div id="itBriefing" tabindex="-1"><!-- it-summary --><!-- /it-summary --></div>
   <section class="hero" id="home" aria-labelledby="leadH">
     <div class="kj-wrap" id="loadError" hidden></div>
@@ -587,57 +584,61 @@ window.kjLoadTimer = setTimeout(() => {
 </main>
 
 <footer class="kj-foot" id="foot">
-  <div class="kj-wrap kj-foot__in">
-    <div class="kj-foot__intro">
-      <div>
+  <div class="paper-width kj-foot__in">
+    <div class="kj-foot__top">
+      <div class="kj-foot__intro">
         <p class="kj-foot__brand">대한민국 조간</p>
-        <p class="kj-foot__tagline">데이터로 읽는 오늘의 대한민국</p>
+        <p class="kj-foot__guide">매일 아침 6시, 기술과 시사 뉴스·경제 지표를 출처와 함께 전합니다.</p>
       </div>
-      <p class="kj-foot__guide">매일 아침 6시, 오늘 우리나라 주요 뉴스와 경제 숫자를 한 페이지로 요약합니다. 출처와 수집 한계를 확인하고, 지난 호와 정정 기록을 함께 읽습니다.</p>
-    </div>
-    <div class="kj-foot__grid">
-      <section class="kj-foot__section kj-foot__section--reading" aria-labelledby="limitsH">
-        <div class="kj-foot__reading">
-          <div>
-            <h2 id="limitsH">수집 방법과 한계</h2>
-            <ul id="limits"></ul>
-          </div>
-          <div>
-            <h2>출처 신뢰도</h2>
-            <ul class="kj-grades">
-              <li class="kj-grade kj-grade--a"><b>A</b>공식 확정 통계</li>
-              <li class="kj-grade kj-grade--b"><b>B</b>공식 잠정 통계</li>
-              <li class="kj-grade kj-grade--c"><b>C</b>공식 정책 발표</li>
-              <li class="kj-grade kj-grade--d"><b>D</b>언론 보도·민간 집계</li>
-              <li class="kj-grade kj-grade--e"><b>E</b>분석·계산</li>
-            </ul>
-            <p>정부·공공기관의 공식 자료를 먼저 쓰고, 부족한 부분은 공개 보도로 채웁니다. 잠정치는 나중에 바뀔 수 있습니다.</p>
-          </div>
-        </div>
-      </section>
-      <section class="kj-foot__section kj-foot__section--archive" aria-labelledby="archH">
-        <h2 id="archH">지난 호</h2>
+      <section class="kj-foot__archive" aria-labelledby="archH">
+        <h2 id="archH">지난 호 읽기</h2>
         <form class="kj-archive" id="archive" aria-labelledby="archH">
           <label class="kj-sr" for="archSel">볼 호 고르기</label>
           <select id="archSel"></select>
           <button type="submit" class="kj-btn kj-btn--secondary">이 호 보기</button>
         </form>
-        <p>매일 아침 받아 보려면 <a href="feed.xml">RSS</a>를 구독하세요.</p>
-        <p><a href="/archive/">전체 지난 호 목록</a> · <a href="/topics/">이슈별 기록</a> · <a href="/indicators/">지표별 기록</a> · <a href="/regions/">시도별 지역 뉴스</a> · <a href="/compare/">보도 비교 기록</a> · <a href="/law/">판례 자료실</a></p>
+        <a href="/archive/">전체 지난 호 목록</a>
       </section>
-      <section class="kj-foot__section kj-foot__section--corrections" aria-labelledby="fixH">
+    </div>
+
+    <section class="kj-foot__sources" aria-labelledby="footSources">
+      <div class="kj-foot__section-title">
+        <h2 id="footSources">출처 등급</h2>
+        <p>정부·공공기관 자료를 우선 사용하고 공개 보도로 보완합니다. 잠정 통계는 바뀔 수 있습니다.</p>
+      </div>
+      <ul class="kj-grades">
+        <li class="kj-grade kj-grade--a"><b>A</b>공식 확정 통계</li>
+        <li class="kj-grade kj-grade--b"><b>B</b>공식 잠정 통계</li>
+        <li class="kj-grade kj-grade--c"><b>C</b>공식 정책 발표</li>
+        <li class="kj-grade kj-grade--d"><b>D</b>언론 보도·민간 집계</li>
+        <li class="kj-grade kj-grade--e"><b>E</b>분석·계산</li>
+      </ul>
+    </section>
+
+    <div class="kj-foot__records">
+      <section aria-labelledby="limitsH">
+        <h2 id="limitsH">수집 방법과 한계</h2>
+        <p class="kj-foot__edition" id="footEdition"></p>
+        <details id="footLimits">
+          <summary>이 호의 수집 기록 <span id="footLimitCount"></span></summary>
+          <ul id="limits"></ul>
+        </details>
+      </section>
+      <section aria-labelledby="fixH">
         <h2 id="fixH">정정 기록</h2>
         <p id="fixStatus">정정 기록을 불러오는 중입니다.</p>
         <details class="fix-disclosure" hidden>
           <summary id="fixLabel">정정 내역</summary>
           <ul class="fixes" id="fixes" aria-labelledby="fixLabel"></ul>
         </details>
-        <p>숫자·문장·링크가 원문과 다르면 <a id="reportLink" href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" target="_blank" rel="noopener">오류 신고</a>로 알려 주세요. 확인한 뒤 고치고, 고친 내용은 이 기록에 남깁니다.</p>
+        <p>숫자·문장·링크가 원문과 다르면 <a id="reportLink" href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" target="_blank" rel="noopener">오류 신고</a>로 알려 주세요.</p>
       </section>
     </div>
-    <div class="kj-foot__meta">
-      <p>코드 MIT · 글 CC BY 4.0 · <a href="/api/docs/">기사 API 문서</a> · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub 저장소</a></p>
-    </div>
+
+    <nav class="kj-foot__links" aria-label="자료실과 구독">
+      <a href="/topics/">이슈별 기록</a><a href="/indicators/">지표별 기록</a><a href="/regions/">시도별 지역 뉴스</a><a href="/compare/">보도 비교 기록</a><a href="/law/">판례 자료실</a><a href="/feed.xml">RSS 구독</a>
+    </nav>
+    <div class="kj-foot__meta"><span>코드 MIT · 글 CC BY 4.0</span><span><a href="/api/docs/">기사 API 문서</a> · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub 저장소</a></span></div>
   </div>
 </footer>
 
@@ -716,6 +717,7 @@ window.kjLoadTimer = setTimeout(() => {
 <script src="src/components/regions/regions.js" defer></script>
 <script src="src/components/politics/politics.js" defer></script>
 <script src="src/components/footer/footer.js" defer></script>
+<script src="src/core/paper-tools.js" defer></script>
 <script src="src/components/header/header.js" defer></script>
 <script src="src/main.js" defer></script>
 </body>

@@ -73,7 +73,6 @@
   .news-edition .kj-cats__in { gap: 0; flex-wrap: wrap; }
   .news-edition .kj-cats ul { flex: 1 1 auto; overflow: visible; gap: 0; }
   .news-edition .kj-cats ul li { flex: 1; text-align: center; }
-  .news-edition #catNav li:has(a[data-sec='regions']), .news-edition #catNav li:has(a[data-sec='politics']), .news-edition #catNav li:has(a[data-sec='industry']), .news-edition #catNav li:has(a[data-sec='fiscal']) { display: none; }
   .news-edition .kj-cats a { font-size: 13px; padding-inline: 5px; }
   .news-edition .kj-menubtn { font-size: 0; width: 44px; padding: 10px; }
   .news-edition #trackingReopen { flex-basis: 100%; text-align: right; min-height: 30px; }
@@ -124,11 +123,6 @@
 .news-edition { --nav-h: 52px; }
 .news-edition .kj-wrap { padding-inline: max(var(--gutter), env(safe-area-inset-left, 0px)) max(var(--gutter), env(safe-area-inset-right, 0px)); }
 @media(max-width:900px) {
-  .news-edition #catNav li:has(a[data-sec='track']) { display: none; }
-  .news-edition #catNav li:has(a[data-sec='home']) { order: 1; }
-  .news-edition #catNav li:has(a[data-sec='media']) { order: 2; }
-  .news-edition #catNav li:has(a[data-sec='national']) { order: 0; }
-  .news-edition #catNav li:has(a[data-sec='economy']) { order: 3; }
 }
 
 /* 도구 버튼은 밝은 지면·어두운 지면에서 같은 상태 대비를 유지한다 */

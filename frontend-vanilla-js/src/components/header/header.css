@@ -211,53 +211,7 @@
 }
 .kj-drawer__tools .reading-switch__copy { width: 100%; justify-content: space-between; }
 
-/* 링크 복사 권한이 없으면 화면 안에서 주소를 선택할 수 있다 */
-.reading-share {
-  width: min(25rem, calc(100% - 2rem));
-  max-height: calc(100dvh - 2rem);
-  padding: 1rem;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: var(--surface-raised);
-  color: var(--ink);
-}
-.reading-share::backdrop { background: var(--scrim); }
-.reading-share form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: .3rem;
-  margin-bottom: .6rem;
-}
-.reading-share h2 { margin: 0; font-size: 1.2rem; }
-.reading-share label { display: block; margin-bottom: .3rem; font-weight: 700; }
-.reading-share input {
-  width: 100%;
-  min-height: 44px;
-  padding: .45rem;
-  border: 1px solid var(--line-strong);
-  border-radius: 4px;
-  background: var(--bg);
-}
-.reading-share p { margin: .55rem 0 0; color: var(--ink-2); font-size: .9rem; }
-.reading-toast {
-  position: fixed;
-  inset-block-end: max(1rem, env(safe-area-inset-bottom, 0px));
-  inset-inline-start: 50%;
-  z-index: 100;
-  width: max-content;
-  max-width: calc(100% - 2rem);
-  margin: 0;
-  padding: .5rem .8rem;
-  border-radius: 6px;
-  transform: translateX(-50%);
-  background: var(--ink);
-  color: var(--bg);
-  opacity: 0;
-  pointer-events: none;
-}
-.reading-toast:not(:empty) { opacity: 1; }
+
 
 @media (forced-colors: active) {
   .reading-switch__track { border-color: ButtonText; }

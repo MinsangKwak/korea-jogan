@@ -126,9 +126,6 @@
   .kj-mast__utility { grid-template-columns: minmax(0, 1.1fr) minmax(0, .75fr) minmax(0, 1fr); }
   .kj-mast__utility .reading-action { gap: .25rem; }
   .news-edition .kj-cats__in { gap: 0; }
-  .news-edition #catNav { overflow-x: auto; }
-  .news-edition #catNav li:has(a[data-sec="home"]) { order: 0; }
-  .news-edition #catNav li:has(a[data-sec="national"]) { order: 1; }
   .news-edition .kj-cats a { min-width: 44px; padding-inline: .2rem; }
   .news-edition .kj-cats .front-law-tab { padding-inline: .45rem; }
   .front-law-tab span { display: none; }
