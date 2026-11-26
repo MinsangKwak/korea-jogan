@@ -29,7 +29,7 @@ async function pageFor(options = {}) {
   // 측정은 자동화 브라우저에서 꺼지므로, 사람 브라우저처럼 보이게 한 뒤 시험한다. automation 옵션이면 그대로 둔다
   if (!options.automation) await context.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
   // 기존 검사는 전국 지면을 고른 독자의 화면을 본다. IT 첫 화면은 smoke.cjs가 따로 검사한다
-  if (options.view !== 'it') await context.addInitScript(() => { try { localStorage.setItem('kj-view', 'national'); } catch {} });
+  if (options.view !== 'it') await context.addInitScript(() => { try { history.replaceState({ joganView: 'national', ...history.state }, ''); } catch {} });
   if (options.blockStorage) await context.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } }));
   const page = await context.newPage();
   const errors = [];
@@ -51,7 +51,7 @@ async function pageFor(options = {}) {
     }
     if (options.badLive && url.pathname === '/data/live.json') return route.fulfill({ json: { updatedAt: 'bad', items: [{}] } });
     if (options.slowExtras && url.pathname === '/data/corrections.json') await new Promise((resolve) => setTimeout(resolve, 2500));
-    let file = path.join(web, url.pathname === '/' ? 'index.html' : url.pathname);
+    let file = path.join(web, url.pathname.endsWith('/') ? url.pathname + 'index.html' : url.pathname);
     if (!path.extname(file)) file += '.html';
     try {
       let body = fs.readFileSync(file);
@@ -254,9 +254,7 @@ async function check(name, options, run) {
       assert.equal(await page.locator('#leadStand').textContent(), latest.lead.standfirst);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
       await page.locator('#trackingExpand').click();
-      assert.equal(await page.locator('#trackingContent .tracking-summary > .tracking-phases').count(), trackers.items.filter((item) => item.phases).length);
-      assert.equal(await page.locator('#trackingContent details .tracking-phases').count(), 0);
-      await page.locator('#trackingContent details > summary').first().click();
+      assert.equal(await page.locator('#trackingContent .tracking-summary > a').count(), trackers.items.length);
       await page.locator('#trackingDialog').evaluate((d) => { d.scrollTop = d.scrollHeight; });
       const stickyHead = await page.locator('#trackingDialog > header').boundingBox();
       const close = await page.locator('#trackingClose').boundingBox();
@@ -372,44 +370,13 @@ async function check(name, options, run) {
     assert.equal(await page.locator('#drawerNav a[data-sec="track"]').isVisible(), true);
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#trackList > article').count(), trackers.items.length);
-    for (const topic of trackers.items.filter((entry) => entry.trackingKeywords?.exact?.length)) {
-      const card = page.locator('#issue-' + topic.id);
-      assert.equal(await card.locator('.kj-track__keywords').innerText(), '추적 키워드 ' + topic.trackingKeywords.exact[0]);
-      assert.equal(await card.locator('.kj-track__permalink').getAttribute('href'), '/topics/' + topic.id + '/');
-      if (topic.periodUnknown) {
-        assert.equal(await card.locator('[role="progressbar"]').count(), 0);
-        assert.equal(await card.locator('.kj-prog__label').innerText(), topic.label);
-      }
-    }
-    const item = trackers.items[0];
-    const firstIssue = page.locator(`#issue-${item.id}`);
-    assert.equal(await firstIssue.locator('.kj-timeline li').count(), item.steps.length);
-    assert.equal(await firstIssue.locator('.kj-timeline li.is-done').count(), item.steps.filter((s) => s.done).length);
-    // 날짜가 아직 없는 단계는 '예정'으로 적는다
-    assert.equal(await firstIssue.locator('.kj-timeline li:not(.is-done) b').first().innerText(), '예정');
-    const hasArticleTable = item.links.some((link) => link.summary);
-    assert.equal(await firstIssue.locator('.kj-track__links li a').count(), hasArticleTable ? 0 : item.links.length);
-    if (hasArticleTable) assert.equal(await firstIssue.locator('.tracking-articles tbody tr').count(), item.links.length);
-    const bar = page.locator('#track .kj-prog__bar');
-    assert.equal(await bar.getAttribute('role'), 'progressbar');
-    assert.ok(Number(await bar.getAttribute('aria-valuenow')) > 0);
-    // 기사와 단계는 날마다 늘어나므로 자료에서 읽어 맞춘다
-    const muanData = trackers.items.find((t) => t.id === 'muan-airport');
-    const muan = page.locator('#issue-muan-airport');
-    assert.equal(await muan.locator('.tracking-articles tbody tr').count(), muanData.links.length);
-    assert.equal(await muan.locator('[aria-current="step"]').innerText(), muanData.phases[muanData.phaseIndex] + '\n현재 확인');
-    assert.equal(await muan.locator('[role="progressbar"]').count(), 0);
-    const sources = muan.locator('.kj-track__sources');
-    assert.equal(await sources.getAttribute('open'), null);
-    await sources.locator('> summary').click();
-    assert.equal(await muan.locator('.tracking-articles').isVisible(), true);
-    await sources.locator('> summary').click();
+    const first = page.locator('#trackList > article:visible');
+    assert.equal(await first.count(), 1);
+    assert.equal(await first.locator('h3').innerText(), trackers.items[0].title);
+    assert.equal(await page.locator('#trackList table, #trackList details').count(), 0);
     await page.locator('#trackingExpand').click();
     assert.equal(await page.locator('#trackingDialog').evaluate((d) => d.open), true);
     assert.deepEqual(await page.locator('#trackingDialog .kj-track__permalink').evaluateAll((links) => links.map((link) => link.getAttribute('href'))), trackers.items.map((item) => '/topics/' + item.id + '/'));
-    await page.locator('#trackingContent details').last().locator('summary').click();
-    const allLinks = trackers.items.reduce((n, t) => n + t.links.length, 0);
-    assert.equal(await page.locator('#trackingDialog .tracking-articles tbody tr').count(), allLinks);
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => document.activeElement.id === 'trackingExpand');
     await page.locator('#trackingHide').click();
@@ -437,9 +404,8 @@ async function check(name, options, run) {
     const before = await page.evaluate(() => window.scrollY);
     assert.ok(before > 0);
     await opener.click();
-    await page.locator('#trackingContent details').last().locator('summary').click();
     assert.equal(await page.locator('#trackingDialog').evaluate((d) => d.scrollWidth <= d.clientWidth + 1), true);
-    assert.equal(await page.locator('#trackingDialog table').count(), trackers.items.filter((t) => t.links && t.links.length).length);
+    assert.equal(await page.locator('#trackingDialog a').count(), trackers.items.length);
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('trackingDialog').open && document.activeElement.id === 'trackingExpand');
     assert.ok(Math.abs(await page.evaluate(() => window.scrollY) - before) < 2);
@@ -481,7 +447,7 @@ async function check(name, options, run) {
         assert.ok(await page.locator('#cats a[href="/law/"]').isVisible(), '판례 자료실 상단 진입점');
         assert.ok(await page.locator('#home a[href="/law/calendar/"]').isVisible(), '접지 않은 입법 캘린더 진입점');
         await page.locator('#track:not([hidden])').waitFor();
-        const panel = page.locator('#track .kj-prog').first();
+        const panel = page.locator('#trackList .issue-preview:visible');
         assert.ok(await panel.evaluate((p) => parseFloat(getComputedStyle(p).paddingLeft)) >= 20);
         const order = await page.evaluate(() => [...document.querySelectorAll('main > section')].map((s) => s.id));
         assert.deepEqual(order, ['home', 'national', 'track', 'regions', 'media', 'politics', 'economy', 'industry', 'fiscal']);
@@ -520,6 +486,7 @@ async function check(name, options, run) {
     }
   });
   await check('IT 첫 화면과 지면 탭', { width: 1280, view: 'it' }, async (page) => {
+    await page.addInitScript(() => localStorage.setItem('kj-view', 'national'));
     await page.goto('http://jogan.test/');
     await ready(page, 'ready', '');
     const items = latest.it?.items.length ? latest.it.items : latest.national.items.filter((item) => item.cat === '과학·IT');
@@ -535,7 +502,7 @@ async function check(name, options, run) {
     assert.equal(await page.locator('#natArticleTitle').innerText(), items[0].title);
     for (const hidden of ['#home', '#regions', '#fiscal', '#editionSearch']) assert.equal(await page.locator(hidden).isVisible(), false, hidden);
     assert.equal(await page.locator('#catNav a[href="/law/"]').isVisible(), true);
-    const cover = page.locator('.nat-cover-art img');
+    const cover = page.locator('#natArticle .nat-cover-art img');
     await cover.evaluate((image) => image.decode());
     const bounds = await cover.boundingBox();
     const titleBounds = await page.locator('#natArticleTitle').boundingBox();
@@ -543,8 +510,12 @@ async function check(name, options, run) {
     const goNext = page.getByRole('button', { name: '다음 기사', exact: true });
     if (items.length > 1) {
       assert.ok((await page.locator('#natHeadlines').boundingBox()).y >= bounds.y + bounds.height);
-      for (let i = 1; i < items.length; i++) await goNext.press('Enter');
-      assert.equal(await goNext.isDisabled(), true);
+      const deckHeight = await page.locator('.nat-deck').evaluate((node) => node.offsetHeight);
+      for (let i = 1; i < items.length; i++) {
+        await goNext.press('Enter');
+        assert.ok(Math.abs(await page.locator('.nat-deck').evaluate((node) => node.offsetHeight) - deckHeight) <= 1);
+      }
+      assert.equal(await goNext.isDisabled(), false);
       const last = page.locator('#natHeadlines [aria-pressed="true"]');
       assert.equal(await last.isVisible(), true);
       assert.equal(await last.locator('strong').innerText(), await page.locator('#natArticleTitle').innerText());
@@ -790,123 +761,105 @@ async function check(name, options, run) {
       assert.ok(drawerClose.y >= 0 && drawerClose.y + drawerClose.height <= 480);
       await page.locator('.kj-drawer__close').click();
       await page.locator('#trackingExpand').click();
-      await page.locator('#trackingContent details summary').last().click();
       const dialog = await page.locator('#trackingDialog').boundingBox();
       const header = await page.locator('#trackingDialog > header').boundingBox();
-      assert.ok(dialog.height - header.height >= 480 * .7);
+      assert.ok(dialog.height > header.height && dialog.height <= 480);
       await page.locator('#trackingDialog').evaluate((node) => { node.scrollTop = node.scrollHeight; });
       const close = await page.locator('#trackingClose').boundingBox();
       assert.ok(close.y >= 0 && close.y + close.height <= 480);
       await page.locator('#trackingClose').click();
-      if (width > 1100) assert.equal(await page.locator('#trackList .kj-track__side').first().evaluate((node) => getComputedStyle(node).position), 'static');
     });
   }
-  await check('PC 이슈 카드 두 열·일정 펼침·문서 스크롤', { width: 1920 }, async (page) => {
-    await page.route('**/data/trackers.json', (route) => route.fulfill({ json: { ...trackers, items: trackers.items.slice(0, 2) } }));
+  for (const width of [320, 940, 1624]) {
+    await check('한 장 이슈 무한 순환·높이 유지·상세 복귀 ' + width, { width }, async (page) => {
+      await page.goto('http://jogan.test/#track');
+      await ready(page);
+      const viewport = page.locator('#trackViewport');
+      const card = page.locator('#trackList > article:visible');
+      await card.locator('h3').waitFor();
+      assert.equal(await card.count(), 1);
+      const controls = page.locator('#trackControls');
+      await controls.scrollIntoViewIfNeeded();
+      await viewport.focus();
+      const heights = [];
+      for (let i = 0; i < trackers.items.length; i++) {
+        assert.equal(await card.locator('h3').innerText(), trackers.items[i].title);
+        heights.push((await viewport.boundingBox()).height);
+        const offset = await page.evaluate(() => scrollY);
+        await viewport.press('ArrowRight');
+        assert.ok(Math.abs(offset - await page.evaluate(() => scrollY)) < 2);
+      }
+      assert.ok(Math.max(...heights) - Math.min(...heights) <= 1);
+      assert.equal(await card.locator('h3').innerText(), trackers.items[0].title);
+      await page.locator('#trackPrev').click();
+      const last = trackers.items.at(-1);
+      const link = card.locator('a');
+      assert.equal(await link.getAttribute('href'), '/topics/' + last.id + '/');
+      await link.click();
+      await page.locator('.issue-sources a').first().waitFor();
+      assert.equal(await page.locator('.issue-sources li').count(), last.links.length);
+      await page.goBack();
+      await card.locator('a').waitFor();
+      assert.equal(await card.locator('h3').innerText(), last.title);
+    });
+  }
+  await check('IT 분야 전환 때 큰 글자 본문 위치 유지와 기사 자동 순환', { width: 320, view: 'it' }, async (page) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.clock.install();
     await page.goto('http://jogan.test/');
-    await ready(page);
-    const cards = page.locator('#trackList .kj-track');
-    const first = await cards.nth(0).boundingBox();
-    const second = await cards.nth(1).boundingBox();
-    assert.ok(Math.abs(first.y - second.y) < 2 && second.x > first.x + first.width, '두 이슈가 같은 행에 나란히 배치');
-    assert.equal(await page.locator('#trackNext').isHidden(), true);
-    const schedule = cards.first().locator('.kj-track__timeline');
-    if (await schedule.getAttribute('open') === null) await schedule.locator('summary').press('Enter');
-    await noDetailScroll(page.locator('#trackList'));
-    await schedule.locator('li').last().scrollIntoViewIfNeeded();
-    assert.ok(await schedule.locator('li').last().evaluate((node) => node.getBoundingClientRect().bottom <= innerHeight + 1));
-  });
-  const carouselIssues = Array.from({ length: 4 }, (_, i) => ({ ...trackers.items[i % trackers.items.length], id: 'test-issue-' + (i + 1) }));
-  await check('PC 이슈 카드 두 장씩 읽기·한 장 이동·작은 화면 복귀', { width: 1440 }, async (page) => {
-    let releaseSwiper;
-    const delaySwiper = new Promise((resolve) => { releaseSwiper = resolve; });
-    await page.route('**/assets/vendor/swiper/*.js', async (route) => { await delaySwiper; await route.fallback(); });
-    await page.route('**/data/trackers.json', (route) => route.fulfill({ json: { ...trackers, items: carouselIssues } }));
-    await page.goto('http://jogan.test/');
-    await ready(page);
-    const viewport = page.locator('#trackViewport');
-    const list = page.locator('#trackList');
-    const prev = page.locator('#trackPrev');
-    const next = page.locator('#trackNext');
-    const position = page.locator('#trackPosition');
-    await viewport.scrollIntoViewIfNeeded();
-    await page.locator('#trackList[data-carousel-state="loading"]').waitFor();
-    const geometry = () => list.evaluate((node) => ({
-      height: node.closest('section').getBoundingClientRect().height,
-      scrollbar: node.offsetHeight - node.clientHeight,
-      widths: [...node.children].map((card) => card.getBoundingClientRect().width),
-      tops: [...node.children].map((card) => card.offsetTop),
-    }));
-    const before = await geometry();
-    releaseSwiper();
-    await page.locator('#trackList[data-carousel-state="ready"]').waitFor();
-    const after = await geometry();
-    assert.ok(before.tops.every((top) => Math.abs(top - before.tops[0]) <= 1), 'JS가 준비되기 전에도 모든 이슈가 한 행에 놓여야 합니다.');
-    assert.ok(before.widths.every((width, i) => Math.abs(width - after.widths[i]) <= 1), '초기 카드 폭은 활성화 뒤에도 유지됩니다.');
-    assert.ok(Math.abs(before.height - after.height) <= before.scrollbar + 2, '브라우저 스크롤바를 제외한 지면 높이가 유지되어야 합니다. ' + JSON.stringify({ before, after }));
-
-    async function checkPair(start) {
-      await page.waitForFunction(({ start, count }) => {
-        const visible = [...document.querySelectorAll('#trackList > article')].filter((card) => !card.inert);
-        return visible.map((card) => card.id).join() === ['issue-test-issue-' + start, 'issue-test-issue-' + (start + 1)].join()
-          && document.querySelector('#trackPosition').textContent.includes(start + '–' + (start + 1) + ' / ' + count);
-      }, { start, count: carouselIssues.length });
-      const frame = await viewport.boundingBox();
-      const visible = await list.locator('> article:not([inert])').evaluateAll((cards) => cards.map((card) => {
-        const { left, right, top } = card.getBoundingClientRect();
-        return { left, right, top };
-      }));
-      assert.ok(visible[0].left >= frame.x - 2 && visible[1].right <= frame.x + frame.width + 2);
-      assert.ok(visible[1].left >= visible[0].right - 1 && Math.abs(visible[0].top - visible[1].top) < 2);
-      assert.equal(await prev.getAttribute('aria-disabled'), String(start === 1));
-      assert.equal(await next.getAttribute('aria-disabled'), String(start === carouselIssues.length - 1));
+    await ready(page, 'ready', '');
+    const deck = page.locator('.nat-deck');
+    if (!await deck.count()) return;
+    await page.locator('#bigBtn').click();
+    const category = page.locator('#natCategory');
+    const measure = () => deck.evaluate((node) => [Math.round(node.getBoundingClientRect().top + scrollY), node.offsetHeight]);
+    const size = await measure();
+    for (const option of await category.locator('option').all()) {
+      await category.selectOption(await option.getAttribute('value'));
+      assert.deepEqual(await measure(), size);
     }
-    await checkPair(1);
-    await noDetailScroll(list.locator('> article').first());
-    await next.click();
-    await checkPair(2);
-    await prev.click();
-    await checkPair(1);
-    await viewport.focus();
-    await page.keyboard.press('ArrowRight');
-    await checkPair(2);
-    await page.keyboard.press('ArrowRight');
-    await checkPair(3);
-    await page.keyboard.press('ArrowRight');
-    await checkPair(3);
-    const permalink = list.locator('> article:not([inert])').last().locator('.kj-track__permalink');
-    await permalink.focus();
-    await page.keyboard.press('ArrowLeft');
-    assert.equal(await permalink.evaluate((link) => link === document.activeElement), true);
-    assert.ok((await position.innerText()).includes('3–4 / 4'));
-    await viewport.focus();
-    await page.keyboard.press('ArrowLeft');
-    await checkPair(2);
-
-    await page.setViewportSize({ width: 390, height: 844 });
-    await next.waitFor({ state: 'hidden' });
-    await page.waitForFunction(() => document.getElementById('trackList').dataset.carouselState === 'static');
-    const rows = await list.locator('> article').evaluateAll((cards) => cards.map((card) => ({
-      inert: card.inert, top: card.getBoundingClientRect().top, bottom: card.getBoundingClientRect().bottom
-    })));
-    assert.equal(rows.length, carouselIssues.length);
-    assert.ok(rows.every((row, i) => !row.inert && (!i || row.top >= rows[i - 1].bottom - 1)));
-    assert.equal(await page.evaluate(() => document.activeElement.closest('.kj-track')?.id), 'issue-test-issue-2');
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
-    await page.setViewportSize({ width: 1100, height: 844 });
-    await viewport.scrollIntoViewIfNeeded();
-    await page.locator('#trackList[data-carousel-state="ready"]').waitFor();
-    await checkPair(2);
-    const secondCard = list.locator('> article:not([inert])').last();
-    await secondCard.locator('h3').scrollIntoViewIfNeeded();
-    const heading = await secondCard.locator('h3').boundingBox();
-    const startX = heading.x + heading.width / 2;
-    const y = heading.y + heading.height / 2;
-    await page.mouse.move(startX, y);
-    await page.mouse.down();
-    await page.mouse.move(startX - (await viewport.boundingBox()).width * 0.45, y, { steps: 8 });
-    await page.mouse.up();
-    await checkPair(3);
+    await page.setViewportSize({ width: 768, height: 960 });
+    const buttons = await page.locator('#natCtrl button').all();
+    await buttons[0].click();
+    const tabletSize = await measure();
+    for (const button of buttons) {
+      await button.click();
+      assert.deepEqual(await measure(), tabletSize);
+    }
+    await page.setViewportSize({ width: 320, height: 844 });
+    await category.selectOption({ index: 0 });
+    if (await page.locator('.nat-deck .nat-reading').count() < 2) return;
+    await category.blur();
+    await deck.evaluate((node) => node.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    await page.mouse.move(-20, -20);
+    await page.waitForFunction(() => document.querySelector('.nat-deck').dataset.autoplay === 'running');
+    const title = page.locator('#natArticleTitle');
+    const first = await title.innerText();
+    await page.clock.fastForward(8100);
+    assert.notEqual(await title.innerText(), first);
+    await deck.press('ArrowLeft');
+    assert.equal(await title.innerText(), first);
+    await page.clock.fastForward(16000);
+    assert.equal(await title.innerText(), first);
+  });
+  await check('최근 변경과 이슈 추적의 화면 내 자동 재생·정지·반복', { width: 390 }, async (page) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.clock.install();
+    await page.goto('http://jogan.test/#home');
+    await ready(page);
+    for (const [prefix, id] of [['change', '#changeList'], ['track', '#trackViewport']]) {
+      const viewport = page.locator(id);
+      await viewport.evaluate((node) => node.scrollIntoView({ block: 'center', behavior: 'instant' }));
+      await page.mouse.move(-20, -20);
+      await page.waitForFunction((id) => document.querySelector(id).dataset.autoplay === 'running', id);
+      const start = await page.locator('#' + prefix + 'Position').innerText();
+      await page.clock.fastForward(8100);
+      assert.notEqual(await page.locator('#' + prefix + 'Position').innerText(), start);
+      await page.locator('#' + prefix + 'Playback').click();
+      const paused = await page.locator('#' + prefix + 'Position').innerText();
+      await page.clock.fastForward(16000);
+      assert.equal(await page.locator('#' + prefix + 'Position').innerText(), paused);
+    }
   });
   await check('PC 단일 이슈는 링크만 제공하고 빈 이슈 지면은 숨김', { width: 1440 }, async (page) => {
     let items = trackers.items.slice(0, 1);
@@ -928,28 +881,6 @@ async function check(name, options, run) {
     assert.equal(await page.locator('#track').isHidden(), true);
     assert.equal(await page.locator('#trackingBar').isHidden(), true);
     assert.equal(await page.locator('#trackList > article').count(), 0);
-  });
-  await check('PC에서 Swiper를 받지 못해도 모든 이슈 기록을 열 수 있음', { width: 1440 }, async (page) => {
-    await page.route('**/data/trackers.json', (route) => route.fulfill({ json: { ...trackers, items: carouselIssues } }));
-    await page.route('**/assets/vendor/swiper/**', (route) => route.abort());
-    await page.goto('http://jogan.test/');
-    await ready(page);
-    const list = page.locator('#trackList');
-    await list.scrollIntoViewIfNeeded();
-    await page.waitForFunction(() => document.querySelector('script[src*="swiper-14"]') && document.getElementById('trackList').dataset.carouselState === 'static');
-    const links = list.locator('.kj-track__permalink');
-    assert.deepEqual(await links.evaluateAll((nodes) => nodes.map((node) => node.getAttribute('href'))),
-      carouselIssues.map((item) => '/topics/' + item.id + '/'));
-    await links.last().focus();
-    assert.ok(await links.last().evaluate((link) => link === document.activeElement));
-    assert.ok(await list.evaluate((node) => node.scrollLeft > 0 && [...node.children].every((card) => !card.inert)));
-    assert.ok(await links.last().evaluate((link) => {
-      const rect = link.getBoundingClientRect();
-      const list = link.closest('#trackList').getBoundingClientRect();
-      return rect.left >= list.left - 1 && rect.right <= list.right + 1;
-    }));
-    assert.equal(await page.locator('#trackNext').isHidden(), true);
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
   });
   for (const width of [390, 900, 1100, 1440, 1920]) {
     await check('섹션 배치와 기사 본문의 자연스러운 스크롤 ' + width, { width }, async (page) => {
@@ -1052,25 +983,15 @@ async function check(name, options, run) {
       assert.equal(await detail.isHidden(), true);
       assert.equal(await page.locator('#nums .econ-detail-toggle[aria-controls="econDetail"][aria-expanded="false"]').count(), count);
       assert.equal(await page.locator('#nums .kj-stat__ref, #nums .kj-src').count(), 0);
-      // PC에 모두 보이는 날은 버튼 비활성화·전체 접근을 확인하고 순환은 별도 6개 지표로 유지한다
-      if (width >= 1440 && count <= 4) {
-        for (const id of ['econPrev', 'econNext', 'econPlayback']) assert.equal(await page.locator('#' + id).isDisabled(), true);
-        assert.equal(await page.locator('#nums > .swiper-slide[aria-hidden="false"]').count(), count);
-        assert.equal(await page.locator('#nums > .swiper-slide').evaluateAll((cards) => cards.some((card) => card.inert)), false);
-        await page.locator('#econViewport').focus();
-        await page.keyboard.press('ArrowRight');
-        assert.equal(await page.locator('#econViewport').evaluate((node) => node.swiper.realIndex), 0);
-      } else {
-        await page.locator('#econPrev').click();
-        await page.waitForFunction((expected) => document.getElementById('econViewport').swiper.realIndex === expected, count - 1);
-        await page.locator('#econNext').click();
-        await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex === 0);
-        await page.locator('#econViewport').focus();
-        await page.keyboard.press('ArrowRight');
-        await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex === 1);
-        await page.locator('#econPlayback').click();
-        assert.equal(await page.locator('#econPlayback').getAttribute('aria-pressed'), 'true');
-      }
+      await page.locator('#econPrev').click();
+      await page.waitForFunction((expected) => document.getElementById('econViewport').swiper.realIndex === expected, count - 1);
+      await page.locator('#econNext').click();
+      await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex === 0);
+      await page.locator('#econViewport').focus();
+      await page.keyboard.press('ArrowRight');
+      await page.waitForFunction(() => document.getElementById('econViewport').swiper.realIndex === 1);
+      await page.locator('#econPlayback').click();
+      assert.equal(await page.locator('#econPlayback').getAttribute('aria-pressed'), 'true');
       const activeTile = page.locator('#nums .swiper-slide-active');
       const trigger = activeTile.locator('.econ-detail-toggle');
       const selected = nums[Number(await activeTile.getAttribute('data-econ-index'))];
@@ -1187,7 +1108,7 @@ async function check(name, options, run) {
   await check('PC 기본 펼침·모바일 핵심 우선·선택 기억', { width: 1440 }, async (page) => {
     await page.goto('http://jogan.test/');
     await ready(page);
-    const selectors = ['#natFlow', '.lead-extras', '#trackList .kj-track__timeline', '#industryChart'];
+    const selectors = ['#natFlow', '.lead-extras', '#industryChart'];
     for (const selector of selectors) assert.equal(await page.locator(selector).first().evaluate((node) => node.open), true, selector);
     const extras = page.locator('.lead-extras');
     await extras.locator('> summary').click();

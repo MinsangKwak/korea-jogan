@@ -20,18 +20,18 @@ function setNewsView(view) {
 }
 
 function setupNewsView() {
-  let initial = itEdition() ? 'it' : 'national';
-  try { if (localStorage.getItem('kj-view') === 'national') initial = 'national'; } catch {}
+  const initial = itEdition() ? 'it' : 'national';
 
   function destination(hash) {
-    if (hash === '#itBriefing') return 'it';
+    if (hash === '#itBriefing') return initial;
+    if (/^#issue-[a-z0-9-]+$/.test(hash)) return 'national';
     const target = document.getElementById(hash.slice(1));
     if (hash === '#natChooserTitle' || hash === '#natArticleTitle') return null;
     if (target?.closest('main > section, main > aside:not([data-reader-tools]), main > .tracking-bar')) return 'national';
     return null;
   }
   function syncLocation(event) {
-    const view = destination(location.hash) || history.state?.joganView || (event ? newsView : initial);
+    const view = destination(location.hash) || history.state?.joganView || (event && location.hash ? newsView : initial);
     setNewsView(view);
     history.replaceState({ ...history.state, joganView: view }, '');
   }
@@ -43,7 +43,9 @@ function setupNewsView() {
     if (!next) return;
     setNewsView(next);
     if (link.dataset.viewTab) {
-      try { localStorage.setItem('kj-view', next); } catch {}
+      event.preventDefault();
+      if (location.hash !== link.hash) history.pushState({ ...history.state, issueReturn: null, joganView: next }, '', link.hash);
+      window.scrollTo({ top: 0, behavior: 'instant' });
       track('view-tab', next);
     }
   }, true);
@@ -51,7 +53,11 @@ function setupNewsView() {
   syncLocation();
 }
 
+let newsPlaybackController;
+let itAutoplayPreference;
+
 function renderNational() {
+  newsPlaybackController?.abort();
   const it = newsView === 'it';
   const N = it ? itEdition() : D.national;
   const order = it ? IT_CATS : NAT_CATS;
@@ -125,8 +131,10 @@ function renderNational() {
   });
   const list = leadItems.concat(remaining);
   $('natJump').hidden = list.length < 2;
-  if (it && list.length > 1) {
-    $('natMeta').append(el('a', { class: 'nat-index-link', href: '#natChooserTitle' }, '기사 목록 ↓'));
+  if (it && N.items.length > 1) {
+    const indexLink = el('a', { class: 'nat-index-link', href: '#natChooserTitle' }, '기사 목록 ↓');
+    indexLink.inert = list.length < 2;
+    $('natMeta').append(indexLink);
   }
   box.replaceChildren();
   box.classList.toggle('nat-board--single', list.length < 2);
@@ -148,16 +156,26 @@ function renderNational() {
     );
     illustration.append(picture, el('figcaption', {}, 'IT 브리핑 지면 삽화 · AI 생성'));
   }
-  const select = (index, move = false) => {
-    const item = list[index];
+  let current = 0;
+  let playback;
+  const deck = el('div', { class: 'nat-deck', role: 'group', 'aria-label': 'IT 브리핑 기사' });
+  const articles = new Map();
+  const previous = el('button', { type: 'button', 'aria-label': '이전 기사' });
+  const next = el('button', { type: 'button', 'aria-label': '다음 기사' });
+  const toggle = el('button', { type: 'button', class: 'nat-playback' });
+  const position = el('span', { class: 'nat-position' });
+  const pager = el('div', { class: 'nat-pager', role: 'group', 'aria-label': '기사 이동' });
+  previous.append(svgIcon('m14 6-6 6 6 6'));
+  next.append(svgIcon('m10 6 6 6-6 6'));
+  if (it) pager.append(toggle);
+  pager.append(previous, position, next);
+
+  function articleFor(item) {
     const label = item.cat + (item.region && item.region !== '전국' ? ' · ' + item.region : '');
     const article = newsItem(item, label, { byline: true });
-    const actions = el('div', { class: 'nat-actions' });
     const title = article.querySelector('h3');
-    title.id = 'natArticleTitle';
-    title.tabIndex = -1;
-    article.setAttribute('aria-labelledby', title.id);
     const link = title.querySelector('a');
+    const actions = el('div', { class: 'nat-actions' });
     if (link) {
       title.textContent = item.title;
       link.className = 'nat-original';
@@ -166,41 +184,87 @@ function renderNational() {
       link.append(svgIcon('M13 5h6v6M19 5l-9 9M11 5H5v14h14v-6'));
       actions.append(link);
     }
-    if (list.length > 1) {
-      const pager = el('div', { class: 'nat-pager', role: 'group', 'aria-label': '기사 이동' });
-      const previous = el('button', { type: 'button', 'aria-label': '이전 기사' });
-      const next = el('button', { type: 'button', 'aria-label': '다음 기사' });
-      previous.append(svgIcon('m14 6-6 6 6 6'));
-      next.append(svgIcon('m10 6 6 6-6 6'));
-      previous.disabled = index === 0;
-      next.disabled = index === list.length - 1;
-      previous.addEventListener('click', () => select(index - 1, true));
-      next.addEventListener('click', () => select(index + 1, true));
-      const position = el('span', { class: 'nat-position' });
-      position.append(el('span', { 'aria-hidden': 'true' }, (index + 1) + ' / ' + list.length),
-        el('span', { class: 'paper-state' }, list.length + '건 중 ' + (index + 1) + '번째 기사'));
-      pager.append(previous, position, next);
-      actions.append(pager);
-      expandFor(buttons[index].parentElement);
-    }
-    if (actions.childElementCount) article.append(actions);
-    if (illustration) {
+    article.append(actions);
+    if (it) {
       const head = el('header', { class: 'nat-cover-head' });
       const body = el('div', { class: 'nat-cover-body' });
       head.append(article.querySelector('.kj-newscard__cat'), title);
       body.append(...article.childNodes);
-      article.append(head, illustration, body);
+      article.append(head, el('div', { class: 'nat-cover-size', 'aria-hidden': 'true' }), body);
     }
-    reading.replaceChildren(article);
+    return article;
+  }
+  function select(index, focusTitle = false, manual = false) {
+    current = index;
+    if (manual && playback) { itAutoplayPreference = false; playback.pause(); }
+    const selected = list[index];
+    let active;
+    if (it) {
+      for (const [item, wrapper] of articles) {
+        const chosen = item === selected;
+        wrapper.inert = !chosen;
+        wrapper.toggleAttribute('data-selected', chosen);
+        wrapper.removeAttribute('id');
+        wrapper.querySelector('h3').removeAttribute('id');
+        wrapper.querySelector('article').removeAttribute('aria-labelledby');
+      }
+      active = articles.get(selected);
+      active.id = 'natArticle';
+      active.querySelector('.nat-cover-size').after(illustration);
+    } else {
+      reading.replaceChildren(articleFor(selected));
+      active = reading;
+    }
+    const title = active.querySelector('h3');
+    title.id = 'natArticleTitle';
+    title.tabIndex = -1;
+    active.querySelector('.kj-newscard').setAttribute('aria-labelledby', title.id);
+    if (list.length > 1 || (it && N.items.length > 1)) {
+      if (!it) active.querySelector('.nat-actions').append(pager);
+      position.replaceChildren(el('span', { 'aria-hidden': 'true' }, (index + 1) + ' / ' + list.length),
+        el('span', { class: 'paper-state' }, list.length + '건 중 ' + (index + 1) + '번째 기사'));
+      previous.disabled = list.length === 1 || (!it && index === 0);
+      next.disabled = list.length === 1 || (!it && index === list.length - 1);
+      if (list.length > 1 && (manual || !it)) expandFor(buttons[index].parentElement);
+    }
     buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
-    if (move) {
+    if (focusTitle) {
       title.focus({ preventScroll: true });
       const bounds = title.getBoundingClientRect();
       if (bounds.top < 0 || bounds.bottom > window.innerHeight) title.scrollIntoView({ block: 'start' });
     }
-  };
-
-  box.append(reading);
+  }
+  function step(by, manual) {
+    select((current + by + list.length) % list.length, !it, manual);
+  }
+  previous.addEventListener('click', () => step(-1, true));
+  next.addEventListener('click', () => step(1, true));
+  if (it) {
+    N.items.forEach((item) => {
+      const wrapper = el('div', { class: 'nat-reading' });
+      wrapper.inert = true;
+      wrapper.append(articleFor(item));
+      articles.set(item, wrapper);
+      deck.append(wrapper);
+    });
+    box.append(deck);
+    if (N.items.length > 1) {
+      $('natMeta').append(pager);
+      toggle.disabled = list.length < 2;
+      newsPlaybackController = new AbortController();
+      playback = editionPlayback($('national'), deck, toggle, () => step(1, false), newsPlaybackController.signal, itAutoplayPreference);
+      playback.setAvailable(list.length > 1);
+      if (list.length > 1) {
+        deck.tabIndex = 0;
+        deck.setAttribute('aria-roledescription', '캐러셀');
+        setupSlideGestures(deck, deck, () => true, (by) => step(by, true), () => {
+          itAutoplayPreference = false;
+          playback.pause();
+        }, newsPlaybackController.signal);
+      }
+      toggle.addEventListener('click', () => { itAutoplayPreference = toggle.getAttribute('aria-pressed') === 'true'; });
+    }
+  } else box.append(reading);
   if (list.length > 1) {
     const chooser = el('section', { class: 'nat-chooser', 'aria-labelledby': 'natChooserTitle' });
     const chooserTitle = el('h3', { id: 'natChooserTitle', tabindex: '-1' }, '기사 목록');
@@ -213,7 +277,7 @@ function renderNational() {
       const meta = el('span', { class: 'nat-headline__meta' });
       meta.append(el('span', {}, item.cat + ' · ' + item.outlet), el('span', { class: 'nat-headline__state', 'aria-hidden': 'true' }, '읽는 중'));
       button.append(meta, el('strong', {}, item.title));
-      button.addEventListener('click', () => select(index, true));
+      button.addEventListener('click', () => select(index, true, true));
       buttons.push(button);
       row.append(button);
       headlines.append(row);

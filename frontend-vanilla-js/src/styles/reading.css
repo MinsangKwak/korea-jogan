@@ -149,114 +149,11 @@
 .news-edition .news-quick .news-quick__base { overflow-wrap: anywhere; }
 
 /* 진행 상황과 통계는 숫자·기준·출처를 같은 순서로 읽는다 */
-.news-edition #trackList .kj-track {
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
-  border-color: var(--line);
-  border-top-color: var(--brand);
-}
-.news-edition #trackList .kj-track__head h3 { font-size: 1.27rem; line-height: 1.5; }
-.news-edition #trackList .kj-track__sum, .news-edition .tracking-summary p { font-size: 1rem; line-height: 1.8; }
 .news-edition #trackingDialog { border-radius: var(--radius-md); }
-.news-edition .kj-track__sources > summary { min-height: 44px; padding-inline: 12px; }
-.news-edition .tracking-phases small { line-height: 1.55; }
 .news-edition .kj-prog { border-radius: var(--radius-md); }
-@media (min-width: 1100px) {
-  .track-heading {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-    column-gap: 2rem;
-    margin-block-end: 1rem;
-  }
-  #track .kj-sechead { max-width: none; margin: 0; }
-  #track .kj-sechead .kj-label { display: none; }
-  #track .kj-sechead > p > strong { display: inline; }
-  #track .track-controls { margin: 0; }
-  #trackPosition {
-    margin-inline-end: .4rem;
-    padding-inline-end: .75rem;
-    border-inline-end: 1px solid var(--line-strong);
-    font-weight: 700;
-  }
-  #trackControls button {
-    display: inline-flex;
-    align-items: center;
-    gap: .45em;
-    min-height: var(--tap-min);
-    border-radius: var(--radius-xs);
-  }
-  #trackPrev::before, #trackNext::after {
-    content: "";
-    width: .4em;
-    height: .4em;
-    border-top: 2px solid currentColor;
-    border-inline-end: 2px solid currentColor;
-  }
-  #trackPrev::before { transform: rotate(-135deg); }
-  #trackNext::after { transform: rotate(45deg); }
-  #trackViewport {
-    box-sizing: border-box;
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    margin-inline: 0;
-    border-top: 2px solid var(--ink);
-    padding-block-start: 1rem;
-  }
-  .news-edition #trackList .kj-track {
-    padding: clamp(1rem, 1.8vw, 1.6rem);
-    border-top: 1px solid var(--line-strong);
-    border-radius: var(--radius-xs);
-  }
-  .news-edition #trackList .kj-track__head {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: "status link" "title title";
-    align-items: center;
-    gap: .35rem 1rem;
-  }
-  .news-edition #trackList .kj-track__head h3 {
-    grid-area: title;
-    font: 750 clamp(1.35rem, 1rem + .75vw, 1.7rem)/1.4 var(--font-serif);
-    letter-spacing: -.03em;
-    word-break: keep-all;
-    overflow-wrap: anywhere;
-  }
-  #trackList .kj-track__head .kj-badge {
-    grid-area: status;
-    justify-self: start;
-    max-width: 100%;
-    padding: .18em .65em;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-xs);
-    background: var(--brand-soft);
-    color: var(--brand);
-    font-size: .8rem;
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-  #trackList .kj-track__permalink { grid-area: link; color: var(--ink-2); }
-  .news-edition #trackList .kj-track__sum { margin-block: .7rem 1rem; line-height: 1.7; }
-  .news-edition #trackList .tracking-phases { margin-block: .5rem 1rem; }
-  #trackList .kj-prog {
-    padding: .75rem max(20px, 1rem);
-    border-top-width: 1px;
-    border-radius: var(--radius-xs);
-  }
-  #trackList .kj-prog__big { margin-block-start: .5rem; }
-  #trackList .kj-prog__since { margin-block: .25rem .65rem; }
-  #trackList .kj-prog__meta { margin-block-start: .45rem; }
-}
-@media screen and (min-width: 1100px) {
-  .news-edition #trackList[data-carousel-state]:not(.swiper-wrapper) {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: calc(50% - 16px);
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-  }
-  #trackList[data-carousel-state]:not(.swiper-wrapper) > article { scroll-snap-align: start; }
+@media (min-width: 850px) {
+  .track-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1rem; }
+  #track .kj-sechead { max-width: 40rem; margin: 0; }
 }
 .news-edition :is(#politics, #fiscal) .kj-panel {
   min-width: 0;

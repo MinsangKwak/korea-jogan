@@ -128,7 +128,7 @@ async function check(name, options, run) {
         if (kind === 'topic') {
           assert.equal(await page.locator('#timeline').isVisible(), true);
           assert.equal(await page.locator('#sources').isVisible(), true);
-          assert.ok(await page.locator('main table a[href^="http"]').count(), routePath);
+          assert.ok(await page.locator('main .issue-sources a[href^="http"]').count(), routePath);
         }
         if (kind === 'indicator') {
           assert.equal(await page.locator('#history').isVisible(), true);

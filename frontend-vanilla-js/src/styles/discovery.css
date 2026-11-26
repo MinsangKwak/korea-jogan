@@ -72,3 +72,12 @@
 .question-share label{display:block;margin-bottom:.3rem;font-size:.88rem;font-weight:700}
 .question-share .reader-tools__status{margin-block:.3rem 0}
 .question-share [hidden]{display:none}
+
+.issue-sections { display: flex; flex-wrap: wrap; gap: .4rem 1.35rem; margin: 1.2rem 0; border-block: 1px solid var(--line); }
+.issue-sections a { display: inline-flex; min-height: 44px; align-items: center; font-weight: 700; }
+.issue-sources { list-style: none; padding: 0; margin: 0; max-width: 56rem; }
+.issue-sources > li { min-width: 0; padding: 1.1rem 0; border-block-start: 1px solid var(--line); overflow-wrap: anywhere; }
+.issue-sources h3, .issue-sources p { margin: .3rem 0; }
+.issue-sources h3 { font: 720 1.17rem/1.5 var(--press-serif); word-break: keep-all; }
+.discovery-main .issue-source-group { max-width: 56rem; margin: 0; padding: 0; }
+.issue-source-group summary { align-content: center; padding-block: .6rem; }
