@@ -10,6 +10,7 @@ function finishLoading(ok) {
 }
 
 function renderLoadError() {
+  delete document.body.dataset.view;
   document.documentElement.classList.remove('js');
   document.title = '호를 불러오지 못했습니다 | 대한민국 조간';
   $('noticeBox').hidden = false;
@@ -54,7 +55,7 @@ async function boot() {
     renderLead();
     renderSplits();
     renderMediaMeta();
-    renderNational();
+    setupNewsView();
     showEditionWeather(D).catch(() => { $('weatherSpread').hidden = true; });
     setupEditionSearch(D.date);
     renderRegions();
@@ -69,7 +70,6 @@ async function boot() {
     setupControls();
     renderDrawerSubs();
     if ($('seoDigest')) $('seoDigest').remove();
-    setupNewsView();
     ok = true;
   } catch (error) {
     renderLoadError();

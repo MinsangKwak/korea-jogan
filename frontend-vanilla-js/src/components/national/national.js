@@ -7,42 +7,48 @@ function itEdition() {
   return items.length ? { flow: [], items } : null;
 }
 
-// IT 지면에서는 목록 밖의 전국 섹션을 CSS로 감춘다. 자료가 없으면 전국 지면으로 돌아간다
 function setNewsView(view) {
-  const next = view === 'it' && itEdition() ? 'it' : 'national';
-  if (next === newsView && document.body.dataset.view === next) return;
-  newsView = next;
+  if (document.body.dataset.view === view) return;
+  newsView = view;
   natCat = '전체';
-  document.body.dataset.view = next;
-  document.querySelectorAll('[data-view-tab]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.viewTab === next)));
+  document.body.dataset.view = view;
+  document.querySelectorAll('[data-view-tab]').forEach((link) => {
+    if (link.dataset.viewTab === view) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
   renderNational();
 }
 
 function setupNewsView() {
-  const tabs = $('viewTabs');
-  tabs.hidden = !itEdition();
-  // 고른 지면은 이 브라우저에 기억한다. 저장소가 막혀 있으면 매번 IT 지면으로 연다
-  const VIEW_KEY = 'kj-view';
-  let saved = '';
-  try { saved = localStorage.getItem(VIEW_KEY) || ''; } catch (error) { saved = ''; }
-  tabs.querySelectorAll('[data-view-tab]').forEach((b) => b.addEventListener('click', () => {
-    setNewsView(b.dataset.viewTab);
-    try { localStorage.setItem(VIEW_KEY, newsView); } catch (error) { saved = ''; }
-    window.scrollTo({ top: 0 });
-    track('view-tab', b.dataset.viewTab);
-  }));
-  const inNational = (id) => {
-    const target = id && document.getElementById(id);
-    return Boolean(target && target.closest('main'));
-  };
-  // IT 지면에서 전국 지면의 섹션으로 가는 링크를 누르면 전국 지면을 먼저 연다
-  document.addEventListener('click', (e) => {
-    const link = e.target.closest('a[href^="#"]');
-    if (link && newsView === 'it' && inNational(link.getAttribute('href').slice(1))) setNewsView('national');
+  let initial = itEdition() ? 'it' : 'national';
+  try { if (localStorage.getItem('kj-view') === 'national') initial = 'national'; } catch {}
+
+  function destination(hash) {
+    if (hash === '#itBriefing') return 'it';
+    const target = document.getElementById(hash.slice(1));
+    if (target?.closest('#national') && target.id !== 'national') return null;
+    if (target?.closest('main > section, main > aside:not([data-reader-tools]), main > .tracking-bar')) return 'national';
+    return null;
+  }
+  function syncLocation(event) {
+    const view = destination(location.hash) || history.state?.joganView || (event ? newsView : initial);
+    setNewsView(view);
+    history.replaceState({ ...history.state, joganView: view }, '');
+  }
+  document.addEventListener('click', (event) => {
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+    const next = destination(link.hash);
+    if (!next) return;
+    setNewsView(next);
+    if (link.dataset.viewTab) {
+      try { localStorage.setItem('kj-view', next); } catch {}
+      track('view-tab', next);
+    }
   }, true);
-  let hash = '';
-  try { hash = decodeURIComponent(location.hash.slice(1)); } catch (error) { hash = ''; }
-  setNewsView(inNational(hash) || saved === 'national' ? 'national' : 'it');
+  window.addEventListener('hashchange', syncLocation);
+  syncLocation();
 }
 
 function renderNational() {
@@ -50,9 +56,26 @@ function renderNational() {
   const N = it ? itEdition() : D.national;
   const order = it ? IT_CATS : NAT_CATS;
   const name = it ? 'IT' : '전국';
-  if (!N) { $('national').hidden = true; return; }
-  $('natH').textContent = '오늘의 ' + name + ' 뉴스';
-  $('natMeta').textContent = N.items.length + '건 · ' + asOfText();
+  const heading = $('natH');
+  const tag = it ? 'h1' : 'h2';
+  if (heading.localName !== tag) heading.replaceWith(el(tag, { id: 'natH' }));
+  $('natH').textContent = it ? 'IT 브리핑' : '오늘의 전국 뉴스';
+  $('national').hidden = false;
+  $('natFlow').hidden = !N?.flow?.length;
+  if (!N) {
+    $('natMeta').textContent = '수록 기사 0건';
+    $('natCategory').closest('.nat-mobile-tools').hidden = true;
+    $('natCtrl').replaceChildren();
+    delete $('natCtrl').dataset.view;
+    clearReadingPair($('natList'));
+    const empty = el('p', { class: 'nat-empty' }, '이 호에는 ' + name + ' 기사가 없습니다. ');
+    empty.append(el('a', { href: it ? '#home' : '/archive/' }, it ? '종합 뉴스 읽기' : '지난 호 보기'));
+    $('natList').replaceChildren(empty);
+    return;
+  }
+  $('natCategory').closest('.nat-mobile-tools').hidden = false;
+  const categoryCount = new Set(N.items.map((item) => item.cat)).size;
+  $('natMeta').textContent = N.items.length + '건 · ' + (it ? categoryCount + '개 분야' : asOfText());
   const flow = $('natFlow');
   flow.hidden = !N.flow.length;
   flow.textContent = '';
@@ -64,9 +87,16 @@ function renderNational() {
 
   const cats = ['전체'].concat(order.filter((c) => N.items.some((i) => i.cat === c)));
   const ctrl = $('natCtrl');
+  const selectCategory = (category) => {
+    if (natCat === category) return;
+    natCat = category;
+    renderNational();
+  };
+  const mobileCategory = $('natCategory');
   // 지면을 바꾸면 분야 단추도 그 지면의 분야로 다시 만든다
   if (ctrl.dataset.view !== newsView) {
     ctrl.replaceChildren();
+    mobileCategory.replaceChildren();
     ctrl.dataset.view = newsView;
   }
   if (!ctrl.childNodes.length) {
@@ -74,15 +104,15 @@ function renderNational() {
       const n = c === '전체' ? N.items.length : N.items.filter((i) => i.cat === c).length;
       const b = el('button', { class: 'kj-chip', type: 'button', 'aria-pressed': String(c === natCat) }, c + ' ');
       b.append(el('span', { class: 'kj-count' }, String(n)));
-      b.addEventListener('click', () => {
-        if (natCat === c) return;
-        natCat = c;
-        ctrl.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-        renderNational();
-      });
+      b.dataset.category = c;
+      b.addEventListener('click', () => selectCategory(c));
+      mobileCategory.append(el('option', { value: c }, c + ' · ' + n + '건'));
       ctrl.append(b);
     });
   }
+  ctrl.querySelectorAll('button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.category === natCat)));
+  mobileCategory.value = natCat;
+  mobileCategory.onchange = () => selectCategory(mobileCategory.value);
   const box = $('natList');
   const sorted = N.items.filter((i) => natCat === '전체' || i.cat === natCat)
     .sort((a, b) => order.indexOf(a.cat) - order.indexOf(b.cat));
@@ -95,6 +125,7 @@ function renderNational() {
     seen.add(item.cat);
   });
   const list = leadItems.concat(remaining);
+  $('natJump').hidden = list.length < 2;
   clearReadingPair(box);
   box.replaceChildren();
   box.classList.toggle('nat-board--single', list.length < 2);
@@ -135,7 +166,7 @@ function renderNational() {
   box.append(reading);
   if (list.length > 1) {
     const chooser = el('section', { class: 'nat-chooser', 'aria-labelledby': 'natChooserTitle' });
-    chooser.append(el('h3', { id: 'natChooserTitle' }, '기사 골라 읽기'), headlines);
+    chooser.append(el('h3', { id: 'natChooserTitle', tabindex: '-1' }, '기사 골라 읽기'), headlines);
     box.append(chooser);
     list.forEach((item, index) => {
       const row = el('li');

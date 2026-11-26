@@ -2,7 +2,6 @@
 // 분야 메뉴, 하단 탭바, 오른쪽 세로 메뉴, 전체 메뉴 서랍, 맨 위로 단추
 
 function renderNav() {
-  $('catNav').querySelectorAll('[data-sec]').forEach((link) => { link.setAttribute('href', '#' + link.dataset.sec); });
   TABS.forEach(([name, secs, icon]) => {
     const li = el('li');
     const a = el('a', { href: '#' + secs[0], 'data-sec': secs[0], 'data-group': secs.join(' ') });
