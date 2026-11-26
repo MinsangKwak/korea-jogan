@@ -131,8 +131,10 @@ function renderNational() {
   });
   const list = leadItems.concat(remaining);
   $('natJump').hidden = list.length < 2;
-  if (it && list.length > 1) {
-    $('natMeta').append(el('a', { class: 'nat-index-link', href: '#natChooserTitle' }, '기사 목록 ↓'));
+  if (it && N.items.length > 1) {
+    const indexLink = el('a', { class: 'nat-index-link', href: '#natChooserTitle' }, '기사 목록 ↓');
+    indexLink.inert = list.length < 2;
+    $('natMeta').append(indexLink);
   }
   box.replaceChildren();
   box.classList.toggle('nat-board--single', list.length < 2);

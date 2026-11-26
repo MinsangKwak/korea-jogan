@@ -818,6 +818,15 @@ async function check(name, options, run) {
       await category.selectOption(await option.getAttribute('value'));
       assert.deepEqual(await measure(), size);
     }
+    await page.setViewportSize({ width: 768, height: 960 });
+    const buttons = await page.locator('#natCtrl button').all();
+    await buttons[0].click();
+    const tabletSize = await measure();
+    for (const button of buttons) {
+      await button.click();
+      assert.deepEqual(await measure(), tabletSize);
+    }
+    await page.setViewportSize({ width: 320, height: 844 });
     await category.selectOption({ index: 0 });
     if (await page.locator('.nat-deck .nat-reading').count() < 2) return;
     await category.blur();

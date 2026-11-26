@@ -376,6 +376,7 @@ html.big { --shell-unit: 20px; }
 .nat-deck .nat-reading, .nat-deck .kj-newscard { height: 100%; }
 .news-edition #national:has(.nat-deck) #natList { grid-template-columns: minmax(0, 1fr); }
 .news-edition[data-view="it"] #natMeta { min-height: 44px; }
+.nat-index-link[inert] { visibility: hidden; }
 .news-edition #natMeta .nat-pager { margin: 0; }
 .nat-pager .nat-playback { padding-inline: .55rem; }
 .news-edition #track .track-heading { margin-block-end: 1rem; }
