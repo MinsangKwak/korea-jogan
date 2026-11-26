@@ -555,20 +555,30 @@ async function check(name, options, run) {
     const view = () => page.evaluate(() => document.body.dataset.view);
     if (!items.length) {
       assert.equal(await view(), 'national');
-      assert.equal(await page.locator('#viewTabs').isVisible(), false);
+      assert.equal(await page.locator('#catNav').isVisible(), true);
       return;
     }
     assert.equal(await view(), 'it');
-    assert.equal(await page.locator('#natH').innerText(), '오늘의 IT 뉴스');
+    assert.equal(await page.locator('h1#natH').innerText(), 'IT 브리핑');
     assert.ok((await page.locator('#natMeta').innerText()).startsWith(items.length + '건'));
     assert.equal(await page.locator('#natArticleTitle').innerText(), items[0].title);
-    for (const hidden of ['#home', '#regions', '#fiscal', '#catNav', '#editionSearch']) assert.equal(await page.locator(hidden).isVisible(), false, hidden);
-    assert.equal(await page.locator('#viewTabs a').getAttribute('href'), '/law/');
+    for (const hidden of ['#home', '#regions', '#fiscal', '#editionSearch']) assert.equal(await page.locator(hidden).isVisible(), false, hidden);
+    assert.equal(await page.locator('#catNav a[href="/law/"]').isVisible(), true);
+    await page.setViewportSize({ width: 390, height: 844 });
+    if (await page.locator('#natCategory option').count() > 1) {
+      await page.locator('#natCategory').selectOption({ index: 1 });
+      assert.equal(await page.locator('#natCategory').inputValue(), await page.locator('#natCtrl [aria-pressed="true"]').getAttribute('data-category'));
+      await page.locator('#natCategory').selectOption({ index: 0 });
+    }
     await page.locator('[data-view-tab="national"]').click();
     assert.equal(await view(), 'national');
     assert.equal(await page.locator('#natH').innerText(), '오늘의 전국 뉴스');
     assert.equal(await page.locator('#home').isVisible(), true);
-    assert.equal(await page.locator('[data-view-tab="national"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('[data-view-tab="national"]').getAttribute('aria-current'), 'page');
+    await page.goBack();
+    assert.equal(await view(), 'it');
+    await page.goForward();
+    assert.equal(await view(), 'national');
     await page.locator('[data-view-tab="it"]').click();
     await page.locator('#tabNav a[data-sec="media"]').evaluate((link) => link.click());
     assert.equal(await view(), 'national');
@@ -584,8 +594,8 @@ async function check(name, options, run) {
     const front = await page.locator('#natH').boundingBox();
     assert.ok(Math.abs(lead.x - front.x) <= 1, '전국 뉴스와 머리기사의 읽기 시작점 정렬');
     const destinations = await page.locator('#catNav a').evaluateAll(links => links.map(link => link.getAttribute('href')));
-    assert.deepEqual(destinations, ['#home', '/politics/', '/topics/', '#national', '/indicators/', '/archive/']);
-    await page.waitForFunction(() => document.querySelector('#catNav a[data-sec="home"]').getAttribute('aria-current') === 'true');
+    assert.deepEqual(destinations, ['#itBriefing', '#home', '/topics/', '/indicators/', '/law/', '/archive/']);
+    await page.waitForFunction(() => document.querySelector('#catNav a[data-view-tab="national"]').getAttribute('aria-current') === 'page');
     assert.equal(await page.locator('#natFlow').getAttribute('open'), '');
     await page.locator('#natFlow > summary').click();
     assert.equal(await page.locator('#natFlow').getAttribute('open'), null);
