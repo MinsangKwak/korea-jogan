@@ -255,7 +255,7 @@ html.big { --shell-unit: 20px; }
   letter-spacing: -.065em; line-height: 1.19; text-wrap: pretty;
 }
 .news-edition[data-view="it"] .nat-cover-body .kj-reading__lead { font-weight: 650; }
-.nat-cover-art {
+.nat-cover-size, .nat-cover-art {
   grid-area: 1 / 2 / 3 / 3; position: relative; isolation: isolate; align-self: stretch;
   margin: 0; min-width: 0; min-height: clamp(260px, 25vw, 380px); max-height: 36rem; overflow: hidden; background: var(--press-tint);
 }
@@ -321,13 +321,13 @@ html.big { --shell-unit: 20px; }
 .news-edition .politics-front__rail { background: var(--press-tint); padding-inline: clamp(12px, 1.5vw, 24px); }
 @media (max-width: 899px) {
   .news-edition[data-view="it"] #national .nat-reading .kj-newscard { grid-template-columns: minmax(0, 1fr) minmax(0, .65fr); gap: .8rem 1.2rem; }
-  .nat-cover-art { min-height: 180px; }
+  .nat-cover-size, .nat-cover-art { min-height: 180px; }
   .news-edition[data-view="it"] .nat-headlines { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 650px) {
   .news-edition[data-view="it"] #national .nat-reading .kj-newscard { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
-  .nat-cover-head, .nat-cover-art, .nat-cover-body { grid-area: auto; }
-  .nat-cover-art { min-height: 0; height: clamp(105px, 32vw, 175px); }
+  .nat-cover-head, .nat-cover-size, .nat-cover-art, .nat-cover-body { grid-area: auto; }
+  .nat-cover-size, .nat-cover-art { min-height: 0; height: clamp(105px, 32vw, 175px); }
   .nat-cover-art img { object-position: 50% 55%; }
   .news-edition[data-view="it"] .nat-headlines { grid-template-columns: minmax(0, 1fr); }
 }
@@ -364,3 +364,38 @@ html.big { --shell-unit: 20px; }
   .paper-settings, .paper-index, .edition-tools .kj-mast__actions { display: none; }
   .paper-header, .paper-header .paper-brand { background: white; color: black; }
 }
+
+/* 각 슬라이드의 자연 높이를 같은 격자 칸에 반영한다 */
+.issue-deck, .news-edition #changeList.issue-deck, .nat-deck {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; min-width: 0;
+}
+.issue-deck, .news-edition #changeList.issue-deck { overflow: clip; touch-action: pan-y pinch-zoom; }
+.issue-deck > *, .nat-deck > * { grid-area: 1 / 1; min-width: 0; }
+.issue-deck > [inert], .nat-deck > [inert] { visibility: hidden; pointer-events: none; }
+.nat-deck { touch-action: pan-y pinch-zoom; }
+.nat-deck .nat-reading, .nat-deck .kj-newscard { height: 100%; }
+.news-edition #national:has(.nat-deck) #natList { grid-template-columns: minmax(0, 1fr); }
+.news-edition[data-view="it"] #natMeta { min-height: 44px; }
+.news-edition #natMeta .nat-pager { margin: 0; }
+.nat-pager .nat-playback { padding-inline: .55rem; }
+.news-edition #track .track-heading { margin-block-end: 1rem; }
+#track .track-controls { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+#trackControls button, #changeControls button { border-radius: 3px; min-height: 44px; padding-inline: .75rem; }
+#trackPosition { padding-inline: .5rem; font-variant-numeric: tabular-nums; min-width: 4em; text-align: center; }
+.issue-preview {
+  display: grid; align-content: center; gap: 1rem; padding: clamp(20px, 3vw, 40px);
+  border-block: 1px solid var(--press-rule); border-block-start: 2px solid var(--press-ink); background: var(--press-panel);
+}
+.issue-preview__meta, .issue-preview__foot { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem .85rem; font: 650 .82rem/1.5 var(--paper-font); color: var(--press-muted); margin: 0; }
+.issue-preview h3 { margin: .45em 0 .35em; font: 750 clamp(1.42rem, 2.7vw, 2.3rem)/1.32 var(--press-serif); letter-spacing: -.045em; word-break: keep-all; overflow-wrap: anywhere; }
+.issue-preview__lead { max-width: 54em; margin: 0; line-height: 1.75; }
+.issue-preview__foot { justify-content: space-between; border-top: 1px solid var(--press-rule); padding-top: .55rem; }
+.issue-preview__foot a, .tracking-summary > a { color: var(--press-accent); min-height: 44px; }
+@media (max-width: 740px) {
+  .news-edition[data-view="it"] #national .nat-heading { align-items: center; }
+  .news-edition #natMeta:has(.nat-pager) { width: 100%; justify-content: space-between; }
+  .news-edition .nat-mobile-tools { align-items: center; min-height: 60px; }
+  .news-edition[data-view="it"] #natJump[hidden] { display: inline-flex !important; visibility: hidden; }
+}
+
+.nat-reading[data-selected] .nat-cover-size { display: none; }

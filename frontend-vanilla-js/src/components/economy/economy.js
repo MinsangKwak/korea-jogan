@@ -135,7 +135,7 @@ function initEconomyCarousel(shell, viewport, list, cards, detail) {
   shell.classList.add('is-ready');
   const visibleCount = () => {
     const desired = innerWidth >= 1350 ? 4 : innerWidth >= 1100 ? 3 : innerWidth >= 700 ? 2 : innerWidth >= 380 && !document.documentElement.classList.contains('big') ? 1.08 : 1;
-    return Math.min(count, desired);
+    return Math.min(count - 1, desired);
   };
   let swiper;
   const syncVisibility = () => {
@@ -175,13 +175,12 @@ function initEconomyCarousel(shell, viewport, list, cards, detail) {
       slidesPerView: visibleCount(),
       spaceBetween: innerWidth > 900 ? 24 : 16,
       slidesPerGroup: 1,
-      loop: count >= 5,
-      rewind: count < 5,
+      loop: true,
       loopAddBlankSlides: false,
       watchOverflow: true,
       watchSlidesProgress: true,
       a11y: { enabled: false },
-      autoplay: { delay: 8000, disableOnInteraction: false, pauseOnMouseEnter: false },
+      autoplay: { delay: EDITION_SLIDE_DELAY, disableOnInteraction: false, pauseOnMouseEnter: false },
       on: {
         init() { syncVisibility(); syncAutoplay(); },
         slideChange() { syncVisibility(); },

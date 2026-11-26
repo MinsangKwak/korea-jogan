@@ -1,153 +1,153 @@
 'use strict';
 
-function setupTrackCarousel(list) {
-  const viewport = $('trackViewport');
-  const controls = $('trackControls');
-  const previous = $('trackPrev');
-  const next = $('trackNext');
-  const position = $('trackPosition');
-  const cards = Array.from(list.children);
-  const desktop = matchMedia('screen and (min-width: 1100px)');
+const EDITION_SLIDE_DELAY = 8000;
+
+function editionPlayback(region, viewport, button, advance, signal, preference) {
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  let enabled = preference ?? !motion.matches;
+  let visible = !('IntersectionObserver' in window);
+  let hovered = false;
+  let timer;
+  let available = true;
+
+  function sync() {
+    clearTimeout(timer);
+    const running = available && enabled && visible && !hovered && !document.hidden && !region.contains(document.activeElement);
+    button.textContent = enabled ? '자동 넘김 끄기' : '자동 넘김 켜기';
+    button.setAttribute('aria-pressed', String(enabled));
+    viewport.dataset.autoplay = running ? 'running' : 'paused';
+    if (running) timer = setTimeout(() => { advance(); sync(); }, EDITION_SLIDE_DELAY);
+  }
+  function pause() { enabled = false; sync(); }
+  button.addEventListener('click', () => { enabled = !enabled; sync(); }, { signal });
+  region.addEventListener('pointerenter', (event) => { hovered = event.pointerType === 'mouse'; sync(); }, { signal });
+  region.addEventListener('pointerleave', () => { hovered = false; sync(); }, { signal });
+  region.addEventListener('focusin', sync, { signal });
+  region.addEventListener('focusout', () => queueMicrotask(() => { if (!signal.aborted) sync(); }), { signal });
+  document.addEventListener('visibilitychange', sync, { signal });
+  window.addEventListener('pageshow', sync, { signal });
+  window.addEventListener('pagehide', () => clearTimeout(timer), { signal });
+  motion.addEventListener('change', () => { if (motion.matches) pause(); }, { signal });
+  const observer = 'IntersectionObserver' in window ? new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    sync();
+  }, { threshold: 0 }) : null;
+  observer?.observe(viewport);
+  signal.addEventListener('abort', () => { clearTimeout(timer); observer?.disconnect(); }, { once: true });
+  sync();
+  return { pause, setAvailable(value) { available = value; sync(); } };
+}
+
+function setupSlideGestures(viewport, list, isActive, advance, pause, signal) {
+  let pointer = null;
+  let swiped = false;
+  viewport.addEventListener('keydown', (event) => {
+    if (!isActive() || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+    event.preventDefault();
+    if (event.target !== viewport) viewport.focus({ preventScroll: true });
+    advance(event.key === 'ArrowRight' ? 1 : -1);
+  }, { signal });
+  viewport.addEventListener('pointerdown', (event) => {
+    if (!isActive() || !event.isPrimary || event.button !== 0) return;
+    pointer = { x: event.clientX, y: event.clientY, id: event.pointerId };
+    swiped = false;
+    if (event.pointerType !== 'mouse') pause();
+  }, { signal });
+  viewport.addEventListener('dragstart', (event) => { if (pointer) event.preventDefault(); }, { signal });
+  window.addEventListener('pointerup', (event) => {
+    if (event.pointerId !== pointer?.id) return;
+    const dx = event.clientX - pointer.x;
+    swiped = Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(event.clientY - pointer.y) * 1.4;
+    pointer = null;
+    if (swiped) {
+      if (list.contains(document.activeElement)) viewport.focus({ preventScroll: true });
+      advance(dx < 0 ? 1 : -1);
+    }
+  }, { signal });
+  window.addEventListener('pointercancel', () => { pointer = null; }, { signal });
+  viewport.addEventListener('click', (event) => {
+    if (swiped && event.detail) { event.preventDefault(); event.stopImmediatePropagation(); swiped = false; }
+  }, { capture: true, signal });
+}
+
+function setupIssueCarousel(prefix, list, region, compact = null) {
+  const slides = Array.from(list.children);
+  const controls = $(prefix + 'Controls');
+  const previous = $(prefix + 'Prev');
+  const next = $(prefix + 'Next');
+  const position = $(prefix + 'Position');
+  const viewport = prefix === 'track' ? $('trackViewport') : list;
   const listeners = new AbortController();
   const { signal } = listeners;
-  let swiper = null;
-  let observer = null;
-  let nearby = false;
-  let loading = false;
-  list.dataset.carouselState = 'static';
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  let active = 0;
+  let rotating = false;
+  const playback = editionPlayback(region, viewport, $(prefix + 'Playback'), () => move(1), signal);
 
-  function syncPosition() {
-    if (!swiper || swiper.destroyed) return;
-    const first = swiper.activeIndex;
-    const last = Math.min(first + 2, cards.length);
-    cards.forEach((card, index) => {
-      const hidden = index < first || index >= last;
-      if (hidden && card.contains(document.activeElement)) viewport.focus({ preventScroll: true });
-      card.inert = hidden;
-      card.setAttribute('aria-hidden', String(hidden));
+  function display() {
+    slides.forEach((card, i) => {
+      card.inert = rotating && i !== active;
+      if (card.inert) card.setAttribute('aria-hidden', 'true');
+      else card.removeAttribute('aria-hidden');
     });
-    previous.setAttribute('aria-disabled', String(first === 0));
-    next.setAttribute('aria-disabled', String(last === cards.length));
-    const range = (first + 1) + '–' + last + ' / ' + cards.length;
-    if (position.textContent !== range) position.textContent = range;
+    position.textContent = (active + 1) + ' / ' + slides.length;
   }
 
-  function restoreList() {
-    const first = swiper?.activeIndex || 0;
-    const moveFocus = controls.contains(document.activeElement) || document.activeElement === viewport;
-    if (swiper && !swiper.destroyed) {
-      try { swiper.destroy(true, true); } catch {}
+  function move(direction, manual = false) {
+    if (!rotating) return;
+    if (manual) playback.pause();
+    active = (active + direction + slides.length) % slides.length;
+    display();
+    if (!motion.matches) slides[active].animate?.([{ transform: 'translateX(' + (direction * 32) + 'px)', opacity: .35 }, { transform: 'none', opacity: 1 }], { duration: 240, easing: 'ease-out' });
+    if (manual) $(prefix + 'Announcement').textContent = position.textContent + ' · ' + slides[active].querySelector('h3').textContent;
+  }
+  function layout() {
+    rotating = slides.length > 1 && (!compact || compact.matches);
+    const focused = slides.findIndex((card) => card.contains(document.activeElement));
+    if (focused >= 0) active = focused;
+    if (!rotating && controls.contains(document.activeElement)) slides[active].querySelector('a')?.focus({ preventScroll: true });
+    controls.hidden = !rotating;
+    viewport.tabIndex = rotating ? 0 : -1;
+    list.classList.toggle('issue-deck', rotating);
+    if (rotating) viewport.setAttribute('aria-roledescription', '캐러셀');
+    else viewport.removeAttribute('aria-roledescription');
+    display();
+    playback.setAvailable(rotating);
+  }
+  function fromHash() {
+    const index = slides.findIndex((card) => card.id && '#' + card.id === location.hash);
+    if (index >= 0) { active = index; playback.pause(); display(); }
+  }
+  previous.addEventListener('click', () => move(-1, true), { signal });
+  next.addEventListener('click', () => move(1, true), { signal });
+  setupSlideGestures(viewport, list, () => rotating, (by) => move(by, true), playback.pause, signal);
+  viewport.addEventListener('click', (event) => {
+    const link = event.target.closest('a');
+    if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const index = slides.findIndex((card) => card.contains(link));
+    if (index >= 0) {
+      playback.pause();
+      history.replaceState({ ...history.state, issueReturn: { prefix, href: link.href, top: link.getBoundingClientRect().top } }, '');
     }
-    swiper = null;
-    cards.forEach((card) => {
-      card.inert = false;
-      card.removeAttribute('aria-hidden');
-      card.classList.remove('swiper-slide', 'swiper-slide-active', 'swiper-slide-prev', 'swiper-slide-next');
-      card.removeAttribute('style');
-    });
-    list.classList.remove('swiper-wrapper');
-    list.removeAttribute('style');
-    viewport.classList.remove('swiper');
-    controls.hidden = true;
-    list.dataset.carouselState = 'static';
-    viewport.removeAttribute('tabindex');
-    viewport.removeAttribute('role');
-    viewport.removeAttribute('aria-label');
-    viewport.removeAttribute('aria-roledescription');
-    if (moveFocus) cards[first]?.querySelector('a, summary')?.focus({ preventScroll: true });
-  }
-
-  function targetCard() {
-    return document.getElementById(location.hash.slice(1))?.closest('.kj-track');
-  }
-
-  async function updateLayout() {
-    if (!desktop.matches) {
-      if (swiper) restoreList();
-      return;
-    }
-    if (!nearby || swiper || loading) return;
-    loading = true;
-    list.dataset.carouselState = 'loading';
-    const loaded = await loadLocalSwiper();
-    loading = false;
-    if (signal.aborted) return;
-    if (!loaded || !desktop.matches) {
-      list.dataset.carouselState = 'static';
-      return;
-    }
-    const reading = document.activeElement.closest('.kj-track') || targetCard();
-    const step = cards[1].offsetLeft - cards[0].offsetLeft;
-    const nativeIndex = step > 0 ? Math.round(list.scrollLeft / step) : 0;
-    const first = Math.max(0, Math.min(reading ? cards.indexOf(reading) : nativeIndex, cards.length - 2));
-    list.scrollLeft = 0;
-    viewport.classList.add('swiper');
-    viewport.tabIndex = 0;
-    viewport.setAttribute('role', 'region');
-    viewport.setAttribute('aria-roledescription', '캐러셀');
-    viewport.setAttribute('aria-label', '이슈 추적 목록, 좌우 방향키로 넘기기');
-    list.classList.add('swiper-wrapper');
-    cards.forEach((card) => card.classList.add('swiper-slide'));
-    try {
-      swiper = new window.Swiper(viewport, {
-        init: false,
-        initialSlide: first,
-        slidesPerView: 2,
-        spaceBetween: 32,
-        speed: motion.matches ? 0 : 300,
-        touchStartPreventDefault: false,
-        a11y: { enabled: false },
-        on: { activeIndexChange: syncPosition }
-      });
-      swiper.init();
-    } catch {
-      restoreList();
-      return;
-    }
-    list.dataset.carouselState = 'ready';
-    syncPosition();
-    controls.hidden = false;
-  }
-
-  function move(direction) {
-    if (!swiper) return;
-    if (direction < 0) swiper.slidePrev();
-    else swiper.slideNext();
-  }
-
-  previous.addEventListener('click', () => move(-1), { signal });
-  next.addEventListener('click', () => move(1), { signal });
-  viewport.addEventListener('keydown', (event) => {
-    if (!swiper || event.target !== viewport || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
-    event.preventDefault();
-    move(event.key === 'ArrowLeft' ? -1 : 1);
-  }, { signal });
-  window.addEventListener('hashchange', () => {
-    const index = cards.indexOf(targetCard());
-    if (swiper && index >= 0 && cards[index].inert) swiper.slideTo(index);
-  }, { signal });
-  motion.addEventListener('change', () => {
-    if (swiper) swiper.params.speed = motion.matches ? 0 : 300;
-  }, { signal });
-  desktop.addEventListener('change', updateLayout, { signal });
-
-  if (typeof IntersectionObserver === 'function') {
-    observer = new IntersectionObserver((entries) => {
-      if (!entries.some((entry) => entry.isIntersecting)) return;
-      observer.disconnect();
-      nearby = true;
-      updateLayout();
-    }, { rootMargin: '400px 0px' });
-    observer.observe(viewport);
-  } else {
-    nearby = true;
-    updateLayout();
-  }
+  }, { capture: true, signal });
+  compact?.addEventListener('change', layout, { signal });
+  window.addEventListener('hashchange', fromHash, { signal });
+  fromHash();
+  const back = history.state?.issueReturn;
+  const backIndex = back?.prefix === prefix && performance.getEntriesByType('navigation')[0]?.type === 'back_forward'
+    ? slides.findIndex((card) => card.querySelector('a')?.href === back.href) : -1;
+  if (backIndex >= 0) { active = backIndex; playback.pause(); }
+  layout();
+  if (backIndex >= 0) requestAnimationFrame(() => {
+    const link = slides[backIndex].querySelector('a');
+    if (signal.aborted || !link.getClientRects().length) return;
+    link.focus({ preventScroll: true });
+    window.scrollBy({ top: link.getBoundingClientRect().top - back.top, behavior: 'instant' });
+  });
   return () => {
     listeners.abort();
-    observer?.disconnect();
-    restoreList();
-    delete list.dataset.carouselState;
+    controls.hidden = true;
+    list.classList.remove('issue-deck');
+    slides.forEach((card) => { card.inert = false; card.removeAttribute('aria-hidden'); });
   };
 }

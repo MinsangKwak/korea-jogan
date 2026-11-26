@@ -186,15 +186,26 @@ def topic_records(item: dict) -> str:
     if links:
         rows = []
         for link in sorted(links, key=lambda row: str(row.get("date", "")), reverse=True):
-            rows.append(
-                '<tr><td data-label="보도일·매체">' + date_html(link.get("date"))
-                + f'<br>{esc(link.get("outlet", "매체 미기록"))}</td>'
-                + '<th scope="row" data-label="기사·원문">' + source_link(link.get("url"), link["title"])
-                + (f'<p class="discovery-meta">{esc(link["topic"])}</p>' if link.get("topic") else "") + "</th>"
-                + f'<td data-label="핵심 내용·확인 범위"><p>{esc(link.get("summary") or "요약 미기록. 제목만으로 상세 내용을 확정하지 않습니다.")}</p>'
-                + f'<p class="discovery-meta">{esc(link.get("verification") or "확인 범위 미기록")}</p></td></tr>'
-            )
-        content += '<section aria-labelledby="sources"><h2 id="sources">관련 기사와 확인 범위</h2><div class="discovery-table-wrap"><table class="discovery-table"><caption>최신 보도부터 정리한 근거 기사</caption><thead><tr><th scope="col">보도일·매체</th><th scope="col">기사·원문</th><th scope="col">핵심 내용·확인 범위</th></tr></thead><tbody>' + "".join(rows) + "</tbody></table></div></section>"
+            rows.append('<li><p class="discovery-meta">' + date_html(link.get("date"))
+                        + ' · ' + esc(link.get("outlet") or "매체 미기록")
+                        + (f' · {esc(link["topic"])}' if link.get("topic") else "") + '</p>'
+                        + '<h3>' + source_link(link.get("url"), link["title"]) + '</h3>'
+                        + '<p>' + esc(link.get("summary") or "요약 미기록") + '</p>'
+                        + '<p class="discovery-meta">확인 범위 · ' + esc(link.get("verification") or "미기록") + '</p></li>')
+        content += f'<section aria-labelledby="sources"><h2 id="sources">관련 기사와 확인 범위 · {len(rows)}건</h2>'
+        for start in range(0, len(rows), 6):
+            group = '<ol class="issue-sources" start="' + str(start + 1) + '">' + ''.join(rows[start:start + 6]) + '</ol>'
+            if start:
+                group = f'<details class="issue-source-group"><summary>이전 보도 {start + 1}–{min(start + 6, len(rows))}번 보기</summary>{group}</details>'
+            content += group
+        content += '</section>'
+    sections = []
+    if steps:
+        sections.append(f'<a href="#timeline">진행 기록 {len(steps)}건</a>')
+    if links:
+        sections.append(f'<a href="#sources">관련 기사 {len(links)}건</a>')
+    if sections:
+        content = '<nav class="issue-sections" aria-label="이슈 기록 바로가기">' + ''.join(sections) + '</nav>' + content
     return content
 
 
