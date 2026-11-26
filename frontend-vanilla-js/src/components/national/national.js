@@ -125,6 +125,9 @@ function renderNational() {
   });
   const list = leadItems.concat(remaining);
   $('natJump').hidden = list.length < 2;
+  if (it && list.length > 1) {
+    $('natMeta').append(el('a', { class: 'nat-index-link', href: '#natChooserTitle' }, '기사 목록 ↓'));
+  }
   box.replaceChildren();
   box.classList.toggle('nat-board--single', list.length < 2);
   if (!list.length) {
@@ -135,6 +138,16 @@ function renderNational() {
   const reading = el('div', { id: 'natArticle', class: 'nat-reading' });
   const headlines = el('ul', { id: 'natHeadlines', class: 'nat-headlines' });
   const buttons = [];
+  let illustration;
+  if (it) {
+    illustration = el('figure', { class: 'nat-cover-art' });
+    const picture = el('picture');
+    picture.append(
+      el('source', { media: '(max-width: 540px)', srcset: '/assets/images/tech-press-small.webp' }),
+      el('img', { src: '/assets/images/tech-press.webp', width: '760', height: '950', alt: '', decoding: 'async' })
+    );
+    illustration.append(picture, el('figcaption', {}, 'IT 브리핑 지면 삽화 · AI 생성'));
+  }
   const select = (index, move = false) => {
     const item = list[index];
     const label = item.cat + (item.region && item.region !== '전국' ? ' · ' + item.region : '');
@@ -171,6 +184,13 @@ function renderNational() {
       expandFor(buttons[index].parentElement);
     }
     if (actions.childElementCount) article.append(actions);
+    if (illustration) {
+      const head = el('header', { class: 'nat-cover-head' });
+      const body = el('div', { class: 'nat-cover-body' });
+      head.append(article.querySelector('.kj-newscard__cat'), title);
+      body.append(...article.childNodes);
+      article.append(head, illustration, body);
+    }
     reading.replaceChildren(article);
     buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
     if (move) {
@@ -198,7 +218,7 @@ function renderNational() {
       row.append(button);
       headlines.append(row);
     });
-    collapse(headlines, { limit: 5, noun: '건', start: true });
+    collapse(headlines, { limit: it ? 6 : 5, noun: '건', start: true });
   }
   select(0);
 }
