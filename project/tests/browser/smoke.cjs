@@ -75,35 +75,6 @@ async function ready(page, state = 'ready', view = 'national') {
   // 기존 검사는 전국 지면을 본다. 첫 화면인 IT 지면은 view를 비워 따로 검사한다
   if (state === 'ready' && view) await page.evaluate((view) => { if (typeof setNewsView === 'function') setNewsView(view); }, view);
 }
-async function pairedSize(page, selector) {
-  await page.waitForFunction((selector) => {
-    const pair = document.querySelector(selector);
-    if (!pair?.hasAttribute('data-paired-reading')) return false;
-    const panes = [...pair.querySelectorAll(':scope > .paired-pane')];
-    if (panes.length !== 2 || Math.abs(panes[0].offsetHeight - panes[1].offsetHeight) > 2) return false;
-    // 긴 열 표시는 ResizeObserver → requestAnimationFrame 뒤에 갱신되므로, 내용이 넘치는 열에 표시가 붙을 때까지 기다린다
-    return panes.every((pane) => pane.scrollHeight <= pane.clientHeight + 2 || pane.hasAttribute('data-paired-overflow'));
-  }, selector);
-  const panes = await page.locator(`${selector} > .paired-pane`).evaluateAll((nodes) => nodes.map((node) => ({
-    height: node.getBoundingClientRect().height,
-    contentHeight: node.scrollHeight + node.offsetHeight - node.clientHeight,
-    scrolls: node.hasAttribute('data-paired-overflow'),
-    scrollable: getComputedStyle(node).overflowY === 'auto',
-    tabIndex: node.tabIndex,
-    role: node.getAttribute('role'),
-    labelled: !!(node.getAttribute('aria-label') || document.getElementById(node.getAttribute('aria-labelledby'))?.textContent.trim()),
-  })));
-  const shorter = Math.min(...panes.map((pane) => pane.contentHeight));
-  for (const pane of panes) {
-    assert.ok(Math.abs(pane.height - shorter) <= 2, `${selector} ${JSON.stringify(panes)}`);
-    if (pane.contentHeight > pane.height + 2) {
-      assert.ok(pane.scrolls && pane.scrollable && pane.tabIndex === 0 && pane.role === 'region' && pane.labelled, `${selector} 긴 열을 키보드로 읽을 수 있어야 합니다.`);
-    } else if (pane.contentHeight <= pane.height) {
-      assert.equal(pane.scrolls, false, `${selector} 짧은 열에는 별도 스크롤이 없어야 합니다.`);
-    }
-  }
-  return panes;
-}
 async function setScreenDark(page, on) {
   const toggle = page.locator('#themeToggle:enabled');
   await toggle.waitFor();
@@ -564,6 +535,16 @@ async function check(name, options, run) {
     assert.equal(await page.locator('#natArticleTitle').innerText(), items[0].title);
     for (const hidden of ['#home', '#regions', '#fiscal', '#editionSearch']) assert.equal(await page.locator(hidden).isVisible(), false, hidden);
     assert.equal(await page.locator('#catNav a[href="/law/"]').isVisible(), true);
+    const goNext = page.getByRole('button', { name: '다음 기사', exact: true });
+    if (items.length > 1) {
+      for (let i = 1; i < items.length; i++) await goNext.press('Enter');
+      assert.equal(await goNext.isDisabled(), true);
+      const last = page.locator('#natHeadlines [aria-pressed="true"]');
+      assert.equal(await last.isVisible(), true);
+      assert.equal(await last.locator('strong').innerText(), await page.locator('#natArticleTitle').innerText());
+      assert.equal(await page.locator('.nat-position > [aria-hidden]').innerText(), items.length + ' / ' + items.length);
+    }
+    await noDetailScroll(page.locator('#natList'));
     await page.setViewportSize({ width: 390, height: 844 });
     if (await page.locator('#natCategory option').count() > 1) {
       await page.locator('#natCategory').selectOption({ index: 1 });
@@ -714,7 +695,7 @@ async function check(name, options, run) {
       else {
         assert.ok(articleBox.width > chooserBox.width);
         assert.ok(Math.abs(articleBox.y - chooserBox.y) <= 1);
-        await pairedSize(page, '#natList');
+        await noDetailScroll(page.locator('#natList'));
       }
       assert.equal(await page.locator('.news-illustration').count(), 0);
       assert.deepEqual(illustrations, []);
@@ -729,13 +710,20 @@ async function check(name, options, run) {
       assert.equal(await page.locator('#natArticle .kj-reading').textContent(), selected.summary);
       assert.equal(await page.locator('#natArticle .nat-original').getAttribute('href'), selected.url);
       assert.equal(await page.locator('#natArticle .nat-original').getAttribute('target'), '_blank');
+      assert.equal(await page.locator('#natArticle time').getAttribute('datetime'), selected.date);
+      assert.equal(await page.locator('#natArticle .nat-outlet').innerText(), selected.outlet);
+      await page.getByRole('button', { name: '이전 기사', exact: true }).press('Enter');
+      assert.equal(await page.getByRole('button', { name: '이전 기사', exact: true }).isDisabled(), true);
+      await page.getByRole('button', { name: '다음 기사', exact: true }).press('Enter');
+      assert.equal(await choice.getAttribute('aria-pressed'), 'true');
+      assert.equal(await page.locator('#natArticleTitle').innerText(), selectedTitle);
       if (width >= 1600) {
         const visible = await page.locator('#natHeadlines .nat-headline:visible').count();
         const more = page.locator('#natHeadlines + .kj-more button');
         await more.click();
         assert.ok(await page.locator('#natHeadlines .nat-headline:visible').count() > visible);
         assert.equal((await readGrid()).columns, grid.columns);
-        await pairedSize(page, '#natList');
+        await noDetailScroll(page.locator('#natList'));
         await more.click();
         assert.equal(await page.locator('#natHeadlines .nat-headline:visible').count(), visible);
       }
@@ -786,6 +774,7 @@ async function check(name, options, run) {
       await page.locator('#drawerBig').click();
       assert.equal(await page.locator('#drawerBig [data-big-state]').innerText(), '켬');
       const body = page.locator('.kj-drawer__body');
+      assert.ok((await body.boundingBox()).height >= 480 * .75);
       await body.evaluate((node) => { node.scrollTop = node.scrollHeight; });
       const end = await page.locator('.kj-drawer__links a').last().boundingBox();
       assert.ok(end.y >= 0 && end.y + end.height <= 480);
@@ -794,6 +783,9 @@ async function check(name, options, run) {
       await page.locator('.kj-drawer__close').click();
       await page.locator('#trackingExpand').click();
       await page.locator('#trackingContent details summary').last().click();
+      const dialog = await page.locator('#trackingDialog').boundingBox();
+      const header = await page.locator('#trackingDialog > header').boundingBox();
+      assert.ok(dialog.height - header.height >= 480 * .7);
       await page.locator('#trackingDialog').evaluate((node) => { node.scrollTop = node.scrollHeight; });
       const close = await page.locator('#trackingClose').boundingBox();
       assert.ok(close.y >= 0 && close.y + close.height <= 480);
@@ -801,7 +793,7 @@ async function check(name, options, run) {
       if (width > 1100) assert.equal(await page.locator('#trackList .kj-track__side').first().evaluate((node) => getComputedStyle(node).position), 'static');
     });
   }
-  await check('PC 이슈 카드 두 열·내부 스크롤·키보드 접근', { width: 1920 }, async (page) => {
+  await check('PC 이슈 카드 두 열·일정 펼침·문서 스크롤', { width: 1920 }, async (page) => {
     await page.route('**/data/trackers.json', (route) => route.fulfill({ json: { ...trackers, items: trackers.items.slice(0, 2) } }));
     await page.goto('http://jogan.test/');
     await ready(page);
@@ -809,15 +801,12 @@ async function check(name, options, run) {
     const first = await cards.nth(0).boundingBox();
     const second = await cards.nth(1).boundingBox();
     assert.ok(Math.abs(first.y - second.y) < 2 && second.x > first.x + first.width, '두 이슈가 같은 행에 나란히 배치');
-    await pairedSize(page, '#trackList');
     assert.equal(await page.locator('#trackNext').isHidden(), true);
-    assert.equal(await cards.first().locator('.kj-track__body').evaluate((node) => getComputedStyle(node).overflowY), 'visible');
-    const long = page.locator('#trackList > [data-paired-overflow]').first();
-    if (await long.count()) {
-      await long.focus();
-      await page.keyboard.press('End');
-      await page.waitForFunction(() => { const node = document.querySelector('#trackList > [data-paired-overflow]'); return node.scrollTop > 0 && node.scrollTop + node.clientHeight >= node.scrollHeight - 1; });
-    }
+    const schedule = cards.first().locator('.kj-track__timeline');
+    if (await schedule.getAttribute('open') === null) await schedule.locator('summary').press('Enter');
+    await noDetailScroll(page.locator('#trackList'));
+    await schedule.locator('li').last().scrollIntoViewIfNeeded();
+    assert.ok(await schedule.locator('li').last().evaluate((node) => node.getBoundingClientRect().bottom <= innerHeight + 1));
   });
   const carouselIssues = Array.from({ length: 4 }, (_, i) => ({ ...trackers.items[i % trackers.items.length], id: 'test-issue-' + (i + 1) }));
   await check('PC 이슈 카드 두 장씩 읽기·한 장 이동·작은 화면 복귀', { width: 1440 }, async (page) => {
@@ -865,6 +854,7 @@ async function check(name, options, run) {
       assert.equal(await next.getAttribute('aria-disabled'), String(start === carouselIssues.length - 1));
     }
     await checkPair(1);
+    await noDetailScroll(list.locator('> article').first());
     await next.click();
     await checkPair(2);
     await prev.click();
@@ -974,7 +964,7 @@ async function check(name, options, run) {
         if (width >= 1100) {
           assert.ok(search.x >= title.x + title.width && search.y < title.y + title.height);
           assert.ok(chart.x >= summary.x + summary.width && Math.abs(chart.y - summary.y) < 2);
-          await pairedSize(page, '.politics-grid');
+          await noDetailScroll(page.locator('.politics-grid'));
         } else {
           assert.ok(search.y >= title.y + title.height);
           assert.ok(chart.y >= summary.y + summary.height);
