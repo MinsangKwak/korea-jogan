@@ -10,6 +10,7 @@ function itEdition() {
 function setNewsView(view) {
   if (document.body.dataset.view === view) return;
   newsView = view;
+  $('paperSection').textContent = view === 'it' ? 'IT 브리핑' : '종합 뉴스';
   natCat = '전체';
   document.body.dataset.view = view;
   document.querySelectorAll('[data-view-tab]').forEach((link) => {

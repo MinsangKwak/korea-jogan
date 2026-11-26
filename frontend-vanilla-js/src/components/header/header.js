@@ -17,41 +17,11 @@ function renderStale() {
 
 // 공유는 휴대폰 공유 창을 먼저 쓰고, 없으면 링크를 복사한다. 링크는 지금 보는 호를 가리킨다
 function setupShare() {
-  const dialog = $('shareDialog');
-  const input = $('shareUrl');
-  const status = $('shareStatus');
-  let timer = 0;
-  let opener = null;
-  const share = async (event) => {
-    if (!D) return;
-    const button = event.currentTarget;
-    const url = issueUrl(D.date);
-    const data = { title: '대한민국 조간 · ' + longDate(D.date), text: D.lead.headline, url };
+  connectPaperShare([$('shareBtn'), $('drawerShare')], () => {
+    if (!D) return null;
     track('share', D.date);
-    if (navigator.share) {
-      try {
-        await navigator.share(data);
-        return;
-      } catch (error) {
-        if (error.name === 'AbortError') return;
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      clearTimeout(timer);
-      status.textContent = '링크를 복사했습니다.';
-      timer = setTimeout(() => { status.textContent = ''; }, 2400);
-    } catch {
-      if (dialog.open) return;
-      opener = button;
-      input.value = url;
-      dialog.showModal();
-      input.focus();
-      input.select();
-    }
-  };
-  ['shareBtn', 'drawerShare'].forEach((id) => $(id).addEventListener('click', share));
-  dialog.addEventListener('close', () => { if (opener) opener.focus({ preventScroll: true }); });
+    return { title: '대한민국 조간 · ' + longDate(D.date), text: D.lead.headline, url: issueUrl(D.date) };
+  });
 }
 
 function asOfText() {

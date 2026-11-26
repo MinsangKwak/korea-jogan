@@ -177,9 +177,6 @@
 .news-edition .reg .kj-tmap { top: calc(112px + var(--space-2)); }
 .news-edition .kj-tmap__label { font-size: .85rem; }
 .news-edition .kj-foot { border-top-color: var(--brand); }
-.news-edition .kj-foot__grid { gap: clamp(16px, 2vw, 28px); align-items: start; border: 0; background: transparent; }
-.news-edition .kj-foot__section { padding: var(--reading-inset); border: 0; border-top: 2px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface-raised); }
-.news-edition .kj-foot .kj-foot__section h2 { font-size: 1.18rem; }
 
 
 @media (min-width: 1080px) {

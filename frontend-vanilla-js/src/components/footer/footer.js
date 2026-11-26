@@ -2,8 +2,18 @@
 // 바닥글: 수집 한계, 지난 호, 정정 기록
 
 function renderLimits() {
-  D.limits.forEach((t) => $('limits').append(el('li', {}, t)));
-  collapse($('limits'), { noun: '개', name: '수집 한계', start: true });
+  $('limits').replaceChildren(...D.limits.map((text) => el('li', {}, text)));
+  $('footLimitCount').textContent = D.limits.length + '건';
+  const collected = $('asOf').textContent;
+  $('footEdition').textContent = D.date.replaceAll('-', '.') + '호' + (collected ? ' · ' + collected : '');
+  $('footLimits').hidden = !D.limits.length;
+  if (location.hash === '#limitsH') $('footLimits').open = true;
+  document.addEventListener('click', (event) => {
+    if (event.target.closest('a[href="#limitsH"]')) $('footLimits').open = true;
+  });
+  window.addEventListener('hashchange', () => {
+    if (location.hash === '#limitsH') $('footLimits').open = true;
+  });
 }
 
 // 지난 호는 선택 상자로 고르고 '이 호 보기'로 옮겨 간다

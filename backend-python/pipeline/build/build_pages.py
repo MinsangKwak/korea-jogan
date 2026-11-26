@@ -247,10 +247,14 @@ def with_lead_heading(page: str, issue: dict | None) -> str:
     return LEAD_H1.sub(lambda m: m.group(1) + esc(headline) + m.group(2), page, count=1)
 
 
-def it_summary(issue: dict) -> str:
-    items = (issue.get("it") or {}).get("items") or [
+def it_items(issue: dict) -> list:
+    return (issue.get("it") or {}).get("items") or [
         item for item in (issue.get("national") or {}).get("items", []) if item.get("cat") == "과학·IT"
     ]
+
+
+def it_summary(issue: dict) -> str:
+    items = it_items(issue)
     if not items:
         return '<p class="paper-width">이 호에는 IT 기사가 없습니다. <a href="#home">종합 뉴스 읽기</a></p>'
     rows = []
@@ -264,6 +268,14 @@ def it_summary(issue: dict) -> str:
 def embed_data(page: str, issue: dict, index: dict) -> str:
     page = re.sub(r'<!-- it-summary -->.*?<!-- /it-summary -->',
                   lambda _: '<!-- it-summary -->' + it_summary(issue) + '<!-- /it-summary -->', page, count=1, flags=re.S)
+    section_label = "IT 브리핑" if it_items(issue) else "종합 뉴스"
+    page = re.sub(r'(<span id="paperSection">).*?(</span>)', lambda m: m[1] + section_label + m[2], page, count=1)
+    limits = issue.get("limits") or []
+    rows = "".join(f"<li>{esc(text)}</li>" for text in limits)
+    page = re.sub(r'(<ul id="limits">).*?(</ul>)', lambda m: m[1] + rows + m[2], page, count=1, flags=re.S)
+    page = re.sub(r'(<span id="footLimitCount">).*?(</span>)', lambda m: m[1] + f"{len(limits)}건" + m[2], page, count=1)
+    page = re.sub(r'(<p class="kj-foot__edition" id="footEdition">).*?(</p>)',
+                  lambda m: m[1] + esc(long_date(issue["date"])) + "호" + m[2], page, count=1)
     for element_id, data in (("issue-data", issue), ("issue-index", index)):
         body = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
         pattern = re.compile(r'(<script type="application/json" id="' + element_id + r'">).*?(</script>)', re.S)
@@ -436,12 +448,12 @@ def discovery_page(template: str, item: dict) -> str:
 <script src="/src/core/theme.js" defer></script>
 <script src="/src/core/metrics.js" defer></script>
 <script src="/src/core/discovery.js" defer></script>
+<script src="/src/core/paper-tools.js" defer></script>
 <script type="module" src="/src/core/reader.js"></script>
 </head>
 <body class="discovery-page">
 <a class="skip" href="#main">본문으로 건너뛰기</a>
-{site_header.markup(section)}
-<div class="paper-width discovery-subscribe"><span><a href="/">대한민국 조간</a> / {labels[parent]}</span><a href="#readerSubscribe" data-reader-subscribe>새 호 구독</a></div>
+{site_header.markup(section, label=labels[parent], subscribe_here=True)}
 {body}
 <footer class="discovery-footer"><p><a href="/">대한민국 조간</a> · 출처와 기준일을 함께 읽습니다.</p><nav aria-label="운영 안내"><a href="/#limitsH">수집 방법과 한계</a><a href="/#fixH">정정 기록</a><a href="/feed.xml">RSS 구독</a><a href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" rel="noopener">오류 신고</a></nav><p>코드 MIT · 글 CC BY 4.0 · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub 저장소</a></p></footer>
 </body>
@@ -504,7 +516,7 @@ def build() -> list[Path]:
             stale.unlink()
     written = []
     for law_page in (PUBLIC / "law").rglob("index.html"):
-        law_page.write_text(secure_page(site_header.apply(law_page.read_text(encoding="utf-8"), "law"), law=True), encoding="utf-8")
+        law_page.write_text(secure_page(site_header.apply(law_page.read_text(encoding="utf-8"), "law", label="입법 캘린더" if law_page.parent.name == "calendar" else "판례·입법"), law=True), encoding="utf-8")
     if not issues:
         template = build_weather.with_spread(template, "", None)
         template = build_politics.with_front(template, {}, [], "")

@@ -106,6 +106,7 @@ function closeDrawer(restoreFocus = true) {
 function setupDrawer() {
   const dr = $('drawer');
   const panel = dr.querySelector('.kj-drawer__panel');
+  $('menuBtn').disabled = false;
   $('menuBtn').addEventListener('click', (e) => openDrawer(e.currentTarget));
   $('tabMenu').addEventListener('click', (e) => openDrawer(e.currentTarget));
   $('railMenu').addEventListener('click', (e) => openDrawer(e.currentTarget));

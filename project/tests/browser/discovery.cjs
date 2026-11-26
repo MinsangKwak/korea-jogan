@@ -59,6 +59,40 @@ async function check(name, options, run) {
   try {
     assert.ok(pages.length >= 3, '검색 도착 페이지가 생성되지 않음');
     await checkQuestionRecall(check, origin);
+    await check('지면 간 같은 제호·도구 위치와 키보드 조작', { width: 1400 }, async ({ page }) => {
+      await page.route('**/data/live.json', (route) => route.fulfill({ json: { items: [] } }));
+      const routes = ['/', '/indicators/', '/topics/', '/law/', '/law/calendar/', '/archive/'];
+      for (const [width, big] of [[1400, false], [768, false], [320, true]]) {
+        await page.setViewportSize({ width, height: 844 });
+        let reference;
+        for (const route of routes) {
+          await page.goto(origin + route);
+          const toggle = page.locator('.paper-settings [data-big-toggle]:enabled');
+          if ((await toggle.getAttribute('aria-checked') === 'true') !== big) await toggle.click();
+          await page.locator('.paper-tools #shareBtn').waitFor();
+          await page.evaluate(() => document.fonts.ready);
+          const geometry = await page.evaluate(() =>
+            [...document.querySelectorAll('.paper-header, .paper-brand, .paper-index a, .paper-settings button, .paper-tools, .paper-actions > a, #shareBtn, #menuBtn, .paper-directory > summary')].map((node) => {
+              const rect = node.getBoundingClientRect();
+              return [rect.x, rect.y + scrollY, rect.width, rect.height].map(Math.round);
+            }));
+          if (reference) assert.deepEqual(geometry, reference, route + ' ' + width);
+          else reference = geometry;
+          assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+        }
+      }
+      const menu = page.locator('.paper-directory summary');
+      await menu.press('Enter');
+      assert.equal(await page.locator('.paper-directory nav a:visible').count(), 6);
+      await menu.press('Escape');
+      assert.equal(await page.locator('.paper-directory').evaluate((node) => node.open), false);
+      await page.evaluate(() => {
+        Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+        Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (url) => { window.shared = url; } } });
+      });
+      await page.locator('#shareBtn').press('Enter');
+      await page.waitForFunction(() => window.shared === location.origin + '/archive/');
+    });
     const questionPaths = ['/topics/lee-jae-myung-trials/', '/politics/regional-student-loan-interest/', '/politics/reversal-and-remand/'];
     await check('세 질문에 자바스크립트 없이 사용 가능한 고정 주소 제공', { javaScriptEnabled: false, width: 320 }, async ({ page }) => {
       for (const routePath of questionPaths) {

@@ -34,6 +34,7 @@
   <script type="module" src="./law-status.js"></script>
   <link rel="stylesheet" href="/src/styles/press.css">
 <link rel="stylesheet" href="/src/styles/paper.css">
+  <script src="/src/core/paper-tools.js" defer></script>
 </head>
 <body>
   <a class="admin-skip" href="#main">본문으로 이동</a>
@@ -47,6 +48,10 @@
     <li><a href="/#itBriefing">IT 브리핑</a></li><li><a href="/#home">종합 뉴스</a></li><li><a href="/topics/">이슈 추적</a></li><li><a href="/indicators/">경제 지표</a></li><li><a href="/law/">판례·입법</a></li><li><a href="/archive/">지난 호</a></li>
   </ul></nav>
 </header>
+<div class="paper-tools paper-width">
+  <div class="paper-location"><a href="/">대한민국 조간</a><span aria-hidden="true">/</span><span id="paperSection">지난 호</span></div>
+  <div class="paper-actions"><a class="paper-action paper-subscribe" href="/feed.xml">새 호 구독</a><button class="paper-action" id="shareBtn" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>공유</button><details class="paper-directory"><summary class="paper-action"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>지면 목차</summary><nav aria-label="지면 목차"><a href="/#itBriefing">IT 브리핑</a><a href="/#home">종합 뉴스</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/law/">판례·입법</a><a href="/archive/">지난 호</a></nav></details></div>
+</div>
 <!-- /site-header -->
   <nav class="admin-desk-links paper-width" aria-label="편집국 도구"><span>편집국</span><a href="https://analytics.google.com/analytics/web/#/a412742288p559927668/reports/intelligenthome">GA4 열기 ↗</a></nav>
   <main id="main" class="kj-wrap admin-main">
