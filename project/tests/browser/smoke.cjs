@@ -441,8 +441,8 @@ async function check(name, options, run) {
         assert.ok(await contrast() >= 4.5);
         await page.getByRole('button', { name: '공유', exact: true }).first().waitFor();
         const meta = await page.locator('.kj-mast__meta').boundingBox();
-        const actions = await page.locator('.kj-mast__actions').boundingBox();
-        if (width <= 900) assert.ok(actions.y >= meta.y + meta.height - 1);
+        const tools = await page.locator('.paper-tools').boundingBox();
+        assert.ok(meta.y >= tools.y + tools.height - 1);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
         assert.ok(await page.locator('#cats a[href="/law/"]').isVisible(), '판례 자료실 상단 진입점');
         assert.ok(await page.locator('#home a[href="/law/calendar/"]').isVisible(), '접지 않은 입법 캘린더 진입점');
@@ -715,6 +715,12 @@ async function check(name, options, run) {
       assert.ok(await page.locator('#archSel option').count() > 0);
       assert.equal(await page.locator('#foot #limitsH').count(), 1);
       assert.equal(await page.locator('#foot #fixH').count(), 1);
+      const records = page.locator('#footLimits');
+      assert.equal(await records.evaluate((node) => node.open), false);
+      await records.locator('summary').press('Enter');
+      assert.deepEqual(await page.locator('#limits li').allTextContents(), latest.limits);
+      assert.equal(await page.locator('#limits li:visible').count(), latest.limits.length);
+      await records.locator('summary').press('Enter');
       if (width === 390) {
         for (const id of ['limitsH', 'archH', 'fixH']) {
           await page.locator('#menuBtn').click();
