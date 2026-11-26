@@ -25,6 +25,7 @@ import build_politics
 import build_case_edition
 import build_discovery
 import build_weather
+import site_header
 import reader_panel
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -246,7 +247,23 @@ def with_lead_heading(page: str, issue: dict | None) -> str:
     return LEAD_H1.sub(lambda m: m.group(1) + esc(headline) + m.group(2), page, count=1)
 
 
+def it_summary(issue: dict) -> str:
+    items = (issue.get("it") or {}).get("items") or [
+        item for item in (issue.get("national") or {}).get("items", []) if item.get("cat") == "과학·IT"
+    ]
+    if not items:
+        return '<p class="paper-width">이 호에는 IT 기사가 없습니다. <a href="#home">종합 뉴스 읽기</a></p>'
+    rows = []
+    for item in items:
+        link = build_discovery.source_link(item["url"], item["title"], new_window=False)
+        rows.append(f'<li><h3>{link}</h3><small>{esc(item.get("cat"))} · {esc(item.get("outlet"))}</small><p>{esc(item.get("summary"))}</p></li>')
+    return (f'<section class="paper-width it-summary" aria-label="IT 브리핑"><h2>IT 브리핑</h2>'
+            f'<p>{esc(issue["date"])}호 · 기사 {len(rows)}건</p><ol>{"".join(rows)}</ol></section>')
+
+
 def embed_data(page: str, issue: dict, index: dict) -> str:
+    page = re.sub(r'<!-- it-summary -->.*?<!-- /it-summary -->',
+                  lambda _: '<!-- it-summary -->' + it_summary(issue) + '<!-- /it-summary -->', page, count=1, flags=re.S)
     for element_id, data in (("issue-data", issue), ("issue-index", index)):
         body = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
         pattern = re.compile(r'(<script type="application/json" id="' + element_id + r'">).*?(</script>)', re.S)
@@ -340,7 +357,7 @@ def discovery_page(template: str, item: dict) -> str:
         share = f'<nav class="discovery-links" aria-label="질문 공유와 구독"><a href="mailto:?{esc(query)}">이 질문 메일로 공유</a><a href="/feed.xml">매일 새 호 RSS</a></nav>'
         body = body.replace("</main>", share + panel + "</main>", 1)
     else:
-        body = body.replace("</header>", "</header>\n" + panel, 1)
+        body = body.replace("</main>", panel + "\n</main>", 1)
     match = LDJSON.search(template)
     graph = json.loads(match.group(1))["@graph"] if match else []
     graph = [node for node in graph if node.get("@type") in ("WebSite", "NewsMediaOrganization")]
@@ -365,6 +382,7 @@ def discovery_page(template: str, item: dict) -> str:
     recall_assets = ""
     if item.get("questionId") == "reversal-and-remand":
         recall_assets = '<link rel="stylesheet" href="/src/components/question-recall/recall.css">\n<script src="/src/components/question-recall/recall.js" defer></script>'
+    section = {"politics": "national", "regions": "national", "compare": "national"}.get(parent, parent)
     page = f'''<!doctype html>
 <html lang="ko">
 <head>
@@ -410,6 +428,8 @@ def discovery_page(template: str, item: dict) -> str:
 <link rel="stylesheet" href="/src/styles/discovery.css">
 <link rel="stylesheet" href="/src/components/reader/reader.css">
 {recall_assets}
+<link rel="stylesheet" href="/src/styles/press.css">
+<link rel="stylesheet" href="/src/styles/paper.css">
 <script type="application/ld+json">
 {data}
 </script>
@@ -420,14 +440,8 @@ def discovery_page(template: str, item: dict) -> str:
 </head>
 <body class="discovery-page">
 <a class="skip" href="#main">본문으로 건너뛰기</a>
-<header class="discovery-mast">
-  <a href="/" class="discovery-logo">대한민국 조간</a>
-  <nav aria-label="신문 읽기"><a href="/">오늘 정치 한 장</a><a href="/politics/">정치 질문</a><a href="/topics/">이슈 추적</a><a href="/indicators/">경제 지표</a><a href="/regions/">지역 뉴스</a><a href="/compare/">보도 비교</a><a href="/archive/">지난 호</a><a href="/law/">판례 자료실</a><a href="#readerSubscribe" data-reader-subscribe>새 호 받아보기</a></nav>
-  <div class="discovery-tools" role="group" aria-label="읽기 설정">
-    <button class="reading-switch" id="discoveryBig" type="button" role="switch" aria-checked="false" data-big-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>글자 크게</span><span class="reading-switch__state" data-big-state aria-hidden="true">끔</span></span></button>
-    <button class="reading-switch" id="discoveryTheme" type="button" role="switch" aria-checked="false" data-theme-toggle disabled><span class="reading-switch__track" aria-hidden="true"></span><span class="reading-switch__copy"><span>어두운 화면</span><span class="reading-switch__state" data-theme-state aria-hidden="true">끔</span></span></button>
-  </div>
-</header>
+{site_header.markup(section)}
+<div class="paper-width discovery-subscribe"><span><a href="/">대한민국 조간</a> / {labels[parent]}</span><a href="#readerSubscribe" data-reader-subscribe>새 호 구독</a></div>
 {body}
 <footer class="discovery-footer"><p><a href="/">대한민국 조간</a> · 출처와 기준일을 함께 읽습니다.</p><nav aria-label="운영 안내"><a href="/#limitsH">수집 방법과 한계</a><a href="/#fixH">정정 기록</a><a href="/feed.xml">RSS 구독</a><a href="https://github.com/MinsangKwak/korea-jogan/issues/new?template=correction.yml" rel="noopener">오류 신고</a></nav><p>코드 MIT · 글 CC BY 4.0 · <a href="https://github.com/MinsangKwak/korea-jogan">GitHub 저장소</a></p></footer>
 </body>
@@ -464,6 +478,7 @@ def build() -> list[Path]:
     home = PUBLIC / "index.html"
     # 이미 한 번 돌린 index.html이어도 요약·기사 정보만 바뀌므로 그대로 틀로 쓴다
     template = home.read_text(encoding="utf-8")
+    template = site_header.apply(template, edition=True)
     issues = published()
     weather = {}
     for issue in issues:
@@ -489,7 +504,7 @@ def build() -> list[Path]:
             stale.unlink()
     written = []
     for law_page in (PUBLIC / "law").rglob("index.html"):
-        law_page.write_text(secure_page(law_page.read_text(encoding="utf-8"), law=True), encoding="utf-8")
+        law_page.write_text(secure_page(site_header.apply(law_page.read_text(encoding="utf-8"), "law"), law=True), encoding="utf-8")
     if not issues:
         template = build_weather.with_spread(template, "", None)
         template = build_politics.with_front(template, {}, [], "")
@@ -497,6 +512,7 @@ def build() -> list[Path]:
         template = build_case_edition.with_edition(template, "", pairs)
         template = DIGEST.sub("<!-- kj:digest -->\n<!-- /kj:digest -->", template, count=1)
         template = DISCOVERY.sub("<!-- kj:discovery -->\n<!-- /kj:discovery -->", template, count=1)
+        template = re.sub(r"<!-- it-summary -->.*?<!-- /it-summary -->", "<!-- it-summary --><!-- /it-summary -->", template, flags=re.S)
         template = with_lead_heading(template, None)
         template = with_today_line(template, "오늘의 한국 뉴스 요약")
         data = json.loads(LDJSON.search(template).group(1))
@@ -528,7 +544,7 @@ def build() -> list[Path]:
         written.append(out)
     admin = PUBLIC / "admin" / "index.html"
     if admin.exists():
-        admin.write_text(secure_page(admin.read_text(encoding="utf-8"), admin=True), encoding="utf-8")
+        admin.write_text(secure_page(site_header.apply(admin.read_text(encoding="utf-8")), admin=True), encoding="utf-8")
     return written
 
 

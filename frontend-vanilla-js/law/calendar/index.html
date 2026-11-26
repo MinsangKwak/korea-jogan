@@ -19,21 +19,24 @@
   <script src="/src/core/theme.js"></script>
   <script src="/src/core/metrics.js" data-law-pageview defer></script>
   <script type="module" src="./calendar.js"></script>
+  <link rel="stylesheet" href="/src/styles/paper.css">
 </head>
 <body class="law-paper cal-page">
   <a class="press-skip" href="#calendar-main">본문으로 건너뛰기</a>
-  <header class="press-bar">
-    <div class="press-inner press-mast">
-      <a class="press-brand" href="/"><img src="/assets/images/jogan-symbol.svg" width="36" height="36" alt="">대한민국 조간</a>
-      <div class="press-settings" aria-label="읽기 설정">
-        <button type="button" role="switch" aria-checked="false" data-big-toggle disabled>글자 크게 <span data-big-state>끔</span></button>
-        <button type="button" role="switch" aria-checked="false" data-theme-toggle disabled>어두운 화면 <span data-theme-state>끔</span></button>
-      </div>
-    </div>
-    <nav class="press-inner press-nav" aria-label="지면 이동">
-      <a href="/">오늘의 조간</a><a href="/law/">판례 검색</a><a href="/law/?view=issues">생활 법률 이슈</a><a href="/law/calendar/" aria-current="page">입법 캘린더</a><a href="/law/?view=saved">내 보관함</a>
+<!-- site-header -->
+<header class="paper-header" id="top">
+  <div class="paper-mast paper-width">
+    <a class="paper-brand kj-mast__logo" href="/"><img src="/assets/images/jogan-symbol.svg" width="42" height="42" alt=""><span>대한민국 조간</span></a>
+    <div class="paper-settings" role="group" aria-label="읽기 설정"><button type="button" id="discoveryBig" role="switch" aria-checked="false" data-big-toggle disabled><span class="paper-switch" aria-hidden="true"></span><span>글자 크게</span><span class="paper-state" data-big-state aria-hidden="true">끔</span></button><button type="button" id="discoveryTheme" role="switch" aria-checked="false" data-theme-toggle disabled><span class="paper-switch" aria-hidden="true"></span><span>어두운 화면</span><span class="paper-state" data-theme-state aria-hidden="true">끔</span></button></div>
+  </div>
+  <nav id="cats" class="paper-index" aria-label="주요 지면"><ul id="catNav" class="paper-width">
+    <li><a href="/#itBriefing">IT 브리핑</a></li><li><a href="/#home">종합 뉴스</a></li><li><a href="/topics/">이슈 추적</a></li><li><a href="/indicators/">경제 지표</a></li><li><a href="/law/" aria-current="page">판례·입법</a></li><li><a href="/archive/">지난 호</a></li>
+  </ul></nav>
+</header>
+<!-- /site-header -->
+  <nav class="press-inner press-nav" aria-label="법률면 목차">
+      <a href="/law/">판례 검색</a><a href="/law/?view=issues">생활 법률 이슈</a><a href="/law/calendar/" aria-current="page">입법 캘린더</a><a href="/law/?view=saved">내 보관함</a>
     </nav>
-  </header>
   <main id="calendar-main" tabindex="-1" class="press-inner">
     <header class="cal-intro">
       <div><p class="cal-kicker"><a href="/law/">법률면</a> / 입법 일정</p><h1>입법 캘린더</h1>

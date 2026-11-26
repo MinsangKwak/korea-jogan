@@ -43,6 +43,24 @@ class PagesTest(unittest.TestCase):
     def ld(self, page):
         return json.loads(build_pages.LDJSON.search(page).group(1))
 
+    def test_header_and_it_summary_survive_static_publication(self):
+        build_pages.build()
+        paths = ["index.html", f"{DATE}.html", "topics/index.html", "regions/index.html",
+                 "law/index.html", "law/calendar/index.html", "admin/index.html"]
+        for path in paths:
+            page = (build_pages.PUBLIC / path).read_text(encoding="utf-8")
+            header = re.search(r'<nav id="cats".*?</nav>', page, re.S)
+            self.assertIsNotNone(header, path)
+            self.assertEqual(re.findall(r"<a [^>]+>([^<]+)</a>", header[0]),
+                             ["IT 브리핑", "종합 뉴스", "이슈 추적", "경제 지표", "판례·입법", "지난 호"])
+        story = {"url": "https://example.org/story", "title": "기술 & 정책", "summary": "공개 자료", "cat": "과학·IT"}
+        issue = {"date": DATE, "national": {"items": [story]}}
+        self.assertIn("기술 &amp; 정책", build_pages.it_summary(issue))
+        self.assertIn('href="#home"', build_pages.it_summary({"date": DATE}))
+        issue["it"] = {"items": [{**story, "title": "전용 IT 기사"}]}
+        self.assertIn("전용 IT 기사", build_pages.it_summary(issue))
+        self.assertNotIn("기술 &amp; 정책", build_pages.it_summary(issue))
+
     def test_reader_tools_are_static_unique_and_keep_site_origin(self):
         build_pages.build()
         home = (build_pages.PUBLIC / 'index.html').read_text(encoding='utf-8')
@@ -134,7 +152,7 @@ class PagesTest(unittest.TestCase):
 
     def test_home_metadata_stays_stable_when_latest_issue_changes(self):
         title = "광고 없는 오늘의 IT 뉴스 요약 | 대한민국 조간"
-        description = "오늘의 IT 주요 뉴스를 광고 없이 짧게 읽으세요. AI·반도체·보안 소식을 먼저 보고, 전국 뉴스와 관련 판례를 탭으로 이어 읽을 수 있습니다."
+        description = "AI·반도체·보안 소식을 IT 브리핑으로 읽고, 종합 뉴스와 이슈 추적, 경제 지표, 판례·입법 자료에서 원문을 확인하세요."
         share_description = "오늘의 IT 뉴스를 짧게 읽고, 전국 뉴스와 관련 판례까지 원문과 함께 확인해 보세요."
         home_path = build_pages.PUBLIC / "index.html"
         for day in (DATE, "2026-10-20"):

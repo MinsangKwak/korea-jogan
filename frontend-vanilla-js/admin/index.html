@@ -32,18 +32,26 @@
   <script type="module" src="./app.js"></script>
   <script type="module" src="./campaigns.js"></script>
   <script type="module" src="./law-status.js"></script>
+  <link rel="stylesheet" href="/src/styles/press.css">
+<link rel="stylesheet" href="/src/styles/paper.css">
 </head>
 <body>
   <a class="admin-skip" href="#main">본문으로 이동</a>
-  <header class="kj-mast">
-    <div class="kj-wrap admin-mast">
-      <a href="/" class="admin-logo">대한민국 조간 <span>관리자</span></a>
-      <nav aria-label="관련 페이지"><a href="/">신문 보기 ↗</a><a href="/law/">판례면 보기</a><a href="https://analytics.google.com/analytics/web/#/a412742288p559927668/reports/intelligenthome">GA4 열기 ↗</a></nav>
-    </div>
-  </header>
+<!-- site-header -->
+<header class="paper-header" id="top">
+  <div class="paper-mast paper-width">
+    <a class="paper-brand kj-mast__logo" href="/"><img src="/assets/images/jogan-symbol.svg" width="42" height="42" alt=""><span>대한민국 조간</span></a>
+    <div class="paper-settings" role="group" aria-label="읽기 설정"><button type="button" id="discoveryBig" role="switch" aria-checked="false" data-big-toggle disabled><span class="paper-switch" aria-hidden="true"></span><span>글자 크게</span><span class="paper-state" data-big-state aria-hidden="true">끔</span></button><button type="button" id="discoveryTheme" role="switch" aria-checked="false" data-theme-toggle disabled><span class="paper-switch" aria-hidden="true"></span><span>어두운 화면</span><span class="paper-state" data-theme-state aria-hidden="true">끔</span></button></div>
+  </div>
+  <nav id="cats" class="paper-index" aria-label="주요 지면"><ul id="catNav" class="paper-width">
+    <li><a href="/#itBriefing">IT 브리핑</a></li><li><a href="/#home">종합 뉴스</a></li><li><a href="/topics/">이슈 추적</a></li><li><a href="/indicators/">경제 지표</a></li><li><a href="/law/">판례·입법</a></li><li><a href="/archive/">지난 호</a></li>
+  </ul></nav>
+</header>
+<!-- /site-header -->
+  <nav class="admin-desk-links paper-width" aria-label="편집국 도구"><span>편집국</span><a href="https://analytics.google.com/analytics/web/#/a412742288p559927668/reports/intelligenthome">GA4 열기 ↗</a></nav>
   <main id="main" class="kj-wrap admin-main">
     <div class="admin-title">
-      <div><p class="admin-eyebrow">대한민국 조간 · 편집국</p><h1>신문·판례 운영 현황</h1><p class="admin-muted">발행한 조간과 판례 자료의 수록 범위를 확인하고, 통계를 연결해 독자의 이용 흐름을 살펴보세요.</p></div>
+      <div><p class="admin-eyebrow">대한민국 조간 · 편집국</p><h1>뉴스·판례 운영 현황</h1><p class="admin-muted">발행한 조간과 판례 자료의 수록 범위를 확인하고, 통계를 연결해 독자의 이용 흐름을 살펴보세요.</p></div>
       <p class="kj-badge kj-badge--muted" id="connection">연결 전</p>
     </div>
 
