@@ -535,8 +535,14 @@ async function check(name, options, run) {
     assert.equal(await page.locator('#natArticleTitle').innerText(), items[0].title);
     for (const hidden of ['#home', '#regions', '#fiscal', '#editionSearch']) assert.equal(await page.locator(hidden).isVisible(), false, hidden);
     assert.equal(await page.locator('#catNav a[href="/law/"]').isVisible(), true);
+    const cover = page.locator('.nat-cover-art img');
+    await cover.evaluate((image) => image.decode());
+    const bounds = await cover.boundingBox();
+    const titleBounds = await page.locator('#natArticleTitle').boundingBox();
+    assert.ok(bounds.x >= titleBounds.x + titleBounds.width);
     const goNext = page.getByRole('button', { name: '다음 기사', exact: true });
     if (items.length > 1) {
+      assert.ok((await page.locator('#natHeadlines').boundingBox()).y >= bounds.y + bounds.height);
       for (let i = 1; i < items.length; i++) await goNext.press('Enter');
       assert.equal(await goNext.isDisabled(), true);
       const last = page.locator('#natHeadlines [aria-pressed="true"]');
@@ -546,6 +552,8 @@ async function check(name, options, run) {
     }
     await noDetailScroll(page.locator('#natList'));
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForFunction(() => document.querySelector('.nat-cover-art img').currentSrc.endsWith('/tech-press-small.webp'));
+    assert.ok((await cover.boundingBox()).y >= (await page.locator('#natArticleTitle').boundingBox()).y);
     if (await page.locator('#natCategory option').count() > 1) {
       await page.locator('#natCategory').selectOption({ index: 1 });
       assert.equal(await page.locator('#natCategory').inputValue(), await page.locator('#natCtrl [aria-pressed="true"]').getAttribute('data-category'));
