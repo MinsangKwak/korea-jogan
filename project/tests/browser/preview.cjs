@@ -26,7 +26,7 @@ let checks = 0;
 async function surface(options = {}) {
   const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, reducedMotion: 'reduce', colorScheme: 'light' });
   // 기존 검사는 전국 지면을 고른 독자의 화면을 본다. IT 첫 화면은 smoke.cjs가 따로 검사한다
-  await context.addInitScript(() => { try { localStorage.setItem('kj-view', 'national'); } catch {} });
+  await context.addInitScript(() => { try { history.replaceState({ joganView: 'national', ...history.state }, ''); } catch {} });
   await context.addInitScript(() => {
     Object.defineProperty(navigator, 'webdriver', { get: () => false });
     window.previewCspEvents = [];
@@ -305,7 +305,7 @@ async function identity(page) {
       await identity(page);
       assert.equal(await page.locator('main h1').isVisible(), true);
       assert.equal(await page.locator('#sources').isVisible(), true);
-      assert.ok(await page.locator('main table tbody tr').count());
+      assert.ok(await page.locator('.issue-sources li').count());
       const theme = page.getByRole('switch', { name: '어두운 화면', exact: true });
       await theme.click();
       assert.equal(await page.locator('html').getAttribute('data-color-mode'), 'dark');
