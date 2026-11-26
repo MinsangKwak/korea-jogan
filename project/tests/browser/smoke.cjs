@@ -582,6 +582,9 @@ async function check(name, options, run) {
     await page.locator('[data-view-tab="it"]').click();
     await page.locator('#tabNav a[data-sec="media"]').evaluate((link) => link.click());
     assert.equal(await view(), 'national');
+    await page.goto('http://jogan.test/#editionSearch');
+    await ready(page, 'ready', '');
+    assert.equal(await view(), 'national');
     await page.goto('http://jogan.test/#media');
     await ready(page, 'ready', '');
     assert.equal(await view(), 'national');
@@ -751,8 +754,9 @@ async function check(name, options, run) {
           await page.locator('[data-jump="' + id + '"]').click();
           await page.locator('#drawer').waitFor({ state: 'hidden' });
           const target = await page.locator('#' + id).boundingBox();
-          const sticky = await page.locator('.news-sticky').boundingBox();
-          assert.ok(target.y >= sticky.y + sticky.height, id + ' 제목이 고정 메뉴에 가려짐');
+          const mast = await page.locator('.paper-header').boundingBox();
+          assert.ok(target.y >= Math.max(0, mast.y + mast.height) && target.y < page.viewportSize().height,
+            id + ' 제목이 화면 안에 보여야 합니다.');
         }
       }
       const layout = await page.evaluate(() => {

@@ -26,7 +26,7 @@ function setupNewsView() {
   function destination(hash) {
     if (hash === '#itBriefing') return 'it';
     const target = document.getElementById(hash.slice(1));
-    if (target?.closest('#national') && target.id !== 'national') return null;
+    if (hash === '#natChooserTitle' || hash === '#natArticleTitle') return null;
     if (target?.closest('main > section, main > aside:not([data-reader-tools]), main > .tracking-bar')) return 'national';
     return null;
   }

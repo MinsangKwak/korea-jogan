@@ -1,6 +1,6 @@
 # 대한민국 조간
 
-**뉴스에서 생긴 질문을 기사·판결문·법령 원문까지 따라가며 읽는 광고 없는 데이터 신문입니다.** 예를 들어 ‘파기환송이 무슨 뜻인가요?’로 들어온 독자는 한 줄 설명을 읽고, 실제 판결 주문에서 어느 법원이 다음 재판을 맡는지 확인할 수 있습니다.
+**IT와 시사 뉴스를 읽고 보도·통계·판결문 원문을 확인하는 광고 없는 데이터 신문입니다.** IT 브리핑에서 분야별 기술 기사를 고르고, 종합 뉴스에서 전국·지역 소식과 정치·정책 질문을 읽습니다. 모든 지면에서 같은 메뉴로 이슈 추적, 경제 지표, 판례·입법, 지난 호를 열 수 있습니다.
 
 **곽민상 · 1인 기획·UI 설계·프론트엔드 개발·운영**
 
@@ -35,7 +35,7 @@ HTML·CSS·바닐라 JavaScript로 접근 가능한 지면을 만들고, Python�
 
 검색 규칙, 질문 본문, 답을 확인하는 동작을 분리해 편집 데이터와 UI를 독립적으로 바꿀 수 있습니다. 대표 질문과 답 옆에 새벽 삽화를 두고, 모바일에서는 답과 근거 링크를 읽은 뒤 풍경과 관련 질문으로 넘어갑니다. [기술 구조](project/docs/dev/architecture.md) · [화면·접근성 설계](project/docs/design/guide.md) · [Figma](https://www.figma.com/design/Eep2qLjiPT9jhDUyLU8Zjx)
 
-[PC·모바일에서 현재 1면 열기](https://korea-jogan.com/) · [이슈 추적 카드 보기](https://korea-jogan.com/#track)
+[IT 브리핑](https://korea-jogan.com/#itBriefing) · [종합 뉴스 1면](https://korea-jogan.com/#home) · [이슈 추적 카드 보기](https://korea-jogan.com/#track)
 
 <details>
 <summary>11월 23일 운영 1면 캡처 보기</summary>
