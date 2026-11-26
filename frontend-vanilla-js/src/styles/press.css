@@ -1,23 +1,27 @@
 :root {
-  --press-paper: #f7f8fb;
-  --press-panel: #ffffff;
-  --press-ink: #172338;
-  --press-muted: #516078;
-  --press-rule: #ccd3df;
-  --press-accent: #354f97;
-  --press-on-accent: #ffffff;
-  --press-tint: #e8edf7;
-  --press-focus: #2448ad;
+  --press-paper: #f7f4ed;
+  --press-panel: #fffdf7;
+  --press-ink: #22211e;
+  --press-muted: #655f55;
+  --press-rule: #cec8ba;
+  --press-accent: #a92e1d;
+  --press-on-accent: #fffdf7;
+  --press-tint: #efe9df;
+  --press-focus: #9d281b;
+  --press-copper: #913322;
+  --press-copper-tint: #f3e0d5;
   --press-serif: "AppleMyungjo", "Batang", "Noto Serif CJK KR", "Noto Serif KR", Georgia, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", "Noto Sans KR", "Jogan Korean", serif;
 }
 :root[data-theme="dark"] {
-  --press-paper: #141b28;
-  --press-panel: #1d2737;
-  --press-ink: #eef2fc;
-  --press-muted: #b9c5d8;
-  --press-rule: #455168;
-  --press-accent: #b7caff;
-  --press-on-accent: #17264b;
-  --press-tint: #29354c;
-  --press-focus: #bdd5ff;
+  --press-paper: #1b1b19;
+  --press-panel: #242421;
+  --press-ink: #f7f2e7;
+  --press-muted: #c6beb0;
+  --press-rule: #4d4942;
+  --press-accent: #ff9c80;
+  --press-on-accent: #302018;
+  --press-tint: #312e2a;
+  --press-focus: #ffc2aa;
+  --press-copper: #ffaf96;
+  --press-copper-tint: #413028;
 }

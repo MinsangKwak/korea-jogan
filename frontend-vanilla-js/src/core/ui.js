@@ -189,9 +189,14 @@ window.addEventListener('news-case-ready', () => {
   });
 });
 
-function newsItem(it, label) {
+function newsItem(it, label, { byline = false } = {}) {
   const a = el('article', { class: 'kj-newscard' });
-  const cat = el('span', { class: 'kj-newscard__cat' }, label);
+  const cat = el('span', { class: 'kj-newscard__cat' });
+  cat.append(el('span', { class: 'news-category' }, label));
+  if (byline) {
+    cat.append(el('span', { class: 'nat-outlet' }, it.outlet),
+      el('time', { datetime: it.date }, it.date.replaceAll('-', '. ')));
+  }
   if (!it.body_read) cat.append(el('span', { class: 'kj-badge kj-badge--muted' }, '본문 미확인'));
   a.append(cat);
   const h = el('h3');
@@ -203,9 +208,9 @@ function newsItem(it, label) {
     a.append(f);
   }
   const src = el('div', { class: 'kj-newscard__src' });
-  src.append(el('span', {}, it.outlet + ' · ' + it.date.slice(5).replace('-', '/')));
+  if (!byline) src.append(el('span', {}, it.outlet + ' · ' + it.date.slice(5).replace('-', '/')));
   if (it.figure_source) src.append(el('span', {}, '수치 출처 ' + it.figure_source));
-  a.append(src);
+  if (src.childElementCount) a.append(src);
   if (attachEditionLink(a, it.url)) return a;
   const material = [it.title, it.summary].join(' ');
   const topic = ARTICLE_LAW_TOPICS.find((item) => item.words.test(material) && !item.exclude?.test(material));

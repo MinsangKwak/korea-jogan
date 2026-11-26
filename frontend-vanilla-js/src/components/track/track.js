@@ -10,7 +10,6 @@ function renderTrack(data) {
   const box = $('trackList');
   stopTrackCarousel?.();
   stopTrackCarousel = null;
-  clearReadingPair(box);
   box.replaceChildren();
   if (!list.length || VIEWING_PAST) {
     $('track').hidden = true;
@@ -20,7 +19,6 @@ function renderTrack(data) {
     return;
   }
   const today = parseDate(todayKST());
-  const paired = list.length === 2 && typeof ResizeObserver === 'function';
   list.forEach((item) => {
     const card = el('article', { class: 'kj-track' });
     const head = el('div', { class: 'kj-track__head' });
@@ -43,11 +41,6 @@ function renderTrack(data) {
     if (item.phases) card.append(trackingPhases(item));
 
     const body = el('div', { class: 'kj-track__body' });
-    if (!paired) {
-      body.tabIndex = 0;
-      body.setAttribute('role', 'region');
-      body.setAttribute('aria-label', item.title + ' 진행 상황과 확인 기록');
-    }
     const grid = el('div', { class: 'kj-track__grid' });
     const ol = el('ol', { class: 'kj-timeline' });
     item.steps.forEach((st) => {
@@ -94,7 +87,6 @@ function renderTrack(data) {
   });
   $('trackMeta').textContent = '사안 ' + list.length + '건 · 오늘 기준 · ' + longDate(data.updated) + ' 갱신';
   $('track').hidden = false;
-  if (paired) matchReadingColumns(box, 1100, list.map((item) => item.title + ' 진행 상황과 확인 기록'));
   if (list.length > 2) stopTrackCarousel = setupTrackCarousel(box);
   toggleSectionNav('track', true);
   setupTrackingPanel(data);

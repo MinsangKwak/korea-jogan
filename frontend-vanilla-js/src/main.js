@@ -63,7 +63,6 @@ async function boot() {
     renderNums();
     renderIndustry();
     renderFiscal();
-    matchReadingColumns(document.querySelector('.politics-grid'), 1040, ['임기와 선거·예산 D-Day', '이번 주 일정']);
     showTheme(D.themes[0].id);
     renderLimits();
     renderArchive();
