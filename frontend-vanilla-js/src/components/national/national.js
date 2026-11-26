@@ -67,7 +67,6 @@ function renderNational() {
     $('natCategory').closest('.nat-mobile-tools').hidden = true;
     $('natCtrl').replaceChildren();
     delete $('natCtrl').dataset.view;
-    clearReadingPair($('natList'));
     const empty = el('p', { class: 'nat-empty' }, '이 호에는 ' + name + ' 기사가 없습니다. ');
     empty.append(el('a', { href: it ? '#home' : '/archive/' }, it ? '종합 뉴스 읽기' : '지난 호 보기'));
     $('natList').replaceChildren(empty);
@@ -126,7 +125,6 @@ function renderNational() {
   });
   const list = leadItems.concat(remaining);
   $('natJump').hidden = list.length < 2;
-  clearReadingPair(box);
   box.replaceChildren();
   box.classList.toggle('nat-board--single', list.length < 2);
   if (!list.length) {
@@ -140,7 +138,8 @@ function renderNational() {
   const select = (index, move = false) => {
     const item = list[index];
     const label = item.cat + (item.region && item.region !== '전국' ? ' · ' + item.region : '');
-    const article = newsItem(item, label);
+    const article = newsItem(item, label, { byline: true });
+    const actions = el('div', { class: 'nat-actions' });
     const title = article.querySelector('h3');
     title.id = 'natArticleTitle';
     title.tabIndex = -1;
@@ -152,21 +151,41 @@ function renderNational() {
       link.textContent = '기사 원문 보기';
       link.setAttribute('aria-label', item.title + ' 기사 원문 보기');
       link.append(svgIcon('M13 5h6v6M19 5l-9 9M11 5H5v14h14v-6'));
-      article.append(link);
+      actions.append(link);
     }
+    if (list.length > 1) {
+      const pager = el('div', { class: 'nat-pager', role: 'group', 'aria-label': '기사 이동' });
+      const previous = el('button', { type: 'button', 'aria-label': '이전 기사' });
+      const next = el('button', { type: 'button', 'aria-label': '다음 기사' });
+      previous.append(svgIcon('m14 6-6 6 6 6'));
+      next.append(svgIcon('m10 6 6 6-6 6'));
+      previous.disabled = index === 0;
+      next.disabled = index === list.length - 1;
+      previous.addEventListener('click', () => select(index - 1, true));
+      next.addEventListener('click', () => select(index + 1, true));
+      const position = el('span', { class: 'nat-position' });
+      position.append(el('span', { 'aria-hidden': 'true' }, (index + 1) + ' / ' + list.length),
+        el('span', { class: 'paper-state' }, list.length + '건 중 ' + (index + 1) + '번째 기사'));
+      pager.append(previous, position, next);
+      actions.append(pager);
+      expandFor(buttons[index].parentElement);
+    }
+    if (actions.childElementCount) article.append(actions);
     reading.replaceChildren(article);
     buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
     if (move) {
-      if (reading.parentElement.classList.contains('paired-pane')) reading.parentElement.scrollTop = 0;
       title.focus({ preventScroll: true });
-      reading.scrollIntoView({ block: 'start' });
+      const bounds = title.getBoundingClientRect();
+      if (bounds.top < 0 || bounds.bottom > window.innerHeight) title.scrollIntoView({ block: 'start' });
     }
   };
 
   box.append(reading);
   if (list.length > 1) {
     const chooser = el('section', { class: 'nat-chooser', 'aria-labelledby': 'natChooserTitle' });
-    chooser.append(el('h3', { id: 'natChooserTitle', tabindex: '-1' }, '기사 골라 읽기'), headlines);
+    const chooserTitle = el('h3', { id: 'natChooserTitle', tabindex: '-1' }, '기사 목록');
+    chooserTitle.append(el('span', { class: 'nat-total' }, list.length + '건'));
+    chooser.append(chooserTitle, headlines);
     box.append(chooser);
     list.forEach((item, index) => {
       const row = el('li');
@@ -182,7 +201,6 @@ function renderNational() {
     collapse(headlines, { limit: 5, noun: '건', start: true });
   }
   select(0);
-  matchReadingColumns(box, 1000, ['선택한 ' + name + ' 기사', name + ' 기사 제목 목록']);
 }
 
 // 다른 날짜로 여는 예전 주소에도 그 호의 정적 지면과 같은 자료를 쓴다

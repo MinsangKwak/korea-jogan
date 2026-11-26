@@ -83,6 +83,7 @@ function renderNotice() {
     const full = at.toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' });
     const chip = $('statusChip');
     chip.textContent = '';
+    chip.dataset.review = D.review.auto ? 'auto' : 'verified';
     // 사람 확인 없이 06시에 자동으로 나간 호는 확인 표시 대신 자동 발행으로 알린다
     if (D.review.auto) {
       chip.append(svgIcon('M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18'), document.createTextNode('자동 발행 ' + hm));

@@ -8,6 +8,8 @@
   --press-on-accent: #ffffff;
   --press-tint: #e8edf7;
   --press-focus: #2448ad;
+  --press-copper: #86502c;
+  --press-copper-tint: #f4e9df;
   --press-serif: "AppleMyungjo", "Batang", "Noto Serif CJK KR", "Noto Serif KR", Georgia, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", "Noto Sans KR", "Jogan Korean", serif;
 }
 :root[data-theme="dark"] {
@@ -20,4 +22,6 @@
   --press-on-accent: #17264b;
   --press-tint: #29354c;
   --press-focus: #bdd5ff;
+  --press-copper: #f1bb91;
+  --press-copper-tint: #382c28;
 }
