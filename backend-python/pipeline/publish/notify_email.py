@@ -1,6 +1,8 @@
 """새로 공개한 최신 호를 이메일 구독자에게 한 번 보낸다. 아침 발행 워크플로가 텔레그램 알림과 같은 자리에서 돌린다.
 
 사용: python3 backend-python/pipeline/publish/notify_email.py --before <발행 전 main SHA> [--after origin/main] [--dry-run]
+수동: python3 backend-python/pipeline/publish/notify_email.py --date YYYY-MM-DD [--after origin/main] [--dry-run]
+- --date는 이미 공개한 그 날짜 호를 한 번 더 보낸다(newsletter.yml 수동 실행용). 초안은 보내지 않는다.
 - 구독자 관리와 발송은 Buttondown(무료 100명까지)이 맡는다. 서버와 DB를 따로 두지 않는다.
 - 발행 전 커밋에서 이미 공개 상태였던 호는 다시 보내지 않는다(재확인 실행에서 중복 발송 방지).
 - BUTTONDOWN_API_KEY가 없으면 아무것도 보내지 않고 정상 종료한다.
@@ -135,14 +137,37 @@ def run(before: str, after: str, dry_run: bool = False, wait: int = 240, root: P
     return f"{date}호 이메일 " + ("발송" if send(issue, key, opener) else "실패")
 
 
+def run_date(date: str, after: str = "origin/main", dry_run: bool = False, root: Path = ROOT, env=None,
+             opener=urllib.request.urlopen) -> str:
+    """이미 공개한 호를 날짜로 골라 보낸다. 사람이 수동 실행으로만 부른다."""
+    env = os.environ if env is None else env
+    try:
+        dt.date.fromisoformat(date)
+    except ValueError:
+        return f"날짜 형식이 아니어서 건너뜀: {date}"
+    issue = show(after, f"{ISSUES}/{date}.json", root)
+    if not isinstance(issue, dict) or issue.get("status") in (None, "draft"):
+        return f"{date}호는 공개된 호가 아니어서 건너뜀"
+    if dry_run:
+        print(subject(issue))
+        print(body(issue))
+        return f"{date}호 미리보기"
+    key = env.get("BUTTONDOWN_API_KEY", "").strip()
+    if not key:
+        return "이메일 구독 설정이 없어 건너뜀"
+    return f"{date}호 이메일 " + ("발송" if send(issue, key, opener) else "실패")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--before", required=True)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--before")
+    group.add_argument("--date")
     parser.add_argument("--after", default="origin/main")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
     try:
-        print(run(args.before, args.after, args.dry_run))
+        print(run_date(args.date, args.after, args.dry_run) if args.date else run(args.before, args.after, args.dry_run))
     except Exception as error:  # 메일 문제로 발행 작업을 실패시키지 않는다
         print(f"이메일 발송 건너뜀: {type(error).__name__}")
     return 0
