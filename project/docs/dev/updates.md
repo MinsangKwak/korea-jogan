@@ -15,6 +15,7 @@
 - **아침 발행 메일 구독을 열었습니다.** 지면 하단 독자 안내에 구독 폼을 넣고, 새 호가 공개되면 아침 발행 마지막 단계에서 구독자에게 메일을 보냅니다. 발송은 외부 뉴스레터 서비스(Buttondown)에 맡겨 서버와 DB를 늘리지 않았습니다. [#154](https://github.com/MinsangKwak/korea-jogan/pull/154)
 - 구독 폼이 CSP에 막히던 문제를 고쳐 일반 폼 제출로 보내고 결과를 사이트 안에서 알립니다. [#156](https://github.com/MinsangKwak/korea-jogan/pull/156)
 - IT 분야 정렬 뒤 첫 기사를 기대하도록 배포 검사를 고쳐 Pages 배포를 복구했습니다. [#155](https://github.com/MinsangKwak/korea-jogan/pull/155)
+- 이슈 추적·경제 숫자·질문 상세 페이지의 안내 상자와 목록을 본문 폭에 맞춰 오른쪽 빈 공간을 없앴습니다. [#158](https://github.com/MinsangKwak/korea-jogan/pull/158)
 
 ## 2026.11.26 (목) · IT 브리핑 지면 디자인 통합
 
