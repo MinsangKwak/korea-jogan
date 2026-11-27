@@ -88,10 +88,18 @@ class NotifyEmailTest(unittest.TestCase):
         return [r for r in self.requests if r.get_method() in ("POST", "PATCH")]
 
     def test_subject_and_body_escape_and_limit_content(self):
-        self.assertEqual(notify_email.subject(issue()), "[대한민국 조간 11/17(화)] 코스피 <3%> 하락")
+        self.assertEqual(notify_email.subject(issue()), "11월 17일(화) · 코스피 <3%> 하락")
+        dated = issue()
+        dated["lead"]["headline"] = "2026-11-17 조간 · RSS 기사 목록"
+        self.assertEqual(notify_email.subject(dated), "11월 17일(화) · RSS 기사 목록")
+        escaped = issue()
+        escaped["lead"]["standfirst"] = "가격 <b>3%</b> 하락"
+        self.assertIn("가격 &lt;b&gt;3%&lt;/b&gt; 하락", notify_email.body(escaped))
         text = notify_email.body(issue())
-        self.assertIn("코스피 &lt;3%&gt; 하락", text)
-        self.assertNotIn("<3%>", text)
+        self.assertTrue(text.startswith("<!-- buttondown-editor-mode: fancy -->"))
+        self.assertNotIn("코스피", text)
+        self.assertIn("{{ unsubscribe_url }}", text)
+        self.assertIn("2026년 11월 17일 화요일", text)
         self.assertIn("첫 문단입니다.", text)
         self.assertNotIn("둘째 문단", text)
         self.assertEqual(text.count("<strong>숫자 "), notify_email.BRIEFS)
@@ -100,6 +108,14 @@ class NotifyEmailTest(unittest.TestCase):
         self.assertIn("https://korea-jogan.com/2026-11-17?utm_source=newsletter&amp;utm_medium=email", text)
         self.assertIn("사람의 원문 확인 전", text)
         self.assertNotIn("사람의 원문 확인 전", notify_email.body(issue(auto=False)))
+
+    def test_brief_that_repeats_the_summary_is_dropped(self):
+        data = issue()
+        data["lead"]["standfirst"] = "별도 조사 초안이 없어 RSS 제목을 자동 수집한 보조 호입니다. 사람이 확인하지 않았습니다."
+        data["briefs"] = [{"k": "자료 확인 범위", "m": "별도 조사 초안이 없어 RSS 제목을 자동 수집한 보조 호입니다."}, {"k": "환율", "m": "1,343원"}]
+        text = notify_email.body(data)
+        self.assertNotIn("자료 확인 범위", text)
+        self.assertIn("환율", text)
 
     def test_creates_draft_then_sends_once_when_issue_becomes_public(self):
         before = self.commit(issue("draft"))
