@@ -37,4 +37,5 @@ jobs:
         run: |
           out=$(python3 backend-python/pipeline/publish/notify_email.py --date "$ISSUE_DATE" --after HEAD)
           echo "$out"
-          case "$out" in *"이메일 발송"*) ;; *) exit 1;; esac
+          # 실패 안내에도 '이메일 발송'이 들어가므로 마지막 줄이 정확히 성공 결과일 때만 통과한다
+          test "$(printf '%s\n' "$out" | tail -n 1)" = "${ISSUE_DATE}호 이메일 발송"
