@@ -202,6 +202,9 @@ class ReaderPanelTest(unittest.TestCase):
         self.assertEqual(reader_panel.newsletter_name({"NEWSLETTER_USERNAME": " korea-jogan "}), "korea-jogan")
         self.assertEqual(reader_panel.newsletter_name({}), "")
         self.assertIn("선착순 100명", with_form)
+        self.assertEqual(with_form.count('<option value="'), len(reader_panel.DOMAINS) + 1)
+        self.assertIn('<option value="">직접 입력</option>', with_form)
+        self.assertEqual(with_form.count('name="email"'), 1)
 
     def test_full_newsletter_shows_notice_instead_of_form(self):
         closed = reader_panel.markup("https://korea-jogan.com/", newsletter="korea-jogan", full=True)

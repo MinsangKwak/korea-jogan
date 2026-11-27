@@ -11,6 +11,12 @@ import os
 import re
 
 SUBSCRIBE = "https://buttondown.com/api/emails/embed-subscribe/"
+# 국내 독자가 많이 쓰는 메일 서비스 순서. 마지막 빈 값은 도메인 직접 입력
+DOMAINS = (
+    ("naver.com", "네이버"), ("gmail.com", "Gmail"), ("daum.net", "다음"), ("hanmail.net", "한메일"),
+    ("kakao.com", "카카오"), ("nate.com", "네이트"), ("outlook.com", "Outlook"), ("hotmail.com", "Hotmail"),
+    ("icloud.com", "iCloud"), ("yahoo.com", "Yahoo"),
+)
 
 
 def newsletter_name(env=None) -> str:
@@ -30,9 +36,16 @@ def email_form(name: str, full: bool = False) -> str:
     if full:
         return '<p class="reader-tools__email" id="readerEmailFull"><strong>메일 구독은 선착순 100명이 모두 찼습니다.</strong> 자리가 나면 다시 열게요. 그동안은 아래 RSS로 새 호를 받아볼 수 있습니다.</p>'
     action = html.escape(SUBSCRIBE + name, quote=True)
+    domains = "".join(f'<option value="{d}">{d} ({label})</option>' for d, label in DOMAINS) + '<option value="">직접 입력</option>'
     return f'''<form class="reader-tools__email" id="readerEmail" action="{action}" method="post" target="_blank">
       <p><strong>지금 선착순 100명까지 무료로 받아보세요!</strong> 매일 아침 6시, 새 호를 메일로 보내 드립니다.</p>
-      <label for="readerEmailInput">이메일 주소</label><div class="reader-tools__copy"><input type="email" id="readerEmailInput" name="email" autocomplete="email" inputmode="email" placeholder="name@example.com" required><button class="kj-btn kj-btn--primary" type="submit">메일로 받기</button></div>
+      <div class="reader-tools__whole" id="readerEmailWhole"><label for="readerEmailInput">이메일 주소</label><input type="email" id="readerEmailInput" name="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="name@example.com" required></div>
+      <fieldset class="reader-tools__split" id="readerEmailSplit" hidden><legend>이메일 주소</legend>
+        <div class="reader-tools__parts"><label class="reader-tools__sr" for="readerEmailLocal">아이디</label><input type="text" id="readerEmailLocal" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="아이디" aria-describedby="readerEmailHint"><span aria-hidden="true">@</span><label class="reader-tools__sr" for="readerEmailDomain">메일 서비스</label><select id="readerEmailDomain">{domains}</select></div>
+        <label class="reader-tools__sr" for="readerEmailCustom">도메인 직접 입력</label><input type="text" id="readerEmailCustom" inputmode="url" autocapitalize="off" spellcheck="false" placeholder="example.com" hidden>
+        <p class="reader-tools__note" id="readerEmailHint">아이디만 적고 메일 서비스를 고르세요. 목록에 없으면 직접 입력을 고르면 됩니다.</p>
+      </fieldset>
+      <button class="kj-btn kj-btn--primary reader-tools__submit" type="submit">메일로 받기</button>
       <input type="hidden" name="tag" value="site"><input type="hidden" name="embed" value="1">
       <p class="reader-tools__status" id="readerEmailStatus" role="status"></p>
       <p class="reader-tools__note">확인 메일의 링크를 눌러야 가입이 끝나며, 메일 아래 링크로 언제든 해지할 수 있습니다.</p>
