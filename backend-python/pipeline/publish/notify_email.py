@@ -16,6 +16,7 @@ import datetime as dt
 import html
 import json
 import os
+import re
 from pathlib import Path
 import sys
 import time
@@ -38,56 +39,100 @@ def link(date: str) -> str:
     return f"{SITE}{date}?{query}"
 
 
-def subject(issue: dict) -> str:
-    year, month, day = (int(part) for part in issue["date"].split("-"))
-    weekday = WEEKDAYS[dt.date(year, month, day).weekday()]
+# 사이트 tokens.css와 같은 색을 쓴다. 메일 앱은 CSS 변수를 못 읽어 값을 그대로 적는다
+INK = "#172738"
+MUTED = "#5b6b7b"
+LINE = "#d6e0e8"
+BRAND = "#24577c"
+SOFT = "#e6eef5"
+FONT = "-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif"
+# 자동 복구 호의 머리기사에 붙는 'YYYY-MM-DD 조간 · ' 머리말. 제목과 날짜가 겹치지 않게 뗀다
+DATED_HEAD = re.compile(r"^\d{4}-\d{2}-\d{2}\s*조간\s*[·:|-]\s*")
+
+
+def day_label(date: str) -> tuple[int, int, int, str]:
+    year, month, day = (int(part) for part in date.split("-"))
+    return year, month, day, WEEKDAYS[dt.date(year, month, day).weekday()]
+
+
+def headline(issue: dict) -> str:
     lead = issue.get("lead") or {}
-    head = lead.get("headline") or issue.get("headline") or "오늘의 조간"
-    return f"[대한민국 조간 {month}/{day}({weekday})] {head}"
+    text = " ".join(str(lead.get("headline") or issue.get("headline") or "오늘의 조간").split())
+    return DATED_HEAD.sub("", text) or "오늘의 조간"
+
+
+def subject(issue: dict) -> str:
+    """보낸 사람 이름이 '대한민국 조간'이라 제목에는 날짜와 머리기사만 둔다."""
+    _, month, day, weekday = day_label(issue["date"])
+    return f"{month}월 {day}일({weekday}) · {headline(issue)}"
 
 
 def items(rows, limit: int) -> list[dict]:
     return [row for row in (rows or []) if isinstance(row, dict)][:limit]
 
 
+def repeats(text: str, stand: str) -> bool:
+    """요약 문단을 그대로 되풀이하는 항목인지. 앞 30자가 요약에 들어 있으면 같은 말로 본다."""
+    head = " ".join(str(text or "").split())[:30]
+    return bool(head) and head in stand
+
+
+def section(title: str, inner: str) -> str:
+    return (f'<tr><td style="padding:28px 0 0">'
+            f'<p style="margin:0 0 10px;padding-top:10px;border-top:2px solid {BRAND};font-size:13px;font-weight:700;letter-spacing:.04em;color:{BRAND}">{html.escape(title)}</p>'
+            f'{inner}</td></tr>')
+
+
 def body(issue: dict) -> str:
-    """메일 본문 HTML. 메일 앱마다 CSS 지원이 달라 인라인 스타일만 쓴다."""
+    """메일 본문 HTML. Buttondown이 제목을 맨 위에 크게 보여 주므로 머리기사를 다시 쓰지 않는다.
+    메일 앱마다 CSS 지원이 달라 표와 인라인 스타일만 쓰고, 링크 색은 span으로 한 번 더 고정한다."""
     e = html.escape
     date = issue["date"]
+    year, month, day, weekday = day_label(date)
     url = e(link(date), quote=True)
     lead = issue.get("lead") or {}
-    parts = [f'<h1 style="font-size:22px;line-height:1.35;margin:0 0 12px">{e(lead.get("headline") or issue.get("headline") or "")}</h1>']
     stand = first_paragraph(lead.get("standfirst"))
+    rows = [f'<tr><td style="padding:0 0 4px;font-size:13px;color:{MUTED}">대한민국 조간 · {year}년 {month}월 {day}일 {weekday}요일</td></tr>']
     if stand:
-        parts.append(f'<p style="font-size:16px;line-height:1.6;margin:0 0 20px">{e(stand)}</p>')
-    briefs = [b for b in items(issue.get("briefs"), BRIEFS) if str(b.get("k", "")).strip()]
+        rows.append(f'<tr><td style="padding:8px 0 0;font-size:16px;line-height:1.7;color:{INK}">{e(stand)}</td></tr>')
+    briefs = [b for b in items(issue.get("briefs"), BRIEFS + 2) if str(b.get("k", "")).strip() and not repeats(b.get("m"), stand)][:BRIEFS]
     if briefs:
-        parts.append('<h2 style="font-size:17px;margin:24px 0 8px">오늘 꼭 볼 숫자</h2><ul style="padding-left:20px;margin:0">')
-        for b in briefs:
-            more = f' <span style="color:#555">{e(str(b["m"]))}</span>' if b.get("m") else ""
-            parts.append(f'<li style="margin-bottom:8px;line-height:1.55"><strong>{e(str(b["k"]))}</strong>{more}</li>')
-        parts.append("</ul>")
+        inner = "".join(
+            f'<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:{INK}"><strong>{e(str(b["k"]))}</strong>'
+            + (f'<br><span style="color:{MUTED}">{e(str(b["m"]))}</span>' if b.get("m") else "") + "</p>"
+            for b in briefs)
+        rows.append(section("오늘 꼭 볼 숫자", inner))
     national = (issue.get("national") or {}).get("items") if isinstance(issue.get("national"), dict) else issue.get("national")
-    news = [n for n in items(national, NATIONAL) if n.get("title")]
+    news = [n for n in items(national, NATIONAL + 3) if n.get("title")][:NATIONAL]
     if news:
-        parts.append('<h2 style="font-size:17px;margin:24px 0 8px">전국 주요 뉴스</h2><ul style="padding-left:20px;margin:0">')
+        inner = ""
         for n in news:
             title = e(str(n["title"]))
             href = str(n.get("url") or "")
-            title = f'<a href="{e(href, quote=True)}" style="color:#111">{title}</a>' if href.startswith("https://") else title
-            outlet = f' <span style="color:#555">· {e(str(n["outlet"]))}</span>' if n.get("outlet") else ""
-            parts.append(f'<li style="margin-bottom:6px;line-height:1.5">{title}{outlet}</li>')
-        parts.append("</ul>")
+            if href.startswith("https://"):
+                title = f'<a href="{e(href, quote=True)}" style="color:{INK};text-decoration:none"><span style="color:{INK}">{title}</span></a>'
+            outlet = f'<br><span style="font-size:13px;color:{MUTED}">{e(str(n["outlet"]))}</span>' if n.get("outlet") else ""
+            inner += f'<p style="margin:0;padding:10px 0;border-bottom:1px solid {LINE};font-size:15px;line-height:1.5;font-weight:600;color:{INK}">{title}{outlet}</p>'
+        rows.append(section("전국 주요 뉴스", inner))
     nums = [n for n in items(issue.get("nums"), NUMS) if n.get("k") and n.get("v")]
     if nums:
-        rows = "".join(f'<li style="margin-bottom:4px">{e(str(n["k"]))} <strong>{e(str(n["v"]))}</strong>'
-                       + (f' ({e(str(n["d"]))})' if n.get("d") else "") + "</li>" for n in nums)
-        parts.append(f'<h2 style="font-size:17px;margin:24px 0 8px">핵심 숫자</h2><ul style="padding-left:20px;margin:0">{rows}</ul>')
-    parts.append(f'<p style="margin:28px 0"><a href="{url}" style="display:inline-block;padding:12px 20px;background:#111;color:#fff;text-decoration:none;border-radius:4px;font-weight:700">오늘 지면 전체 읽기</a></p>')
+        cells = "".join(
+            f'<tr><td style="padding:8px 0;border-bottom:1px solid {LINE};font-size:14px;color:{MUTED}">{e(str(n["k"]))}</td>'
+            f'<td align="right" style="padding:8px 0;border-bottom:1px solid {LINE};font-size:15px;color:{INK};white-space:nowrap"><strong>{e(str(n["v"]))}</strong>'
+            + (f'<br><span style="font-size:12px;color:{MUTED}">{e(str(n["d"]))}</span>' if n.get("d") else "") + "</td></tr>"
+            for n in nums)
+        rows.append(section("핵심 숫자", f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">{cells}</table>'))
+    rows.append(f'<tr><td style="padding:32px 0 8px"><a href="{url}" style="display:inline-block;padding:14px 22px;background:{BRAND};border-radius:6px;text-decoration:none;font-size:16px;font-weight:700">'
+                f'<span style="color:#ffffff">오늘 지면 전체 읽기</span></a></td></tr>')
     review = issue.get("review") or {}
-    note = "자동 발행 · 사람의 원문 확인 전입니다. 출처와 기준일은 지면에서 확인하세요." if review.get("auto") else "출처와 기준일은 지면에서 확인하세요."
-    parts.append(f'<p style="font-size:13px;color:#666;margin:0">{e(note)}</p>')
-    return '<div style="max-width:600px;margin:0 auto;font-family:-apple-system,\'Apple SD Gothic Neo\',\'Malgun Gothic\',sans-serif;color:#111">' + "".join(parts) + "</div>"
+    note = "자동 발행 호라 사람의 원문 확인 전입니다. 출처와 기준일은 지면에서 확인해 주세요." if review.get("auto") else "출처와 기준일은 지면에서 확인해 주세요."
+    rows.append(f'<tr><td style="padding:16px 0 0;font-size:13px;line-height:1.6;color:{MUTED}">{e(note)}<br>'
+                f'구독 해지는 <a href="{{{{ unsubscribe_url }}}}" style="color:{MUTED}"><span style="color:{MUTED}">여기</span></a>에서 할 수 있습니다.</td></tr>')
+    table = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+             f'style="max-width:600px;margin:0 auto;border-collapse:collapse;font-family:{FONT};color:{INK};background:#ffffff">'
+             + "".join(rows) + "</table>")
+    # 마크다운 모드는 원시 HTML을 회색 테두리 상자에 넣어 보여 주므로 HTML 모드로 보낸다
+    return "<!-- buttondown-editor-mode: fancy -->\n" + table
 
 
 def call(method: str, url: str, key: str, payload: dict, opener=urllib.request.urlopen):
