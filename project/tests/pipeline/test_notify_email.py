@@ -109,6 +109,13 @@ class NotifyEmailTest(unittest.TestCase):
         self.assertIn("사람의 원문 확인 전", text)
         self.assertNotIn("사람의 원문 확인 전", notify_email.body(issue(auto=False)))
 
+    def test_body_uses_only_tables_and_inline_spacing(self):
+        text = notify_email.body(issue())
+        for banned in ("display:flex", "display:grid", "inline-block", "<p", "<div", "<style"):
+            self.assertNotIn(banned, text)
+        self.assertIn(f'padding:{notify_email.GUTTER}px', text)
+        self.assertIn(f'bgcolor="{notify_email.BRAND}"', text)
+
     def test_brief_that_repeats_the_summary_is_dropped(self):
         data = issue()
         data["lead"]["standfirst"] = "별도 조사 초안이 없어 RSS 제목을 자동 수집한 보조 호입니다. 사람이 확인하지 않았습니다."
