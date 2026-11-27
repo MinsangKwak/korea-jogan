@@ -161,3 +161,9 @@ python3 backend-python/pipeline/build/build_tokens.py --check
 관리자의 기간·주제·채널 선택에는 네이티브 `select`를 사용합니다. 입력 필드와 읽기 전용 결과는 `admin-field` 스타일을 공유합니다. 제출할 때 오류가 있으면 한국어 안내를 필드에 연결하고 첫 오류로 포커스를 옮깁니다. [관리자 스타일](../../../frontend-vanilla-js/admin/admin.css)
 
 RSS 주소는 첫 화면과 지난 호, 주제·지표 기록에서 펼쳐 볼 수 있습니다. 자바스크립트를 끄면 주소와 직접 열기 링크를 읽을 수 있습니다. 복사 결과는 `role="status"`로 알리고 자동 복사가 제한되면 직접 선택할 수 있게 합니다. [구독 영역 생성](../../../backend-python/pipeline/build/reader_panel.py) · [공통 복사 동작](../../../frontend-vanilla-js/src/core/clipboard.js)
+
+## 이메일 구독 폼과 메일 본문
+
+구독 폼은 아이디 칸과 메일 서비스 선택(국내 주요 10곳 + 직접 입력)으로 주소를 받고, 제출할 때 원래 `email` 칸 하나로 합쳐 보냅니다. 자바스크립트를 끄면 한 칸짜리 주소 입력이 그대로 보입니다. [구독 영역 생성](../../../backend-python/pipeline/build/reader_panel.py) · [폼 동작](../../../frontend-vanilla-js/src/core/reader.js)
+
+**메일 본문은 표와 인라인 여백으로만 배치합니다.** 네이버 메일·Gmail 앱은 `flex`·`grid`·`<style>`·CSS 변수를 지우거나 무시하고, `<p>` 기본 여백과 `a`의 `padding`·`inline-block`도 앱마다 다르게 그립니다. 그래서 블록마다 `<tr><td>` 한 줄을 쓰고 간격은 `td`의 `padding`으로 잡습니다. 버튼은 배경색을 `td`의 `bgcolor`로 칠하고 `a`에는 글자만 둡니다. 화면 가장자리와 본문 사이에는 8px 여백을 두고, 본문 폭은 최대 600px, 한글은 `word-break:keep-all`로 어절 단위로 줄바꿈합니다. 색은 사이트 토큰 값을 그대로 적습니다. [메일 본문 생성](../../../backend-python/pipeline/publish/notify_email.py)
