@@ -5,36 +5,11 @@ function note(action) {
   if (typeof window.track === 'function') window.track('reader_' + action);
 }
 
-// 구독 폼을 사이트 안에서 보내고 결과를 바로 알린다
-// Buttondown 결과 페이지로 넘어가면 브라우저에 따라 빈 화면만 보여 독자가 성공 여부를 알 수 없다
-// fetch가 막힌 환경이면 원래 폼 제출로 넘긴다
-async function subscribe(event, form) {
-  event.preventDefault();
-  const status = form.querySelector('#readerEmailStatus');
-  const button = form.querySelector('button[type="submit"]');
-  if (button.disabled) return;
-  button.disabled = true;
-  button.setAttribute('aria-busy', 'true');
-  status.textContent = '구독 신청을 보내는 중입니다.';
-  let response;
-  try {
-    response = await fetch(form.action, { method: 'POST', body: new FormData(form), mode: 'cors' });
-  } catch {
-    button.disabled = false;
-    button.removeAttribute('aria-busy');
-    status.textContent = '';
-    form.submit();
-    return;
-  }
-  button.disabled = false;
-  button.removeAttribute('aria-busy');
-  if (response.ok) {
-    note('email_subscribed');
-    form.reset();
-    status.textContent = '신청했습니다. 받은편지함의 확인 메일에서 링크를 누르면 구독이 완료됩니다. 메일이 없으면 스팸함도 확인해 주세요.';
-  } else {
-    status.textContent = '구독 신청을 처리하지 못했습니다. 이메일 주소를 확인하고 다시 시도해 주세요.';
-  }
+// 구독 신청은 Buttondown 규칙대로 일반 폼 제출로 새 창에 보낸다
+// 보안 확인(CAPTCHA)이나 주소 오류 안내를 독자가 그 창에서 이어서 처리해야 해서 fetch를 쓰지 않는다
+function subscribe(form) {
+  note('email_submit');
+  form.querySelector('#readerEmailStatus').textContent = '새 창에서 신청 결과를 확인해 주세요. 받은편지함의 확인 메일에서 링크를 누르면 구독이 완료됩니다.';
 }
 
 const panel = document.querySelector('[data-reader-tools]');
@@ -50,7 +25,7 @@ if (panel) {
   panel.querySelectorAll('[data-reader-action]').forEach((link) => link.addEventListener('click', () => note(link.dataset.readerAction)));
   details.addEventListener('toggle', () => { if (details.open) note('subscribe_open'); });
   const emailForm = panel.querySelector('#readerEmail');
-  if (emailForm) emailForm.addEventListener('submit', (event) => subscribe(event, emailForm));
+  if (emailForm) emailForm.addEventListener('submit', () => subscribe(emailForm));
   document.querySelectorAll('[data-reader-subscribe]').forEach((link) => link.addEventListener('click', (event) => {
     event.preventDefault();
     details.open = true;

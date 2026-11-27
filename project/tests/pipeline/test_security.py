@@ -37,7 +37,7 @@ class SecurityTest(unittest.TestCase):
         page = '<meta charset="utf-8">' + reader_panel.markup("https://korea-jogan.com/", newsletter="korea-jogan")
         rules = dict(item.split(" ", 1) for item in build_security.policy(page).split("; "))
         self.assertIn("https://buttondown.com", rules["form-action"])
-        self.assertIn("https://buttondown.com", rules["connect-src"])
+        self.assertNotIn("buttondown", rules["connect-src"])
         plain = build_security.policy('<meta charset="utf-8">' + reader_panel.markup("https://korea-jogan.com/", newsletter=""))
         self.assertNotIn("buttondown", plain)
 

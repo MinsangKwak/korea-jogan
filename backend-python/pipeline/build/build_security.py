@@ -78,9 +78,8 @@ def policy(page: str, admin: bool = False, *, law: bool = False) -> str:
         if scripts.goatcounter:
             connections.append(scripts.goatcounter)
             images.append(scripts.goatcounter)
-    # 이메일 구독 폼이 있는 페이지만 Buttondown으로 보내기를 허용한다(reader_panel.py)
+    # 이메일 구독 폼이 있는 페이지만 Buttondown으로 폼 제출을 허용한다(reader_panel.py)
     if NEWSLETTER in page:
-        connections.append(NEWSLETTER_ORIGIN)
         forms.append(NEWSLETTER_ORIGIN)
     directives = {
         "default-src": ["'self'"],
