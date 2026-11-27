@@ -9,6 +9,7 @@
 .reader-tools__subscribe > summary:hover { color: var(--brand-strong); text-decoration: underline; }
 .reader-tools__rss { padding-block: var(--space-2); font-size: 0.9rem; }
 .reader-tools__rss p { margin-top: 0; }
+.reader-tools__email { margin-bottom: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--line); }
 .reader-tools__rss label { display: block; margin-bottom: var(--space-2); font-weight: 700; }
 .reader-tools__copy { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .reader-tools__copy input { flex: 1 1 14rem; width: 100%; min-width: 0; min-height: var(--tap-min); padding: var(--space-2); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); font: inherit; }
