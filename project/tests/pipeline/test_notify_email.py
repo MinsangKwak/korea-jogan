@@ -158,6 +158,20 @@ class NotifyEmailTest(unittest.TestCase):
         self.assertNotIn("SECRET", out.getvalue() + result)
 
 
+class ManualSendTest(NotifyEmailTest):
+    def test_sends_a_public_issue_by_date_and_refuses_drafts(self):
+        public = self.commit(issue())
+        result = notify_email.run_date(DATE, public, root=self.root, env=ENV, opener=self.opener)
+        self.assertIn("발송", result)
+        self.assertEqual([r.get_method() for r in self.api()], ["POST", "PATCH"])
+        self.requests.clear()
+        draft = self.commit(issue("draft"))
+        self.assertIn("건너뜀", notify_email.run_date(DATE, draft, root=self.root, env=ENV, opener=self.opener))
+        self.assertIn("건너뜀", notify_email.run_date("2026-13-40", draft, root=self.root, env=ENV, opener=self.opener))
+        self.assertIn("설정이 없어", notify_email.run_date(DATE, public, root=self.root, env={}, opener=self.opener))
+        self.assertEqual(self.requests, [])
+
+
 class ReaderPanelTest(unittest.TestCase):
     def test_email_form_appears_only_with_a_valid_username(self):
         plain = reader_panel.markup("https://korea-jogan.com/", newsletter="")
