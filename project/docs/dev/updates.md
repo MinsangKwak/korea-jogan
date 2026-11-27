@@ -14,7 +14,7 @@
 
 - **아침 발행 메일 구독을 열었습니다.** 지면 하단 독자 안내에 구독 폼을 넣고, 새 호가 공개되면 아침 발행 마지막 단계에서 구독자에게 메일을 보냅니다. 발송은 외부 뉴스레터 서비스(Buttondown)에 맡겨 서버와 DB를 늘리지 않았습니다. [#154](https://github.com/MinsangKwak/korea-jogan/pull/154)
 - 구독 폼이 CSP에 막히던 문제를 고쳐 Buttondown 규칙대로 일반 폼 제출(새 창)로 보냅니다. [#156](https://github.com/MinsangKwak/korea-jogan/pull/156)
-- **메일 템플릿을 한국어 지면에 맞게 새로 짰습니다.** 제목을 `11월 27일(금) · 헤드라인`으로 줄이고, 요약과 겹치는 숫자 항목은 빼고, 버튼·링크 색을 지면 색으로 맞췄습니다. 공개된 호를 날짜로 골라 다시 보내는 수동 발송 워크플로도 더했습니다. [#159](https://github.com/MinsangKwak/korea-jogan/pull/159) · [#162](https://github.com/MinsangKwak/korea-jogan/pull/162)
+- **메일 템플릿을 한국어 지면에 맞게 새로 짰습니다.** 제목을 `11월 27일(금) · 헤드라인`으로 줄이고, 요약과 겹치는 숫자 항목은 빼고, 버튼·링크 색을 지면 색으로 맞췄습니다. 메일 앱이 `flex`를 지원하지 않아 표와 인라인 여백으로만 다시 배치하고 가장자리 여백 8px을 두었습니다. 공개된 호를 날짜로 골라 다시 보내는 수동 발송 워크플로도 더했습니다. [#159](https://github.com/MinsangKwak/korea-jogan/pull/159) · [#162](https://github.com/MinsangKwak/korea-jogan/pull/162)
 - 가입 폼을 "선착순 100명 무료" 안내로 바꾸고, 이메일을 아이디 @ 메일 서비스 선택(국내 주요 10곳 + 직접 입력)으로 받습니다. 100명이 차면 저장소 변수 하나로 폼을 마감 안내로 바꿉니다. [#162](https://github.com/MinsangKwak/korea-jogan/pull/162)
 - IT 분야 정렬 뒤 첫 기사를 기대하도록 배포 검사를 고쳐 Pages 배포를 복구했습니다. [#155](https://github.com/MinsangKwak/korea-jogan/pull/155)
 - 이슈 추적·경제 숫자·질문 상세 페이지의 안내 상자와 목록을 본문 폭에 맞춰 오른쪽 빈 공간을 없앴습니다. [#158](https://github.com/MinsangKwak/korea-jogan/pull/158)

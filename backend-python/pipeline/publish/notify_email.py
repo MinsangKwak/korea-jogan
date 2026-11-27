@@ -77,62 +77,93 @@ def repeats(text: str, stand: str) -> bool:
     return bool(head) and head in stand
 
 
-def section(title: str, inner: str) -> str:
-    return (f'<tr><td style="padding:28px 0 0">'
-            f'<p style="margin:0 0 10px;padding-top:10px;border-top:2px solid {BRAND};font-size:13px;font-weight:700;letter-spacing:.04em;color:{BRAND}">{html.escape(title)}</p>'
-            f'{inner}</td></tr>')
+# 메일 앱(특히 네이버 메일·Gmail 앱)은 flex·grid·외부 CSS를 지우거나 무시한다
+# 그래서 표(table)로 줄을 나누고, 간격은 td의 padding과 인라인 style로만 잡는다
+# <p> 기본 여백도 앱마다 달라 쓰지 않는다
+GUTTER = 8
+
+
+def cell(content: str, style: str = "") -> str:
+    """본문 한 줄. 모든 블록은 이 td 하나로 감싼다."""
+    return f'<tr><td style="{style}">{content}</td></tr>'
+
+
+def stack(rows: list[str]) -> str:
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">' + "".join(rows) + "</table>"
+
+
+def section(title: str, rows: list[str]) -> str:
+    head = cell(html.escape(title), f"padding:10px 0 10px;border-top:2px solid {BRAND};font-size:13px;font-weight:700;letter-spacing:.04em;color:{BRAND}")
+    return cell(stack([head, *rows]), "padding:28px 0 0")
+
+
+def button(url: str, label: str) -> str:
+    """배경색은 td bgcolor로 칠하고 a에는 글자만 둔다. a의 padding·inline-block은 앱마다 무시된다."""
+    return (f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate">'
+            f'<tr><td bgcolor="{BRAND}" style="background-color:{BRAND};border-radius:6px;padding:14px 22px">'
+            f'<a href="{url}" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:700">'
+            f'<span style="color:#ffffff">{html.escape(label)}</span></a></td></tr></table>')
 
 
 def body(issue: dict) -> str:
-    """메일 본문 HTML. Buttondown이 제목을 맨 위에 크게 보여 주므로 머리기사를 다시 쓰지 않는다.
-    메일 앱마다 CSS 지원이 달라 표와 인라인 스타일만 쓰고, 링크 색은 span으로 한 번 더 고정한다."""
+    """메일 본문 HTML. Buttondown이 제목을 맨 위에 크게 보여 주므로 머리기사를 다시 쓰지 않는다."""
     e = html.escape
     date = issue["date"]
     year, month, day, weekday = day_label(date)
     url = e(link(date), quote=True)
     lead = issue.get("lead") or {}
     stand = first_paragraph(lead.get("standfirst"))
-    rows = [f'<tr><td style="padding:0 0 4px;font-size:13px;color:{MUTED}">대한민국 조간 · {year}년 {month}월 {day}일 {weekday}요일</td></tr>']
+    rows = [cell(f"대한민국 조간 · {year}년 {month}월 {day}일 {weekday}요일", f"padding:0 0 4px;font-size:13px;line-height:1.5;color:{MUTED}")]
     if stand:
-        rows.append(f'<tr><td style="padding:8px 0 0;font-size:16px;line-height:1.7;color:{INK}">{e(stand)}</td></tr>')
+        rows.append(cell(e(stand), f"padding:8px 0 0;font-size:16px;line-height:1.7;color:{INK}"))
     briefs = [b for b in items(issue.get("briefs"), BRIEFS + 2) if str(b.get("k", "")).strip() and not repeats(b.get("m"), stand)][:BRIEFS]
     if briefs:
-        inner = "".join(
-            f'<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:{INK}"><strong>{e(str(b["k"]))}</strong>'
-            + (f'<br><span style="color:{MUTED}">{e(str(b["m"]))}</span>' if b.get("m") else "") + "</p>"
-            for b in briefs)
-        rows.append(section("오늘 꼭 볼 숫자", inner))
+        rows.append(section("오늘 꼭 볼 숫자", [
+            cell(f'<strong>{e(str(b["k"]))}</strong>' + (f'<br><span style="color:{MUTED}">{e(str(b["m"]))}</span>' if b.get("m") else ""),
+                 f"padding:0 0 14px;font-size:15px;line-height:1.6;color:{INK}")
+            for b in briefs]))
     national = (issue.get("national") or {}).get("items") if isinstance(issue.get("national"), dict) else issue.get("national")
     news = [n for n in items(national, NATIONAL + 3) if n.get("title")][:NATIONAL]
     if news:
-        inner = ""
+        lines = []
         for n in news:
             title = e(str(n["title"]))
             href = str(n.get("url") or "")
             if href.startswith("https://"):
                 title = f'<a href="{e(href, quote=True)}" style="color:{INK};text-decoration:none"><span style="color:{INK}">{title}</span></a>'
-            outlet = f'<br><span style="font-size:13px;color:{MUTED}">{e(str(n["outlet"]))}</span>' if n.get("outlet") else ""
-            inner += f'<p style="margin:0;padding:10px 0;border-bottom:1px solid {LINE};font-size:15px;line-height:1.5;font-weight:600;color:{INK}">{title}{outlet}</p>'
-        rows.append(section("전국 주요 뉴스", inner))
+            outlet = f'<br><span style="font-size:13px;font-weight:400;color:{MUTED}">{e(str(n["outlet"]))}</span>' if n.get("outlet") else ""
+            lines.append(cell(title + outlet, f"padding:10px 0;border-bottom:1px solid {LINE};font-size:15px;line-height:1.5;font-weight:600;color:{INK}"))
+        rows.append(section("전국 주요 뉴스", lines))
     nums = [n for n in items(issue.get("nums"), NUMS) if n.get("k") and n.get("v")]
     if nums:
         cells = "".join(
-            f'<tr><td style="padding:8px 0;border-bottom:1px solid {LINE};font-size:14px;color:{MUTED}">{e(str(n["k"]))}</td>'
-            f'<td align="right" style="padding:8px 0;border-bottom:1px solid {LINE};font-size:15px;color:{INK};white-space:nowrap"><strong>{e(str(n["v"]))}</strong>'
+            f'<tr><td style="padding:8px 8px 8px 0;border-bottom:1px solid {LINE};font-size:14px;line-height:1.5;color:{MUTED}">{e(str(n["k"]))}</td>'
+            f'<td align="right" style="padding:8px 0;border-bottom:1px solid {LINE};font-size:15px;line-height:1.5;color:{INK};white-space:nowrap"><strong>{e(str(n["v"]))}</strong>'
             + (f'<br><span style="font-size:12px;color:{MUTED}">{e(str(n["d"]))}</span>' if n.get("d") else "") + "</td></tr>"
             for n in nums)
-        rows.append(section("핵심 숫자", f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">{cells}</table>'))
-    rows.append(f'<tr><td style="padding:32px 0 8px"><a href="{url}" style="display:inline-block;padding:14px 22px;background:{BRAND};border-radius:6px;text-decoration:none;font-size:16px;font-weight:700">'
-                f'<span style="color:#ffffff">오늘 지면 전체 읽기</span></a></td></tr>')
+        rows.append(section("핵심 숫자", [cell(f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">{cells}</table>')]))
+    rows.append(cell(button(url, "오늘 지면 전체 읽기"), "padding:32px 0 8px"))
     review = issue.get("review") or {}
     note = "자동 발행 호라 사람의 원문 확인 전입니다. 출처와 기준일은 지면에서 확인해 주세요." if review.get("auto") else "출처와 기준일은 지면에서 확인해 주세요."
-    rows.append(f'<tr><td style="padding:16px 0 0;font-size:13px;line-height:1.6;color:{MUTED}">{e(note)}<br>'
-                f'구독 해지는 <a href="{{{{ unsubscribe_url }}}}" style="color:{MUTED}"><span style="color:{MUTED}">여기</span></a>에서 할 수 있습니다.</td></tr>')
-    table = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
-             f'style="max-width:600px;margin:0 auto;border-collapse:collapse;font-family:{FONT};color:{INK};background:#ffffff">'
-             + "".join(rows) + "</table>")
+    rows.append(cell(f'{e(note)}<br>구독 해지는 <a href="{{{{ unsubscribe_url }}}}" style="color:{MUTED}"><span style="color:{MUTED}">여기</span></a>에서 할 수 있습니다.',
+                     f"padding:16px 0 0;font-size:13px;line-height:1.6;color:{MUTED}"))
+    inner = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" '
+             f'style="width:100%;max-width:600px;border-collapse:collapse;font-family:{FONT};color:{INK};word-break:keep-all">' + "".join(rows) + "</table>")
+    # 바깥 칸의 padding이 화면 가장자리와 본문 사이 여백(8px)이 된다
+    table = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background-color:#ffffff">'
+             f'<tr><td align="center" style="padding:{GUTTER}px">{inner}</td></tr></table>')
     # 마크다운 모드는 원시 HTML을 회색 테두리 상자에 넣어 보여 주므로 HTML 모드로 보낸다
     return "<!-- buttondown-editor-mode: fancy -->\n" + table
+
+
+# 메일 앱은 <style>·스크립트를 지우거나 막는다. 본문에 남아 있으면 보내기 전에 통째로 걷어 낸다
+STRIP_BLOCKS = re.compile(r"<(script|style)\b[^>]*>.*?</\1\s*>", re.I | re.S)
+STRIP_ATTRS = re.compile(r"\s(?:class|on[a-z]+)\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s>]+)", re.I)
+
+
+def clean(text: str) -> str:
+    """표와 인라인 style만 남긴다. script·style 태그, class, on* 이벤트 속성은 지운다."""
+    return STRIP_ATTRS.sub("", STRIP_BLOCKS.sub("", text))
 
 
 def call(method: str, url: str, key: str, payload: dict, opener=urllib.request.urlopen):
@@ -152,7 +183,7 @@ def call(method: str, url: str, key: str, payload: dict, opener=urllib.request.u
 
 
 def send(issue: dict, key: str, opener=urllib.request.urlopen) -> bool:
-    draft = call("POST", API, key, {"subject": subject(issue), "body": body(issue), "status": "draft"}, opener)
+    draft = call("POST", API, key, {"subject": subject(issue), "body": clean(body(issue)), "status": "draft"}, opener)
     if not isinstance(draft, dict) or not draft.get("id"):
         return False
     sent = call("PATCH", f"{API}/{urllib.parse.quote(str(draft['id']))}", key, {"status": "about_to_send"}, opener)
