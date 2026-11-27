@@ -27,6 +27,7 @@
 ## 개발·운영 기준
 
 - **발행과 복구** — 매일 발행할 데이터 준비, 검사 실패 시 복구 순서, 운영 도메인에서의 확인. [운영 런북](planning/runbook.md) · [브랜치·배포](dev/branches.md)
+- **날짜별 변경 이력** — 첫 공개부터 오늘까지 하루에 한 주요 기능을 날짜별로 묶었습니다. [업데이트 노트](dev/updates.md)
 - **보안과 장애 대응** — 공개 화면·관리자·기사 API에 적용한 보호 조치, 이전 장애의 증상과 복구 근거. [보안 설계와 검증](dev/security.md) · [장애·검사 기록](dev/changelog.md)
 - **운영 검증** — 발행 확인, 관리자 공개 현황과 권한별 GA4·검색 조회. [관리자 연결](dev/ga4-admin.md) · [운영 Notion](https://app.notion.com/p/40ecbbdd109b8192be79d2ad87e1b95d)
 - **디자인 자산** — 지면·공유 이미지와 외부 라이브러리의 출처·이용 조건. [브랜드 자산](design/illustrations.md) · [Swiper 원본·라이선스](design/swiper.md)

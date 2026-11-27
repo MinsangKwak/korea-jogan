@@ -103,6 +103,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 - 날짜별 조간은 발행 당시의 기록이고, `live.json`은 별도로 생성하는 ECOS 최신 일별 확정값입니다. 장중 시세가 아니며 수집 실패가 조간 배포를 막지 않습니다. 지난 호에서는 현재의 추적 상태와 숫자 띠를 숨깁니다. 갱신 시각과 배포 방식은 [워크플로 표](branches.md#워크플로와-실행-환경)를 따릅니다.
 - `/admin/`에서 공개 발행 상태와 법률 수록 파일을 확인할 수 있습니다. GA4·검색 실적은 권한 있는 계정이 별도로 연결합니다. OAuth 토큰은 메모리에서만 쓰며 브라우저가 Google API를 직접 호출합니다. 인증·조회 실패 처리는 [관리자 문서](ga4-admin.md), 개발 환경의 읽기 전용 범위는 [개발 미리보기](branches.md#개발-미리보기-vercel)에 있습니다.
 - [build_pages.py](../../../backend-python/pipeline/build/build_pages.py)는 최신 호와 `/YYYY-MM-DD`에 제목·설명·canonical·요약·구조화 데이터를 만들고, [index.html](../../../frontend-vanilla-js/index.html)의 날짜 탐색은 호별 주소를 사용합니다. [build_security.py](../../../backend-python/pipeline/build/build_security.py)는 실제 인라인 실행 코드의 해시로 메타 CSP를 생성합니다. [IndexNow 알림](../../../backend-python/pipeline/publish/indexnow.py)의 실패는 배포를 중단하지 않습니다. 검색 도착 페이지·RSS·사이트맵의 운영 기준은 [검색·재방문 문서](../planning/growth.md)에 있습니다.
+- 이메일 구독은 서버나 DB 없이 외부 뉴스레터 서비스(Buttondown)에 맡깁니다. 지면에는 일반 폼 제출만 두고, 발송은 아침 발행의 마지막 단계에서 새로 공개한 호에 한해 실행합니다. 켜는 변수와 실패 처리는 [운영 런북](../planning/runbook.md#5-반영과-배포-확인)에 있습니다.
 
 ## 검사 범위
 

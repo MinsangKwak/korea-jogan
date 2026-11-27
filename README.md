@@ -49,6 +49,7 @@ HTML·CSS·바닐라 JavaScript로 접근 가능한 지면을 만들고, Python�
 - **기사와 판례를 어떻게 연결했나.** 같은 쟁점을 다룬 보도와 과거 판결을 한 지면에 놓고 각각의 날짜·사건번호·원문을 표시했습니다. 입법 캘린더는 제안·공포·시행을 나눠 보여 줍니다. [기사와 판례](https://korea-jogan.com/#caseEdition) · [입법 캘린더](https://korea-jogan.com/law/calendar/) · [수록 범위](project/docs/planning/law-data.md)
 - **AI를 어디에 사용했나.** 조사·초안·삽화 제작에 활용했습니다. 자동 검사를 통과한 호와 사람이 원문을 대조한 호를 지면에서 구별하고, 공개 뒤 발견한 오류는 변경 전후와 이유를 기록합니다. [편집 기준](project/docs/planning/editorial.md) · [정정 기록](https://korea-jogan.com/#fixH)
 - **발행 성공을 어떻게 확인하나.** 운영 도메인에서 해당 호가 열리고, 공개된 빌드의 커밋이 배포 대상으로 지정한 커밋과 일치하는지 확인합니다. [공개 빌드 기록](https://korea-jogan.com/build-info.json) · [발행·복구 절차](project/docs/planning/runbook.md)
+- **독자에게 어떻게 다시 알리나.** 새 호가 공개되면 텔레그램 채널과 이메일 구독자에게 그날 요약을 보냅니다. 이메일은 외부 뉴스레터 서비스에 맡겨 서버를 늘리지 않았습니다. [발송 절차](project/docs/planning/runbook.md#5-반영과-배포-확인) · [날짜별 업데이트 노트](project/docs/dev/updates.md)
 - **첫 독자를 어떻게 찾을 것인가.** 첫 4주간 외부 방문자 100명을 목표로 삼았습니다. 질문별로 검색 노출·클릭과 원문 열람을 살펴봅니다. 방문자와 반복 가능한 클릭 횟수는 별도로 집계합니다. [독자 유입 검증 계획](project/docs/planning/growth.md) · [관리자 화면](https://korea-jogan.com/admin/)
 
 ## 프런트엔드와 백엔드 보안
