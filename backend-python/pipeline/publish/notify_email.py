@@ -156,6 +156,16 @@ def body(issue: dict) -> str:
     return "<!-- buttondown-editor-mode: fancy -->\n" + table
 
 
+# 메일 앱은 <style>·스크립트를 지우거나 막는다. 본문에 남아 있으면 보내기 전에 통째로 걷어 낸다
+STRIP_BLOCKS = re.compile(r"<(script|style)\b[^>]*>.*?</\1\s*>", re.I | re.S)
+STRIP_ATTRS = re.compile(r"\s(?:class|on[a-z]+)\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s>]+)", re.I)
+
+
+def clean(text: str) -> str:
+    """표와 인라인 style만 남긴다. script·style 태그, class, on* 이벤트 속성은 지운다."""
+    return STRIP_ATTRS.sub("", STRIP_BLOCKS.sub("", text))
+
+
 def call(method: str, url: str, key: str, payload: dict, opener=urllib.request.urlopen):
     """Buttondown API 호출. 성공하면 응답 JSON, 실패하면 None."""
     request = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), method=method, headers={
@@ -173,7 +183,7 @@ def call(method: str, url: str, key: str, payload: dict, opener=urllib.request.u
 
 
 def send(issue: dict, key: str, opener=urllib.request.urlopen) -> bool:
-    draft = call("POST", API, key, {"subject": subject(issue), "body": body(issue), "status": "draft"}, opener)
+    draft = call("POST", API, key, {"subject": subject(issue), "body": clean(body(issue)), "status": "draft"}, opener)
     if not isinstance(draft, dict) or not draft.get("id"):
         return False
     sent = call("PATCH", f"{API}/{urllib.parse.quote(str(draft['id']))}", key, {"status": "about_to_send"}, opener)
