@@ -499,7 +499,10 @@ async function check(name, options, run) {
     assert.equal(await view(), 'it');
     assert.equal(await page.locator('h1#natH').innerText(), 'IT 브리핑');
     assert.ok((await page.locator('#natMeta').innerText()).startsWith(items.length + '건'));
-    assert.equal(await page.locator('#natArticleTitle').innerText(), items[0].title);
+    // 지면은 분야 순서(config.js IT_CATS)로 안정 정렬하므로 JSON 첫 기사가 아니라 정렬 뒤 첫 기사를 기대한다
+    const itOrder = ['AI', '반도체·기기', '플랫폼·서비스', '보안·개인정보', '통신·정책', '개발·오픈소스', '과학·IT'];
+    const shown = items.slice().sort((a, b) => itOrder.indexOf(a.cat) - itOrder.indexOf(b.cat));
+    assert.equal(await page.locator('#natArticleTitle').innerText(), shown[0].title);
     for (const hidden of ['#home', '#regions', '#fiscal', '#editionSearch']) assert.equal(await page.locator(hidden).isVisible(), false, hidden);
     assert.equal(await page.locator('#catNav a[href="/law/"]').isVisible(), true);
     const cover = page.locator('#natArticle .nat-cover-art img');
