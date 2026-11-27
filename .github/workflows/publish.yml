@@ -68,3 +68,10 @@ jobs:
         run: |
           git fetch origin main
           python3 backend-python/pipeline/publish/notify_telegram.py --before "$BEFORE_SHA" --after origin/main
+      # 텔레그램과 같은 기준으로 새로 공개한 호만 이메일 구독자에게 보낸다. 키가 없거나 실패해도 발행은 성공으로 남는다
+      - name: 새로 공개한 최신 호를 이메일 구독자에게 보내기
+        continue-on-error: true
+        env:
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          BEFORE_SHA: ${{ steps.start.outputs.sha }}
+        run: python3 backend-python/pipeline/publish/notify_email.py --before "$BEFORE_SHA" --after origin/main
