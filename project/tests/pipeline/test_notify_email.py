@@ -111,7 +111,7 @@ class NotifyEmailTest(unittest.TestCase):
 
     def test_body_uses_only_tables_and_inline_spacing(self):
         text = notify_email.body(issue())
-        for banned in ("display:flex", "display:grid", "inline-block", "<p", "<div", "<style"):
+        for banned in ("display:flex", "display:grid", "inline-block", "<p", "<div", "<style", "class="):
             self.assertNotIn(banned, text)
         self.assertIn(f'padding:{notify_email.GUTTER}px', text)
         self.assertIn(f'bgcolor="{notify_email.BRAND}"', text)
