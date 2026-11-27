@@ -172,8 +172,10 @@ jobs:
       - name: 호별 검색 페이지 만들기
         if: steps.gate.outputs.run == 'true'
         # 저장소 변수 NEWSLETTER_USERNAME(Buttondown 사용자 이름)이 있으면 이메일 구독 폼을 넣는다
+        # NEWSLETTER_FULL=1이면 선착순 100명 마감으로 보고 폼 대신 마감 안내를 넣는다
         env:
           NEWSLETTER_USERNAME: ${{ vars.NEWSLETTER_USERNAME }}
+          NEWSLETTER_FULL: ${{ vars.NEWSLETTER_FULL }}
         run: python backend-python/pipeline/build/build_pages.py
       - name: 기사 저장소 갱신과 공개 읽기 API 생성
         if: steps.gate.outputs.run == 'true'

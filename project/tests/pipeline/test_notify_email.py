@@ -201,6 +201,17 @@ class ReaderPanelTest(unittest.TestCase):
         self.assertEqual(reader_panel.newsletter_name({"NEWSLETTER_USERNAME": "bad\"name"}), "")
         self.assertEqual(reader_panel.newsletter_name({"NEWSLETTER_USERNAME": " korea-jogan "}), "korea-jogan")
         self.assertEqual(reader_panel.newsletter_name({}), "")
+        self.assertIn("선착순 100명", with_form)
+
+    def test_full_newsletter_shows_notice_instead_of_form(self):
+        closed = reader_panel.markup("https://korea-jogan.com/", newsletter="korea-jogan", full=True)
+        self.assertNotIn("<form", closed)
+        self.assertNotIn("buttondown.com", closed)
+        self.assertIn("모두 찼습니다", closed)
+        self.assertIn('id="readerFeed"', closed)
+        self.assertTrue(reader_panel.newsletter_full({"NEWSLETTER_FULL": " TRUE "}))
+        self.assertFalse(reader_panel.newsletter_full({"NEWSLETTER_FULL": "0"}))
+        self.assertFalse(reader_panel.newsletter_full({}))
 
 
 if __name__ == "__main__":
