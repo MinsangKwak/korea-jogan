@@ -5,6 +5,13 @@ function note(action) {
   if (typeof window.track === 'function') window.track('reader_' + action);
 }
 
+// 구독 신청은 Buttondown 규칙대로 일반 폼 제출로 새 창에 보낸다
+// 보안 확인(CAPTCHA)이나 주소 오류 안내를 독자가 그 창에서 이어서 처리해야 해서 fetch를 쓰지 않는다
+function subscribe(form) {
+  note('email_submit');
+  form.querySelector('#readerEmailStatus').textContent = '새 창에서 신청 결과를 확인해 주세요. 받은편지함의 확인 메일에서 링크를 누르면 구독이 완료됩니다.';
+}
+
 const panel = document.querySelector('[data-reader-tools]');
 if (panel) {
   const details = panel.querySelector('#readerSubscribe');
@@ -17,6 +24,8 @@ if (panel) {
   });
   panel.querySelectorAll('[data-reader-action]').forEach((link) => link.addEventListener('click', () => note(link.dataset.readerAction)));
   details.addEventListener('toggle', () => { if (details.open) note('subscribe_open'); });
+  const emailForm = panel.querySelector('#readerEmail');
+  if (emailForm) emailForm.addEventListener('submit', () => subscribe(emailForm));
   document.querySelectorAll('[data-reader-subscribe]').forEach((link) => link.addEventListener('click', (event) => {
     event.preventDefault();
     details.open = true;

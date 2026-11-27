@@ -16,6 +16,8 @@ from urllib.parse import urlsplit
 
 PUBLIC = Path(__file__).resolve().parents[3] / "frontend-vanilla-js"
 CSP_META = re.compile(r'\s*<meta\b(?=[^>]*http-equiv=["\']Content-Security-Policy["\'])[^>]*>', re.I)
+NEWSLETTER_ORIGIN = "https://buttondown.com"
+NEWSLETTER = NEWSLETTER_ORIGIN + "/api/emails/embed-subscribe/"
 REFERRER_META = re.compile(r'\s*<meta\b(?=[^>]*name=["\']referrer["\'])[^>]*>', re.I)
 
 
@@ -76,6 +78,9 @@ def policy(page: str, admin: bool = False, *, law: bool = False) -> str:
         if scripts.goatcounter:
             connections.append(scripts.goatcounter)
             images.append(scripts.goatcounter)
+    # 이메일 구독 폼이 있는 페이지만 Buttondown으로 폼 제출을 허용한다(reader_panel.py)
+    if NEWSLETTER in page:
+        forms.append(NEWSLETTER_ORIGIN)
     directives = {
         "default-src": ["'self'"],
         "base-uri": ["'none'"],

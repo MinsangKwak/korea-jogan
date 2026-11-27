@@ -32,6 +32,15 @@ class SecurityTest(unittest.TestCase):
         self.assertNotEqual(csp(secured), csp(changed))
         self.assertEqual(build_security.secure_page(secured), secured)
 
+    def test_newsletter_origin_is_allowed_only_on_pages_with_the_form(self):
+        import reader_panel
+        page = '<meta charset="utf-8">' + reader_panel.markup("https://korea-jogan.com/", newsletter="korea-jogan")
+        rules = dict(item.split(" ", 1) for item in build_security.policy(page).split("; "))
+        self.assertIn("https://buttondown.com", rules["form-action"])
+        self.assertNotIn("buttondown", rules["connect-src"])
+        plain = build_security.policy('<meta charset="utf-8">' + reader_panel.markup("https://korea-jogan.com/", newsletter=""))
+        self.assertNotIn("buttondown", plain)
+
     def test_policy_precedes_scripts_and_separates_admin_endpoints(self):
         page = '<html><head><meta charset="utf-8"><script src="main.js"></script></head></html>'
         public = build_security.secure_page(page)

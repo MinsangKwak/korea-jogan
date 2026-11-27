@@ -166,6 +166,7 @@ class ReaderPanelTest(unittest.TestCase):
         with_form = reader_panel.markup("https://korea-jogan.com/", newsletter="korea-jogan")
         self.assertIn('action="https://buttondown.com/api/emails/embed-subscribe/korea-jogan"', with_form)
         self.assertIn('type="email"', with_form)
+        self.assertIn('id="readerEmailStatus"', with_form)
         self.assertIn('id="readerFeed"', with_form)
         self.assertEqual(reader_panel.newsletter_name({"NEWSLETTER_USERNAME": "bad\"name"}), "")
         self.assertEqual(reader_panel.newsletter_name({"NEWSLETTER_USERNAME": " korea-jogan "}), "korea-jogan")

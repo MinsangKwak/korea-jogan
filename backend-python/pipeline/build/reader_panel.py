@@ -24,8 +24,9 @@ def email_form(name: str) -> str:
     action = html.escape(SUBSCRIBE + name, quote=True)
     return f'''<form class="reader-tools__email" id="readerEmail" action="{action}" method="post" target="_blank">
       <p>이메일을 남기면 매일 아침 6시 새 호를 메일로 보내 드립니다. 확인 메일의 링크를 눌러야 구독이 완료되며, 메일 아래 링크로 언제든 해지할 수 있습니다.</p>
-      <label for="readerEmailInput">이메일 주소</label><div class="reader-tools__copy"><input type="email" id="readerEmailInput" name="email" autocomplete="email" inputmode="email" placeholder="name@example.com" required><button class="kj-btn kj-btn--primary" type="submit" data-reader-action="email_submit">메일로 받기</button></div>
-      <input type="hidden" name="tag" value="site">
+      <label for="readerEmailInput">이메일 주소</label><div class="reader-tools__copy"><input type="email" id="readerEmailInput" name="email" autocomplete="email" inputmode="email" placeholder="name@example.com" required><button class="kj-btn kj-btn--primary" type="submit">메일로 받기</button></div>
+      <input type="hidden" name="tag" value="site"><input type="hidden" name="embed" value="1">
+      <p class="reader-tools__status" id="readerEmailStatus" role="status"></p>
     </form>
       '''
 
