@@ -81,3 +81,8 @@
 .issue-sources h3 { font: 720 1.17rem/1.5 var(--press-serif); word-break: keep-all; }
 .discovery-main .issue-source-group { max-width: 56rem; margin: 0; padding: 0; }
 .issue-source-group summary { align-content: center; padding-block: .6rem; }
+
+/* 상자·목록을 본문 문단 폭에 맞춰 오른쪽 빈 공간을 없애고, 상자 안 문단은 상자를 채운다 */
+.discovery-main .discovery-note,.discovery-main>.discovery-card,.discovery-phases,.discovery-main .question-related,.discovery-timeline,.issue-sources,.discovery-main .issue-source-group{max-width:var(--measure)}
+.discovery-main .discovery-note p,.discovery-main .discovery-card p,.discovery-main .question-related p{max-width:none}
+.discovery-note>h2:first-child,.discovery-main>.discovery-card>h2:first-child{margin-top:0}
