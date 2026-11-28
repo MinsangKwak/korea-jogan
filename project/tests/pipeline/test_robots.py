@@ -32,6 +32,11 @@ class RobotsTest(unittest.TestCase):
             for path in ("/admin/", "/data/issues/index.json", "/src/main.js"):
                 self.assertFalse(self.rp.can_fetch(bot, SITE + path), f"{bot} {path}")
 
+    def test_visit_counts_are_for_answer_bots_only(self):
+        self.assertTrue(self.rp.can_fetch("Claude-User", SITE + "/visits.json"))
+        for bot in ("Googlebot", "Yeti", "facebookexternalhit", "SomeBot"):
+            self.assertFalse(self.rp.can_fetch(bot, SITE + "/visits.json"), bot)
+
     def test_each_bot_is_listed_once(self):
         agents = [line.split(":", 1)[1].strip() for line in ROBOTS.read_text(encoding="utf-8").splitlines() if line.startswith("User-agent:")]
         self.assertEqual(len(agents), len(set(agents)))

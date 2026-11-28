@@ -36,6 +36,7 @@ Python이 발행 전에 신문과 정치 질문을 HTML로 만듭니다. 독자�
 | `news-case-pairs.json` | 보도와 관련 선례의 출처·사건번호·연결 설명 | 편집자가 [선정 기준](../planning/law-data.md#기사와-판례-선정-기록)에 따라 기록 | 호별 정적 지면 생성기·1면 컴포넌트 |
 | `corrections.json` | 전체 호의 정정 이력 | 운영자 | `footer.js`, `validate.py` |
 | `live.json` | ECOS 최신 일별 확정값. Git에 없음 | `build_live.py`(배포 시) | `economy.js` 숫자 띠 |
+| `visits.json` | GA4 지난 30일 날짜별 조회수·사용자·방문과 어제 많이 본 주소 5개. Git에 없음 | `build_visits.py`(배포 시, 하루 1회만 조회) | Claude가 "어제 몇 명 봤어?"에 답할 때 `https://korea-jogan.com/visits.json`을 읽음 |
 | `build-info.json` | 실제 배포 소스. Git에 없음 | `build_info.py`(배포 시) | `verify_publication.py`, 관리자, 복구 확인 |
 
 [법률 수록본](../../../frontend-vanilla-js/law/data/)은 판례면을 열 때 불러옵니다. 판례 보관함은 선택한 식별번호와 분야를 현재 도메인의 브라우저 저장소에 보관하고, 판결 내용은 해당 분야 파일에서 다시 읽습니다. [보관함 구현](../../../frontend-vanilla-js/law/library.js) · [자료의 범위와 갱신 방법](../planning/law-data.md)

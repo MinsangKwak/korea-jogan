@@ -196,6 +196,32 @@ jobs:
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
         run: python backend-python/pipeline/build/build_live.py
+      # 방문 숫자(visits.json)는 GA4를 하루 한 번만 묻는다. 공개 중인 파일이 어제까지면 그대로 다시 싣는다
+      - id: visits
+        name: 방문 숫자 재사용 여부
+        if: steps.gate.outputs.run == 'true'
+        continue-on-error: true
+        env:
+          GA4_KEY_CONFIGURED: ${{ secrets.GA4_SERVICE_ACCOUNT_KEY != '' && 'present' || 'absent' }}
+        run: |
+          echo "key=$GA4_KEY_CONFIGURED" >> "$GITHUB_OUTPUT"
+          python backend-python/pipeline/build/build_visits.py --reuse
+      - id: ga4_auth
+        name: GA4 읽기 토큰 받기
+        if: steps.gate.outputs.run == 'true' && steps.visits.outputs.need == 'true' && steps.visits.outputs.key == 'present'
+        continue-on-error: true
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GA4_SERVICE_ACCOUNT_KEY }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/analytics.readonly
+          create_credentials_file: false
+      - name: 방문 숫자 만들기
+        if: steps.gate.outputs.run == 'true' && steps.ga4_auth.outputs.access_token != ''
+        continue-on-error: true
+        env:
+          GA4_ACCESS_TOKEN: ${{ steps.ga4_auth.outputs.access_token }}
+        run: python backend-python/pipeline/build/build_visits.py --fetch
       - name: 실제 배포 소스 기록
         if: steps.gate.outputs.run == 'true'
         env:
