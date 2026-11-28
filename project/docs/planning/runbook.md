@@ -94,6 +94,8 @@ python3 backend-python/pipeline/publish/validate.py --deploy
 
 공개 대조가 끝나면 새로 공개한 최신 호만 독자에게 알립니다. [notify_telegram.py](../../../backend-python/pipeline/publish/notify_telegram.py)는 텔레그램 채널에, [notify_email.py](../../../backend-python/pipeline/publish/notify_email.py)는 Buttondown 구독자에게 보냅니다. 이메일은 초안을 만든 뒤 발송 상태로 바꾸며, 비밀값 `BUTTONDOWN_API_KEY`가 없으면 건너뜁니다. 구독 폼은 저장소 변수 `NEWSLETTER_USERNAME`이 있을 때만 [독자 안내](../../../backend-python/pipeline/build/reader_panel.py)에 들어갑니다. 알림 실패는 이미 끝난 공개를 되돌리지 않습니다. 무료 요금제는 구독자 100명까지라 넘으면 유료 전환을 검토합니다.
 
+방문 숫자는 배포 때 [build_visits.py](../../../backend-python/pipeline/build/build_visits.py)가 GA4 속성 559927668에서 하루 한 번 받아 `https://korea-jogan.com/visits.json`(지난 30일 날짜별 `views`·`users`·`sessions`, 어제 많이 본 주소 5개)으로 싣습니다. 비밀값 `GA4_SERVICE_ACCOUNT_KEY`(GA4 뷰어 권한만 준 서비스 계정 JSON 키)가 없으면 건너뛰고, 실패해도 배포를 막지 않습니다. Claude에게 방문 수를 물으면 이 파일을 읽어 답합니다.
+
 `deploy-pages.yml`은 `validate --deploy` → `build_feed.py` → `build_pages.py`(호별 HTML·CSP 해시) → `build_live.py`(실패해도 계속) → `build_info.py` → Pages 순서로 진행하고 공개 색인·호 JSON·홈·`build-info.json`의 날짜·SHA를 대조합니다. 06시를 넘겨 수집했다면 자료 기준은 전날 23:59로 두고 `late.reason`·`late.cutoff`를 남기며 수집 시각을 앞당겨 적지 않습니다.
 
 Codex 감독은 05:55에 깨어나 연결·도구를 준비하고 06:00:00 정각에 발행을 실행합니다. GitHub 예약이 늦게 시작하는 날이 많아(11/17·11/19) 공개 여부를 지켜보며 기다리지 않으며, 06:00 전에는 `publish.yml`을 실행하지 않습니다. 발행 1~2분에 Pages 배포 전 같은 SHA 전체 검사(약 3분)와 배포가 더해져 공개는 06:04~06:07 무렵으로 예상합니다. 데이터 검사는 00시 초안을 올릴 때 끝나 있고 `publish.yml`이 그 SHA의 `verify-ci` 결과를 직접 확인하므로, 감독이 검사를 따로 돌리거나 건너뛰지 않습니다.

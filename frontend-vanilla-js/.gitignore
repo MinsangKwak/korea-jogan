@@ -19,5 +19,6 @@ dist-preview/
 /compare/
 /build-info.json
 /data/live.json
+/visits.json
 /data/edition-weather.json
 /api/

@@ -23,6 +23,7 @@
 | `frontend-vanilla-js/data/corrections.json` | 전체 호의 정정 이력 |
 | `frontend-vanilla-js/data/trackers.json` | 최신 호에서 제공하는 장기 이슈·단계·근거 기사 |
 | `frontend-vanilla-js/data/live.json` | 배포 시 생성하는 최신 공식 숫자. Git에는 저장하지 않음 |
+| `frontend-vanilla-js/visits.json` | 배포 시 하루 1회 GA4에서 받는 지난 30일 날짜별 조회수·사용자·방문. Git에는 저장하지 않음 |
 
 아래 날짜는 형식 설명용 예시입니다. 실제 최신 호는 색인을 확인합니다.
 

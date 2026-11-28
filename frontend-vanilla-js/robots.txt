@@ -12,6 +12,7 @@ User-agent: Bingbot
 User-agent: Daumoa
 User-agent: DuckDuckBot
 Disallow: /admin
+Disallow: /visits.json
 Allow: /
 
 # 미리보기 카드: 링크를 공유할 때 제목·이미지만 가져간다
@@ -22,9 +23,10 @@ User-agent: Slackbot
 Disallow: /admin
 Disallow: /data/
 Disallow: /src/
+Disallow: /visits.json
 Allow: /
 
-# AI 검색·답변: 사람이 물은 질문에 답하려고 읽고 출처 링크를 남기는 봇. 미리 그려 둔 본문만 읽는다
+# AI 검색·답변: 사람이 물은 질문에 답하려고 읽고 출처 링크를 남기는 봇. 미리 그려 둔 본문과 방문 숫자(visits.json)만 읽는다
 User-agent: OAI-SearchBot
 User-agent: ChatGPT-User
 User-agent: Claude-SearchBot
@@ -79,6 +81,7 @@ User-agent: *
 Disallow: /admin
 Disallow: /data/
 Disallow: /src/
+Disallow: /visits.json
 Crawl-delay: 10
 
 Sitemap: https://korea-jogan.com/sitemap.xml
